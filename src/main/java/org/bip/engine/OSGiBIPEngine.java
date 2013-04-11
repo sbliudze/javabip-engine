@@ -16,7 +16,7 @@ import org.slf4j.LoggerFactory;
 public class OSGiBIPEngine implements BIPEngine, Runnable {
 
 
-	private GlueEncoderImpl glueenc = new GlueEncoderImpl(); //TODO, change to IFs
+	private GlueEncoderImpl glueenc = new GlueEncoderImpl(); //TODO: change to IFs
 	private BehaviourEncoderImpl behenc = new BehaviourEncoderImpl();
 	private CurrentStateEncoderImpl currstenc = new CurrentStateEncoderImpl();
 	private BDDBIPEngineImpl engine = new BDDBIPEngineImpl();
@@ -24,8 +24,8 @@ public class OSGiBIPEngine implements BIPEngine, Runnable {
 	private Logger logger = LoggerFactory.getLogger(OSGiBIPEngine.class);
 
 	//TODO: start IDs from 0
-	public Hashtable<BIPComponent, Integer> reversedIdentityMapping = new Hashtable<BIPComponent, Integer>();  //TODO, give me ID getter?
-	public Hashtable<Integer, BIPComponent> identityMapping = new Hashtable<Integer, BIPComponent>(); //TODO, give me BIPComponent getter?
+	public Hashtable<BIPComponent, Integer> reversedIdentityMapping = new Hashtable<BIPComponent, Integer>();  //TODO: give me ID getter?
+	public Hashtable<Integer, BIPComponent> identityMapping = new Hashtable<Integer, BIPComponent>(); //TODO: give me BIPComponent getter?
 	public Hashtable<Integer, Behaviour> behaviourMapping = new Hashtable<Integer, Behaviour>();
 	public ArrayList<Integer> positionsOfPorts = new ArrayList<Integer>(); //move to the BDDEngine
 	private volatile int componentCounter = 0; // TODO: list of booleans instead?
@@ -139,9 +139,7 @@ public class OSGiBIPEngine implements BIPEngine, Runnable {
 //		return isEngineExecuting;
 //	}
 
-	public void run() { // TODO, run function should contain the code and the
-		// start should create the thread based on wrapper to
-		// run the run
+	public void run() { 
 		logger.error("Engine thread is started.");
 		while (true) {
 			
