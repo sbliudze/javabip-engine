@@ -15,7 +15,6 @@ import org.slf4j.LoggerFactory;
 
 import net.sf.javabdd.BDD;
 
-// TODO, Please attributes and functions start with small letter. 
 public class GlueEncoderImpl implements GlueEncoder {
 
 	private ArrayList<BDD> glueRequireBDDs = new ArrayList<BDD>();

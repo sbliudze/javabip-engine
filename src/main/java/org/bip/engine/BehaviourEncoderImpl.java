@@ -13,6 +13,9 @@ import org.slf4j.LoggerFactory;
 /** Computes the BDD of the behaviour of all components */
 public class BehaviourEncoderImpl implements BehaviourEncoder {
 
+	//TODO: put all loggers in the beginning
+	private Logger logger = LoggerFactory.getLogger(BehaviourEncoderImpl.class);
+	
 	private volatile Hashtable<Integer, BDD[]> stateBDDs = new Hashtable<Integer, BDD[]>();
 	private volatile Hashtable<Integer, BDD[]> portBDDs = new Hashtable<Integer, BDD[]>();
 	private int auxSum;
@@ -20,8 +23,6 @@ public class BehaviourEncoderImpl implements BehaviourEncoder {
 	private BDDBIPEngineImpl engine; //TODO, use the IFs instead
 
 	private OSGiBIPEngine wrapper;
-
-	private Logger logger = LoggerFactory.getLogger(BehaviourEncoderImpl.class);
 
 	public void setEngine(BDDBIPEngineImpl engine) {  //TODO, use the IFs instead
 		this.engine = engine;
@@ -40,25 +41,25 @@ public class BehaviourEncoderImpl implements BehaviourEncoder {
 	}
 
 	private synchronized void createPortAndStateBDDs(int componentID, int sum, int noStates, int noPorts) {
-		BDD[] a2 = new BDD[noStates];
+		BDD[] singleNodeBDDsForStates = new BDD[noStates];
 		for (int i = 0; i < noStates; i++) {
 			/**
 			 * create new variable in the BDD manager for the state of each
 			 * component instance
 			 */
-			a2[i] = engine.bdd_mgr.ithVar(i + sum);
+			singleNodeBDDsForStates[i] = engine.bdd_mgr.ithVar(i + sum);
 		}
-		stateBDDs.put(componentID, a2);
+		stateBDDs.put(componentID, singleNodeBDDsForStates);
 
-		BDD[] a1 = new BDD[noPorts];
+		BDD[] singleNodeBDDsForPorts = new BDD[noPorts];
 		for (int j = 0; j < noPorts; j++) {
 			/**
 			 * create new variable in the BDD manager for the port of each
 			 * component instance
 			 */
-			a1[j] = engine.bdd_mgr.ithVar(j + noStates + sum);
+			singleNodeBDDsForPorts[j] = engine.bdd_mgr.ithVar(j + noStates + sum);
 		}
-		portBDDs.put(componentID, a1);
+		portBDDs.put(componentID, singleNodeBDDsForPorts);
 		logger.error("Component {} put to portBdds, size={}. ", componentID, portBDDs.size());
 		System.out.println("portBDDs size: " + portBDDs.size());
 	}
@@ -68,7 +69,6 @@ public class BehaviourEncoderImpl implements BehaviourEncoder {
 
 		int initialNoNodes = noComponentPorts + noComponentStates + auxSum;
 
-		// int auxSum = 0;
 		logger.error("Initial no of Nodes {}", initialNoNodes);
 		logger.error("BDD manager variable Number {}", engine.bdd_mgr.varNum());
 		if (engine.bdd_mgr.varNum() < initialNoNodes)

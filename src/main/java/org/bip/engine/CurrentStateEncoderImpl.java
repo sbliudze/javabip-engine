@@ -19,6 +19,7 @@ public class CurrentStateEncoderImpl implements CurrentStateEncoder {
 
 	private Logger logger = LoggerFactory.getLogger(CurrentStateEncoderImpl.class);
 
+	//TODO: put setters in the bottom
 	public void setOSGiBIPEngine(OSGiBIPEngine wrapper) {
 		this.wrapper = wrapper;
 
@@ -32,6 +33,11 @@ public class CurrentStateEncoderImpl implements CurrentStateEncoder {
 		this.engine = engine;
 	}
 
+// TODO: find how to get Javadoc support in Eclipse	
+/*
+ * (non-Javadoc)
+ * @see org.bip.engine.CurrentStateEncoder#inform(org.bip.api.BIPComponent, java.lang.String, java.util.ArrayList)
+ */
 	public BDD inform(BIPComponent component, String currentState, ArrayList<Port> disabledPorts) {
 		Integer CompID = wrapper.reversedIdentityMapping.get(component);
 		ArrayList<String> componentStates = wrapper.behaviourMapping.get(CompID).getStates();
@@ -54,6 +60,7 @@ public class CurrentStateEncoderImpl implements CurrentStateEncoder {
 			int k = 0;
 			while (disabledPorts.get(l) != componentPorts.get(k)) {
 				if (k == statePorts.get(StateID).size() - 1) {
+					//TODO: add Exception
 					System.err.println("Disabled Port cannot be found.");
 					break;
 				}

@@ -13,8 +13,8 @@ import org.bip.glue.BIPGlue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+//TODO: add comments
 public class OSGiBIPEngine implements BIPEngine, Runnable {
-
 
 	private GlueEncoderImpl glueenc = new GlueEncoderImpl(); //TODO: change to IFs
 	private BehaviourEncoderImpl behenc = new BehaviourEncoderImpl();
@@ -28,18 +28,16 @@ public class OSGiBIPEngine implements BIPEngine, Runnable {
 	public Hashtable<Integer, BIPComponent> identityMapping = new Hashtable<Integer, BIPComponent>(); //TODO: give me BIPComponent getter?
 	public Hashtable<Integer, Behaviour> behaviourMapping = new Hashtable<Integer, Behaviour>();
 	public ArrayList<Integer> positionsOfPorts = new ArrayList<Integer>(); //move to the BDDEngine
-	private volatile int componentCounter = 0; // TODO: list of booleans instead?
-
-	/** Maximal interactions */
+	private volatile int componentCounter = 0; // TODO: hashset of the components registered, if a component informs then check if it registered (exists in the hashset) and add it to the hashset of components informed
 
 	/** Identification number for local use */
 	private AtomicInteger idGenerator = new AtomicInteger(1);
 	/** Total number of ports */
 	private int noPorts;
-
-
+	
 	/** Total number of states */
 	private int noStates;
+	
 	/** Total number of components registered */
 	public int noComponents;
 
@@ -47,6 +45,7 @@ public class OSGiBIPEngine implements BIPEngine, Runnable {
 
 	private boolean isEngineExecuting;
 
+	
 	public OSGiBIPEngine() {
 		glueenc.setBehaviourEncoder(behenc);
 		glueenc.setEngine(engine);
@@ -61,9 +60,10 @@ public class OSGiBIPEngine implements BIPEngine, Runnable {
 
 		engine.setOSGiBIPEngine(this);
 
-		engine.bdd_mgr = BDDFactory.init("java", 100, 100);
+		engine.bdd_mgr = BDDFactory.init("java", 100, 100); //TODO: parameters as constants
 
 	}
+
 
 	public synchronized void specifyGlue(BIPGlue glue) {
 		// We require to have components registered before glue is specified, so
@@ -135,9 +135,6 @@ public class OSGiBIPEngine implements BIPEngine, Runnable {
 		}
 	}
 
-//	public synchronized boolean isExecuting() {
-//		return isEngineExecuting;
-//	}
 
 	public void run() { 
 		logger.error("Engine thread is started.");
@@ -171,11 +168,11 @@ public class OSGiBIPEngine implements BIPEngine, Runnable {
 
 	public void stop() {
 		engineThread.interrupt();
-		isEngineExecuting= false;
+		isEngineExecuting = false;
 	}
 
 	public void execute() {
-		isEngineExecuting=true;
+		isEngineExecuting = true;
 		synchronized (this) {
 			notifyAll();
 		}

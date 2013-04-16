@@ -13,6 +13,7 @@ import org.bip.behaviour.Behaviour;
 import org.bip.behaviour.Port;
 
 //TODO: add Exceptions
+//TODO: assert?
 /** Coordinates the execution of ports */
 public class BDDBIPEngineImpl implements BDDBIPEngine {
 
@@ -241,7 +242,7 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		wrapper.execute(chosenComponents, chosenPorts);
 
 		solns.free();
-		//cubeMaximals.clear();
+		// cubeMaximals.clear();
 
 		// for(int j = 0; j < Components; j++)
 		// {
