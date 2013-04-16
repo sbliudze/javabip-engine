@@ -2,18 +2,14 @@ package org.bip.engine;
 
 import java.util.ArrayList;
 import java.util.Hashtable;
-import java.util.concurrent.atomic.AtomicInteger;
+
+import net.sf.javabdd.BDD;
 
 import org.bip.api.BIPComponent;
-import org.bip.behaviour.Behaviour;
 import org.bip.behaviour.Port;
 import org.bip.glue.Accepts;
 import org.bip.glue.BIPGlue;
 import org.bip.glue.Requires;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import net.sf.javabdd.BDD;
 
 public class GlueEncoderImpl implements GlueEncoder {
 
@@ -201,7 +197,6 @@ public class GlueEncoderImpl implements GlueEncoder {
 		ArrayList<Port> componentPorts = wrapper.behaviourMapping.get(CompID).getEnforceablePorts();
 		int PortID = 0;
 		for (int i = 1; i <= componentPorts.size(); i++) {
-			Port p = componentPorts.get(i - 1);
 			if (componentPorts.get(i - 1).id.equals(HolderPort.id)) {
 				PortID = i;
 				break;

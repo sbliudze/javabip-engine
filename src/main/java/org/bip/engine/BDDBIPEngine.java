@@ -3,8 +3,6 @@ package org.bip.engine;
 import net.sf.javabdd.BDD;
 
 import org.bip.api.BIPComponent;
-import org.bip.behaviour.Behaviour;
-
 
 public interface BDDBIPEngine {
 

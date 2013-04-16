@@ -13,18 +13,19 @@ import org.slf4j.LoggerFactory;
 /** Computes the BDD of the behaviour of all components */
 public class BehaviourEncoderImpl implements BehaviourEncoder {
 
-	//TODO: put all loggers in the beginning
+	// TODO: put all loggers in the beginning
 	private Logger logger = LoggerFactory.getLogger(BehaviourEncoderImpl.class);
-	
+
 	private volatile Hashtable<Integer, BDD[]> stateBDDs = new Hashtable<Integer, BDD[]>();
 	private volatile Hashtable<Integer, BDD[]> portBDDs = new Hashtable<Integer, BDD[]>();
 	private int auxSum;
 
-	private BDDBIPEngineImpl engine; //TODO, use the IFs instead
+	private BDDBIPEngineImpl engine; // TODO, use the IFs instead
 
 	private OSGiBIPEngine wrapper;
 
-	public void setEngine(BDDBIPEngineImpl engine) {  //TODO, use the IFs instead
+	public void setEngine(BDDBIPEngineImpl engine) { // TODO, use the IFs
+														// instead
 		this.engine = engine;
 	}
 
@@ -132,9 +133,8 @@ public class BehaviourEncoderImpl implements BehaviourEncoder {
 			}
 			int i = 0;
 			for (int m = 0; m < componentStates.size(); m++) {
-				if (stateKey.equals(componentStates.get(m))) { // TODO:
-																// algorithmic
-																// complexity?
+				if (stateKey.equals(componentStates.get(m))) {
+					// TODO: algorithmic complexity?
 					i = m + 1;
 					break;
 				}

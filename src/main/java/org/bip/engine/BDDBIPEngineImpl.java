@@ -2,14 +2,13 @@ package org.bip.engine;
 
 import java.util.ArrayList;
 import java.util.Hashtable;
+import java.util.Iterator;
 import java.util.Random;
-import java.util.concurrent.atomic.AtomicInteger;
+
 import net.sf.javabdd.BDD;
 import net.sf.javabdd.BDDFactory;
-import java.util.Iterator;
 
 import org.bip.api.BIPComponent;
-import org.bip.behaviour.Behaviour;
 import org.bip.behaviour.Port;
 
 //TODO: add Exceptions
@@ -144,24 +143,9 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		BDD totalCurrentState = totalCurrentStateBdd(currentStateBDDs);
 
 		/** Compute global BDD: solns= Λi Fi Λ G Λ (Λi Ci) */
-		BDD solns = totalBehaviour.and(totalGlue).and(totalCurrentState); // TODO:
-																			// compute
-																			// the
-																			// conjunction
-																			// of
-																			// totalBehaviour
-																			// and
-																			// totalGlue
-																			// and
-																			// store
-																			// it
-																			// in
-																			// a
-																			// global
-																			// and
-																			// then
-																			// andwith
-																			// totalCurrentState
+		BDD solns = totalBehaviour.and(totalGlue).and(totalCurrentState);
+		// TODO: compute the conjunction of totalBehaviour and totalGlue and
+		// store it in a global and then andwith totalCurrentState
 		totalCurrentState.free();
 		// chosenPorts.clear();
 		// chosenComponents.clear();

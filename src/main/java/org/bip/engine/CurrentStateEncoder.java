@@ -3,8 +3,7 @@ import java.util.ArrayList;
 
 import net.sf.javabdd.BDD;
 
-import org.bip.api.BIPComponent; 
-import org.bip.behaviour.Behaviour;
+import org.bip.api.BIPComponent;
 import org.bip.behaviour.Port;
 
 public interface CurrentStateEncoder {

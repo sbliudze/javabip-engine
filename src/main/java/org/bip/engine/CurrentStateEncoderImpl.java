@@ -82,7 +82,6 @@ public class CurrentStateEncoderImpl implements CurrentStateEncoder {
 		BDD[] statesBDDs = new BDD[noStates];
 
 		for (int i = 0; i < noPorts; i++) {
-			Hashtable<Integer, BDD[]> tempPortBDDs = behaviourEncoder.getPortBDDs();
 			//logger.error("For component {} Port bdds are {}", ComponentID, behaviourEncoder.getPortBDDs().get(ComponentID)[i]);
 			portsBDDs[i] = behaviourEncoder.getPortBDDs().get(ComponentID)[i];
 		}
