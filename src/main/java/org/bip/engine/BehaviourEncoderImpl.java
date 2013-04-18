@@ -7,39 +7,19 @@ import java.util.Map;
 import net.sf.javabdd.BDD;
 
 import org.bip.behaviour.Port;
+import org.bip.exceptions.BIPEngineException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** Computes the BDD of the behaviour of all components */
 public class BehaviourEncoderImpl implements BehaviourEncoder {
 
-	// TODO: put all loggers in the beginning
 	private Logger logger = LoggerFactory.getLogger(BehaviourEncoderImpl.class);
-
 	private volatile Hashtable<Integer, BDD[]> stateBDDs = new Hashtable<Integer, BDD[]>();
 	private volatile Hashtable<Integer, BDD[]> portBDDs = new Hashtable<Integer, BDD[]>();
 	private int auxSum;
-
-	private BDDBIPEngineImpl engine; // TODO, use the IFs instead
-
+	private BDDBIPEngine engine;
 	private OSGiBIPEngine wrapper;
-
-	public void setEngine(BDDBIPEngineImpl engine) { // TODO, use the IFs
-														// instead
-		this.engine = engine;
-	}
-
-	public void setOSGiBIPEngine(OSGiBIPEngine wrapper) {
-		this.wrapper = wrapper;
-	}
-
-	protected synchronized Hashtable<Integer, BDD[]> getStateBDDs() {
-		return stateBDDs;
-	}
-
-	protected synchronized Hashtable<Integer, BDD[]> getPortBDDs() {
-		return portBDDs;
-	}
 
 	private synchronized void createPortAndStateBDDs(int componentID, int sum, int noStates, int noPorts) {
 		BDD[] singleNodeBDDsForStates = new BDD[noStates];
@@ -48,7 +28,7 @@ public class BehaviourEncoderImpl implements BehaviourEncoder {
 			 * create new variable in the BDD manager for the state of each
 			 * component instance
 			 */
-			singleNodeBDDsForStates[i] = engine.bdd_mgr.ithVar(i + sum);
+			singleNodeBDDsForStates[i] = engine.getBDDManager().ithVar(i + sum);
 		}
 		stateBDDs.put(componentID, singleNodeBDDsForStates);
 
@@ -58,11 +38,11 @@ public class BehaviourEncoderImpl implements BehaviourEncoder {
 			 * create new variable in the BDD manager for the port of each
 			 * component instance
 			 */
-			singleNodeBDDsForPorts[j] = engine.bdd_mgr.ithVar(j + noStates + sum);
+			singleNodeBDDsForPorts[j] = engine.getBDDManager().ithVar(j + noStates + sum);
 		}
 		portBDDs.put(componentID, singleNodeBDDsForPorts);
-		logger.error("Component {} put to portBdds, size={}. ", componentID, portBDDs.size());
-		System.out.println("portBDDs size: " + portBDDs.size());
+		logger.debug("Component {} put to portBdds, size={}. ", componentID, portBDDs.size());
+		logger.debug("portBDDs size: {} ", portBDDs.size());
 	}
 
 	/** All the components need to be registered before creating the nodes */
@@ -70,25 +50,26 @@ public class BehaviourEncoderImpl implements BehaviourEncoder {
 
 		int initialNoNodes = noComponentPorts + noComponentStates + auxSum;
 
-		logger.error("Initial no of Nodes {}", initialNoNodes);
-		logger.error("BDD manager variable Number {}", engine.bdd_mgr.varNum());
-		if (engine.bdd_mgr.varNum() < initialNoNodes)
-			engine.bdd_mgr.setVarNum(initialNoNodes);
+		logger.debug("Initial no of Nodes {}", initialNoNodes);
+		logger.debug("Number of nodes in the BDD manager {}", engine.getBDDManager().varNum());
+		if (engine.getBDDManager().varNum() < initialNoNodes){
+			engine.getBDDManager().setVarNum(initialNoNodes);
+		}
 
-		logger.error("componentID {}, auxSum {}", componentID, auxSum);
-		logger.error("noComponentPorts {}, noComponentStates {}", noComponentPorts, noComponentStates);
+		logger.debug("componentID {}, auxSum {}", componentID, auxSum);
+		logger.debug("noComponentPorts {}, noComponentStates {}", noComponentPorts, noComponentStates);
 		createPortAndStateBDDs(componentID, auxSum, noComponentStates, noComponentPorts);
 		auxSum = auxSum + noComponentPorts + noComponentStates;
 
 	}
 
-	/** Compute the Behavior BDD of a component */
+	/** Computes the Behavior BDD of a component */
 	private synchronized BDD behaviourBDD(int componentID) {
-		BDD componentBehaviour = engine.bdd_mgr.zero();// for OR-ing
-		ArrayList<Port> componentPorts = wrapper.behaviourMapping.get(componentID).getEnforceablePorts();
-		ArrayList<String> componentStates = wrapper.behaviourMapping.get(componentID).getStates();
-		int noStates = wrapper.behaviourMapping.get(componentID).getStates().size();
-		int noPorts = wrapper.behaviourMapping.get(componentID).getEnforceablePorts().size();
+		BDD componentBehaviour = engine.getBDDManager().zero(); // for OR-ing
+		ArrayList<Port> componentPorts = wrapper.getBIPComponentBehaviour(componentID).getEnforceablePorts();
+		ArrayList<String> componentStates = wrapper.getBIPComponentBehaviour(componentID).getStates();
+		int noStates = componentStates.size();
+		int noPorts = wrapper.getBIPComponentBehaviour(componentID).getEnforceablePorts().size();
 
 		BDD[] portsBDDs = new BDD[noPorts];
 		BDD[] statesBDDs = new BDD[noStates];
@@ -101,7 +82,7 @@ public class BehaviourEncoderImpl implements BehaviourEncoder {
 		}
 
 		Hashtable<String, ArrayList<Port>> statePorts = new Hashtable<String, ArrayList<Port>>();
-		statePorts = wrapper.behaviourMapping.get(componentID).getStateToPorts();
+		statePorts = wrapper.getBIPComponentBehaviour(componentID).getStateToPorts();
 		int c_size = 0;
 		for (Map.Entry<String, ArrayList<Port>> entry : statePorts.entrySet()) {
 			c_size = c_size + entry.getValue().size();
@@ -116,15 +97,18 @@ public class BehaviourEncoderImpl implements BehaviourEncoder {
 		ArrayList<Integer> availablePorts = new ArrayList<Integer>();
 
 		for (Map.Entry<String, ArrayList<Port>> entry : statePorts.entrySet()) {
-			// portsValue.clear();
-			portsValue = entry.getValue();// StatePorts.get(i);
+			portsValue = entry.getValue();
 			stateKey = entry.getKey();
 			for (int l = 0; l < portsValue.size(); l++) {
 				int k = 0;
 				while (portsValue.get(l) != componentPorts.get(k)) {
 					if (k == componentPorts.size() - 1) {
-						System.out.println("Port not found!");
-						break;
+						try {
+							throw new BIPEngineException("Port not found.");
+						} catch (BIPEngineException e) {
+							e.printStackTrace();
+							logger.error(e.getMessage());	
+						} 
 					}
 					k++;
 				}
@@ -141,7 +125,7 @@ public class BehaviourEncoderImpl implements BehaviourEncoder {
 			}
 
 			for (int l = 0; l < portsValue.size(); l++) {
-				BDD aux1 = engine.bdd_mgr.one();
+				BDD aux1 = engine.getBDDManager().one();
 				for (int j = 1; j <= noStates; j++) {
 					if (i == j)
 						c[i + l - 1] = aux1.and(statesBDDs[j - 1]);
@@ -171,7 +155,7 @@ public class BehaviourEncoderImpl implements BehaviourEncoder {
 
 			if (portsValue.size() == 0) {
 
-				BDD aux1 = engine.bdd_mgr.one();
+				BDD aux1 = engine.getBDDManager().one();
 				for (int j = 1; j <= noStates; j++) {
 					if (i == j)
 						c[i - 1] = aux1.and(statesBDDs[j - 1]);
@@ -201,7 +185,7 @@ public class BehaviourEncoderImpl implements BehaviourEncoder {
 
 		}
 
-		BDD aux3 = engine.bdd_mgr.one();
+		BDD aux3 = engine.getBDDManager().one();
 		for (int j = 1; j <= noPorts; j++) {
 			c[c.length - 1] = aux3.and(portsBDDs[j - 1].not());
 			if (j != noPorts) {
@@ -219,11 +203,29 @@ public class BehaviourEncoderImpl implements BehaviourEncoder {
 
 	public BDD totalBehaviour() {
 		/** conjunction of all FSM BDDs (Λi Fi) */
-		BDD totalBehaviour = engine.bdd_mgr.one();
-		for (int k = 1; k <= wrapper.noComponents; k++) {
+		BDD totalBehaviour = engine.getBDDManager().one();
+		for (int k = 0; k < wrapper.getNoComponents(); k++) {
 			totalBehaviour.andWith(behaviourBDD(k));
 		}
 		return totalBehaviour;
 	}
+	
+	public void setEngine(BDDBIPEngine engine) { 
+		this.engine = engine;
+	}
+
+	public void setOSGiBIPEngine(OSGiBIPEngine wrapper) {
+		this.wrapper = wrapper;
+	}
+
+	public synchronized Hashtable<Integer, BDD[]> getStateBDDs() {
+		return stateBDDs;
+	}
+
+	public synchronized Hashtable<Integer, BDD[]> getPortBDDs() {
+		return portBDDs;
+	}
+	
+	
 
 }

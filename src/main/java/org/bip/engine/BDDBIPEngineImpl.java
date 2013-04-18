@@ -10,41 +10,30 @@ import net.sf.javabdd.BDDFactory;
 
 import org.bip.api.BIPComponent;
 import org.bip.behaviour.Port;
+import org.bip.exceptions.BIPEngineException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-//TODO: add Exceptions
-//TODO: assert?
 /** Coordinates the execution of ports */
 public class BDDBIPEngineImpl implements BDDBIPEngine {
-
-	// TODO: start IDs from 0, and change for loops to start from 0
+	
+	private Logger logger = LoggerFactory.getLogger(BDDBIPEngineImpl.class);
 	private Hashtable<Integer, BDD> currentStateBDDs = new Hashtable<Integer, BDD>();
-
 	/** BDD for ΛFi */
-	BDD totalBehaviour;
+	private BDD totalBehaviour;
 	/** BDD for Glue */
-	BDD totalGlue;
+	private BDD totalGlue;
+	
+	private BDD totalBehaviourAndGlue;
+	
+	private int noNodes=1000;
+	private int cacheSize=100;
 	/** JavaBDD Bdd Manager */
-	public BDDFactory bdd_mgr; // TODO, have a get function in the IF
+	private BDDFactory bdd_mgr= BDDFactory.init("java", noNodes, cacheSize); 
+	private ArrayList<Integer> positionsOfPorts = new ArrayList<Integer>();
 
-	OSGiBIPEngine wrapper;
+	private OSGiBIPEngine wrapper;
 
-	public void setOSGiBIPEngine(OSGiBIPEngine wrapper) {
-		this.wrapper = wrapper;
-	}
-
-	/** Current-State BDDs */
-	public synchronized void informCurrentState(BIPComponent component, BDD componentBDD) {
-		Integer id = wrapper.reversedIdentityMapping.get(component);
-		currentStateBDDs.put(id, componentBDD);
-	}
-
-	public void informTotalBehaviour(BDD totalBehaviour) {
-		this.totalBehaviour = totalBehaviour;// BDD for ΛFi
-	}
-
-	public void informGlue(BDD totalGlue) {
-		this.totalGlue = totalGlue;
-	}
 
 	/** Counts the number of enabled ports in the Maximal cube chosen */
 	private int countPortEnable(byte[] in_cube, ArrayList<Integer> pp) {
@@ -117,7 +106,7 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 
 		BDD behavBdd = bdd_mgr.one();
 		BDD tmp;
-		for (int k = 1; k <= wrapper.noComponents; k++) {
+		for (int k = 0; k < wrapper.getNoComponents(); k++) {
 			tmp = behavBdd.and(currentStateBDDs.get(k));
 			behavBdd.free();
 			behavBdd = tmp;
@@ -133,31 +122,23 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		ArrayList<BIPComponent> chosenComponents = new ArrayList<BIPComponent>();
 		byte[] cubeMaximal = new byte[wrapper.getNoPorts() + wrapper.getNoStates()];
 
-		/** initialize maximal cube */
-		// for (int z = 0; z < wrapper.getNoPorts() + wrapper.getNoStates();
-		// z++)
-		// cubeMaximal[z] = 0;
+
 		cubeMaximals.add(0, cubeMaximal);
 
 		/** Λi Ci */
 		BDD totalCurrentState = totalCurrentStateBdd(currentStateBDDs);
 
 		/** Compute global BDD: solns= Λi Fi Λ G Λ (Λi Ci) */
-		BDD solns = totalBehaviour.and(totalGlue).and(totalCurrentState);
-		// TODO: compute the conjunction of totalBehaviour and totalGlue and
-		// store it in a global and then andwith totalCurrentState
+		BDD solns = totalBehaviourAndGlue.and(totalCurrentState);
 		totalCurrentState.free();
-		// chosenPorts.clear();
-		// chosenComponents.clear();
 		ArrayList<byte[]> a = new ArrayList<byte[]>();
 
 		a.addAll(solns.allsat()); // BIG TODO, can we find random maximal
-									// interaction without getting all solutions
-									// at once
-		// TODO: check for no solution
+								  // interaction without getting all solutions
+								  // at once
 
-		System.out.println("********************************* Engine *************************************");
-		System.out.println("Number of possible interactions is: " + a.size());
+		logger.info("******************************* Engine **********************************");
+		logger.debug("Number of possible interactions is: {} ", a.size());
 		Iterator<byte[]> it = a.iterator();
 
 		// for debugging
@@ -168,27 +149,34 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 			for (byte b : value) {
 				sb.append(String.format("%02X ", b));
 			}
-			System.out.println(sb.toString());
+			logger.debug(sb.toString());
 		}
 
 		for (int k = 0; k < a.size(); k++)
-			findMaximals(cubeMaximals, a.get(k), wrapper.positionsOfPorts);
+			findMaximals(cubeMaximals, a.get(k), positionsOfPorts);
 
 		/** deadlock detection */
-		noEnabledPorts = countPortEnable(cubeMaximals.get(0), wrapper.positionsOfPorts);
+		noEnabledPorts = countPortEnable(cubeMaximals.get(0), positionsOfPorts);
 		int size = cubeMaximals.size();
 		if (size == 0) {
-			System.out.println("scheduler : deadlock");
-			System.exit(1); // TODO, do not exit the JVM just exit the thread
+			try {
+				throw new BIPEngineException("Deadlock. No maximal interactions.");
+			} catch (BIPEngineException e) {
+				e.printStackTrace();
+				logger.error(e.getMessage());	
+			} 
 		} else if (size == 1) {
 			if (noEnabledPorts == 0) {
-				System.out.println("scheduler : deadlock");
-				System.exit(0); // TODO, do not exit the JVM just exit the
-								// thread
+				try {
+					throw new BIPEngineException("Deadlock. No enabled ports.");
+				} catch (BIPEngineException e) {
+					e.printStackTrace();
+					logger.error(e.getMessage());	
+				} 
 			}
 		}
 
-		System.out.println("Number of maximal interactions: " + cubeMaximals.size());
+		logger.debug("Number of maximal interactions: " + cubeMaximals.size());
 		Random rand = new Random();
 		int randomInt = rand.nextInt(cubeMaximals.size()); // pick a random
 															// maximal
@@ -196,43 +184,71 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		chosenInteraction = cubeMaximals.get(randomInt); // update chosen
 															// interaction
 		cubeMaximals.clear();
-		System.out.println("ChosenInteraction: ");
+		logger.info("ChosenInteraction: ");
 		for (int k = 0; k < chosenInteraction.length; k++)
-			System.out.print(+chosenInteraction[k]);
-		System.out.println();
+			logger.debug("{}",chosenInteraction[k]);
 
 		int offset = 0;
 
-		for (int i = 1; i <= wrapper.noComponents; i++) {
-			int portsize = wrapper.behaviourMapping.get(i).getEnforceablePorts().size();
-			BIPComponent component = wrapper.identityMapping.get(i);
+		for (int i = 0; i < wrapper.getNoComponents(); i++) {
+			int portsize = wrapper.getBIPComponentBehaviour(i).getEnforceablePorts().size();
+			BIPComponent component = wrapper.getBIPComponent(i);
 			ArrayList<Port> enabledPorts = new ArrayList<Port>();
 			for (int l = 0; l < portsize; l++) {
-				if (chosenInteraction[wrapper.positionsOfPorts.get(l + offset)] == 1) {
-					enabledPorts.add(wrapper.behaviourMapping.get(i).getEnforceablePorts().get(l));
+				if (chosenInteraction[positionsOfPorts.get(l + offset)] == 1) {
+					enabledPorts.add(wrapper.getBIPComponentBehaviour(i).getEnforceablePorts().get(l));
 				}
 			}
 			if (!enabledPorts.isEmpty()) {
-				System.out.println("Chosen Component: " + wrapper.behaviourMapping.get(i).getComponentType() + i + " Chosen Port: " + enabledPorts.get(0).id);
+				logger.info("Chosen Component: {} {}", wrapper.getBIPComponentBehaviour(i).getComponentType(), i);
+				logger.info("Chosen Port: {}", enabledPorts.get(0).id);
 			}
 			chosenPorts.put(component, enabledPorts);
 			chosenComponents.add(component);
 			offset = offset + portsize;
 
 		}
-
-		System.out.println("*****************************************************************************");
+		logger.info("*************************************************************************");
 
 		wrapper.execute(chosenComponents, chosenPorts);
 
 		solns.free();
-		// cubeMaximals.clear();
+	}
+	
+	/** Current-State BDDs */
+	public synchronized void informCurrentState(BIPComponent component, BDD componentBDD) {
+		Integer id = wrapper.getBIPComponentIdentity(component);
+		currentStateBDDs.put(id, componentBDD);
+	}
 
-		// for(int j = 0; j < Components; j++)
-		// {
-		// //clear all local bdds
-		// CurrentStateBDDs.clear();
-		// }
+	public void informTotalBehaviour(BDD totalBehaviour) {
+		this.totalBehaviour = totalBehaviour;// BDD for ΛFi
+		if (totalGlue!=null){
+			totalBehaviourAndGlue=this.totalBehaviour.and(totalGlue);		
+			this.totalBehaviour.free();
+			totalGlue.free();
+		}
+	}
+
+	public void informGlue(BDD totalGlue) {
+		this.totalGlue = totalGlue;
+		if (totalBehaviour!=null){
+			totalBehaviourAndGlue=totalBehaviour.and(this.totalGlue);		
+			totalBehaviour.free();
+			this.totalGlue.free();
+		}
+	}
+	
+	public ArrayList<Integer> getPositionsOfPorts() {
+		return positionsOfPorts;
+	}
+	
+	public void setOSGiBIPEngine(OSGiBIPEngine wrapper) {
+		this.wrapper = wrapper;
+	}
+	
+	public synchronized BDDFactory getBDDManager() {
+		return bdd_mgr;
 	}
 
 }

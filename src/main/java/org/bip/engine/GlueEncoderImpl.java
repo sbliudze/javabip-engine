@@ -1,6 +1,7 @@
 package org.bip.engine;
 
 import java.util.ArrayList;
+
 import java.util.Hashtable;
 
 import net.sf.javabdd.BDD;
@@ -11,26 +12,15 @@ import org.bip.glue.Accepts;
 import org.bip.glue.BIPGlue;
 import org.bip.glue.Requires;
 
+/** Computes the BDD of the glue */
 public class GlueEncoderImpl implements GlueEncoder {
 
 	private ArrayList<BDD> glueRequireBDDs = new ArrayList<BDD>();
 	private ArrayList<BDD> glueAcceptBDDs = new ArrayList<BDD>();
 
-	private BehaviourEncoderImpl behenc; //TODO, use the IFs instead
-	private BDDBIPEngineImpl engine;
+	private BehaviourEncoder behenc; 
+	private BDDBIPEngine engine;
 	private OSGiBIPEngine wrapper;
-
-	public void setBehaviourEncoder(BehaviourEncoderImpl behaviourEncoder) {
-		this.behenc = behaviourEncoder;
-	}
-
-	public void setEngine(BDDBIPEngineImpl engine) {
-		this.engine = engine;
-	}
-
-	public void setOSGiBIPEngine(OSGiBIPEngine wrapper) {
-		this.wrapper = wrapper;
-	}
 
 	public void specifyGlue(BIPGlue glue) {
 
@@ -52,9 +42,9 @@ public class GlueEncoderImpl implements GlueEncoder {
 		Hashtable<Port, ArrayList<BIPComponent>> portToComponents = new Hashtable<Port, ArrayList<BIPComponent>>();
 
 		/** Find all effect component instances */
-		for (int k = 1; k <= wrapper.noComponents; k++) {
-			if (requireComponentType.equals(wrapper.behaviourMapping.get(k).getComponentType())) {
-				requireEffectComponents.add(wrapper.identityMapping.get(k));
+		for (int k = 0; k < wrapper.getNoComponents(); k++) {
+			if (requireComponentType.equals(wrapper.getBIPComponentBehaviour(k).getComponentType())){
+				requireEffectComponents.add(wrapper.getBIPComponent(k));
 			}
 		}
 
@@ -64,10 +54,10 @@ public class GlueEncoderImpl implements GlueEncoder {
 		String RequireCausePortComponentType;
 		for (int l = 0; l < sizecauseports; l++) {
 			RequireCausePortComponentType = causePorts.get(l).specType;
-			for (int m = 1; m <= wrapper.noComponents; m++) {
+			for (int m = 0; m < wrapper.getNoComponents(); m++) {
 
-				if (RequireCausePortComponentType.equals(wrapper.behaviourMapping.get(m).getComponentType())) {
-					requireCauseComponents.add(wrapper.identityMapping.get(m));
+				if (RequireCausePortComponentType.equals(wrapper.getBIPComponentBehaviour(m).getComponentType())){
+					requireCauseComponents.add(wrapper.getBIPComponent(m));
 				}
 			}
 			portToComponents.put(causePorts.get(l), requireCauseComponents);
@@ -93,9 +83,9 @@ public class GlueEncoderImpl implements GlueEncoder {
 		ArrayList<BIPComponent> AcceptCauseComponents = new ArrayList<BIPComponent>();
 
 		/** Find all effect component instances */
-		for (int k = 1; k <= wrapper.noComponents; k++) {
-			if (AcceptComponentType.equals(wrapper.behaviourMapping.get(k).getComponentType())) {
-				AcceptEffectComponents.add(wrapper.identityMapping.get(k));
+		for (int k = 0; k < wrapper.getNoComponents(); k++) {
+			if (AcceptComponentType.equals(wrapper.getBIPComponentBehaviour(k).getComponentType())){
+				AcceptEffectComponents.add(wrapper.getBIPComponent(k));
 			}
 		}
 
@@ -105,9 +95,9 @@ public class GlueEncoderImpl implements GlueEncoder {
 		String AcceptCausePortComponentType;
 		for (int l = 0; l < sizecauseports; l++) {
 			AcceptCausePortComponentType = CausePorts.get(l).specType;
-			for (int m = 1; m <= wrapper.noComponents; m++) {
-				if (AcceptCausePortComponentType.equals(wrapper.behaviourMapping.get(m).getComponentType())) {
-					AcceptCauseComponents.add(wrapper.identityMapping.get(m));
+			for (int m = 0; m < wrapper.getNoComponents(); m++) {
+				if (AcceptCausePortComponentType.equals(wrapper.getBIPComponentBehaviour(m).getComponentType())){
+					AcceptCauseComponents.add(wrapper.getBIPComponent(m));
 					AcceptCausePorts.add(CausePorts.get(l));
 				}
 			}
@@ -123,8 +113,8 @@ public class GlueEncoderImpl implements GlueEncoder {
 	/** BDD for the Require Constraint */
 	BDD requireBDD(BDD RequirePortHolder, ArrayList<Port> AuxPort, Hashtable<Port, ArrayList<BDD>> RequirePorts) {
 		BDD tmp, tmp2, tmp3;
-		BDD aux = engine.bdd_mgr.zero();
-		BDD aux2 = engine.bdd_mgr.one();
+		BDD aux = engine.getBDDManager().zero();
+		BDD aux2 = engine.getBDDManager().one();
 
 		ArrayList<BDD> AuxPortBDDs = new ArrayList<BDD>();
 		int size = RequirePorts.size();
@@ -132,7 +122,7 @@ public class GlueEncoderImpl implements GlueEncoder {
 			AuxPortBDDs.addAll(RequirePorts.get(AuxPort.get(j)));
 			int size2 = AuxPortBDDs.size();
 			for (int i = 0; i < size2; i++) {
-				BDD aux3 = engine.bdd_mgr.one();
+				BDD aux3 = engine.getBDDManager().one();
 				for (int k = 0; k < size2; k++) {
 					if (i == k) {
 						tmp3 = AuxPortBDDs.get(k).and(aux3);
@@ -163,9 +153,8 @@ public class GlueEncoderImpl implements GlueEncoder {
 	/** BDD for the Accept Constraint */
 	BDD acceptBDD(BDD AcceptPortHolder, ArrayList<BDD> AcceptPorts) {
 		BDD tmp;
-		BDD accept_bdd = engine.bdd_mgr.one();
-		for (int i = 1; i <= wrapper.noComponents; i++) {
-			// BDD[] db = behenc.portBDDs.get(i);
+		BDD accept_bdd = engine.getBDDManager().one();
+		for (int i = 0; i < wrapper.getNoComponents(); i++) {
 			int length = behenc.getPortBDDs().get(i).length;
 			BDD[] ComponentPortTmp = behenc.getPortBDDs().get(i);
 			for (int k = 0; k < length; k++) {
@@ -193,8 +182,8 @@ public class GlueEncoderImpl implements GlueEncoder {
 		BDD PortBDD;
 		Hashtable<Port, ArrayList<BDD>> RequiredBDDs = new Hashtable<Port, ArrayList<BDD>>();
 		ArrayList<BDD> PortBDDs = new ArrayList<BDD>();
-		Integer CompID = wrapper.reversedIdentityMapping.get(HolderComponent);
-		ArrayList<Port> componentPorts = wrapper.behaviourMapping.get(CompID).getEnforceablePorts();
+		Integer CompID = wrapper.getBIPComponentIdentity(HolderComponent);
+		ArrayList<Port> componentPorts = wrapper.getBIPComponentBehaviour(CompID).getEnforceablePorts();
 		int PortID = 0;
 		for (int i = 1; i <= componentPorts.size(); i++) {
 			if (componentPorts.get(i - 1).id.equals(HolderPort.id)) {
@@ -211,8 +200,8 @@ public class GlueEncoderImpl implements GlueEncoder {
 			Port port = RequiredPorts.get(p);
 			RequiredComponents.addAll(EffectPorttoComponents.get(port));
 			for (int i = 0; i < RequiredComponents.size(); i++) {
-				Integer ComID = wrapper.reversedIdentityMapping.get(RequiredComponents.get(i));
-				ArrayList<Port> compPorts = wrapper.behaviourMapping.get(ComID).getEnforceablePorts();
+				Integer ComID = wrapper.getBIPComponentIdentity(RequiredComponents.get(i));
+				ArrayList<Port> compPorts = wrapper.getBIPComponentBehaviour(ComID).getEnforceablePorts();
 				int PID = 0;
 				for (int j = 1; j <= compPorts.size(); j++) {
 					if (compPorts.get(j - 1).id.equals(RequiredPorts.get(p).id)) {
@@ -234,8 +223,8 @@ public class GlueEncoderImpl implements GlueEncoder {
 	BDD componentAccept(BIPComponent HolderComponent, Port HolderPort, ArrayList<BIPComponent> AcceptedComponents, ArrayList<Port> AcceptedPorts) {
 		BDD PortBDD;
 		ArrayList<BDD> AcceptedBDDs = new ArrayList<BDD>();
-		Integer CompID = wrapper.reversedIdentityMapping.get(HolderComponent);
-		ArrayList<Port> componentPorts = wrapper.behaviourMapping.get(CompID).getEnforceablePorts();
+		Integer CompID = wrapper.getBIPComponentIdentity(HolderComponent);
+		ArrayList<Port> componentPorts = wrapper.getBIPComponentBehaviour(CompID).getEnforceablePorts();
 		int PortID = 0;
 		for (int i = 1; i <= componentPorts.size(); i++) {
 			if (componentPorts.get(i - 1).id.equals(HolderPort.id)) {
@@ -247,8 +236,8 @@ public class GlueEncoderImpl implements GlueEncoder {
 		PortBDD = behenc.getPortBDDs().get(CompID)[PortID - 1];
 
 		for (int i = 0; i < AcceptedComponents.size(); i++) {
-			Integer ComID = wrapper.reversedIdentityMapping.get(AcceptedComponents.get(i));
-			ArrayList<Port> compPorts = wrapper.behaviourMapping.get(ComID).getEnforceablePorts();
+			Integer ComID = wrapper.getBIPComponentIdentity(AcceptedComponents.get(i));
+			ArrayList<Port> compPorts = wrapper.getBIPComponentBehaviour(ComID).getEnforceablePorts();
 			int PID = 0;
 			for (int j = 1; j <= compPorts.size(); j++) {
 				if (compPorts.get(j - 1).id.equals(AcceptedPorts.get(i).id)) {
@@ -266,7 +255,7 @@ public class GlueEncoderImpl implements GlueEncoder {
 
 		BDD Glue;
 
-		BDD GlueRequireBDD = engine.bdd_mgr.one();
+		BDD GlueRequireBDD = engine.getBDDManager().one();
 		BDD tmp;
 		int requiresize = glueRequireBDDs.size();
 		for (int k = 0; k < requiresize; k++) {
@@ -275,7 +264,7 @@ public class GlueEncoderImpl implements GlueEncoder {
 			GlueRequireBDD = tmp;
 		}
 
-		BDD GlueAcceptBDD = engine.bdd_mgr.one();
+		BDD GlueAcceptBDD = engine.getBDDManager().one();
 		BDD tmp2;
 		int acceptsize = glueAcceptBDDs.size();
 		for (int k = 0; k < acceptsize; k++) {
@@ -289,4 +278,17 @@ public class GlueEncoderImpl implements GlueEncoder {
 
 	}
 
+	public void setBehaviourEncoder(BehaviourEncoder behaviourEncoder) {
+		this.behenc = behaviourEncoder;
+	}
+
+	public void setEngine(BDDBIPEngine engine) {
+		this.engine = engine;
+	}
+
+	public void setOSGiBIPEngine(OSGiBIPEngine wrapper) {
+		this.wrapper = wrapper;
+	}
+
+	
 }

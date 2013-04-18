@@ -7,40 +7,24 @@ import net.sf.javabdd.BDD;
 
 import org.bip.api.BIPComponent;
 import org.bip.behaviour.Port;
+import org.bip.exceptions.BIPEngineException;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** Computes the BDD of the Current State of all components */
 public class CurrentStateEncoderImpl implements CurrentStateEncoder {
 
-	private BehaviourEncoderImpl behaviourEncoder; //TODO, use the IFs instead
-	private BDDBIPEngineImpl engine;
+	private BehaviourEncoder behaviourEncoder; 
+	private BDDBIPEngine engine;
 	private OSGiBIPEngine wrapper;
 
 	private Logger logger = LoggerFactory.getLogger(CurrentStateEncoderImpl.class);
 
-	//TODO: put setters in the bottom
-	public void setOSGiBIPEngine(OSGiBIPEngine wrapper) {
-		this.wrapper = wrapper;
 
-	}
-
-	public void setBehaviourEncoder(BehaviourEncoderImpl behaviourEncoder) {
-		this.behaviourEncoder = behaviourEncoder;
-	}
-
-	public void setEngine(BDDBIPEngineImpl engine) {
-		this.engine = engine;
-	}
-
-// TODO: find how to get Javadoc support in Eclipse	
-/*
- * (non-Javadoc)
- * @see org.bip.engine.CurrentStateEncoder#inform(org.bip.api.BIPComponent, java.lang.String, java.util.ArrayList)
- */
 	public BDD inform(BIPComponent component, String currentState, ArrayList<Port> disabledPorts) {
-		Integer CompID = wrapper.reversedIdentityMapping.get(component);
-		ArrayList<String> componentStates = wrapper.behaviourMapping.get(CompID).getStates();
+		Integer CompID = wrapper.getBIPComponentIdentity(component);
+		ArrayList<String> componentStates = wrapper.getBIPComponentBehaviour(CompID).getStates();
 
 		int StateID = 0;
 		for (int i = 1; i <= componentStates.size(); i++) {
@@ -52,7 +36,7 @@ public class CurrentStateEncoderImpl implements CurrentStateEncoder {
 
 		int[] noDisabledPorts = new int[disabledPorts.size()];
 		Hashtable<String, ArrayList<Port>> statePorts = new Hashtable<String, ArrayList<Port>>();
-		statePorts = wrapper.behaviourMapping.get(CompID).getStateToPorts();
+		statePorts = wrapper.getBIPComponentBehaviour(CompID).getStateToPorts();
 		ArrayList<Port> componentPorts = new ArrayList<Port>();
 		componentPorts = statePorts.get(currentState);
 
@@ -60,9 +44,12 @@ public class CurrentStateEncoderImpl implements CurrentStateEncoder {
 			int k = 0;
 			while (disabledPorts.get(l) != componentPorts.get(k)) {
 				if (k == statePorts.get(StateID).size() - 1) {
-					//TODO: add Exception
-					System.err.println("Disabled Port cannot be found.");
-					break;
+					try {
+						throw new BIPEngineException("Disabled Port cannot be found..");
+					} catch (BIPEngineException e) {
+						e.printStackTrace();
+						logger.error(e.getMessage());	
+					} 
 				}
 				k++;
 			}
@@ -75,28 +62,24 @@ public class CurrentStateEncoderImpl implements CurrentStateEncoder {
 
 	private synchronized BDD componentCurrentStateBDD(Integer ComponentID, int stateID, int[] disabledPorts) {
 
-		int noStates = wrapper.behaviourMapping.get(ComponentID).getStates().size();
-		int noPorts = wrapper.behaviourMapping.get(ComponentID).getEnforceablePorts().size();
-		//System.out.println("BehaviourEncoder bddPort size: " + behaviourEncoder.getPortBDDs().size());
+		int noStates = wrapper.getBIPComponentBehaviour(ComponentID).getStates().size();
+		int noPorts = wrapper.getBIPComponentBehaviour(ComponentID).getEnforceablePorts().size();
 		BDD[] portsBDDs = new BDD[noPorts];
 		BDD[] statesBDDs = new BDD[noStates];
 
 		for (int i = 0; i < noPorts; i++) {
-			//logger.error("For component {} Port bdds are {}", ComponentID, behaviourEncoder.getPortBDDs().get(ComponentID)[i]);
 			portsBDDs[i] = behaviourEncoder.getPortBDDs().get(ComponentID)[i];
 		}
 		for (int j = 0; j < noStates; j++) {
-			//logger.error("For component {} State bdds are {}", ComponentID, behaviourEncoder.getStateBDDs().get(ComponentID)[j]);
 			statesBDDs[j] = behaviourEncoder.getStateBDDs().get(ComponentID)[j];
 		}
 
 		BDD partialBDD[] = new BDD[2];
 		BDD aux1 = null;
 		try {
-			aux1 = engine.bdd_mgr.one();
+			aux1 = engine.getBDDManager().one();
 			for (int k = 1; k <= noStates; k++) {
 				if (stateID == k) {
-					//logger.error("Bdd of state {} is {}", k, statesBDDs[k - 1]);
 					partialBDD[0] = aux1.and(statesBDDs[k - 1]);
 				} else {
 					partialBDD[0] = aux1.and(statesBDDs[k - 1].not());
@@ -113,7 +96,7 @@ public class CurrentStateEncoderImpl implements CurrentStateEncoder {
 
 		BDD aux2 = null;
 		try {
-			aux2 = engine.bdd_mgr.one();
+			aux2 = engine.getBDDManager().one();
 			for (int k = 0; k < disabledPorts.length; k++) {
 				partialBDD[1] = aux2.and(portsBDDs[disabledPorts[k]].not());
 				if (k != disabledPorts.length - 1) {
@@ -137,5 +120,19 @@ public class CurrentStateEncoderImpl implements CurrentStateEncoder {
 
 		return componentCurrentStateBDD;
 	}
+	
+	public void setOSGiBIPEngine(OSGiBIPEngine wrapper) {
+		this.wrapper = wrapper;
+
+	}
+
+	public void setBehaviourEncoder(BehaviourEncoder behaviourEncoder) {
+		this.behaviourEncoder = behaviourEncoder;
+	}
+
+	public void setEngine(BDDBIPEngine engine) {
+		this.engine = engine;
+	}
+
 
 }
