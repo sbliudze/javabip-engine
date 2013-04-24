@@ -39,7 +39,7 @@ public interface BDDBIPEngine {
 	/**
 	 * Setter for the OSGiBIPEngine
 	 */
-	void setOSGiBIPEngine(OSGiBIPEngine wrapper);
+	void setOSGiBIPEngine(BIPCoordinator wrapper);
 	
 	/**
 	 * Getter for the BDD Manager
@@ -54,4 +54,5 @@ public interface BDDBIPEngine {
 
 
 }
+
 

@@ -8,28 +8,55 @@ import net.sf.javabdd.BDD;
 
 import org.bip.api.BIPComponent;
 import org.bip.behaviour.Port;
+import org.bip.exceptions.BIPEngineException;
 import org.bip.glue.Accepts;
 import org.bip.glue.BIPGlue;
 import org.bip.glue.Requires;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** Computes the BDD of the glue */
 public class GlueEncoderImpl implements GlueEncoder {
-
+	private Logger logger = LoggerFactory.getLogger(GlueEncoderImpl.class);
 	private ArrayList<BDD> glueRequireBDDs = new ArrayList<BDD>();
 	private ArrayList<BDD> glueAcceptBDDs = new ArrayList<BDD>();
 
 	private BehaviourEncoder behenc; 
 	private BDDBIPEngine engine;
-	private OSGiBIPEngine wrapper;
+	private BIPCoordinator wrapper;
 
-	public void specifyGlue(BIPGlue glue) {
-
+	public void specifyGlue(BIPGlue glue){
+		
+       if (glue == null) {
+        try {
+			throw new BIPEngineException("Glue is null");
+		} catch (BIPEngineException e) {
+			e.printStackTrace();
+			logger.error("Did not get glue from the XML file");
+		}
+      }
+			 
 		for (Requires requires : glue.requiresConstraints)
 			glueRequireBDDs.addAll(decomposeRequireGlue(requires));
-
+		if (glueRequireBDDs.isEmpty()) {
+                   try {
+					throw new BIPEngineException("Glue require is empty");
+                   } catch (BIPEngineException e) {
+                       e.printStackTrace();
+                       logger.error("Did not get the require constraints from the XML file");
+               }
+          }
+		
 		for (Accepts accept : glue.acceptConstraints)
 			glueAcceptBDDs.addAll(decomposeAcceptGlue(accept));
-
+		if (glueAcceptBDDs.isEmpty()) {
+            try {
+				throw new BIPEngineException("Glue accept is empty");
+            } catch (BIPEngineException e) {
+                e.printStackTrace();
+                logger.error("Did not get the accept constraints from the XML file");
+        }
+   }
 	}
 
 	ArrayList<BDD> decomposeRequireGlue(Requires require) {
@@ -286,9 +313,10 @@ public class GlueEncoderImpl implements GlueEncoder {
 		this.engine = engine;
 	}
 
-	public void setOSGiBIPEngine(OSGiBIPEngine wrapper) {
+	public void setBIPCoordinator(BIPCoordinator wrapper) {
 		this.wrapper = wrapper;
 	}
 
 	
 }
+

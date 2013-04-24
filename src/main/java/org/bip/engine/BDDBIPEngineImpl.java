@@ -32,7 +32,7 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 	private BDDFactory bdd_mgr= BDDFactory.init("java", noNodes, cacheSize); 
 	private ArrayList<Integer> positionsOfPorts = new ArrayList<Integer>();
 
-	private OSGiBIPEngine wrapper;
+	private BIPCoordinator wrapper;
 
 
 	/** Counts the number of enabled ports in the Maximal cube chosen */
@@ -161,6 +161,7 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		if (size == 0) {
 			try {
 				throw new BIPEngineException("Deadlock. No maximal interactions.");
+				//TODO: stop the thread?
 			} catch (BIPEngineException e) {
 				e.printStackTrace();
 				logger.error(e.getMessage());	
@@ -200,7 +201,7 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 				}
 			}
 			if (!enabledPorts.isEmpty()) {
-				logger.info("Chosen Component: {} {}", wrapper.getBIPComponentBehaviour(i).getComponentType(), i);
+				logger.info("Chosen Component: {} with identity {}", wrapper.getBIPComponentBehaviour(i).getComponentType(), i);
 				logger.info("Chosen Port: {}", enabledPorts.get(0).id);
 			}
 			chosenPorts.put(component, enabledPorts);
@@ -243,7 +244,7 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		return positionsOfPorts;
 	}
 	
-	public void setOSGiBIPEngine(OSGiBIPEngine wrapper) {
+	public void setOSGiBIPEngine(BIPCoordinator wrapper) {
 		this.wrapper = wrapper;
 	}
 	

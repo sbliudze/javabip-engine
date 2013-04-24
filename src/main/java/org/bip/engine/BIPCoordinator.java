@@ -19,7 +19,7 @@ import org.bip.behaviour.Port;
   * @author mavridou
  */
 
-public interface OSGiBIPEngine extends BIPEngine {
+public interface BIPCoordinator extends BIPEngine {
 
 	/**
 	 * @param component 

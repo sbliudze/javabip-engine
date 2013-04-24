@@ -19,7 +19,7 @@ public class BehaviourEncoderImpl implements BehaviourEncoder {
 	private volatile Hashtable<Integer, BDD[]> portBDDs = new Hashtable<Integer, BDD[]>();
 	private int auxSum;
 	private BDDBIPEngine engine;
-	private OSGiBIPEngine wrapper;
+	private BIPCoordinator wrapper;
 
 	private synchronized void createPortAndStateBDDs(int componentID, int sum, int noStates, int noPorts) {
 		BDD[] singleNodeBDDsForStates = new BDD[noStates];
@@ -214,7 +214,7 @@ public class BehaviourEncoderImpl implements BehaviourEncoder {
 		this.engine = engine;
 	}
 
-	public void setOSGiBIPEngine(OSGiBIPEngine wrapper) {
+	public void setBIPCoordinator(BIPCoordinator wrapper) {
 		this.wrapper = wrapper;
 	}
 
@@ -225,6 +225,8 @@ public class BehaviourEncoderImpl implements BehaviourEncoder {
 	public synchronized Hashtable<Integer, BDD[]> getPortBDDs() {
 		return portBDDs;
 	}
+
+
 	
 	
 

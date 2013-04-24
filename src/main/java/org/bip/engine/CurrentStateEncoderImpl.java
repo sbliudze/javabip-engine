@@ -17,7 +17,7 @@ public class CurrentStateEncoderImpl implements CurrentStateEncoder {
 
 	private BehaviourEncoder behaviourEncoder; 
 	private BDDBIPEngine engine;
-	private OSGiBIPEngine wrapper;
+	private BIPCoordinator wrapper;
 
 	private Logger logger = LoggerFactory.getLogger(CurrentStateEncoderImpl.class);
 
@@ -121,7 +121,7 @@ public class CurrentStateEncoderImpl implements CurrentStateEncoder {
 		return componentCurrentStateBDD;
 	}
 	
-	public void setOSGiBIPEngine(OSGiBIPEngine wrapper) {
+	public void setBIPCoordinator(BIPCoordinator wrapper) {
 		this.wrapper = wrapper;
 
 	}

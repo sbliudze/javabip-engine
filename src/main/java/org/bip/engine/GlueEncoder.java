@@ -2,6 +2,7 @@ package org.bip.engine;
 
 import net.sf.javabdd.BDD;
 
+import org.bip.exceptions.BIPEngineException;
 import org.bip.glue.BIPGlue;
 
 /**
@@ -14,6 +15,7 @@ public interface GlueEncoder {
     /**
      * Receives the information about the glue of the system.
      * @param glue
+     * @throws BIPEngineException 
      */
     void specifyGlue(BIPGlue glue);
 	/**
@@ -27,7 +29,7 @@ public interface GlueEncoder {
 	/**
 	 * Setter for the OSGiBIPEngine
 	 */
-	void setOSGiBIPEngine(OSGiBIPEngine wrapper);
+	void setBIPCoordinator(BIPCoordinator wrapper);
 	
 	/**
 	 * @return the total Glue BDD
@@ -35,3 +37,4 @@ public interface GlueEncoder {
 	BDD totalGlue();
 
 }
+

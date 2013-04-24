@@ -25,7 +25,7 @@ public interface CurrentStateEncoder {
 	/**
 	 * Setter for the OSGiBIPEngine
 	 */
-	void setOSGiBIPEngine(OSGiBIPEngine wrapper);
+	void setBIPCoordinator(BIPCoordinator wrapper);
 	/**
 	 * Setter for the BehaviourEncoder
 	 */
@@ -36,5 +36,6 @@ public interface CurrentStateEncoder {
 	void setEngine(BDDBIPEngine engine);
 	
 }
+
 
 

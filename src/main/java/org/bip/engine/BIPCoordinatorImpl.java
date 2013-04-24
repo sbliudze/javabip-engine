@@ -18,14 +18,13 @@ import org.slf4j.LoggerFactory;
  * Orchestrates the execution of the behaviour, glue and current state encoders.
  * At the initialization phase, it receives information about the behaviour of 
  * BIP components sends this to the behaviour encoder and orders it to compute the total behaviour BDD.
- * At the initialization phase, it also receives information about the glue, sends this to the glue 
- * encoder and orders it to compute the glue BDD. During each execution cycle, it receives information about 
+ * At the initialization phase, it also orders the glue encoder to compute the glue BDD. During each execution cycle, it receives information about 
  * the current state of the BIP components and their disabled ports, sends this to the current state encoder 
  * and orders it to compute the current state BDDs. When a new interaction is chosen by the engine, it notifies all the BIP components.
  */
-public class OSGiBIPEngineImpl implements OSGiBIPEngine, Runnable {
+public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 
-	private Logger logger = LoggerFactory.getLogger(OSGiBIPEngineImpl.class);
+	private Logger logger = LoggerFactory.getLogger(BIPCoordinatorImpl.class);
 	private GlueEncoder glueenc = new GlueEncoderImpl();
 	private BehaviourEncoder behenc = new BehaviourEncoderImpl();
 	private CurrentStateEncoder currstenc = new CurrentStateEncoderImpl();
@@ -54,17 +53,17 @@ public class OSGiBIPEngineImpl implements OSGiBIPEngine, Runnable {
 
 	private boolean isEngineExecuting;
 
-	public OSGiBIPEngineImpl() {
+	public BIPCoordinatorImpl() {
 		glueenc.setBehaviourEncoder(behenc);
 		glueenc.setEngine(engine);
-		glueenc.setOSGiBIPEngine(this);
+		glueenc.setBIPCoordinator(this);
 
 		behenc.setEngine(engine);
-		behenc.setOSGiBIPEngine(this);
+		behenc.setBIPCoordinator(this);
 
 		currstenc.setBehaviourEncoder(behenc);
 		currstenc.setEngine(engine);
-		currstenc.setOSGiBIPEngine(this);
+		currstenc.setBIPCoordinator(this);
 
 		engine.setOSGiBIPEngine(this);
 	}
@@ -78,9 +77,7 @@ public class OSGiBIPEngineImpl implements OSGiBIPEngine, Runnable {
 		computeTotalBehaviourAndInformEngine();
 	}
 	
-	/**
-	 * 
-	 */
+
 	public synchronized void computeTotalBehaviourAndInformEngine(){
 		engine.informTotalBehaviour(behenc.totalBehaviour());
 	}
@@ -91,7 +88,7 @@ public class OSGiBIPEngineImpl implements OSGiBIPEngine, Runnable {
 
 	public synchronized void register(BIPComponent component, Behaviour behaviour) {
 		logger.info("********************************* Register *************************************");
-		int registeredComponentID = idGenerator.getAndIncrement(); // atomically adds one
+		int registeredComponentID = idGenerator.getAndIncrement(); // atomically adds one //TODO: print an identifier through getName (?) instead of local identities
 		reversedIdentityMapping.put(component, registeredComponentID);
 		logger.info("Component: {} with identity {}",component.getName(), reversedIdentityMapping.get(component));
 		identityMapping.put(registeredComponentID, component);
@@ -164,9 +161,18 @@ public class OSGiBIPEngineImpl implements OSGiBIPEngine, Runnable {
 	}
 
 	public void run() {
+		
+		if (glueenc.totalGlue()==null)
+       {
+              try {
+                   throw new BIPEngineException("Glue BDD is null after execute");
+              } catch (BIPEngineException e) {
+                      e.printStackTrace();
+                      logger.error("Total Glue BDD is null");
+              }
+   }
 		logger.info("Engine thread is started.");
 		while (true) {
-
 			synchronized (this) {
 				logger.debug("isEngineExecuting: {} ", isEngineExecuting);
 				logger.debug("noComponents: {}, componentCounter: {}", noComponents, componentsHaveInformed.size());
@@ -180,6 +186,7 @@ public class OSGiBIPEngineImpl implements OSGiBIPEngine, Runnable {
 
 					} catch (InterruptedException e) {
 						logger.warn("Engine run is interrupted: {}", Thread.currentThread().getName());
+						//TODO: notify the component that the engine is not working?
 						return;
 					}
 				}
@@ -195,6 +202,8 @@ public class OSGiBIPEngineImpl implements OSGiBIPEngine, Runnable {
 	public void stop() {
 		engineThread.interrupt();
 		isEngineExecuting = false;
+		//TODO: unregister components
+		//TODO: notify the component that the engine is not working
 	}
 
 	public void execute() {

@@ -32,7 +32,7 @@ public interface BehaviourEncoder {
 	/**
 	 * Setter for the OSGiBIPEngine
 	 */
-    void setOSGiBIPEngine(OSGiBIPEngine wrapper);
+    void setBIPCoordinator(BIPCoordinator wrapper);
     
 	/**
 	 * @return the BDDs that correspond to the states of each component
@@ -45,5 +45,6 @@ public interface BehaviourEncoder {
 	Hashtable<Integer, BDD[]> getPortBDDs();
 	
 }
+
 
 
