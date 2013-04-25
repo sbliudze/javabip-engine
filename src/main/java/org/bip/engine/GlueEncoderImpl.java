@@ -99,43 +99,49 @@ public class GlueEncoderImpl implements GlueEncoder {
 		return result;
 
 	}
-
+	
 	ArrayList<BDD> decomposeAcceptGlue(Accepts accept) {
-
 		ArrayList<BDD> result = new ArrayList<BDD>();
-		String AcceptComponentType = accept.effect.specType;
-		ArrayList<BIPComponent> AcceptEffectComponents = new ArrayList<BIPComponent>();
-		ArrayList<Port> CausePorts = new ArrayList<Port>();
-		ArrayList<Port> AcceptCausePorts = new ArrayList<Port>();
-		ArrayList<BIPComponent> AcceptCauseComponents = new ArrayList<BIPComponent>();
+
+		String acceptComponentType = accept.effect.specType;
+		ArrayList<BIPComponent> acceptEffectComponents = new ArrayList<BIPComponent>();
+		ArrayList<Port> causePorts = new ArrayList<Port>();
+		ArrayList<BIPComponent> acceptCauseComponents = new ArrayList<BIPComponent>();
+		Hashtable<Port, ArrayList<BIPComponent>> portToComponents = new Hashtable<Port, ArrayList<BIPComponent>>();
 
 		/** Find all effect component instances */
 		for (int k = 0; k < wrapper.getNoComponents(); k++) {
-			if (AcceptComponentType.equals(wrapper.getBIPComponentBehaviour(k).getComponentType())){
-				AcceptEffectComponents.add(wrapper.getBIPComponent(k));
+			if (acceptComponentType.equals(wrapper.getBIPComponentBehaviour(k).getComponentType())){
+				acceptEffectComponents.add(wrapper.getBIPComponent(k));
 			}
 		}
 
 		/** Find all causes component instances */
-		CausePorts = accept.causes;
-		int sizecauseports = CausePorts.size();
-		String AcceptCausePortComponentType;
+		causePorts = accept.causes;
+		int sizecauseports = causePorts.size();
+		String acceptCausePortComponentType;
 		for (int l = 0; l < sizecauseports; l++) {
-			AcceptCausePortComponentType = CausePorts.get(l).specType;
+			acceptCausePortComponentType = causePorts.get(l).specType;
 			for (int m = 0; m < wrapper.getNoComponents(); m++) {
-				if (AcceptCausePortComponentType.equals(wrapper.getBIPComponentBehaviour(m).getComponentType())){
-					AcceptCauseComponents.add(wrapper.getBIPComponent(m));
-					AcceptCausePorts.add(CausePorts.get(l));
+
+				if (acceptCausePortComponentType.equals(wrapper.getBIPComponentBehaviour(m).getComponentType())){
+					acceptCauseComponents.add(wrapper.getBIPComponent(m));
 				}
 			}
+			portToComponents.put(causePorts.get(l), acceptCauseComponents);
+
 		}
 
-		int effectsize = AcceptEffectComponents.size();
-		for (int m = 0; m < effectsize; m++)
-			result.add(componentAccept(AcceptEffectComponents.get(m), accept.effect, AcceptCauseComponents, AcceptCausePorts));
+		int effectsize = acceptEffectComponents.size();
+		for (int m = 0; m < effectsize; m++) {
+			result.add(componentAccept(acceptEffectComponents.get(m), accept.effect, causePorts, portToComponents));
+		}
 
 		return result;
+
 	}
+
+
 
 	/** BDD for the Require Constraint */
 	BDD requireBDD(BDD RequirePortHolder, ArrayList<Port> AuxPort, Hashtable<Port, ArrayList<BDD>> RequirePorts) {
@@ -143,20 +149,20 @@ public class GlueEncoderImpl implements GlueEncoder {
 		BDD aux = engine.getBDDManager().zero();
 		BDD aux2 = engine.getBDDManager().one();
 
-		ArrayList<BDD> AuxPortBDDs = new ArrayList<BDD>();
+		ArrayList<BDD> auxPortBDDs = new ArrayList<BDD>();
 		int size = RequirePorts.size();
 		for (int j = 0; j < size; j++) {
-			AuxPortBDDs.addAll(RequirePorts.get(AuxPort.get(j)));
-			int size2 = AuxPortBDDs.size();
+			auxPortBDDs.addAll(RequirePorts.get(AuxPort.get(j)));
+			int size2 = auxPortBDDs.size();
 			for (int i = 0; i < size2; i++) {
 				BDD aux3 = engine.getBDDManager().one();
 				for (int k = 0; k < size2; k++) {
 					if (i == k) {
-						tmp3 = AuxPortBDDs.get(k).and(aux3);
+						tmp3 = auxPortBDDs.get(k).and(aux3);
 						aux3.free();
 						aux3 = tmp3;
 					} else {
-						tmp3 = AuxPortBDDs.get(k).not().and(aux3);
+						tmp3 = auxPortBDDs.get(k).not().and(aux3);
 						aux3.free();
 						aux3 = tmp3;
 					}
@@ -168,39 +174,53 @@ public class GlueEncoderImpl implements GlueEncoder {
 			tmp2 = aux.and(aux2);
 			aux2.free();
 			aux2 = tmp2;
-			AuxPortBDDs.clear();
+			auxPortBDDs.clear();
 
 		}
 		BDD require_bdd = RequirePortHolder.not().or(aux2);
 		aux2.free();
 		return require_bdd;
 
+
 	}
 
 	/** BDD for the Accept Constraint */
-	BDD acceptBDD(BDD AcceptPortHolder, ArrayList<BDD> AcceptPorts) {
+	BDD acceptBDD(BDD acceptPortHolder, ArrayList<Port> auxPort, Hashtable<Port, ArrayList<BDD>> acceptPorts) {
 		BDD tmp;
 		BDD accept_bdd = engine.getBDDManager().one();
-		for (int i = 0; i < wrapper.getNoComponents(); i++) {
-			int length = behenc.getPortBDDs().get(i).length;
-			BDD[] ComponentPortTmp = behenc.getPortBDDs().get(i);
-			for (int k = 0; k < length; k++) {
+		int portBDDsize = behenc.getPortBDDs().size();
+		ArrayList<BDD> totalPortBDDs= new ArrayList<BDD>();
+		
+		for (int i = 0; i < portBDDsize; i++) {
+			BDD [] portBDD=behenc.getPortBDDs().get(i);
+			for (int p=0; p<portBDD.length;p++){
+				totalPortBDDs.add(portBDD[p]);
+			}
+		}
+				
+		for(int i=0; i<totalPortBDDs.size();i++){
 				boolean exist = false;
-				BDD PortK = ComponentPortTmp[k];
-				for (int j = 0; j < AcceptPorts.size(); j++) {
-					if (AcceptPorts.get(j) == PortK) {
-						exist = true;
-						break;
-					}
+				for (int j = 0; j < acceptPorts.size(); j++) {
+					ArrayList<BDD> acceptBDDs=acceptPorts.get(auxPort.get(j));
+					for(int k=0; k< acceptBDDs.size(); k++){				
+						if (acceptBDDs.get(k).equals(totalPortBDDs.get(i))) {
+							exist = true;
+							break;
+						}
 				}
-				if (!exist && PortK != AcceptPortHolder) {
-					tmp = PortK.not().and(accept_bdd);
+					if((totalPortBDDs.get(i)).equals(acceptPortHolder)){
+						exist=true;
+					}
+				if (!exist) {
+					tmp = totalPortBDDs.get(i).not().and(accept_bdd);
 					accept_bdd.free();
 					accept_bdd = tmp;
 				}
 			}
 		}
-		return accept_bdd;
+		BDD acc_bdd = acceptPortHolder.not().or(accept_bdd);
+		accept_bdd.free();
+		return acc_bdd;
 	}
 
 	/** Require BDD */
@@ -247,9 +267,11 @@ public class GlueEncoderImpl implements GlueEncoder {
 	}
 
 	/** Accept BDD */
-	BDD componentAccept(BIPComponent HolderComponent, Port HolderPort, ArrayList<BIPComponent> AcceptedComponents, ArrayList<Port> AcceptedPorts) {
+	BDD componentAccept(BIPComponent HolderComponent, Port HolderPort, ArrayList<Port> acceptedPorts, Hashtable<Port, ArrayList<BIPComponent>> EffectPorttoComponents) {
+
 		BDD PortBDD;
-		ArrayList<BDD> AcceptedBDDs = new ArrayList<BDD>();
+		Hashtable<Port, ArrayList<BDD>> acceptedBDDs = new Hashtable<Port, ArrayList<BDD>>();
+		ArrayList<BDD> PortBDDs = new ArrayList<BDD>();
 		Integer CompID = wrapper.getBIPComponentIdentity(HolderComponent);
 		ArrayList<Port> componentPorts = wrapper.getBIPComponentBehaviour(CompID).getEnforceablePorts();
 		int PortID = 0;
@@ -259,25 +281,33 @@ public class GlueEncoderImpl implements GlueEncoder {
 				break;
 			}
 		}
-
 		PortBDD = behenc.getPortBDDs().get(CompID)[PortID - 1];
 
-		for (int i = 0; i < AcceptedComponents.size(); i++) {
-			Integer ComID = wrapper.getBIPComponentIdentity(AcceptedComponents.get(i));
-			ArrayList<Port> compPorts = wrapper.getBIPComponentBehaviour(ComID).getEnforceablePorts();
-			int PID = 0;
-			for (int j = 1; j <= compPorts.size(); j++) {
-				if (compPorts.get(j - 1).id.equals(AcceptedPorts.get(i).id)) {
-					PID = j;
-					break;
+		ArrayList<BIPComponent> acceptedComponents = new ArrayList<BIPComponent>();
+		ArrayList<Port> AuxPorts = new ArrayList<Port>();
+		int size = EffectPorttoComponents.size();
+		for (int p = 0; p < size; p++) {
+			Port port = acceptedPorts.get(p);
+			acceptedComponents.addAll(EffectPorttoComponents.get(port));
+			for (int i = 0; i < acceptedComponents.size(); i++) {
+				Integer ComID = wrapper.getBIPComponentIdentity(acceptedComponents.get(i));
+				ArrayList<Port> compPorts = wrapper.getBIPComponentBehaviour(ComID).getEnforceablePorts();
+				int PID = 0;
+				for (int j = 1; j <= compPorts.size(); j++) {
+					if (compPorts.get(j - 1).id.equals(acceptedPorts.get(p).id)) {
+						PID = j;
+						break;
+					}
 				}
+				PortBDDs.add(behenc.getPortBDDs().get(ComID)[PID - 1]);
 			}
-			AcceptedBDDs.add(behenc.getPortBDDs().get(ComID)[PID - 1]);
+			acceptedBDDs.put(acceptedPorts.get(p), PortBDDs);
+			AuxPorts.add(acceptedPorts.get(p));
 		}
-		BDD Accept = acceptBDD(PortBDD, AcceptedBDDs);
-		return Accept;
-	}
 
+		BDD accept = acceptBDD(PortBDD, AuxPorts, acceptedBDDs);
+		return accept;
+	}
 	public BDD totalGlue() {
 
 		BDD Glue;
@@ -300,7 +330,8 @@ public class GlueEncoderImpl implements GlueEncoder {
 			GlueAcceptBDD = tmp2;
 		}
 
-		Glue = GlueRequireBDD;
+		//Glue=GlueRequireBDD;
+		Glue = GlueRequireBDD.and(GlueAcceptBDD);
 		return Glue;
 
 	}
