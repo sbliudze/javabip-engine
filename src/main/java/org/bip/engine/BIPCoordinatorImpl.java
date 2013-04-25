@@ -89,7 +89,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	public synchronized void register(BIPComponent component, Behaviour behaviour) {
 		if(reversedIdentityMapping.contains(component)){
 			try {
-				throw new BIPEngineException("Component has already registered before");
+				throw new BIPEngineException("Component has already registered before.");
 			} catch (BIPEngineException e) {
 				e.printStackTrace();
 				logger.error(e.getMessage());	
