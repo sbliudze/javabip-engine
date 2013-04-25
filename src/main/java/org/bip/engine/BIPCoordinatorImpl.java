@@ -87,8 +87,16 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	}
 
 	public synchronized void register(BIPComponent component, Behaviour behaviour) {
+		if(reversedIdentityMapping.contains(component)){
+			try {
+				throw new BIPEngineException("Component has already registered before");
+			} catch (BIPEngineException e) {
+				e.printStackTrace();
+				logger.error(e.getMessage());	
+			} 
+		}
 		logger.info("********************************* Register *************************************");
-		int registeredComponentID = idGenerator.getAndIncrement(); // atomically adds one //TODO: print an identifier through getName (?) instead of local identities
+		int registeredComponentID = idGenerator.getAndIncrement(); // atomically adds one //TODO: add exception for registering twice
 		reversedIdentityMapping.put(component, registeredComponentID);
 		logger.info("Component: {} with identity {}",component.getName(), reversedIdentityMapping.get(component));
 		identityMapping.put(registeredComponentID, component);
