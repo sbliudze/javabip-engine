@@ -98,7 +98,8 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 		logger.info("********************************* Register *************************************");
 		int registeredComponentID = idGenerator.getAndIncrement(); // atomically adds one //TODO: add exception for registering twice
 		reversedIdentityMapping.put(component, registeredComponentID);
-		logger.info("Component: {} with identity {}",component.getName(), reversedIdentityMapping.get(component));
+		//logger.info("Component: {} with identity {}",component.getName(), reversedIdentityMapping.get(component));
+		logger.info("Component: {} ",component.getName());
 		identityMapping.put(registeredComponentID, component);
 		behaviourMapping.put(registeredComponentID, behaviour);
 		int componentPorts = behaviour.getEnforceablePorts().size();
@@ -142,7 +143,8 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 		engine.informCurrentState(component, currstenc.inform(component, currentState, disabledPorts));
 		
 		logger.info("********************************* Inform *************************************");
-		logger.info("Component: {} with identity {}",component.getName(), reversedIdentityMapping.get(component));
+		//logger.info("Component: {} with identity {}",component.getName(), reversedIdentityMapping.get(component));
+		logger.info("Component: {}",component.getName());
 		logger.info("informs that is at state: {}", currentState);
 		logger.info("******************************************************************************");
 

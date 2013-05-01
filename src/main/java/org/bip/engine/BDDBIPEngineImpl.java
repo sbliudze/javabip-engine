@@ -201,7 +201,8 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 				}
 			}
 			if (!enabledPorts.isEmpty()) {
-				logger.info("Chosen Component: {} with identity {}", wrapper.getBIPComponentBehaviour(i).getComponentType(), i);
+				//logger.info("Chosen Component: {} with identity {}", wrapper.getBIPComponentBehaviour(i).getComponentType(), i);
+				logger.info("Chosen Component: {}", wrapper.getBIPComponentBehaviour(i).getComponentType());
 				logger.info("Chosen Port: {}", enabledPorts.get(0).id);
 			}
 			chosenPorts.put(component, enabledPorts);
