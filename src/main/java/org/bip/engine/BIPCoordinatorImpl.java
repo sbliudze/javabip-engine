@@ -1,5 +1,8 @@
 package org.bip.engine;
 
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Hashtable;
@@ -54,6 +57,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	private boolean isEngineExecuting;
 
 	public BIPCoordinatorImpl() {
+		redirectSystemErr();
 		glueenc.setBehaviourEncoder(behenc);
 		glueenc.setEngine(engine);
 		glueenc.setBIPCoordinator(this);
@@ -96,7 +100,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 			} 
 		}
 		logger.info("********************************* Register *************************************");
-		int registeredComponentID = idGenerator.getAndIncrement(); // atomically adds one //TODO: add exception for registering twice
+		int registeredComponentID = idGenerator.getAndIncrement(); // atomically adds one 
 		reversedIdentityMapping.put(component, registeredComponentID);
 		logger.info("Component: {} with identity {}",component.getName(), reversedIdentityMapping.get(component));
 		identityMapping.put(registeredComponentID, component);
@@ -220,6 +224,26 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 			notifyAll();
 		}
 	}
+	
+    /**
+     * Redirects System.err and sends all data to a file.
+     *
+     */
+    public void redirectSystemErr() {
+        
+        try {
+            
+            System.setErr(new PrintStream(new FileOutputStream("system_err.txt")));
+            
+            String nullString = null;
+            
+            //Forcing an exception to have the stacktrace printed on System.err
+//            nullString = nullString.toUpperCase();
+            
+        } catch (FileNotFoundException ex) {
+            ex.printStackTrace();
+        }
+    }
 
 	public int getNoPorts() {
 		return noPorts;

@@ -25,6 +25,15 @@ public class CurrentStateEncoderImpl implements CurrentStateEncoder {
 	public BDD inform(BIPComponent component, String currentState, ArrayList<Port> disabledPorts) {
 		Integer CompID = wrapper.getBIPComponentIdentity(component);
 		ArrayList<String> componentStates = wrapper.getBIPComponentBehaviour(CompID).getStates();
+		
+		if (currentState == null) {
+	        try {
+				throw new BIPEngineException("Current State of component is null");
+			} catch (BIPEngineException e) {
+				e.printStackTrace();
+				logger.error("Component did not inform about its current state correctly");
+			}
+	      }
 
 		int StateID = 0;
 		for (int i = 1; i <= componentStates.size(); i++) {
@@ -45,7 +54,7 @@ public class CurrentStateEncoderImpl implements CurrentStateEncoder {
 			while (disabledPorts.get(l) != componentPorts.get(k)) {
 				if (k == statePorts.get(StateID).size() - 1) {
 					try {
-						throw new BIPEngineException("Disabled Port cannot be found..");
+						throw new BIPEngineException("Disabled Port cannot be found.");
 					} catch (BIPEngineException e) {
 						e.printStackTrace();
 						logger.error(e.getMessage());	
@@ -117,6 +126,16 @@ public class CurrentStateEncoderImpl implements CurrentStateEncoder {
 		} else {
 			componentCurrentStateBDD = partialBDD[0];
 		}
+		
+		if (componentCurrentStateBDD == null) {
+	        try {
+				throw new BIPEngineException("Current State BDD of component is null");
+			} catch (BIPEngineException e) {
+				e.printStackTrace();
+				logger.error(" Current State BDD was not computed correctly");
+			}
+	      }
+
 
 		return componentCurrentStateBDD;
 	}

@@ -332,6 +332,15 @@ public class GlueEncoderImpl implements GlueEncoder {
 
 		//Glue=GlueRequireBDD;
 		Glue = GlueRequireBDD.and(GlueAcceptBDD);
+		
+		if (Glue == null) {
+	        try {
+				throw new BIPEngineException("Glue BDD is null");
+			} catch (BIPEngineException e) {
+				e.printStackTrace();
+				logger.error("Glue BDD was not computed correctly");
+			}
+	      }
 		return Glue;
 
 	}
