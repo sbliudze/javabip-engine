@@ -5,7 +5,7 @@ import java.util.Hashtable;
 
 import org.bip.api.BIPComponent;
 import org.bip.api.BIPEngine;
-import org.bip.behaviour.Behaviour;
+import org.bip.api.Behaviour;
 import org.bip.behaviour.Port;
 
 /**
