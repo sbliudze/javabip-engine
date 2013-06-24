@@ -205,8 +205,24 @@ public class BehaviourEncoderImpl implements BehaviourEncoder {
 		/** conjunction of all FSM BDDs (Λi Fi) */
 		BDD totalBehaviour = engine.getBDDManager().one();
 		for (int k = 0; k < wrapper.getNoComponents(); k++) {
+			if (behaviourBDD(k) == null) {
+		        try {
+					throw new BIPEngineException("Behaviour of a component is null");
+				} catch (BIPEngineException e) {
+					e.printStackTrace();
+					logger.error("Component did not register correctly");
+				}
+		      }
 			totalBehaviour.andWith(behaviourBDD(k));
 		}
+		if (totalBehaviour == null) {
+	        try {
+				throw new BIPEngineException("Total behaviour is null");
+			} catch (BIPEngineException e) {
+				e.printStackTrace();
+				logger.error("Total behaviour was not computed correctly or no components were registered.");
+			}
+	      }
 		return totalBehaviour;
 	}
 	

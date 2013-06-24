@@ -1,5 +1,8 @@
 package org.bip.engine;
 
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Hashtable;
@@ -60,6 +63,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	private boolean isEngineExecuting;
 
 	public BIPCoordinatorImpl() {
+
 		// redirectSystemErr();
 
 		glueenc.setBehaviourEncoder(behenc);
@@ -104,8 +108,10 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 			}
 		}
 		logger.info("********************************* Register *************************************");
+
 		// atomically adds one
 		int registeredComponentID = idGenerator.getAndIncrement(); 
+
 		reversedIdentityMapping.put(component, registeredComponentID);
 		// logger.info("Component: {} with identity {}",component.getName(),
 		// reversedIdentityMapping.get(component));
