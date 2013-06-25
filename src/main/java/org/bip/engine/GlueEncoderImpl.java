@@ -234,7 +234,7 @@ public class GlueEncoderImpl implements GlueEncoder {
 		Hashtable<Port, ArrayList<BDD>> RequiredBDDs = new Hashtable<Port, ArrayList<BDD>>();
 		ArrayList<BDD> PortBDDs = new ArrayList<BDD>();
 		Integer CompID = wrapper.getBIPComponentIdentity(HolderComponent);
-		ArrayList<Port> componentPorts = wrapper.getBIPComponentBehaviour(CompID).getEnforceablePorts();
+		ArrayList<Port> componentPorts = (ArrayList<Port>) wrapper.getBIPComponentBehaviour(CompID).getEnforceablePorts();
 		int PortID = 0;
 		for (int i = 1; i <= componentPorts.size(); i++) {
 			if (componentPorts.get(i - 1).id.equals(HolderPort.id)) {
@@ -252,7 +252,7 @@ public class GlueEncoderImpl implements GlueEncoder {
 			RequiredComponents.addAll(EffectPorttoComponents.get(port));
 			for (int i = 0; i < RequiredComponents.size(); i++) {
 				Integer ComID = wrapper.getBIPComponentIdentity(RequiredComponents.get(i));
-				ArrayList<Port> compPorts = wrapper.getBIPComponentBehaviour(ComID).getEnforceablePorts();
+				ArrayList<Port> compPorts = (ArrayList<Port>) wrapper.getBIPComponentBehaviour(ComID).getEnforceablePorts();
 				int PID = 0;
 				for (int j = 1; j <= compPorts.size(); j++) {
 					if (compPorts.get(j - 1).id.equals(RequiredPorts.get(p).id)) {
@@ -277,7 +277,7 @@ public class GlueEncoderImpl implements GlueEncoder {
 		Hashtable<Port, ArrayList<BDD>> acceptedBDDs = new Hashtable<Port, ArrayList<BDD>>();
 		ArrayList<BDD> PortBDDs = new ArrayList<BDD>();
 		Integer CompID = wrapper.getBIPComponentIdentity(HolderComponent);
-		ArrayList<Port> componentPorts = wrapper.getBIPComponentBehaviour(CompID).getEnforceablePorts();
+		ArrayList<Port> componentPorts = (ArrayList<Port>) wrapper.getBIPComponentBehaviour(CompID).getEnforceablePorts();
 		int PortID = 0;
 		for (int i = 1; i <= componentPorts.size(); i++) {
 			if (componentPorts.get(i - 1).id.equals(HolderPort.id)) {
@@ -295,7 +295,7 @@ public class GlueEncoderImpl implements GlueEncoder {
 			acceptedComponents.addAll(EffectPorttoComponents.get(port));
 			for (int i = 0; i < acceptedComponents.size(); i++) {
 				Integer ComID = wrapper.getBIPComponentIdentity(acceptedComponents.get(i));
-				ArrayList<Port> compPorts = wrapper.getBIPComponentBehaviour(ComID).getEnforceablePorts();
+				ArrayList<Port> compPorts = (ArrayList<Port>) wrapper.getBIPComponentBehaviour(ComID).getEnforceablePorts();
 				int PID = 0;
 				for (int j = 1; j <= compPorts.size(); j++) {
 					if (compPorts.get(j - 1).id.equals(acceptedPorts.get(p).id)) {

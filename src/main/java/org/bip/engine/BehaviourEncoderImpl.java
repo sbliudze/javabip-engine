@@ -71,10 +71,10 @@ public class BehaviourEncoderImpl implements BehaviourEncoder {
 	/** Computes the Behavior BDD of a component */
 	private synchronized BDD behaviourBDD(int componentID) {
 		BDD componentBehaviour = engine.getBDDManager().zero(); // for OR-ing
-		ArrayList<Port> componentPorts = wrapper.getBIPComponentBehaviour(componentID).getEnforceablePorts();
-		ArrayList<String> componentStates = wrapper.getBIPComponentBehaviour(componentID).getStates();
+		ArrayList<Port> componentPorts = (ArrayList<Port>) wrapper.getBIPComponentBehaviour(componentID).getEnforceablePorts();
+		ArrayList<String> componentStates = (ArrayList<String>) wrapper.getBIPComponentBehaviour(componentID).getStates();
 		int noStates = componentStates.size();
-		int noPorts = wrapper.getBIPComponentBehaviour(componentID).getEnforceablePorts().size();
+		int noPorts = ((ArrayList<Port>)wrapper.getBIPComponentBehaviour(componentID).getEnforceablePorts()).size();
 
 		BDD[] portsBDDs = new BDD[noPorts];
 		BDD[] statesBDDs = new BDD[noStates];
@@ -87,7 +87,7 @@ public class BehaviourEncoderImpl implements BehaviourEncoder {
 		}
 
 		Hashtable<String, ArrayList<Port>> statePorts = new Hashtable<String, ArrayList<Port>>();
-		statePorts = wrapper.getBIPComponentBehaviour(componentID).getStateToPorts();
+		statePorts = (Hashtable<String, ArrayList<Port>>) wrapper.getBIPComponentBehaviour(componentID).getStateToPorts();
 		int c_size = 0;
 		for (Map.Entry<String, ArrayList<Port>> entry : statePorts.entrySet()) {
 			c_size = c_size + entry.getValue().size();
