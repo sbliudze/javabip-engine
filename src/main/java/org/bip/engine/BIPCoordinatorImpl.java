@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory;
  * At the initialization phase, it also orders the glue encoder to compute the glue BDD. During each execution cycle, it receives information about 
  * the current state of the BIP components and their disabled ports, sends this to the current state encoder 
  * and orders it to compute the current state BDDs. When a new interaction is chosen by the engine, it notifies all the BIP components.
+ * @author mavridou
  */
 public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 

@@ -14,6 +14,13 @@ import org.bip.exceptions.BIPEngineException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Receives the current state, glue and behaviour BDDs.
+ * Computes the possible maximal interactions and picks one non-deterministically.
+ * Notifies the OSGiBIPEngine about the outcome.
+ * @author mavridou
+ */
+
 /** Coordinates the execution of ports */
 public class BDDBIPEngineImpl implements BDDBIPEngine {
 	

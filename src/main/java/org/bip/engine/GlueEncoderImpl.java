@@ -15,6 +15,11 @@ import org.bip.glue.Requires;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Receives information about the glue and computes the glue BDD.
+ * @author mavridou
+ */
+
 /** Computes the BDD of the glue */
 public class GlueEncoderImpl implements GlueEncoder {
 	private Logger logger = LoggerFactory.getLogger(GlueEncoderImpl.class);
@@ -138,7 +143,6 @@ public class GlueEncoderImpl implements GlueEncoder {
 		}
 
 		return result;
-
 	}
 
 
@@ -330,7 +334,6 @@ public class GlueEncoderImpl implements GlueEncoder {
 			GlueAcceptBDD = tmp2;
 		}
 
-		//Glue=GlueRequireBDD;
 		Glue = GlueRequireBDD.and(GlueAcceptBDD);
 		
 		if (Glue == null) {

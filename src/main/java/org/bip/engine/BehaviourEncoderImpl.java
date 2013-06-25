@@ -11,6 +11,11 @@ import org.bip.exceptions.BIPEngineException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Receives information about the behaviour of each registered component and computes the total behaviour BDD.
+ * @author mavridou
+ */
+
 /** Computes the BDD of the behaviour of all components */
 public class BehaviourEncoderImpl implements BehaviourEncoder {
 
