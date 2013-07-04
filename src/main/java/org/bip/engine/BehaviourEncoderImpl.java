@@ -45,6 +45,7 @@ public class BehaviourEncoderImpl implements BehaviourEncoder {
 			 */
 			singleNodeBDDsForPorts[j] = engine.getBDDManager().ithVar(j + noStates + sum);
 		}
+		//TODO: pass the portBDDs, (stateBDDs ?) to the BDDEngine
 		portBDDs.put(componentID, singleNodeBDDsForPorts);
 		logger.debug("Component {} put to portBdds, size={}. ", componentID, portBDDs.size());
 		logger.debug("portBDDs size: {} ", portBDDs.size());

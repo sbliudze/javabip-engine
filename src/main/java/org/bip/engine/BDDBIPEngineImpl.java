@@ -219,7 +219,7 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		}
 		logger.info("*************************************************************************");
 
-		wrapper.execute(chosenComponents, chosenPorts);
+		wrapper.executeComponents(chosenComponents, chosenPorts);
 
 		solns.free();
 	}

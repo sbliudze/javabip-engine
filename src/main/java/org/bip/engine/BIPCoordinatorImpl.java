@@ -52,9 +52,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	/** Number of states of components registered */
 	private int noStates;
 
-	/**
-	 * Number of components registered
-	 */
+	/** Number of components registered */
 	public int noComponents;
 
 	private Thread engineThread;
@@ -64,7 +62,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	public BIPCoordinatorImpl() {
 
 		// redirectSystemErr();
-
+		//TODO: simplify dependencies
 		glueenc.setBehaviourEncoder(behenc);
 		glueenc.setEngine(engine);
 		glueenc.setBIPCoordinator(this);
@@ -85,11 +83,13 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	 */
 	public synchronized void specifyGlue(BIPGlue glue) {
 		glueenc.specifyGlue(glue);
+		// engine.informGlue(glueenc.specifyGlue()); // This assumes that glueenc.specifyGlue() returns the reference to the glue BDD
 		computeGlueAndInformEngine();
 		computeTotalBehaviourAndInformEngine();
 	}
 
 	public synchronized void computeTotalBehaviourAndInformEngine() {
+		//TODO: send one by one (insertion and deletion)
 		engine.informTotalBehaviour(behenc.totalBehaviour());
 	}
 
@@ -121,6 +121,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 		int componentStates = ((ArrayList<String>)behaviour.getStates()).size();
 
 		behenc.createBDDNodes(registeredComponentID, componentPorts, componentStates);
+		//TODO: compute BDD and send to engine (replaces the call to informTotalBehaviour() in specifyGlue() )
 
 		for (int i = 0; i < componentPorts; i++) {
 			engine.getPositionsOfPorts().add(noPorts + noStates + componentStates + i);
@@ -174,27 +175,29 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 		}
 	}
 
-	public synchronized void execute(ArrayList<BIPComponent> allComponents, Hashtable<BIPComponent, ArrayList<Port>> allPorts) {
-
+	public synchronized void executeComponents(ArrayList<BIPComponent> allComponents, Hashtable<BIPComponent, ArrayList<Port>> portsToFire) {
+		Port port = null;
 		int size = allComponents.size();
-		Port[] ports = new Port[size];
+		
 		for (int i = 0; i < size; i++) {
-			BIPComponent comp = allComponents.get(i);
-			if ((allPorts.get(comp) != null) && (!allPorts.get(comp).isEmpty())) {
-				ports[i] = allPorts.get(comp).get(0);
+			BIPComponent comp = allComponents.get(i); // Better to use an iterator
+			ArrayList<Port> compPortsToFire = portsToFire.get(comp);
+			
+			if ((compPortsToFire != null) && (!compPortsToFire.isEmpty())) {
+				port = compPortsToFire.get(0);
+				assert(port != null);
+				comp.execute(port.id);
 			}
-			if (ports[i] == null) {
-				allComponents.get(i).execute(null);
-				// TODO: instead of sending null is there a better solution?
-			} else {
-				allComponents.get(i).execute(ports[i].id);
-			}
+			else
+				comp.execute(null);
 		}
 	}
 
 	public void run() {
 
+		//TODO: pointless check
 		if (glueenc.totalGlue() == null) {
+			logger.info("Total Glue BDD is null");
 			try {
 				throw new BIPEngineException("Glue BDD is null after execute");
 			} catch (BIPEngineException e) {
@@ -217,9 +220,9 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 
 					} catch (InterruptedException e) {
 						logger.warn("Engine run is interrupted: {}", Thread.currentThread().getName());
-						for (BIPComponent component : identityMapping.values()) {
-							//component.deregister();
-						}
+						//for (BIPComponent component : identityMapping.values()) {
+						//	component.deregister();
+						//}
 						reversedIdentityMapping.clear();
 						identityMapping.clear();
 						behaviourMapping.clear();
@@ -244,6 +247,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	}
 
 	public void execute() {
+		//TODO: add a comment
 		isEngineExecuting = true;
 		synchronized (this) {
 			notifyAll();
@@ -284,8 +288,8 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 
 			System.setErr(new PrintStream(new FileOutputStream("system_err.txt")));
 
-			String nullString = null;
-
+			// String nullString = null;
+			//
 			// Forcing an exception to have the stacktrace printed on System.err
 			// nullString = nullString.toUpperCase();
 

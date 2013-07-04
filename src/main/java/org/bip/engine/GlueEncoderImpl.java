@@ -37,37 +37,37 @@ public class GlueEncoderImpl implements GlueEncoder {
 			throw new BIPEngineException("Glue is null");
 		} catch (BIPEngineException e) {
 			e.printStackTrace();
-			logger.error("Did not get glue from the XML file");
+			logger.error("No glue was specified in the XML file");
 		}
       }
 			 
 		for (Requires requires : glue.requiresConstraints)
 			glueRequireBDDs.addAll(decomposeRequireGlue(requires));
+		
 		if (glueRequireBDDs.isEmpty()) {
-                   try {
-					throw new BIPEngineException("Glue require is empty");
-                   } catch (BIPEngineException e) {
-                       e.printStackTrace();
-                       logger.error("Did not get the require constraints from the XML file");
-               }
+            logger.error("No require constraints were specified in the XML file");
           }
 		
 		for (Accepts accept : glue.acceptConstraints)
 			glueAcceptBDDs.addAll(decomposeAcceptGlue(accept));
 		if (glueAcceptBDDs.isEmpty()) {
-            try {
-				throw new BIPEngineException("Glue accept is empty");
-            } catch (BIPEngineException e) {
-                e.printStackTrace();
-                logger.error("Did not get the accept constraints from the XML file");
-        }
-   }
+            logger.error("No accept constraints were specified in the XML file");
+		}
+		
 	}
 
-	ArrayList<BDD> decomposeRequireGlue(Requires require) {
+		ArrayList<BDD> decomposeRequireGlue(Requires require) {
 		ArrayList<BDD> result = new ArrayList<BDD>();
 
 		String requireComponentType = require.effect.specType;
+		if (requireComponentType==null) {
+            try {
+                logger.error("Spec type was not specified in Require effect");
+				throw new BIPEngineException("Spec type not specified in Require effect");
+            } catch (BIPEngineException e) {
+                e.printStackTrace();
+        }
+   }
 		ArrayList<BIPComponent> requireEffectComponents = new ArrayList<BIPComponent>();
 		ArrayList<Port> causePorts = new ArrayList<Port>();
 		ArrayList<BIPComponent> requireCauseComponents = new ArrayList<BIPComponent>();
@@ -82,6 +82,7 @@ public class GlueEncoderImpl implements GlueEncoder {
 
 		/** Find all causes component instances */
 		causePorts = require.causes;
+		
 		int sizecauseports = causePorts.size();
 		String RequireCausePortComponentType;
 		for (int l = 0; l < sizecauseports; l++) {
@@ -100,15 +101,21 @@ public class GlueEncoderImpl implements GlueEncoder {
 		for (int m = 0; m < effectsize; m++) {
 			result.add(componentRequire(requireEffectComponents.get(m), require.effect, causePorts, portToComponents));
 		}
-
 		return result;
-
 	}
 	
 	ArrayList<BDD> decomposeAcceptGlue(Accepts accept) {
 		ArrayList<BDD> result = new ArrayList<BDD>();
 
 		String acceptComponentType = accept.effect.specType;
+		if (acceptComponentType==null) {
+            try {
+                logger.error("Spec type was not specified in Accept effect");
+				throw new BIPEngineException("Spec type not specified in Accept effect");
+            } catch (BIPEngineException e) {
+                e.printStackTrace();
+        }
+   }
 		ArrayList<BIPComponent> acceptEffectComponents = new ArrayList<BIPComponent>();
 		ArrayList<Port> causePorts = new ArrayList<Port>();
 		ArrayList<BIPComponent> acceptCauseComponents = new ArrayList<BIPComponent>();
@@ -315,9 +322,9 @@ public class GlueEncoderImpl implements GlueEncoder {
 	public BDD totalGlue() {
 
 		BDD Glue;
-
 		BDD GlueRequireBDD = engine.getBDDManager().one();
 		BDD tmp;
+		
 		int requiresize = glueRequireBDDs.size();
 		for (int k = 0; k < requiresize; k++) {
 			tmp = GlueRequireBDD.and(glueRequireBDDs.get(k));

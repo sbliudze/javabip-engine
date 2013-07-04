@@ -58,7 +58,7 @@ public interface BIPCoordinator extends BIPEngine {
 	 * Notifies all the components whether they need to perform a transition
 	 * @param allComponents, all components
 	 */
-	void execute(ArrayList<BIPComponent> allComponents, Hashtable<BIPComponent, ArrayList<Port>> allPorts);
+	void executeComponents(ArrayList<BIPComponent> allComponents, Hashtable<BIPComponent, ArrayList<Port>> portsToFire);
 	
 	
 }
