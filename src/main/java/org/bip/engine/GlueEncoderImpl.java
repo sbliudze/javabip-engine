@@ -45,13 +45,13 @@ public class GlueEncoderImpl implements GlueEncoder {
 			glueRequireBDDs.addAll(decomposeRequireGlue(requires));
 		
 		if (glueRequireBDDs.isEmpty()) {
-            logger.error("No require constraints were specified in the XML file");
+            logger.warn("No require constraints were specified in the XML file");
           }
 		
 		for (Accepts accept : glue.acceptConstraints)
 			glueAcceptBDDs.addAll(decomposeAcceptGlue(accept));
 		if (glueAcceptBDDs.isEmpty()) {
-            logger.error("No accept constraints were specified in the XML file");
+            logger.warn("No accept constraints were specified in the XML file");
 		}
 		
 	}
@@ -66,8 +66,8 @@ public class GlueEncoderImpl implements GlueEncoder {
 				throw new BIPEngineException("Spec type not specified in Require effect");
             } catch (BIPEngineException e) {
                 e.printStackTrace();
-        }
-   }
+            }	
+		}
 		ArrayList<BIPComponent> requireEffectComponents = new ArrayList<BIPComponent>();
 		ArrayList<Port> causePorts = new ArrayList<Port>();
 		ArrayList<BIPComponent> requireCauseComponents = new ArrayList<BIPComponent>();
@@ -78,6 +78,15 @@ public class GlueEncoderImpl implements GlueEncoder {
 			if (requireComponentType.equals(wrapper.getBIPComponentBehaviour(k).getComponentType())){
 				requireEffectComponents.add(wrapper.getBIPComponent(k));
 			}
+		}
+
+		if (requireEffectComponents.size()==0) {
+            try {
+                logger.error("Spec type in require effect was defined incorrectly. It does not match any registered component types");
+				throw new BIPEngineException("Spec type in require effect was defined incorrectly");
+            } catch (BIPEngineException e) {
+                e.printStackTrace();
+            }	
 		}
 
 		/** Find all causes component instances */
@@ -126,6 +135,15 @@ public class GlueEncoderImpl implements GlueEncoder {
 			if (acceptComponentType.equals(wrapper.getBIPComponentBehaviour(k).getComponentType())){
 				acceptEffectComponents.add(wrapper.getBIPComponent(k));
 			}
+		}
+
+		if (acceptEffectComponents.size()==0) {
+            try {
+                logger.error("Spec type in accept effect was defined incorrectly. It does not match any registered component types");
+				throw new BIPEngineException("Spec type in accept effect was defined incorrectly");
+            } catch (BIPEngineException e) {
+                e.printStackTrace();
+            }	
 		}
 
 		/** Find all causes component instances */

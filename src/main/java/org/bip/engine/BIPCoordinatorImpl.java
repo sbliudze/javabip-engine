@@ -47,13 +47,13 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	private AtomicInteger idGenerator = new AtomicInteger(0);
 
 	/** Number of ports of components registered */
-	private int noPorts;
+	private int nbPorts;
 
 	/** Number of states of components registered */
-	private int noStates;
+	private int nbStates;
 
 	/** Number of components registered */
-	public int noComponents;
+	public int nbComponents;
 
 	private Thread engineThread;
 
@@ -98,6 +98,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	}
 
 	public synchronized void register(BIPComponent component, Behaviour behaviour) {
+		// This condition checks whether the component has already registered.
 		if (reversedIdentityMapping.contains(component)) {
 			try {
 				throw new BIPEngineException("Component has already registered before.");
@@ -105,35 +106,39 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 				e.printStackTrace();
 				logger.error(e.getMessage());
 			}
+		} else {
+			logger.info("********************************* Register *************************************");
+	
+			// atomically adds one
+			int registeredComponentID = idGenerator.getAndIncrement(); 
+	
+			reversedIdentityMapping.put(component, registeredComponentID);
+			// logger.info("Component: {} with identity {}",component.getName(),
+			// reversedIdentityMapping.get(component));
+			logger.info("Component: {} ", component.getName());
+			identityMapping.put(registeredComponentID, component);
+			behaviourMapping.put(registeredComponentID, behaviour);
+			int nbComponentPorts = ((ArrayList<Port>)behaviour.getEnforceablePorts()).size();
+			int nbComponentStates = ((ArrayList<String>)behaviour.getStates()).size();
+	
+			behenc.createBDDNodes(registeredComponentID, nbComponentPorts, nbComponentStates);
+			// TODO: compute BDD and send to engine (replaces the call to informTotalBehaviour() in specifyGlue() )
+
+			// TODO: (minor) think whether a better data structure is possible for associating the variable 
+			// position to a port.  To access the position defined below one has to first obtain the corresponding
+			// index in the engine.getPositionsOfPorts() array.  Is it possible to get the position directly instead
+			// of passing through this index?
+			for (int i = 0; i < nbComponentPorts; i++) {
+				engine.getPositionsOfPorts().add(nbPorts + nbStates + nbComponentStates + i);
+			}
+			nbPorts += nbComponentPorts;
+			nbStates += nbComponentStates;
+			nbComponents++;
+			logger.info("******************************************************************************");
 		}
-		logger.info("********************************* Register *************************************");
-
-		// atomically adds one
-		int registeredComponentID = idGenerator.getAndIncrement(); 
-
-		reversedIdentityMapping.put(component, registeredComponentID);
-		// logger.info("Component: {} with identity {}",component.getName(),
-		// reversedIdentityMapping.get(component));
-		logger.info("Component: {} ", component.getName());
-		identityMapping.put(registeredComponentID, component);
-		behaviourMapping.put(registeredComponentID, behaviour);
-		int componentPorts = ((ArrayList<Port>)behaviour.getEnforceablePorts()).size();
-		int componentStates = ((ArrayList<String>)behaviour.getStates()).size();
-
-		behenc.createBDDNodes(registeredComponentID, componentPorts, componentStates);
-		//TODO: compute BDD and send to engine (replaces the call to informTotalBehaviour() in specifyGlue() )
-
-		for (int i = 0; i < componentPorts; i++) {
-			engine.getPositionsOfPorts().add(noPorts + noStates + componentStates + i);
-		}
-		noPorts = noPorts + componentPorts;
-		noStates = noStates + componentStates;
-		noComponents++;
-		logger.info("******************************************************************************");
 	}
 
 	public synchronized void inform(BIPComponent component, String currentState, ArrayList<Port> disabledPorts) {
-
 		if (componentsHaveInformed.contains(component)) {
 			try {
 				logger.info("************************** Second Inform *************************************");
@@ -147,31 +152,36 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 			} catch (BIPEngineException e) {
 				logger.error(e.getMessage());
 			}
-		}
-
-		if (reversedIdentityMapping.containsKey(component) == true) {
-			componentsHaveInformed.add(component);
-			logger.debug("Number of components that have informed {}", componentsHaveInformed.size());
-		} else {
-			try {
-				throw new BIPEngineException("Component has not registered yet.");
-			} catch (BIPEngineException e) {
-				e.printStackTrace();
-				logger.error(e.getMessage());
+		} else { 
+			// TODO: Check what happens if engine.informCurrentState() is called twice for the same component.
+			// If this overwrites the current state information gracefully, then let it overwrite. To do so 
+			// remove the else above and make sure the semaphore below (replacing notifyAll()) does not get 
+			// called twice.  Otherwise, keep the else to prevent data corruption.
+			
+			// This condition checks whether the component has already registered.
+			if (reversedIdentityMapping.containsKey(component)) { 
+				componentsHaveInformed.add(component);
+				engine.informCurrentState(component, currstenc.inform(component, currentState, disabledPorts));
+	
+				logger.debug("Number of components that have informed {}", componentsHaveInformed.size());
+				logger.info("********************************* Inform *************************************");
+				// logger.info("Component: {} with identity {}",component.getName(),
+				// reversedIdentityMapping.get(component));
+				logger.info("Component: {}", component.getName());
+				logger.info("informs that is at state: {}", currentState);
+				logger.info("******************************************************************************");
+	
+				// TODO: Replace by releasing the semaphore (see run())
+				// Releasing the semaphore should only be done once per component -- see the comment above 
+				notifyAll();
+			} else {
+				try {
+					throw new BIPEngineException("Component has not registered yet.");
+				} catch (BIPEngineException e) {
+					e.printStackTrace();
+					logger.error(e.getMessage());
+				}
 			}
-		}
-
-		engine.informCurrentState(component, currstenc.inform(component, currentState, disabledPorts));
-
-		logger.info("********************************* Inform *************************************");
-		// logger.info("Component: {} with identity {}",component.getName(),
-		// reversedIdentityMapping.get(component));
-		logger.info("Component: {}", component.getName());
-		logger.info("informs that is at state: {}", currentState);
-		logger.info("******************************************************************************");
-
-		synchronized (this) {
-			notifyAll();
 		}
 	}
 
@@ -194,8 +204,11 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	}
 
 	public void run() {
-
-		//TODO: pointless check
+		/**
+		 * This should never happen in this implementation because the glue encoder is created in the constructor.
+		 * However, one could imagine a situation where the glue encoder be obtained by calling a function that 
+		 * could return null.
+		 */
 		if (glueenc.totalGlue() == null) {
 			logger.info("Total Glue BDD is null");
 			try {
@@ -206,32 +219,55 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 			}
 		}
 		logger.info("Engine thread is started.");
-		while (true) {
-			synchronized (this) {
-				logger.debug("isEngineExecuting: {} ", isEngineExecuting);
-				logger.debug("noComponents: {}, componentCounter: {}", noComponents, componentsHaveInformed.size());
-				if (noComponents != 0 && componentsHaveInformed.size() == noComponents && isEngineExecuting) {
-					componentsHaveInformed.clear();
-					engine.runOneIteration();
-				} else {
+		
+		/**
+		 * Wait until the execute() has been called signalling that all the components have registered 
+		 */		
+		if (!isEngineExecuting ) {
+			try {
+				wait();
+			} catch (InterruptedException e) {
+				logger.warn("Engine run is interrupted: {}", Thread.currentThread().getName());
+			}	
+		}
+		
+		/**
+		 * For the moment, all components must be registered before execute() is called.  Therefore the engine might
+		 * as well quit if the following test fails.  However, in the future we want components to be able to 
+		 * register and unregister on the fly.  In this case running the engine with no registered components becomes
+		 * legitimate.
+		 */
+		if (nbComponents == 0) {
+			// TODO: Complain
+		}
 
-					try {
-						wait();
+		while (isEngineExecuting) {
+			logger.debug("isEngineExecuting: {} ", isEngineExecuting);
+			logger.debug("noComponents: {}, componentCounter: {}", nbComponents, componentsHaveInformed.size());
 
-					} catch (InterruptedException e) {
-						logger.warn("Engine run is interrupted: {}", Thread.currentThread().getName());
-						//for (BIPComponent component : identityMapping.values()) {
-						//	component.deregister();
-						//}
-						reversedIdentityMapping.clear();
-						identityMapping.clear();
-						behaviourMapping.clear();
-						componentsHaveInformed.clear();
-						return;
-					}
+			// TODO: Use a semaphore initialised with noComponents -- requires a modification of inform() to 
+			// release the semaphore
+			if (componentsHaveInformed.size() == nbComponents) {
+				componentsHaveInformed.clear();
+				engine.runOneIteration();
+			} else {
+				try {
+					wait();
+				} catch (InterruptedException e) {
+					isEngineExecuting = false;
+					logger.warn("Engine run is interrupted: {}", Thread.currentThread().getName());
 				}
 			}
 		}
+		
+		//TODO: for (BIPComponent component : identityMapping.values()) {
+		//	component.deregister();
+		//}
+		reversedIdentityMapping.clear();
+		identityMapping.clear();
+		behaviourMapping.clear();
+		componentsHaveInformed.clear();
+		return;
 	}
 
 	public void start() {
@@ -240,26 +276,29 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	}
 
 	public void stop() {
-		engineThread.interrupt();
 		isEngineExecuting = false;
+		engineThread.interrupt();
 		// TODO: unregister components
 		// TODO: notify the component that the engine is not working
 	}
 
 	public void execute() {
-		//TODO: add a comment
-		isEngineExecuting = true;
-		synchronized (this) {
+		// TODO: add a comment
+		if (isEngineExecuting) {
+			// TODO: Complain about execute() being called several times
+		}	
+		else {
+			isEngineExecuting = true;
 			notifyAll();
 		}
 	}
 
 	public int getNoPorts() {
-		return noPorts;
+		return nbPorts;
 	}
 
 	public int getNoStates() {
-		return noStates;
+		return nbStates;
 	}
 
 	public Integer getBIPComponentIdentity(BIPComponent component) {
@@ -275,7 +314,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	}
 
 	public int getNoComponents() {
-		return noComponents;
+		return nbComponents;
 	}
 
 	/**
