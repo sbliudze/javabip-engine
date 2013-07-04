@@ -6,12 +6,7 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Hashtable;
-import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.PrintStream;
 
 import org.bip.api.*;
 import org.bip.behaviour.Port;
@@ -98,7 +93,9 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	}
 
 	public synchronized void register(BIPComponent component, Behaviour behaviour) {
-		// This condition checks whether the component has already registered.
+		/**
+		 *  This condition checks whether the component has already registered.
+		 */
 		if (reversedIdentityMapping.contains(component)) {
 			try {
 				throw new BIPEngineException("Component has already registered before.");
@@ -158,7 +155,9 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 			// remove the else above and make sure the semaphore below (replacing notifyAll()) does not get 
 			// called twice.  Otherwise, keep the else to prevent data corruption.
 			
-			// This condition checks whether the component has already registered.
+			/** 
+			 * This condition checks whether the component has already registered.
+			 */
 			if (reversedIdentityMapping.containsKey(component)) { 
 				componentsHaveInformed.add(component);
 				engine.informCurrentState(component, currstenc.inform(component, currentState, disabledPorts));
@@ -222,13 +221,15 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 		
 		/**
 		 * Wait until the execute() has been called signalling that all the components have registered 
-		 */		
-		if (!isEngineExecuting ) {
-			try {
-				wait();
-			} catch (InterruptedException e) {
-				logger.warn("Engine run is interrupted: {}", Thread.currentThread().getName());
-			}	
+		 */	
+		synchronized (this){ 
+			if (!isEngineExecuting ) {
+				try {
+					wait();
+				} catch (InterruptedException e) {
+					logger.warn("Engine run is interrupted: {}", Thread.currentThread().getName());
+				}	
+			}
 		}
 		
 		/**
@@ -242,6 +243,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 		}
 
 		while (isEngineExecuting) {
+
 			logger.debug("isEngineExecuting: {} ", isEngineExecuting);
 			logger.debug("noComponents: {}, componentCounter: {}", nbComponents, componentsHaveInformed.size());
 
@@ -252,7 +254,9 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 				engine.runOneIteration();
 			} else {
 				try {
-					wait();
+					synchronized (this) {
+						wait();
+					}
 				} catch (InterruptedException e) {
 					isEngineExecuting = false;
 					logger.warn("Engine run is interrupted: {}", Thread.currentThread().getName());
@@ -269,7 +273,10 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 		componentsHaveInformed.clear();
 		return;
 	}
-
+	
+	/**
+	 * Create a thread for the BIPCoordinator and start the thread
+	 */
 	public void start() {
 		engineThread = new Thread(this, "BIPEngine");
 		engineThread.start();
@@ -282,14 +289,20 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 		// TODO: notify the component that the engine is not working
 	}
 
+	/**
+	 * If the execute function is called then set to true the boolean isEngineExecuting and notify the waiting threads. 
+	 * If the execute function is called more than once then it complains. 
+	 * We do not allow the case that execute is called twice at the same time by surrounding its code by synchronized(this).
+	 */
 	public void execute() {
-		// TODO: add a comment
-		if (isEngineExecuting) {
-			// TODO: Complain about execute() being called several times
-		}	
-		else {
-			isEngineExecuting = true;
-			notifyAll();
+		synchronized(this){
+			if (isEngineExecuting) {
+				// TODO: Complain about execute() being called several times
+			}	
+			else {
+				isEngineExecuting = true;
+				notifyAll();
+			}
 		}
 	}
 
