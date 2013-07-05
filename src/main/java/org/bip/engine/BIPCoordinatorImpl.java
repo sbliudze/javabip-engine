@@ -253,9 +253,12 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 				comp.execute(null);
 		}
 	}
-
-	public void run() {
-
+	
+	/**
+	 * Initialization phase. Orders the Behaviour and Current State Encoders to compute their total BDDs 
+	 * and send these to the BDDBIPEngine. 
+	 */
+	private void initialization(){
 		logger.info("Engine thread is started.");
 		
 		/**
@@ -307,7 +310,11 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 			e1.printStackTrace();
 			logger.error("Semaphore have all components informed acquire method for the number of registered components in the system was interrupted.");
 		}
-
+	}
+	
+	public void run() {
+		
+		initialization();
 		/**
 		 * Start the Engine cycle
 		 */
