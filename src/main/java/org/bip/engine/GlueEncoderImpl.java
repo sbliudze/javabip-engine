@@ -23,50 +23,40 @@ import org.slf4j.LoggerFactory;
 /** Computes the BDD of the glue */
 public class GlueEncoderImpl implements GlueEncoder {
 	private Logger logger = LoggerFactory.getLogger(GlueEncoderImpl.class);
-	private ArrayList<BDD> glueRequireBDDs = new ArrayList<BDD>();
-	private ArrayList<BDD> glueAcceptBDDs = new ArrayList<BDD>();
 
+	// TODO: Dependencies to be simplified (see the BIPCoordinator implementation)
 	private BehaviourEncoder behenc; 
 	private BDDBIPEngine engine;
 	private BIPCoordinator wrapper;
+	private BIPGlue glueSpec;
 
 	public void specifyGlue(BIPGlue glue){
-		
-       if (glue == null) {
-        try {
-			throw new BIPEngineException("Glue is null");
-		} catch (BIPEngineException e) {
-			e.printStackTrace();
-			logger.error("No glue was specified in the XML file");
+
+		if (glue == null) {
+			try {
+				throw new BIPEngineException("Glue parser outputs null");
+			} catch (BIPEngineException e) {
+				e.printStackTrace();
+				logger.error("The glue parser has failed to compute the glue object.\n" +
+						"\tPossible reasons: Corrupt or non-existant glue XML file.");
+			}
 		}
-      }
-			 
-		for (Requires requires : glue.requiresConstraints)
-			glueRequireBDDs.addAll(decomposeRequireGlue(requires));
-		
-		if (glueRequireBDDs.isEmpty()) {
-            logger.warn("No require constraints were specified in the XML file");
-          }
-		
-		for (Accepts accept : glue.acceptConstraints)
-			glueAcceptBDDs.addAll(decomposeAcceptGlue(accept));
-		if (glueAcceptBDDs.isEmpty()) {
-            logger.warn("No accept constraints were specified in the XML file");
-		}
-		
+
+		this.glueSpec = glue;
 	}
 
-		ArrayList<BDD> decomposeRequireGlue(Requires require) {
+	ArrayList<BDD> decomposeRequireGlue(Requires require) {
 		ArrayList<BDD> result = new ArrayList<BDD>();
 
 		String requireComponentType = require.effect.specType;
+
 		if (requireComponentType==null) {
-            try {
-                logger.error("Spec type was not specified in Require effect");
+			try {
+				logger.error("Spec type was not specified in Require effect");
 				throw new BIPEngineException("Spec type not specified in Require effect");
-            } catch (BIPEngineException e) {
-                e.printStackTrace();
-            }	
+			} catch (BIPEngineException e) {
+				e.printStackTrace();
+			}	
 		}
 		ArrayList<BIPComponent> requireEffectComponents = new ArrayList<BIPComponent>();
 		ArrayList<Port> causePorts = new ArrayList<Port>();
@@ -81,17 +71,17 @@ public class GlueEncoderImpl implements GlueEncoder {
 		}
 
 		if (requireEffectComponents.size()==0) {
-            try {
-                logger.error("Spec type in require effect was defined incorrectly. It does not match any registered component types");
+			try {
+				logger.error("Spec type in require effect for component {} was defined incorrectly. It does not match any registered component types", requireComponentType);
 				throw new BIPEngineException("Spec type in require effect was defined incorrectly");
-            } catch (BIPEngineException e) {
-                e.printStackTrace();
-            }	
+			} catch (BIPEngineException e) {
+				e.printStackTrace();
+			}	
 		}
 
 		/** Find all causes component instances */
 		causePorts = require.causes;
-		
+
 		int sizecauseports = causePorts.size();
 		String RequireCausePortComponentType;
 		for (int l = 0; l < sizecauseports; l++) {
@@ -112,19 +102,19 @@ public class GlueEncoderImpl implements GlueEncoder {
 		}
 		return result;
 	}
-	
+
 	ArrayList<BDD> decomposeAcceptGlue(Accepts accept) {
 		ArrayList<BDD> result = new ArrayList<BDD>();
 
 		String acceptComponentType = accept.effect.specType;
 		if (acceptComponentType==null) {
-            try {
-                logger.error("Spec type was not specified in Accept effect");
+			try {
+				logger.error("Spec type was not specified in Accept effect");
 				throw new BIPEngineException("Spec type not specified in Accept effect");
-            } catch (BIPEngineException e) {
-                e.printStackTrace();
-        }
-   }
+			} catch (BIPEngineException e) {
+				e.printStackTrace();
+			}
+		}
 		ArrayList<BIPComponent> acceptEffectComponents = new ArrayList<BIPComponent>();
 		ArrayList<Port> causePorts = new ArrayList<Port>();
 		ArrayList<BIPComponent> acceptCauseComponents = new ArrayList<BIPComponent>();
@@ -138,12 +128,12 @@ public class GlueEncoderImpl implements GlueEncoder {
 		}
 
 		if (acceptEffectComponents.size()==0) {
-            try {
-                logger.error("Spec type in accept effect was defined incorrectly. It does not match any registered component types");
+			try {
+				logger.error("Spec type in accept effect was defined incorrectly. It does not match any registered component types");
 				throw new BIPEngineException("Spec type in accept effect was defined incorrectly");
-            } catch (BIPEngineException e) {
-                e.printStackTrace();
-            }	
+			} catch (BIPEngineException e) {
+				e.printStackTrace();
+			}	
 		}
 
 		/** Find all causes component instances */
@@ -219,27 +209,27 @@ public class GlueEncoderImpl implements GlueEncoder {
 		BDD accept_bdd = engine.getBDDManager().one();
 		int portBDDsize = behenc.getPortBDDs().size();
 		ArrayList<BDD> totalPortBDDs= new ArrayList<BDD>();
-		
+
 		for (int i = 0; i < portBDDsize; i++) {
 			BDD [] portBDD=behenc.getPortBDDs().get(i);
 			for (int p=0; p<portBDD.length;p++){
 				totalPortBDDs.add(portBDD[p]);
 			}
 		}
-				
+
 		for(int i=0; i<totalPortBDDs.size();i++){
-				boolean exist = false;
-				for (int j = 0; j < acceptPorts.size(); j++) {
-					ArrayList<BDD> acceptBDDs=acceptPorts.get(auxPort.get(j));
-					for(int k=0; k< acceptBDDs.size(); k++){				
-						if (acceptBDDs.get(k).equals(totalPortBDDs.get(i))) {
-							exist = true;
-							break;
-						}
-				}
-					if((totalPortBDDs.get(i)).equals(acceptPortHolder)){
-						exist=true;
+			boolean exist = false;
+			for (int j = 0; j < acceptPorts.size(); j++) {
+				ArrayList<BDD> acceptBDDs=acceptPorts.get(auxPort.get(j));
+				for(int k=0; k< acceptBDDs.size(); k++){				
+					if (acceptBDDs.get(k).equals(totalPortBDDs.get(i))) {
+						exist = true;
+						break;
 					}
+				}
+				if((totalPortBDDs.get(i)).equals(acceptPortHolder)){
+					exist=true;
+				}
 				if (!exist) {
 					tmp = totalPortBDDs.get(i).not().and(accept_bdd);
 					accept_bdd.free();
@@ -298,19 +288,19 @@ public class GlueEncoderImpl implements GlueEncoder {
 	/** Accept BDD */
 	BDD componentAccept(BIPComponent HolderComponent, Port HolderPort, ArrayList<Port> acceptedPorts, Hashtable<Port, ArrayList<BIPComponent>> EffectPorttoComponents) {
 
-		BDD PortBDD;
+		BDD portBDD;
 		Hashtable<Port, ArrayList<BDD>> acceptedBDDs = new Hashtable<Port, ArrayList<BDD>>();
-		ArrayList<BDD> PortBDDs = new ArrayList<BDD>();
-		Integer CompID = wrapper.getBIPComponentIdentity(HolderComponent);
-		ArrayList<Port> componentPorts = (ArrayList<Port>) wrapper.getBIPComponentBehaviour(CompID).getEnforceablePorts();
-		int PortID = 0;
+		ArrayList<BDD> portBDDs = new ArrayList<BDD>();
+		Integer compID = wrapper.getBIPComponentIdentity(HolderComponent);
+		ArrayList<Port> componentPorts = (ArrayList<Port>) wrapper.getBIPComponentBehaviour(compID).getEnforceablePorts();
+		int portID = 0;
 		for (int i = 1; i <= componentPorts.size(); i++) {
 			if (componentPorts.get(i - 1).id.equals(HolderPort.id)) {
-				PortID = i;
+				portID = i;
 				break;
 			}
 		}
-		PortBDD = behenc.getPortBDDs().get(CompID)[PortID - 1];
+		portBDD = behenc.getPortBDDs().get(compID)[portID - 1];
 
 		ArrayList<BIPComponent> acceptedComponents = new ArrayList<BIPComponent>();
 		ArrayList<Port> AuxPorts = new ArrayList<Port>();
@@ -328,49 +318,40 @@ public class GlueEncoderImpl implements GlueEncoder {
 						break;
 					}
 				}
-				PortBDDs.add(behenc.getPortBDDs().get(ComID)[PID - 1]);
+				portBDDs.add(behenc.getPortBDDs().get(ComID)[PID - 1]);
 			}
-			acceptedBDDs.put(acceptedPorts.get(p), PortBDDs);
+			acceptedBDDs.put(acceptedPorts.get(p), portBDDs);
 			AuxPorts.add(acceptedPorts.get(p));
 		}
 
-		BDD accept = acceptBDD(PortBDD, AuxPorts, acceptedBDDs);
+		BDD accept = acceptBDD(portBDD, AuxPorts, acceptedBDDs);
 		return accept;
 	}
+	
 	public BDD totalGlue() {
+		BDD result = engine.getBDDManager().one();
 
-		BDD Glue;
-		BDD GlueRequireBDD = engine.getBDDManager().one();
-		BDD tmp;
-		
-		int requiresize = glueRequireBDDs.size();
-		for (int k = 0; k < requiresize; k++) {
-			tmp = GlueRequireBDD.and(glueRequireBDDs.get(k));
-			GlueRequireBDD.free();
-			GlueRequireBDD = tmp;
-		}
-
-		BDD GlueAcceptBDD = engine.getBDDManager().one();
-		BDD tmp2;
-		int acceptsize = glueAcceptBDDs.size();
-		for (int k = 0; k < acceptsize; k++) {
-			tmp2 = GlueAcceptBDD.and(glueAcceptBDDs.get(k));
-			GlueAcceptBDD.free();
-			GlueAcceptBDD = tmp2;
-		}
-
-		Glue = GlueRequireBDD.and(GlueAcceptBDD);
-		
-		if (Glue == null) {
-	        try {
-				throw new BIPEngineException("Glue BDD is null");
-			} catch (BIPEngineException e) {
-				e.printStackTrace();
-				logger.error("Glue BDD was not computed correctly");
+		if (!glueSpec.requiresConstraints.isEmpty()) {
+			for (Requires requires : glueSpec.requiresConstraints) {
+				for (BDD effect : decomposeRequireGlue(requires)) {
+					result.andWith(effect);
+				}
 			}
-	      }
-		return Glue;
+		} else {
+			logger.warn("No require constraints provided (usually there should be some).");
+		}
 
+		if (!glueSpec.acceptConstraints.isEmpty()) {
+			for (Accepts accept : glueSpec.acceptConstraints) {
+				for (BDD effect : decomposeAcceptGlue(accept)) {
+					result.andWith(effect);
+				}
+			}
+		} else {
+			logger.warn("No accept constraints were provided (usually there should be some).");
+		}
+
+		return result;
 	}
 
 	public void setBehaviourEncoder(BehaviourEncoder behaviourEncoder) {
@@ -385,6 +366,6 @@ public class GlueEncoderImpl implements GlueEncoder {
 		this.wrapper = wrapper;
 	}
 
-	
+
 }
 
