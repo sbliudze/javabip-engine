@@ -6,6 +6,7 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Hashtable;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.bip.api.*;
@@ -28,6 +29,10 @@ import org.slf4j.LoggerFactory;
 public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 
 	private Logger logger = LoggerFactory.getLogger(BIPCoordinatorImpl.class);
+	/**
+	 * Create instances of all the the Glue Encoder, the Behaviour Encoder, 
+	 * the Current State Encoder, the Symbolic BIP Engine
+	 */
 	private GlueEncoder glueenc = new GlueEncoderImpl();
 	private BehaviourEncoder behenc = new BehaviourEncoderImpl();
 	private CurrentStateEncoder currstenc = new CurrentStateEncoderImpl();
@@ -53,6 +58,8 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	private Thread engineThread;
 
 	private boolean isEngineExecuting;
+	
+	private Semaphore haveAllComponentsInformed;
 
 	public BIPCoordinatorImpl() {
 
@@ -110,8 +117,6 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 			int registeredComponentID = idGenerator.getAndIncrement(); 
 	
 			reversedIdentityMapping.put(component, registeredComponentID);
-			// logger.info("Component: {} with identity {}",component.getName(),
-			// reversedIdentityMapping.get(component));
 			logger.info("Component: {} ", component.getName());
 			identityMapping.put(registeredComponentID, component);
 			behaviourMapping.put(registeredComponentID, behaviour);
@@ -134,13 +139,15 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 			logger.info("******************************************************************************");
 		}
 	}
+	/**
+	 * Components call the inform function to give information about their current state and their number of
+	 * disabled ports by guards.
+	 */
 
 	public synchronized void inform(BIPComponent component, String currentState, ArrayList<Port> disabledPorts) {
 		if (componentsHaveInformed.contains(component)) {
 			try {
 				logger.info("************************** Second Inform *************************************");
-				// logger.info("Component: {} with identity {}",component.getName(),
-				// reversedIdentityMapping.get(component));
 				logger.info("Component: {}", component.getName());
 				logger.info("informs that is at state: {}", currentState);
 				logger.info("******************************************************************************");
@@ -149,12 +156,15 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 			} catch (BIPEngineException e) {
 				logger.error(e.getMessage());
 			}
-		} else { 
-			// TODO: Check what happens if engine.informCurrentState() is called twice for the same component.
-			// If this overwrites the current state information gracefully, then let it overwrite. To do so 
-			// remove the else above and make sure the semaphore below (replacing notifyAll()) does not get 
-			// called twice.  Otherwise, keep the else to prevent data corruption.
-			
+		} 
+		
+		/**
+		 * If a component informs more than once in the same execution cycle we add the else below to prevent the 
+		 * re-computation of the current state BDD for the specific component. The  deletion of the else will not
+		 * result in any data corruption but overhead will be added.
+		 */
+		else { 
+	
 			/** 
 			 * This condition checks whether the component has already registered.
 			 */
@@ -164,15 +174,22 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	
 				logger.debug("Number of components that have informed {}", componentsHaveInformed.size());
 				logger.info("********************************* Inform *************************************");
-				// logger.info("Component: {} with identity {}",component.getName(),
-				// reversedIdentityMapping.get(component));
 				logger.info("Component: {}", component.getName());
 				logger.info("informs that is at state: {}", currentState);
 				logger.info("******************************************************************************");
-	
-				// TODO: Replace by releasing the semaphore (see run())
-				// Releasing the semaphore should only be done once per component -- see the comment above 
-				notifyAll();
+
+				/**
+				 * The haveAllComponentsInformed semaphore is used to indicate whether all registered components
+				 * have informed and to order one execution cycle of the engine. The semaphore is initialised with the
+				 * number of registered components. When a component informs we release one permit of the semaphore.
+				 */
+				if (isEngineExecuting){
+					haveAllComponentsInformed.release();
+				}
+
+				/**
+				 * An exception is thrown when a component informs the Coordinator without being registered first.
+				 */
 			} else {
 				try {
 					throw new BIPEngineException("Component has not registered yet.");
@@ -203,24 +220,24 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	}
 
 	public void run() {
-		/**
-		 * This should never happen in this implementation because the glue encoder is created in the constructor.
-		 * However, one could imagine a situation where the glue encoder be obtained by calling a function that 
-		 * could return null.
-		 */
-		if (glueenc.totalGlue() == null) {
-			logger.info("Total Glue BDD is null");
-			try {
-				throw new BIPEngineException("Glue BDD is null after execute");
-			} catch (BIPEngineException e) {
-				e.printStackTrace();
-				logger.error("Total Glue BDD is null");
-			}
-		}
+//		/**
+//		 * This should never happen in this implementation because the glue encoder is created in the constructor.
+//		 * However, one could imagine a situation where the glue encoder be obtained by calling a function that 
+//		 * could return null.
+//		 */
+//		if (glueenc.totalGlue() == null) {
+//			logger.info("Total Glue BDD is null");
+//			try {
+//				throw new BIPEngineException("Glue BDD is null after execute");
+//			} catch (BIPEngineException e) {
+//				e.printStackTrace();
+//				logger.error("Total Glue BDD is null");
+//			}
+//		}
 		logger.info("Engine thread is started.");
 		
 		/**
-		 * Wait until the execute() has been called signalling that all the components have registered 
+		 * Wait until the execute() has been called signaling that all the components have registered 
 		 */	
 		synchronized (this){ 
 			if (!isEngineExecuting ) {
@@ -239,29 +256,51 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 		 * legitimate.
 		 */
 		if (nbComponents == 0) {
-			// TODO: Complain
+			logger.error("Thread started but no components have been registered yet.");
 		}
+		
+		/**
+		 * To order the engine to begin its execution cycle we need to know first whether all components have informed
+		 * the BIP Coordinator about their current state. For this reason, the semaphore haveAllComponentsInformed is used
+		 * that it is initialized  here with the number of registered components in the system. Note that, if components
+		 * can be registered and unregistered on the fly the semaphore has to be updated with the new number of components
+		 * in the system.
+		 */
+		haveAllComponentsInformed= new Semaphore(nbComponents);
+		
+
+		/**
+		 * Acquire permits for the number of registered components.
+		 */
+		try {
+			haveAllComponentsInformed.acquire(nbComponents);
+		} catch (InterruptedException e1) {
+			e1.printStackTrace();
+			logger.error("Semaphore have all components informed acquire method for the number of registered components in the system was interrupted.");
+		}
+		
+		/**
+		 * Components may have inform the BIPCoordinator before the execute() is called
+		 * According to the size of the components informed we release some of the permits of the semaphore.
+		 */
+		haveAllComponentsInformed.release(componentsHaveInformed.size());
 
 		while (isEngineExecuting) {
 
 			logger.debug("isEngineExecuting: {} ", isEngineExecuting);
 			logger.debug("noComponents: {}, componentCounter: {}", nbComponents, componentsHaveInformed.size());
-
-			// TODO: Use a semaphore initialised with noComponents -- requires a modification of inform() to 
-			// release the semaphore
-			if (componentsHaveInformed.size() == nbComponents) {
+			logger.debug("Number of available permits in the semaphore: {}", haveAllComponentsInformed.availablePermits());
+			
+			if (haveAllComponentsInformed.availablePermits()==nbComponents){
+				try {
+					haveAllComponentsInformed.acquire(nbComponents);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+					logger.error("Semaphore have all components informed acquire method for the number of registered components in the system was interrupted.");
+				}	
 				componentsHaveInformed.clear();
 				engine.runOneIteration();
-			} else {
-				try {
-					synchronized (this) {
-						wait();
-					}
-				} catch (InterruptedException e) {
-					isEngineExecuting = false;
-					logger.warn("Engine run is interrupted: {}", Thread.currentThread().getName());
-				}
-			}
+			} 
 		}
 		
 		//TODO: for (BIPComponent component : identityMapping.values()) {
@@ -292,40 +331,66 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	/**
 	 * If the execute function is called then set to true the boolean isEngineExecuting and notify the waiting threads. 
 	 * If the execute function is called more than once then it complains. 
-	 * We do not allow the case that execute is called twice at the same time by surrounding its code by synchronized(this).
+	 * 
+	 * We do not allow the case that execute is called twice simultaneously by surrounding its code by synchronized(this).
+	 * 
+	 * At this implementation, we assume that components have been registered before the execute() is called and therefore 
+	 * we are aware of the number of components in the system and can initialize the semaphore that shows whether all 
+	 * registered components have informed. In future, that components may be able to register on the fly the semaphore needs 
+	 * be re-initialized with the new number of components. If a component unregisters from the system then we can use the 
+	 * reducePermits(int reduction) on the semaphore to shrink the number of available permits by the indicated reduction. 
 	 */
 	public void execute() {
 		synchronized(this){
 			if (isEngineExecuting) {
-				// TODO: Complain about execute() being called several times
+				logger.warn("Execute() called more than once");
 			}	
 			else {
 				isEngineExecuting = true;
+				
 				notifyAll();
 			}
 		}
 	}
-
+	
+	/**
+	 * Helper function that returns the total number of ports of the registered components.
+	 */
 	public int getNoPorts() {
 		return nbPorts;
 	}
-
+	
+	/**
+	 * Helper function that returns the total number of states of the registered components.
+	 */
 	public int getNoStates() {
 		return nbStates;
 	}
-
+	
+	/**
+	 * Helper function that given the local identity of a BIPComponent Object returns the component's local identity.
+	 */
 	public Integer getBIPComponentIdentity(BIPComponent component) {
 		return reversedIdentityMapping.get(component);
 	}
 
+	/**
+	 * Helper function that given the local identity of a component returns the component as a BIPComponent Object.
+	 */
 	public BIPComponent getBIPComponent(int identity) {
 		return identityMapping.get(identity);
 	}
 
+	/**
+	 * Helper function that given the local identity of a component returns the behaviour as a Behaviour Object.
+	 */
 	public Behaviour getBIPComponentBehaviour(int identity) {
 		return behaviourMapping.get(identity);
 	}
 
+	/**
+	 * Helper function that returns the number of registered components in the system.
+	 */
 	public int getNoComponents() {
 		return nbComponents;
 	}
