@@ -24,7 +24,6 @@ import org.slf4j.LoggerFactory;
  * the current state of the BIP components and their disabled ports, sends this to the current state encoder 
  * and orders it to compute the current state BDDs. When a new interaction is chosen by the engine, it notifies all the BIP components.
  * @author mavridou
-
  */
 public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 
@@ -130,7 +129,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 
 	public synchronized void register(BIPComponent component, Behaviour behaviour) {
 		/**
-		 *  This condition checks whether the component has already registered.
+		 *  This condition checks whether the component has already been registered.
 		 */
 		if (reversedIdentityMapping.contains(component)) {
 			try {
@@ -147,7 +146,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 			int registeredComponentID = idGenerator.getAndIncrement(); 
 
 			reversedIdentityMapping.put(component, registeredComponentID);
-			logger.info("Component: {} ", component.getName());
+			logger.info("Component type: {} with localID: {} ", component.getName(), registeredComponentID);
 			identityMapping.put(registeredComponentID, component);
 			behaviourMapping.put(registeredComponentID, behaviour);
 			int nbComponentPorts = ((ArrayList<Port>)behaviour.getEnforceablePorts()).size();
@@ -184,6 +183,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 
 				throw new BIPEngineException("Component has already informed the engine in this execution cycle.");
 			} catch (BIPEngineException e) {
+				e.printStackTrace();
 				logger.error(e.getMessage());
 			}
 		} 
