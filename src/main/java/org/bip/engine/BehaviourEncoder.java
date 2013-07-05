@@ -19,10 +19,17 @@ public interface BehaviourEncoder {
 	 */
 	void createBDDNodes(int componentID, int noComponentPorts, int noComponentStates);
 	
+//	/**
+//	 * @return the BDD that corresponds to the total behaviour of the system
+//	 */
+//	BDD totalBehaviour();
+	
 	/**
-	 * @return the BDD that corresponds to the total behaviour of the system
+	 * 
+	 * @param componentID
+	 * @return BDD that corresponds to the behaviour of the component
 	 */
-	BDD totalBehaviour();
+	BDD behaviourBDD(int componentID);
 	
 	/**
 	 * Setter for the BDDBIPEngine

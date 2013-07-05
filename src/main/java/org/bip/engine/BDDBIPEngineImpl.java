@@ -26,6 +26,7 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 	
 	private Logger logger = LoggerFactory.getLogger(BDDBIPEngineImpl.class);
 	private Hashtable<Integer, BDD> currentStateBDDs = new Hashtable<Integer, BDD>();
+	private Hashtable<Integer, BDD> behaviourBDDs = new Hashtable<Integer, BDD>();
 	/** BDD for ΛFi */
 	private BDD totalBehaviour;
 	/** BDD for Glue */
@@ -108,17 +109,36 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		}
 		addCube(cubeMaximals, c_cube, cubeMaximals.size());
 	}
+	
+
+	public final void totalBehaviourBDD(){
+		
+		BDD totalBehaviourBdd = bdd_mgr.one();
+		BDD tmp;
+		for (int k = 0; k < wrapper.getNoComponents(); k++) {
+			tmp = totalBehaviourBdd.and(behaviourBDDs.get(k));
+			totalBehaviourBdd.free();
+			totalBehaviourBdd = tmp;
+		}
+		this.totalBehaviour=totalBehaviourBdd;
+		if (totalGlue!=null){
+			totalBehaviourAndGlue=this.totalBehaviour.and(totalGlue);		
+			this.totalBehaviour.free();
+			totalGlue.free();
+		}
+		
+	}
 
 	public final BDD totalCurrentStateBdd(Hashtable<Integer, BDD> currentStateBDDs) {
 
-		BDD behavBdd = bdd_mgr.one();
+		BDD totalCurrentStateBdd = bdd_mgr.one();
 		BDD tmp;
 		for (int k = 0; k < wrapper.getNoComponents(); k++) {
-			tmp = behavBdd.and(currentStateBDDs.get(k));
-			behavBdd.free();
-			behavBdd = tmp;
+			tmp = totalCurrentStateBdd.and(currentStateBDDs.get(k));
+			totalCurrentStateBdd.free();
+			totalCurrentStateBdd = tmp;
 		}
-		return behavBdd;
+		return totalCurrentStateBdd;
 	}
 
 	public final void runOneIteration() {
@@ -136,6 +156,7 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		BDD totalCurrentState = totalCurrentStateBdd(currentStateBDDs);
 
 		/** Compute global BDD: solns= Λi Fi Λ G Λ (Λi Ci) */
+//		totalBehaviourAndGlue=totalBehaviour.and(this.totalGlue);
 		BDD solns = totalBehaviourAndGlue.and(totalCurrentState);
 		totalCurrentState.free();
 		ArrayList<byte[]> a = new ArrayList<byte[]>();
@@ -186,11 +207,15 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 
 		logger.debug("Number of maximal interactions: " + cubeMaximals.size());
 		Random rand = new Random();
-		int randomInt = rand.nextInt(cubeMaximals.size()); // pick a random
-															// maximal
-															// interaction
-		chosenInteraction = cubeMaximals.get(randomInt); // update chosen
-															// interaction
+		/**
+		 * Pick a random maximal interaction
+		 */
+		int randomInt = rand.nextInt(cubeMaximals.size());
+		/**
+		 * Update chosen interaction
+		 */
+		chosenInteraction = cubeMaximals.get(randomInt); 
+		
 		cubeMaximals.clear();
 		logger.info("ChosenInteraction: ");
 		for (int k = 0; k < chosenInteraction.length; k++)
@@ -229,15 +254,20 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		Integer id = wrapper.getBIPComponentIdentity(component);
 		currentStateBDDs.put(id, componentBDD);
 	}
-
-	public void informTotalBehaviour(BDD totalBehaviour) {
-		this.totalBehaviour = totalBehaviour;// BDD for ΛFi
-		if (totalGlue!=null){
-			totalBehaviourAndGlue=this.totalBehaviour.and(totalGlue);		
-			this.totalBehaviour.free();
-			totalGlue.free();
-		}
+	
+	public synchronized void informBehaviour(BIPComponent component, BDD componentBDD) {
+		Integer id = wrapper.getBIPComponentIdentity(component);
+		behaviourBDDs.put(id, componentBDD);
 	}
+
+//	public void informTotalBehaviour(BDD totalBehaviour) {
+//		this.totalBehaviour = totalBehaviour;// BDD for ΛFi
+//		if (totalGlue!=null){
+//			totalBehaviourAndGlue=this.totalBehaviour.and(totalGlue);		
+//			this.totalBehaviour.free();
+//			totalGlue.free();
+//		}
+//	}
 
 	public void informGlue(BDD totalGlue) {
 		this.totalGlue = totalGlue;

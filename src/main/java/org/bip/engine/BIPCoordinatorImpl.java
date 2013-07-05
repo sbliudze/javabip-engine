@@ -29,6 +29,7 @@ import org.slf4j.LoggerFactory;
 public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 
 	private Logger logger = LoggerFactory.getLogger(BIPCoordinatorImpl.class);
+	
 	/**
 	 * Create instances of all the the Glue Encoder, the Behaviour Encoder, 
 	 * the Current State Encoder, the Symbolic BIP Engine
@@ -38,9 +39,27 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	private CurrentStateEncoder currstenc = new CurrentStateEncoderImpl();
 	private BDDBIPEngine engine = new BDDBIPEngineImpl();
 
+	/**
+	 * Helper hashtable with BIPComponents as the keys and integers representing the local identities 
+	 * of registered components as the values.
+	 */
 	private Hashtable<BIPComponent, Integer> reversedIdentityMapping = new Hashtable<BIPComponent, Integer>();
+	
+	/**
+	 * Helper hashtable with integers representing the local identities of registered components 
+	 * as the keys and BIPComponents as the values.
+	 */
 	private Hashtable<Integer, BIPComponent> identityMapping = new Hashtable<Integer, BIPComponent>();
+	
+	/**
+	 * Helper hashtable with integers representing the local identities of registered components 
+	 * as the keys and Behaviours of these components as the values.
+	 */
 	private Hashtable<Integer, Behaviour> behaviourMapping = new Hashtable<Integer, Behaviour>();
+	
+	/**
+	 * Helper hashset of the components that have informed in an execution cycle.
+	 */
 	private HashSet<BIPComponent> componentsHaveInformed = new HashSet<BIPComponent>();
 
 	/** Identification number for local use */
@@ -55,10 +74,19 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	/** Number of components registered */
 	public int nbComponents;
 
+	/** Thread for the BIPCoordinator*/
 	private Thread engineThread;
 
+	/** 
+	 * Boolean variable that shows whether the execute() was called.
+	 */
 	private boolean isEngineExecuting;
 	
+	/**
+	 * Semaphore that controls when the runOneIteration() function of the BDDBIPEngine 
+	 * class can be called. It can be called after all registered components 
+	 * have inform the BIPCoordinator about their current state.
+	 */
 	private Semaphore haveAllComponentsInformed;
 
 	public BIPCoordinatorImpl() {
@@ -79,20 +107,14 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 		engine.setOSGiBIPEngine(this);
 	}
 
-	/**
-	 * We require to have components registered before glue is specified, so
-	 * functions of BehEnc are executed properly.
-	 */
+
 	public synchronized void specifyGlue(BIPGlue glue) {
 		glueenc.specifyGlue(glue);
-		// engine.informGlue(glueenc.specifyGlue()); // This assumes that glueenc.specifyGlue() returns the reference to the glue BDD
 		computeGlueAndInformEngine();
-		computeTotalBehaviourAndInformEngine();
 	}
-
-	public synchronized void computeTotalBehaviourAndInformEngine() {
-		//TODO: send one by one (insertion and deletion)
-		engine.informTotalBehaviour(behenc.totalBehaviour());
+	
+	public synchronized void orderEngineToComputeTotalBehaviour() {
+		engine.totalBehaviourBDD();
 	}
 
 	public synchronized void computeGlueAndInformEngine() {
@@ -110,12 +132,13 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 				e.printStackTrace();
 				logger.error(e.getMessage());
 			}
-		} else {
+		} 
+		else {
 			logger.info("********************************* Register *************************************");
 	
 			// atomically adds one
 			int registeredComponentID = idGenerator.getAndIncrement(); 
-	
+
 			reversedIdentityMapping.put(component, registeredComponentID);
 			logger.info("Component: {} ", component.getName());
 			identityMapping.put(registeredComponentID, component);
@@ -124,7 +147,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 			int nbComponentStates = ((ArrayList<String>)behaviour.getStates()).size();
 	
 			behenc.createBDDNodes(registeredComponentID, nbComponentPorts, nbComponentStates);
-			// TODO: compute BDD and send to engine (replaces the call to informTotalBehaviour() in specifyGlue() )
+			engine.informBehaviour(component, behenc.behaviourBDD(registeredComponentID));
 
 			// TODO: (minor) think whether a better data structure is possible for associating the variable 
 			// position to a port.  To access the position defined below one has to first obtain the corresponding
@@ -220,20 +243,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	}
 
 	public void run() {
-//		/**
-//		 * This should never happen in this implementation because the glue encoder is created in the constructor.
-//		 * However, one could imagine a situation where the glue encoder be obtained by calling a function that 
-//		 * could return null.
-//		 */
-//		if (glueenc.totalGlue() == null) {
-//			logger.info("Total Glue BDD is null");
-//			try {
-//				throw new BIPEngineException("Glue BDD is null after execute");
-//			} catch (BIPEngineException e) {
-//				e.printStackTrace();
-//				logger.error("Total Glue BDD is null");
-//			}
-//		}
+
 		logger.info("Engine thread is started.");
 		
 		/**
@@ -258,6 +268,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 		if (nbComponents == 0) {
 			logger.error("Thread started but no components have been registered yet.");
 		}
+		orderEngineToComputeTotalBehaviour();
 		
 		/**
 		 * To order the engine to begin its execution cycle we need to know first whether all components have informed

@@ -1,6 +1,7 @@
 package org.bip.engine;
 
 import java.util.ArrayList;
+import java.util.Hashtable;
 
 import net.sf.javabdd.BDD;
 import net.sf.javabdd.BDDFactory;
@@ -22,14 +23,25 @@ public interface BDDBIPEngine {
 	void informCurrentState(BIPComponent component, BDD componentBDD);
 	
 	/**
+	 * @param component
+	 * @param componentBDD BDD corresponding to the behavior of the particular component
+	 */
+	void informBehaviour(BIPComponent component, BDD componentBDD);
+	
+	/**
 	 * @param totalGlue BDD corresponding to the total glue of the components of the system
 	 */
 	void informGlue(BDD totalGlue);
 	
+//	/**
+//	 * @param totalBehaviour BDD corresponding to the total behaviour of the components of the system
+//	 */
+//	void informTotalBehaviour(BDD totalBehaviour);
+	
 	/**
-	 * @param totalBehaviour BDD corresponding to the total behaviour of the components of the system
+	 * @param hashtable with the BehaviourBDDs of each component
 	 */
-	void informTotalBehaviour(BDD totalBehaviour);
+	void totalBehaviourBDD();
 	
 	/**
 	 * Computes possible maximal interactions and chooses one non-deterministically
