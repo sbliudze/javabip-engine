@@ -47,13 +47,13 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	
 	/**
 	 * Helper hashtable with integers representing the local identities of registered components 
-	 * as the keys and BIPComponents as the values.
+	 * as the keys and the BIPComponents as the values.
 	 */
 	private Hashtable<Integer, BIPComponent> identityMapping = new Hashtable<Integer, BIPComponent>();
 	
 	/**
 	 * Helper hashtable with integers representing the local identities of registered components 
-	 * as the keys and Behaviours of these components as the values.
+	 * as the keys and the Behaviours of these components as the values.
 	 */
 	private Hashtable<Integer, Behaviour> behaviourMapping = new Hashtable<Integer, Behaviour>();
 	
@@ -110,15 +110,22 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 
 	public synchronized void specifyGlue(BIPGlue glue) {
 		glueenc.specifyGlue(glue);
-		computeGlueAndInformEngine();
 	}
 	
+	public synchronized void orderGlueEncoderToComputeTotalGlueAndInformEngine() {
+		engine.informGlue(glueenc.totalGlue());
+	}
+	
+	/**
+	 * When the registration of components has finished, order engine to compute the total Behaviour BDD.
+	 * 
+	 * Currently, this method is called once in the run() but later, on the deletion of components on the fly
+	 * the engine should be re-ordered to compute the total Behaviour BDD. Not that, in case of insertion of
+	 * components this function need not be called, since we can just take the conjunction of the previous total 
+	 * Behaviour BDD and the Behaviour BDD representing the new component to compute the new total Behaviour BDD.
+	 */
 	public synchronized void orderEngineToComputeTotalBehaviour() {
 		engine.totalBehaviourBDD();
-	}
-
-	public synchronized void computeGlueAndInformEngine() {
-		engine.informGlue(glueenc.totalGlue());
 	}
 
 	public synchronized void register(BIPComponent component, Behaviour behaviour) {
@@ -224,6 +231,10 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 		}
 	}
 
+	/**
+	 * BDDBIPEngine informs the BIPCoordinator for the components (and their associated ports) that are part of the chosen interaction.
+	 */
+	
 	public synchronized void executeComponents(ArrayList<BIPComponent> allComponents, Hashtable<BIPComponent, ArrayList<Port>> portsToFire) {
 		Port port = null;
 		int size = allComponents.size();
@@ -269,6 +280,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 			logger.error("Thread started but no components have been registered yet.");
 		}
 		orderEngineToComputeTotalBehaviour();
+		orderGlueEncoderToComputeTotalGlueAndInformEngine();
 		
 		/**
 		 * To order the engine to begin its execution cycle we need to know first whether all components have informed
@@ -278,7 +290,6 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 		 * in the system.
 		 */
 		haveAllComponentsInformed= new Semaphore(nbComponents);
-		
 
 		/**
 		 * Acquire permits for the number of registered components.
