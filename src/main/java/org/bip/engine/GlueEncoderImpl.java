@@ -30,15 +30,22 @@ public class GlueEncoderImpl implements GlueEncoder {
 	private BIPCoordinator wrapper;
 	private BIPGlue glueSpec;
 
+	/**
+	 * Function called by the BIPCoordinator when the Glue xml file is parsed
+	 * and its contents are stored as BIPGlue object that is given to this function
+	 * as a parameter and stored in a global field of the class.
+	 * 
+	 * If the glue field is null throw an exception. 
+	 */
 	public void specifyGlue(BIPGlue glue){
 
 		if (glue == null) {
 			try {
+				logger.error("The glue parser has failed to compute the glue object.\n" +
+						"\tPossible reasons: Corrupt or non-existant glue XML file.");
 				throw new BIPEngineException("Glue parser outputs null");
 			} catch (BIPEngineException e) {
 				e.printStackTrace();
-				logger.error("The glue parser has failed to compute the glue object.\n" +
-						"\tPossible reasons: Corrupt or non-existant glue XML file.");
 			}
 		}
 
@@ -74,15 +81,15 @@ public class GlueEncoderImpl implements GlueEncoder {
 		ArrayList<BIPComponent> requireEffectComponents = wrapper.getBIPComponentInstances(requireComponentType);
 		if (requireEffectComponents.isEmpty()) {
 			try {
-				logger.info("Spec type in require effect for component {} was defined incorrectly. It does not match any registered component types", requireComponentType);
+				logger.error("Spec type in require effect for component {} was defined incorrectly. It does not match any registered component types", requireComponentType);
 				throw new BIPEngineException("Spec type in require effect was defined incorrectly");
 			} catch (BIPEngineException e) {
 				e.printStackTrace();
 			}	
 		} else {
 			for (BIPComponent effectInstance : requireEffectComponents) {
-				logger.info("Require Effect port type: {} ", requires.effect.id);
-				logger.info("PortToComponents size: {} ", portToComponents.size());
+				logger.debug("Require Effect port type: {} ", requires.effect.id);
+				logger.debug("PortToComponents size: {} ", portToComponents.size());
 				result.add(componentRequire(effectInstance, requires.effect, requires.causes, portToComponents));
 			}
 		}
@@ -126,8 +133,8 @@ public class GlueEncoderImpl implements GlueEncoder {
 			}	
 		} else {
 			for (BIPComponent effectInstance : acceptEffectComponents) {
-				logger.info("Accept Effect port type: {} ", accept.effect.id);
-				logger.info("PortToComponents size: {} ", portToComponents.size());
+				logger.debug("Accept Effect port type: {} ", accept.effect.id);
+				logger.debug("PortToComponents size: {} ", portToComponents.size());
 				result.add(componentAccept(effectInstance, accept.effect, accept.causes, portToComponents));
 			}
 		}

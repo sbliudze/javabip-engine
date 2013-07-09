@@ -161,7 +161,7 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		totalCurrentState.free();
 		ArrayList<byte[]> a = new ArrayList<byte[]>();
 
-		a.addAll(solns.allsat()); // BIG TODO, can we find random maximal
+		a.addAll(solns.allsat()); // TODO, can we find random maximal
 								  // interaction without getting all solutions
 								  // at once
 
@@ -233,7 +233,6 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 				}
 			}
 			if (!enabledPorts.isEmpty()) {
-				//logger.info("Chosen Component: {} with identity {}", wrapper.getBIPComponentBehaviour(i).getComponentType(), i);
 				logger.info("Chosen Component: {}", wrapper.getBIPComponent(i).getName());
 				logger.info("Chosen Port: {}", enabledPorts.get(0).id);
 			}
@@ -259,15 +258,6 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		Integer id = wrapper.getBIPComponentIdentity(component);
 		behaviourBDDs.put(id, componentBDD);
 	}
-
-//	public void informTotalBehaviour(BDD totalBehaviour) {
-//		this.totalBehaviour = totalBehaviour;// BDD for ΛFi
-//		if (totalGlue!=null){
-//			totalBehaviourAndGlue=this.totalBehaviour.and(totalGlue);		
-//			this.totalBehaviour.free();
-//			totalGlue.free();
-//		}
-//	}
 
 	public void informGlue(BDD totalGlue) {
 
