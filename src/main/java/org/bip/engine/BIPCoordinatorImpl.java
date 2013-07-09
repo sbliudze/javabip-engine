@@ -42,20 +42,25 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	 * Helper hashtable with BIPComponents as the keys and integers representing the local identities 
 	 * of registered components as the values.
 	 */
-	private Hashtable<BIPComponent, Integer> reversedIdentityMapping = new Hashtable<BIPComponent, Integer>();
+	private Hashtable<BIPComponent, Integer> componentIdMapping = new Hashtable<BIPComponent, Integer>();
 	
 	/**
 	 * Helper hashtable with integers representing the local identities of registered components 
 	 * as the keys and the BIPComponents as the values.
 	 */
-	private Hashtable<Integer, BIPComponent> identityMapping = new Hashtable<Integer, BIPComponent>();
+	private Hashtable<Integer, BIPComponent> idComponentMapping = new Hashtable<Integer, BIPComponent>();
 	
 	/**
 	 * Helper hashtable with integers representing the local identities of registered components 
 	 * as the keys and the Behaviours of these components as the values.
 	 */
-	private Hashtable<Integer, Behaviour> behaviourMapping = new Hashtable<Integer, Behaviour>();
+	private Hashtable<Integer, Behaviour> idBehaviourMapping = new Hashtable<Integer, Behaviour>();
 	
+	/**
+	 * Helper hashtable with strings as keys representing the component type of the registered components
+	 * and ArrayList of BIPComponent instances that correspond to the component type specified in the key.
+	 */
+	private Hashtable<String, ArrayList<BIPComponent>> typeInstancesMapping = new Hashtable<String, ArrayList<BIPComponent>>();
 	/**
 	 * Helper hashset of the components that have informed in an execution cycle.
 	 */
@@ -131,7 +136,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 		/**
 		 *  This condition checks whether the component has already been registered.
 		 */
-		if (reversedIdentityMapping.contains(component)) {
+		if (componentIdMapping.contains(component)) {
 			try {
 				throw new BIPEngineException("Component has already registered before.");
 			} catch (BIPEngineException e) {
@@ -141,14 +146,35 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 		} 
 		else {
 			logger.info("********************************* Register *************************************");
-	
-			// atomically adds one
+			
+			/**
+			 * For each new component instance, generate a unique identity for local use.
+			 */
 			int registeredComponentID = idGenerator.getAndIncrement(); 
+			
+			/**
+			 * Map all component instances of the same type in the typeInstancesMapping Hashtable
+			 */
+			ArrayList<BIPComponent> componentInstances = new ArrayList<BIPComponent> ();
+			
+			/**
+			 * If this component type already exists in the hashtable, update the ArrayList of BIPComponents
+			 * that corresponds to this component type.
+			 */
 
-			reversedIdentityMapping.put(component, registeredComponentID);
+			if (typeInstancesMapping.containsKey(component.getName())){
+				componentInstances.addAll(typeInstancesMapping.get(component.getName()));
+			}
+			
+			componentInstances.add(component);
+			typeInstancesMapping.put(component.getName(), componentInstances);
+			logger.debug("Component name: {}", component.getName());
+			logger.debug("Component instances size: {}", componentInstances.size());
+
+			componentIdMapping.put(component, registeredComponentID);
 			logger.info("Component type: {} with localID: {} ", component.getName(), registeredComponentID);
-			identityMapping.put(registeredComponentID, component);
-			behaviourMapping.put(registeredComponentID, behaviour);
+			idComponentMapping.put(registeredComponentID, component);
+			idBehaviourMapping.put(registeredComponentID, behaviour);
 			int nbComponentPorts = ((ArrayList<Port>)behaviour.getEnforceablePorts()).size();
 			int nbComponentStates = ((ArrayList<String>)behaviour.getStates()).size();
 	
@@ -199,7 +225,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 			/** 
 			 * This condition checks whether the component has already registered.
 			 */
-			if (reversedIdentityMapping.containsKey(component)) { 
+			if (componentIdMapping.containsKey(component)) { 
 				componentsHaveInformed.add(component);
 				engine.informCurrentState(component, currstenc.inform(component, currentState, disabledPorts));
 	
@@ -258,9 +284,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	 * Initialization phase. Orders the Behaviour and Current State Encoders to compute their total BDDs 
 	 * and send these to the BDDBIPEngine. 
 	 */
-	private void initialization(){
-		logger.info("Engine thread is started.");
-		
+	private void coordinatorCycleInitialization(){
 		/**
 		 * Wait until the execute() has been called signaling that all the components have registered 
 		 */	
@@ -313,8 +337,9 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	}
 	
 	public void run() {
+		logger.info("Engine thread is started.");
 		
-		initialization();
+		coordinatorCycleInitialization();
 		/**
 		 * Start the Engine cycle
 		 */
@@ -340,9 +365,9 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 		//for (BIPComponent component : identityMapping.values()) {
 		//	component.deregister();
 		//}
-		reversedIdentityMapping.clear();
-		identityMapping.clear();
-		behaviourMapping.clear();
+		componentIdMapping.clear();
+		idComponentMapping.clear();
+		idBehaviourMapping.clear();
 		componentsHaveInformed.clear();
 		return;
 	}
@@ -403,21 +428,21 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	 * Helper function that given the local identity of a BIPComponent Object returns the component's local identity.
 	 */
 	public Integer getBIPComponentIdentity(BIPComponent component) {
-		return reversedIdentityMapping.get(component);
+		return componentIdMapping.get(component);
 	}
 
 	/**
 	 * Helper function that given the local identity of a component returns the component as a BIPComponent Object.
 	 */
 	public BIPComponent getBIPComponent(int identity) {
-		return identityMapping.get(identity);
+		return idComponentMapping.get(identity);
 	}
 
 	/**
 	 * Helper function that given the local identity of a component returns the behaviour as a Behaviour Object.
 	 */
 	public Behaviour getBIPComponentBehaviour(int identity) {
-		return behaviourMapping.get(identity);
+		return idBehaviourMapping.get(identity);
 	}
 
 	/**
@@ -427,6 +452,23 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 		return nbComponents;
 	}
 
+	/**
+	 * Helper function that returns the registered component instances that correspond to a component type.
+	 */
+	public ArrayList<BIPComponent> getBIPComponentInstances(String type) {
+		ArrayList<BIPComponent> instances = typeInstancesMapping.get(type);
+		if (instances == null){
+			try {
+				logger.error("No registered component instances for the: {} ",type +
+						" component type. Possible reasons: The name of the component instances was specified in another way at registration.");
+				throw new BIPEngineException("No registered component instances for this component type");
+			} catch (BIPEngineException e) {
+				e.printStackTrace();
+			}
+		}
+		return instances; 
+	}
+	
 	/**
 	 * Redirects System.err and sends all data to a file.
 	 * 

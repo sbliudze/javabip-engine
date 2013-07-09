@@ -270,6 +270,7 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 //	}
 
 	public void informGlue(BDD totalGlue) {
+
 		this.totalGlue = totalGlue;
 		if (totalBehaviour!=null){
 			totalBehaviourAndGlue=totalBehaviour.and(this.totalGlue);		

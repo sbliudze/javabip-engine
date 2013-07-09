@@ -45,122 +45,95 @@ public class GlueEncoderImpl implements GlueEncoder {
 		this.glueSpec = glue;
 	}
 
-	ArrayList<BDD> decomposeRequireGlue(Requires require) {
+	ArrayList<BDD> decomposeRequireGlue(Requires requires) {
 		ArrayList<BDD> result = new ArrayList<BDD>();
+		Hashtable<Port, ArrayList<BIPComponent>> portToComponents = new Hashtable<Port, ArrayList<BIPComponent>>();
 
-		String requireComponentType = require.effect.specType;
+		/** Find all causes component instances */
+		for (Port causePort : requires.causes) {
+			if (causePort.specType == null || causePort.specType.isEmpty()) {
+					logger.warn("Spec type not specified or empty in a Require macro cause");
+			}
+			else{
+				portToComponents.put(causePort, wrapper.getBIPComponentInstances(causePort.specType));
+			}
+		}
 
-		if (requireComponentType==null) {
+
+		/** Find all effect component instances */
+		String requireComponentType = requires.effect.specType;
+		if (requireComponentType == null || requireComponentType.isEmpty()) {
 			try {
-				logger.error("Spec type was not specified in Require effect");
-				throw new BIPEngineException("Spec type not specified in Require effect");
+				logger.error("Spec type not specified or empty in a Require macro effect");
+				throw new BIPEngineException("Spec type not specified or empty in a Require macro effect");
 			} catch (BIPEngineException e) {
 				e.printStackTrace();
 			}	
 		}
-		ArrayList<BIPComponent> requireEffectComponents = new ArrayList<BIPComponent>();
-		ArrayList<Port> causePorts = new ArrayList<Port>();
-		ArrayList<BIPComponent> requireCauseComponents = new ArrayList<BIPComponent>();
-		Hashtable<Port, ArrayList<BIPComponent>> portToComponents = new Hashtable<Port, ArrayList<BIPComponent>>();
-
-		/** Find all effect component instances */
-		for (int k = 0; k < wrapper.getNoComponents(); k++) {
-			if (requireComponentType.equals(wrapper.getBIPComponentBehaviour(k).getComponentType())){
-				requireEffectComponents.add(wrapper.getBIPComponent(k));
-			}
-		}
-
-		if (requireEffectComponents.size()==0) {
+		
+		ArrayList<BIPComponent> requireEffectComponents = wrapper.getBIPComponentInstances(requireComponentType);
+		if (requireEffectComponents.isEmpty()) {
 			try {
-				logger.error("Spec type in require effect for component {} was defined incorrectly. It does not match any registered component types", requireComponentType);
+				logger.info("Spec type in require effect for component {} was defined incorrectly. It does not match any registered component types", requireComponentType);
 				throw new BIPEngineException("Spec type in require effect was defined incorrectly");
 			} catch (BIPEngineException e) {
 				e.printStackTrace();
 			}	
-		}
-
-		/** Find all causes component instances */
-		causePorts = require.causes;
-
-		int sizecauseports = causePorts.size();
-		String RequireCausePortComponentType;
-		for (int l = 0; l < sizecauseports; l++) {
-			RequireCausePortComponentType = causePorts.get(l).specType;
-			for (int m = 0; m < wrapper.getNoComponents(); m++) {
-
-				if (RequireCausePortComponentType.equals(wrapper.getBIPComponentBehaviour(m).getComponentType())){
-					requireCauseComponents.add(wrapper.getBIPComponent(m));
-				}
+		} else {
+			for (BIPComponent effectInstance : requireEffectComponents) {
+				logger.info("Require Effect port type: {} ", requires.effect.id);
+				logger.info("PortToComponents size: {} ", portToComponents.size());
+				result.add(componentRequire(effectInstance, requires.effect, requires.causes, portToComponents));
 			}
-			portToComponents.put(causePorts.get(l), requireCauseComponents);
-
 		}
-
-		int effectsize = requireEffectComponents.size();
-		for (int m = 0; m < effectsize; m++) {
-			result.add(componentRequire(requireEffectComponents.get(m), require.effect, causePorts, portToComponents));
-		}
+		
 		return result;
 	}
-
+	
+	
 	ArrayList<BDD> decomposeAcceptGlue(Accepts accept) {
 		ArrayList<BDD> result = new ArrayList<BDD>();
-
-		String acceptComponentType = accept.effect.specType;
-		if (acceptComponentType==null) {
-			try {
-				logger.error("Spec type was not specified in Accept effect");
-				throw new BIPEngineException("Spec type not specified in Accept effect");
-			} catch (BIPEngineException e) {
-				e.printStackTrace();
-			}
-		}
-		ArrayList<BIPComponent> acceptEffectComponents = new ArrayList<BIPComponent>();
-		ArrayList<Port> causePorts = new ArrayList<Port>();
-		ArrayList<BIPComponent> acceptCauseComponents = new ArrayList<BIPComponent>();
 		Hashtable<Port, ArrayList<BIPComponent>> portToComponents = new Hashtable<Port, ArrayList<BIPComponent>>();
 
-		/** Find all effect component instances */
-		for (int k = 0; k < wrapper.getNoComponents(); k++) {
-			if (acceptComponentType.equals(wrapper.getBIPComponentBehaviour(k).getComponentType())){
-				acceptEffectComponents.add(wrapper.getBIPComponent(k));
+		/** Find all causes component instances */
+		for (Port causePort : accept.causes) {
+			if (causePort.specType == null || causePort.specType.isEmpty()) {
+					logger.warn("Spec type not specified or empty in a Accept macro cause");
+			}
+			else{
+			portToComponents.put(causePort, wrapper.getBIPComponentInstances(causePort.specType));
 			}
 		}
 
-		if (acceptEffectComponents.size()==0) {
+		/** Find all effect component instances */
+		String acceptComponentType = accept.effect.specType;
+		if (acceptComponentType == null || acceptComponentType.isEmpty()) {
 			try {
-				logger.error("Spec type in accept effect was defined incorrectly. It does not match any registered component types");
-				throw new BIPEngineException("Spec type in accept effect was defined incorrectly");
+				logger.error("Spec type not specified or empty in a Accept macro effect");
+				throw new BIPEngineException("Spec type not specified or empty in a Accept macro effect");
 			} catch (BIPEngineException e) {
 				e.printStackTrace();
 			}	
 		}
-
-		/** Find all causes component instances */
-		causePorts = accept.causes;
-		int sizecauseports = causePorts.size();
-		String acceptCausePortComponentType;
-		for (int l = 0; l < sizecauseports; l++) {
-			acceptCausePortComponentType = causePorts.get(l).specType;
-			for (int m = 0; m < wrapper.getNoComponents(); m++) {
-
-				if (acceptCausePortComponentType.equals(wrapper.getBIPComponentBehaviour(m).getComponentType())){
-					acceptCauseComponents.add(wrapper.getBIPComponent(m));
-				}
+		
+		ArrayList<BIPComponent> acceptEffectComponents = wrapper.getBIPComponentInstances(acceptComponentType);
+		if (acceptEffectComponents.isEmpty()) {
+			try {
+				logger.error("Spec type in Accept effect for component {} was defined incorrectly. It does not match any registered component types", acceptComponentType);
+				throw new BIPEngineException("Spec type in Accept effect was defined incorrectly");
+			} catch (BIPEngineException e) {
+				e.printStackTrace();
+			}	
+		} else {
+			for (BIPComponent effectInstance : acceptEffectComponents) {
+				logger.info("Accept Effect port type: {} ", accept.effect.id);
+				logger.info("PortToComponents size: {} ", portToComponents.size());
+				result.add(componentAccept(effectInstance, accept.effect, accept.causes, portToComponents));
 			}
-			portToComponents.put(causePorts.get(l), acceptCauseComponents);
-
 		}
-
-		int effectsize = acceptEffectComponents.size();
-		for (int m = 0; m < effectsize; m++) {
-			result.add(componentAccept(acceptEffectComponents.get(m), accept.effect, causePorts, portToComponents));
-		}
-
+		
 		return result;
 	}
-
-
 
 	/** BDD for the Require Constraint */
 	BDD requireBDD(BDD RequirePortHolder, ArrayList<Port> AuxPort, Hashtable<Port, ArrayList<BDD>> RequirePorts) {
@@ -329,27 +302,37 @@ public class GlueEncoderImpl implements GlueEncoder {
 	}
 	
 	public BDD totalGlue() {
+		
 		BDD result = engine.getBDDManager().one();
 
+		logger.debug("Glue spec require Constraints size: {} ", glueSpec.requiresConstraints.size());
 		if (!glueSpec.requiresConstraints.isEmpty()) {
+			ArrayList<BDD> RequireBDDs = new ArrayList<BDD>();
 			for (Requires requires : glueSpec.requiresConstraints) {
-				for (BDD effect : decomposeRequireGlue(requires)) {
-					result.andWith(effect);
+				RequireBDDs.addAll(decomposeRequireGlue(requires));
+				for (BDD effectInstance : RequireBDDs) {
+					result.andWith(effectInstance);
 				}
+				RequireBDDs.clear();
 			}
 		} else {
 			logger.warn("No require constraints provided (usually there should be some).");
 		}
 
+		logger.debug("Glue spec accept Constraints size: {} ", glueSpec.acceptConstraints.size());
 		if (!glueSpec.acceptConstraints.isEmpty()) {
-			for (Accepts accept : glueSpec.acceptConstraints) {
-				for (BDD effect : decomposeAcceptGlue(accept)) {
-					result.andWith(effect);
+			ArrayList<BDD> AcceptBDDs = new ArrayList<BDD>();
+			for (Accepts accepts : glueSpec.acceptConstraints) {
+				AcceptBDDs.addAll(decomposeAcceptGlue(accepts));
+				for (BDD effectInstance : AcceptBDDs) {
+					result.andWith(effectInstance);
 				}
+				AcceptBDDs.clear();
 			}
 		} else {
 			logger.warn("No accept constraints were provided (usually there should be some).");
 		}
+
 
 		return result;
 	}
