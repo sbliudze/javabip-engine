@@ -39,7 +39,7 @@ public interface BDDBIPEngine {
 //	void informTotalBehaviour(BDD totalBehaviour);
 	
 	/**
-	 * @param hashtable with the BehaviourBDDs of each component
+	 * 
 	 */
 	void totalBehaviourBDD();
 	
