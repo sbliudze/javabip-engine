@@ -173,13 +173,13 @@ public class GlueEncoderImpl implements GlueEncoder {
 
 		ArrayList<BDD> auxPortBDDs = new ArrayList<BDD>();
 		int size = RequirePorts.size();
-		for (int j = 0; j < size; j++) {
-			auxPortBDDs.addAll(RequirePorts.get(AuxPort.get(j)));
+		for (int i = 0; i < size; i++) {
+			auxPortBDDs.addAll(RequirePorts.get(AuxPort.get(i)));
 			int size2 = auxPortBDDs.size();
-			for (int i = 0; i < size2; i++) {
+			for (int j = 0; j < size2; j++) {
 				BDD aux3 = engine.getBDDManager().one();
 				for (int k = 0; k < size2; k++) {
-					if (i == k) {
+					if (j == k) {
 						tmp3 = auxPortBDDs.get(k).and(aux3);
 						aux3.free();
 						aux3 = tmp3;
@@ -246,9 +246,13 @@ public class GlueEncoderImpl implements GlueEncoder {
 	}
 
 	/**
+	 * Finds the BDDs of the ports of the components that are needed for computing the constraint macros.
 	 * 
-	 * @param
-	 * @return
+	 * @param the component that holds the interaction require constraint
+	 * @param the port of the holder component
+	 * @param the set of ports that are required by the macro
+	 * @param the list of components that correspond to the previous set of ports
+	 * @return the BDD that corresponds to a Require macro
 	 */
 	BDD componentRequire(BIPComponent holderComponent, Port holderPort, ArrayList<Port> requiredPorts, Hashtable<Port, ArrayList<BIPComponent>> effectPortToComponents) {
 
