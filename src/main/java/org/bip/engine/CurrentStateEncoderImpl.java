@@ -134,14 +134,14 @@ public class CurrentStateEncoderImpl implements CurrentStateEncoder {
 			componentCurrentStateBDD = partialBDD[0];
 		}
 		
-		if (componentCurrentStateBDD == null) {
-	        try {
-				throw new BIPEngineException("Current State BDD of component is null");
-			} catch (BIPEngineException e) {
-				e.printStackTrace();
-				logger.error(" Current State BDD was not computed correctly");
-			}
-	      }
+//		if (componentCurrentStateBDD == null) {
+//	        try {
+//				throw new BIPEngineException("Current State BDD of component is null");
+//			} catch (BIPEngineException e) {
+//				e.printStackTrace();
+//				logger.error(" Current State BDD was not computed correctly");
+//			}
+//	      }
 
 
 		return componentCurrentStateBDD;

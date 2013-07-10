@@ -51,13 +51,27 @@ public class GlueEncoderImpl implements GlueEncoder {
 
 		this.glueSpec = glue;
 	}
-
+	
+	/**
+	 * Finds all the component instances that correspond to the effect and causes component types 
+	 * and computes the BDDs for all the different combinations of component instances by calling
+	 * the component require function.
+	 * 
+	 * @param  require interaction constraints
+	 * @return Arraylist of BDDs for all the different combinations of component instances
+	 */
 	ArrayList<BDD> decomposeRequireGlue(Requires requires) {
 		ArrayList<BDD> result = new ArrayList<BDD>();
 		Hashtable<Port, ArrayList<BIPComponent>> portToComponents = new Hashtable<Port, ArrayList<BIPComponent>>();
+		// TODO: Not having a spec types is a serious problem, so the execution should probably stop in such cases, 
+		// meaning that the exceptions should be re-thrown 
 
+		// TODO: Define helper functions to do the computations below that are shared with decomposeAcceptGlue()
+		
 		/** Find all causes component instances */
 		for (Port causePort : requires.causes) {
+			// TODO: This should be as much of a problem as a missing spec for the effect (see below)
+			// Hence, the treatment should be the same (an error rather than a warning)
 			if (causePort.specType == null || causePort.specType.isEmpty()) {
 					logger.warn("Spec type not specified or empty in a Require macro cause");
 			}
@@ -97,10 +111,19 @@ public class GlueEncoderImpl implements GlueEncoder {
 		return result;
 	}
 	
-	
+	/**
+	 * Finds all the component instances that correspond to the effect and causes component types 
+	 * and calls the component accept function to compute the BDDs for all the different combinations 
+	 * of component instances.
+	 * 
+	 * @param  accept interaction constraints
+	 * @return Arraylist of BDDs for all the different combinations of component instances
+	 */
 	ArrayList<BDD> decomposeAcceptGlue(Accepts accept) {
 		ArrayList<BDD> result = new ArrayList<BDD>();
 		Hashtable<Port, ArrayList<BIPComponent>> portToComponents = new Hashtable<Port, ArrayList<BIPComponent>>();
+		// TODO: Not having a spec types is a serious problem, so the execution should probably stop in such cases, 
+		// meaning that the exceptions should be re-thrown 
 
 		/** Find all causes component instances */
 		for (Port causePort : accept.causes) {
@@ -222,46 +245,50 @@ public class GlueEncoderImpl implements GlueEncoder {
 		return acc_bdd;
 	}
 
-	/** Require BDD */
-	BDD componentRequire(BIPComponent HolderComponent, Port HolderPort, ArrayList<Port> RequiredPorts, Hashtable<Port, ArrayList<BIPComponent>> EffectPorttoComponents) {
+	/**
+	 * 
+	 * @param
+	 * @return
+	 */
+	BDD componentRequire(BIPComponent holderComponent, Port holderPort, ArrayList<Port> requiredPorts, Hashtable<Port, ArrayList<BIPComponent>> effectPortToComponents) {
 
-		BDD PortBDD;
-		Hashtable<Port, ArrayList<BDD>> RequiredBDDs = new Hashtable<Port, ArrayList<BDD>>();
+		BDD portBDD;
+		Hashtable<Port, ArrayList<BDD>> requiredBDDs = new Hashtable<Port, ArrayList<BDD>>();
 		ArrayList<BDD> PortBDDs = new ArrayList<BDD>();
-		Integer CompID = wrapper.getBIPComponentIdentity(HolderComponent);
+		Integer CompID = wrapper.getBIPComponentIdentity(holderComponent);
 		ArrayList<Port> componentPorts = (ArrayList<Port>) wrapper.getBIPComponentBehaviour(CompID).getEnforceablePorts();
 		int PortID = 0;
 		for (int i = 1; i <= componentPorts.size(); i++) {
-			if (componentPorts.get(i - 1).id.equals(HolderPort.id)) {
+			if (componentPorts.get(i - 1).id.equals(holderPort.id)) {
 				PortID = i;
 				break;
 			}
 		}
-		PortBDD = behenc.getPortBDDs().get(CompID)[PortID - 1];
+		portBDD = behenc.getPortBDDs().get(CompID)[PortID - 1];
 
 		ArrayList<BIPComponent> RequiredComponents = new ArrayList<BIPComponent>();
 		ArrayList<Port> AuxPorts = new ArrayList<Port>();
-		int size = EffectPorttoComponents.size();
+		int size = effectPortToComponents.size();
 		for (int p = 0; p < size; p++) {
-			Port port = RequiredPorts.get(p);
-			RequiredComponents.addAll(EffectPorttoComponents.get(port));
+			Port port = requiredPorts.get(p);
+			RequiredComponents.addAll(effectPortToComponents.get(port));
 			for (int i = 0; i < RequiredComponents.size(); i++) {
 				Integer ComID = wrapper.getBIPComponentIdentity(RequiredComponents.get(i));
 				ArrayList<Port> compPorts = (ArrayList<Port>) wrapper.getBIPComponentBehaviour(ComID).getEnforceablePorts();
 				int PID = 0;
 				for (int j = 1; j <= compPorts.size(); j++) {
-					if (compPorts.get(j - 1).id.equals(RequiredPorts.get(p).id)) {
+					if (compPorts.get(j - 1).id.equals(requiredPorts.get(p).id)) {
 						PID = j;
 						break;
 					}
 				}
 				PortBDDs.add(behenc.getPortBDDs().get(ComID)[PID - 1]);
 			}
-			RequiredBDDs.put(RequiredPorts.get(p), PortBDDs);
-			AuxPorts.add(RequiredPorts.get(p));
+			requiredBDDs.put(requiredPorts.get(p), PortBDDs);
+			AuxPorts.add(requiredPorts.get(p));
 		}
 
-		BDD Require = requireBDD(PortBDD, AuxPorts, RequiredBDDs);
+		BDD Require = requireBDD(portBDD, AuxPorts, requiredBDDs);
 		return Require;
 	}
 
@@ -308,19 +335,22 @@ public class GlueEncoderImpl implements GlueEncoder {
 		return accept;
 	}
 	
+	/**
+	 * This function computes the total Glue BDD that is the conjunction of the require and accept constraints.
+	 * For each require/accept macro we find the different combinations of the component instances that correspond
+	 * to each constraint and take the conjunction of all these.
+	 */
 	public BDD totalGlue() {
 		
 		BDD result = engine.getBDDManager().one();
 
 		logger.debug("Glue spec require Constraints size: {} ", glueSpec.requiresConstraints.size());
 		if (!glueSpec.requiresConstraints.isEmpty()) {
-			ArrayList<BDD> RequireBDDs = new ArrayList<BDD>();
 			for (Requires requires : glueSpec.requiresConstraints) {
-				RequireBDDs.addAll(decomposeRequireGlue(requires));
+				ArrayList<BDD> RequireBDDs = decomposeRequireGlue(requires);
 				for (BDD effectInstance : RequireBDDs) {
 					result.andWith(effectInstance);
 				}
-				RequireBDDs.clear();
 			}
 		} else {
 			logger.warn("No require constraints provided (usually there should be some).");
@@ -328,13 +358,11 @@ public class GlueEncoderImpl implements GlueEncoder {
 
 		logger.debug("Glue spec accept Constraints size: {} ", glueSpec.acceptConstraints.size());
 		if (!glueSpec.acceptConstraints.isEmpty()) {
-			ArrayList<BDD> AcceptBDDs = new ArrayList<BDD>();
 			for (Accepts accepts : glueSpec.acceptConstraints) {
-				AcceptBDDs.addAll(decomposeAcceptGlue(accepts));
+				ArrayList<BDD> AcceptBDDs = decomposeAcceptGlue(accepts);
 				for (BDD effectInstance : AcceptBDDs) {
 					result.andWith(effectInstance);
 				}
-				AcceptBDDs.clear();
 			}
 		} else {
 			logger.warn("No accept constraints were provided (usually there should be some).");
