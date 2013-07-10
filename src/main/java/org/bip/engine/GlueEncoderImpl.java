@@ -165,7 +165,16 @@ public class GlueEncoderImpl implements GlueEncoder {
 		return result;
 	}
 
-	/** BDD for the Require Constraint */
+	/**
+	 * Computes the BDD that corresponds to an Require macro.
+	 * 
+	 * @param BDD of the port of the component holder of the Require macro
+	 * @param Arraylist of ports of the "causes" part of the Require macro
+	 * @param Hashtable of ports of the "causes" part of the Require macro 
+	 * and the corresponding port BDDs of the component instances
+	 * 
+	 *  @return the BDD that corresponds to a Require macro.
+	 */
 	BDD requireBDD(BDD RequirePortHolder, ArrayList<Port> AuxPort, Hashtable<Port, ArrayList<BDD>> RequirePorts) {
 		BDD tmp, tmp2, tmp3;
 		BDD aux = engine.getBDDManager().zero();
@@ -206,7 +215,16 @@ public class GlueEncoderImpl implements GlueEncoder {
 
 	}
 
-	/** BDD for the Accept Constraint */
+	/**
+	 * Computes the BDD that corresponds to an Accept macro.
+	 * 
+	 * @param BDD of the port of the component holder of the Accept macro
+	 * @param Arraylist of ports of the "causes" part of the Accept macro
+	 * @param Hashtable of ports of the "causes" part of the Accept macro 
+	 * and the corresponding port BDDs of the component instances
+	 * 
+	 *  @return the BDD that corresponds to an Accept macro.
+	 */
 	BDD acceptBDD(BDD acceptPortHolder, ArrayList<Port> auxPort, Hashtable<Port, ArrayList<BDD>> acceptPorts) {
 		BDD tmp;
 		BDD accept_bdd = engine.getBDDManager().one();
@@ -246,7 +264,8 @@ public class GlueEncoderImpl implements GlueEncoder {
 	}
 
 	/**
-	 * Finds the BDDs of the ports of the components that are needed for computing the constraint macros.
+	 * Finds the BDDs of the ports of the components that are needed for computing one require macro and 
+	 * computes the BDD for this macro by calling the requireBDD method.
 	 * 
 	 * @param the component that holds the interaction require constraint
 	 * @param the port of the holder component
@@ -295,7 +314,16 @@ public class GlueEncoderImpl implements GlueEncoder {
 		return Require;
 	}
 
-	/** Accept BDD */
+	/**
+	 * Finds the BDDs of the ports of the components that are needed for computing one accept macro and 
+	 * computes the BDD for this macro by calling the acceptBDD method.
+	 * 
+	 * @param the component that holds the interaction accept constraint
+	 * @param the port of the holder component
+	 * @param the set of ports that are "accepted" by the macro
+	 * @param the list of components that correspond to the previous set of ports
+	 * @return the BDD that corresponds to an Accept macro
+	 */
 	BDD componentAccept(BIPComponent HolderComponent, Port HolderPort, ArrayList<Port> acceptedPorts, Hashtable<Port, ArrayList<BIPComponent>> EffectPorttoComponents) {
 
 		BDD portBDD;
