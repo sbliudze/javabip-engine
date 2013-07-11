@@ -30,7 +30,7 @@ public class CurrentStateEncoderImpl implements CurrentStateEncoder {
 	public BDD inform(BIPComponent component, String currentState, ArrayList<Port> disabledPorts) {
 		Integer CompID = wrapper.getBIPComponentIdentity(component);
 
-		ArrayList<String> componentStates = (ArrayList<String>) wrapper.getBIPComponentBehaviour(CompID).getStates();
+		ArrayList<String> componentStates = (ArrayList<String>) wrapper.getBehaviourById(CompID).getStates();
 		
 		if (currentState == null) {
 	        try {
@@ -52,7 +52,7 @@ public class CurrentStateEncoderImpl implements CurrentStateEncoder {
 
 		int[] noDisabledPorts = new int[disabledPorts.size()];
 		Hashtable<String, ArrayList<Port>> statePorts = new Hashtable<String, ArrayList<Port>>();
-		statePorts = (Hashtable<String, ArrayList<Port>>) wrapper.getBIPComponentBehaviour(CompID).getStateToPorts();
+		statePorts = (Hashtable<String, ArrayList<Port>>) wrapper.getBehaviourById(CompID).getStateToPorts();
 		ArrayList<Port> componentPorts = new ArrayList<Port>();
 		componentPorts = statePorts.get(currentState);
 
@@ -78,8 +78,8 @@ public class CurrentStateEncoderImpl implements CurrentStateEncoder {
 
 	private synchronized BDD componentCurrentStateBDD(Integer ComponentID, int stateID, int[] disabledPorts) {
 
-		int noStates =  ((ArrayList<String>) wrapper.getBIPComponentBehaviour(ComponentID).getStates()).size();
-		int noPorts = ((ArrayList<Port>)wrapper.getBIPComponentBehaviour(ComponentID).getEnforceablePorts()).size();
+		int noStates =  ((ArrayList<String>) wrapper.getBehaviourById(ComponentID).getStates()).size();
+		int noPorts = ((ArrayList<Port>)wrapper.getBehaviourById(ComponentID).getEnforceablePorts()).size();
 		BDD[] portsBDDs = new BDD[noPorts];
 		BDD[] statesBDDs = new BDD[noStates];
 

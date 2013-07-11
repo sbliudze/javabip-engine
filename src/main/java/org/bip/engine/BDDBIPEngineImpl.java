@@ -229,12 +229,12 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		int offset = 0;
 
 		for (int i = 0; i < wrapper.getNoComponents(); i++) {
-			int portsize = ((ArrayList<Port>)wrapper.getBIPComponentBehaviour(i).getEnforceablePorts()).size();
+			int portsize = ((ArrayList<Port>)wrapper.getBehaviourById(i).getEnforceablePorts()).size();
 			BIPComponent component = wrapper.getBIPComponent(i);
 			ArrayList<Port> enabledPorts = new ArrayList<Port>();
 			for (int l = 0; l < portsize; l++) {
 				if (chosenInteraction[positionsOfPorts.get(l + offset)] == 1) {
-					enabledPorts.add(((ArrayList<Port>)wrapper.getBIPComponentBehaviour(i).getEnforceablePorts()).get(l));
+					enabledPorts.add(((ArrayList<Port>)wrapper.getBehaviourById(i).getEnforceablePorts()).get(l));
 				}
 			}
 			if (!enabledPorts.isEmpty()) {

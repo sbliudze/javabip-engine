@@ -57,6 +57,12 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	private Hashtable<Integer, Behaviour> idBehaviourMapping = new Hashtable<Integer, Behaviour>();
 	
 	/**
+	 * Helper hashtable with integers representing the local identities of registered components 
+	 * as the keys and the Behaviours of these components as the values.
+	 */
+	private Hashtable<BIPComponent, Behaviour> componentBehaviourMapping = new Hashtable<BIPComponent, Behaviour>();
+	
+	/**
 	 * Helper hashtable with strings as keys representing the component type of the registered components
 	 * and ArrayList of BIPComponent instances that correspond to the component type specified in the key.
 	 */
@@ -182,6 +188,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 			logger.info("Component type: {} with localID: {} ", component.getName(), registeredComponentID);
 			idComponentMapping.put(registeredComponentID, component);
 			idBehaviourMapping.put(registeredComponentID, behaviour);
+			componentBehaviourMapping.put(component, behaviour);
 			int nbComponentPorts = ((ArrayList<Port>)behaviour.getEnforceablePorts()).size();
 			int nbComponentStates = ((ArrayList<String>)behaviour.getStates()).size();
 	
@@ -395,6 +402,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 		componentIdMapping.clear();
 		idComponentMapping.clear();
 		idBehaviourMapping.clear();
+		componentBehaviourMapping.clear();
 		componentsHaveInformed.clear();
 		return;
 	}
@@ -468,8 +476,15 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	/**
 	 * Helper function that given the local identity of a component returns the behaviour as a Behaviour Object.
 	 */
-	public Behaviour getBIPComponentBehaviour(int identity) {
+	public Behaviour getBehaviourById(int identity) {
 		return idBehaviourMapping.get(identity);
+	}
+
+	/**
+	 * Helper function that given a component returns the corresponding behaviour as a Behaviour Object.
+	 */
+	public Behaviour getBehaviourByComponent(BIPComponent component) {
+		return componentBehaviourMapping.get(component);
 	}
 
 	/**

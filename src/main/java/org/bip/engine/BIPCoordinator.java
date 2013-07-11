@@ -48,7 +48,15 @@ public interface BIPCoordinator extends BIPEngine {
 	 * @param identity of a component instance
 	 * @return behaviour of the BIP component instance specified by the identity
 	 */
-	Behaviour getBIPComponentBehaviour(int componentIdentity);
+	Behaviour getBehaviourById(int componentIdentity);
+	
+	/**
+	 * Returns the Behaviour of the BIP component.
+	 * 
+	 * @param a component instance
+	 * @return behaviour of the BIP component
+	 */
+	Behaviour getBehaviourByComponent(BIPComponent component);
 	
 	/**
 	 * Returns the BIP component instances registered in the system that correspond
