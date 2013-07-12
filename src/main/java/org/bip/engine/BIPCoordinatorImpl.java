@@ -126,10 +126,14 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 
 
 	public synchronized void specifyGlue(BIPGlue glue) {
-		glueenc.specifyGlue(glue);
+		try {
+			glueenc.specifyGlue(glue);
+		} catch (BIPEngineException e) {
+			e.printStackTrace();
+		}
 	}
 	
-	private synchronized void orderGlueEncoderToComputeTotalGlueAndInformEngine() {
+	private synchronized void orderGlueEncoderToComputeTotalGlueAndInformEngine() throws BIPEngineException {
 		engine.informGlue(glueenc.totalGlue());
 	}
 	
@@ -151,10 +155,11 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 		 */
 		if (componentIdMapping.contains(component)) {
 			try {
+				logger.error("Component has already registered before.");
 				throw new BIPEngineException("Component has already registered before.");
 			} catch (BIPEngineException e) {
 				e.printStackTrace();
-				logger.error(e.getMessage());
+
 			}
 		} 
 		else {
@@ -219,11 +224,11 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 				logger.info("Component: {}", component.getName());
 				logger.info("informs that is at state: {}", currentState);
 				logger.info("******************************************************************************");
-
+				logger.error("Component has already informed the engine in this execution cycle.");
 				throw new BIPEngineException("Component has already informed the engine in this execution cycle.");
 			} catch (BIPEngineException e) {
 				e.printStackTrace();
-				logger.error(e.getMessage());
+				
 			}
 		} 
 		
@@ -266,10 +271,10 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 				 */
 			} else {
 				try {
+					logger.error("Component has not registered yet.");
 					throw new BIPEngineException("Component has not registered yet.");
 				} catch (BIPEngineException e) {
-					e.printStackTrace();
-					logger.error(e.getMessage());
+					e.printStackTrace();					
 				}
 			}
 		}
@@ -299,8 +304,9 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	/**
 	 * Initialization phase. Orders the Behaviour and Current State Encoders to compute their total BDDs 
 	 * and send these to the BDDBIPEngine. 
+	 * @throws BIPEngineException 
 	 */
-	private void coordinatorCycleInitialization(){
+	private void coordinatorCycleInitialization() throws BIPEngineException{
 		/*
 		 * Wait until the execute() has been called signaling that all the components have registered 
 		 */	
@@ -370,7 +376,11 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	public void run() {
 		logger.info("Engine thread is started.");
 		
-		coordinatorCycleInitialization();
+		try {
+			coordinatorCycleInitialization();
+		} catch (BIPEngineException e1) {
+			e1.printStackTrace();
+		}
 		/**
 		 * Start the Engine cycle
 		 */

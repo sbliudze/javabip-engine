@@ -17,7 +17,7 @@ public interface GlueEncoder {
      * @param glue
      * @throws BIPEngineException 
      */
-    void specifyGlue(BIPGlue glue);
+    void specifyGlue(BIPGlue glue) throws BIPEngineException;
 	/**
 	 * Setter for the BehaviourEncoder
 	 */
@@ -33,8 +33,9 @@ public interface GlueEncoder {
 	
 	/**
 	 * @return the total Glue BDD
+	 * @throws BIPEngineException 
 	 */
-	BDD totalGlue();
+	BDD totalGlue() throws BIPEngineException;
 
 }
 

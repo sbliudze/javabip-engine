@@ -37,8 +37,9 @@ public class GlueEncoderImpl implements GlueEncoder {
 	 * as a parameter and stored in a global field of the class.
 	 * 
 	 * If the glue field is null throw an exception. 
+	 * @throws BIPEngineException 
 	 */
-	public void specifyGlue(BIPGlue glue){
+	public void specifyGlue(BIPGlue glue) throws BIPEngineException{
 
 		if (glue == null) {
 			try {
@@ -47,6 +48,7 @@ public class GlueEncoderImpl implements GlueEncoder {
 				throw new BIPEngineException("Glue parser outputs null");
 			} catch (BIPEngineException e) {
 				e.printStackTrace();
+				throw e;
 			}
 		}
 		this.glueSpec = glue;
@@ -58,15 +60,13 @@ public class GlueEncoderImpl implements GlueEncoder {
 	 * 
 	 * @param ArrayList of causes ports
 	 * @return Hashtable with the causes ports as keys and the set of component instances that correspond to them as values
+	 * @throws BIPEngineException 
 	 */
-	Hashtable<Port, ArrayList<BIPComponent>> findCausesComponents (ArrayList<Port> causesPorts){
+	Hashtable<Port, ArrayList<BIPComponent>> findCausesComponents (ArrayList<Port> causesPorts) throws BIPEngineException{
 		
 		Hashtable<Port, ArrayList<BIPComponent>> portToComponents = new Hashtable<Port, ArrayList<BIPComponent>>();
-		// TODO: Not having a spec types is a serious problem, so the execution should probably stop in such cases, 
-		// meaning that the exceptions should be re-thrown 
+
 		for (Port causePort : causesPorts) {
-			// TODO: This should be as much of a problem as a missing spec for the effect (see below)
-			// Hence, the treatment should be the same (an error rather than a warning)
 			if (causePort.specType == null || causePort.specType.isEmpty()) {
 					logger.warn("Spec type not specified or empty in a Require macro cause");
 			} else {
@@ -77,6 +77,15 @@ public class GlueEncoderImpl implements GlueEncoder {
 				logger.warn("Port name not specified or empty in a Require macro cause");
 			} else {
 				portToComponents.put(causePort, wrapper.getBIPComponentInstances(causePort.specType));
+				if (portToComponents.get(causePort).isEmpty()) {
+					try {
+						logger.error("Spec type in causes for component {} was defined incorrectly. It does not match any registered component types", causePort.specType);
+						throw new BIPEngineException("Spec type in causes was defined incorrectly");
+					} catch (BIPEngineException e) {
+						e.printStackTrace();
+						throw e;
+					}
+				}	
 			}
 		}
 			return portToComponents;
@@ -88,31 +97,38 @@ public class GlueEncoderImpl implements GlueEncoder {
 	 * 
 	 * @param Effect port
 	 * @return ArrayList with the set of component instances that correspond to the effect port
+	 * @throws BIPEngineException 
 	 */
-	ArrayList<BIPComponent> findEffectComponents (Port effectPort){
+	ArrayList<BIPComponent> findEffectComponents (Port effectPort) throws BIPEngineException{
 		
-		//TODO: Add this as an exception 
 		if (effectPort.id == null || effectPort.id.isEmpty()) {
-			logger.warn("Port name not specified or empty in a Require macro cause");
+			try {
+				logger.error("Port name not specified or empty in a macro cause.");
+				throw new BIPEngineException("Port name not specified or empty in a macro cause.");
+			} catch (BIPEngineException e) {
+				e.printStackTrace();
+				throw e;
+			}	
 		}
 		
 		if (effectPort.specType == null || effectPort.specType.isEmpty()) {
 			try {
-				logger.error("Spec type not specified or empty in a Require macro effect");
-				throw new BIPEngineException("Spec type not specified or empty in a Require macro effect");
+				logger.error("Spec type not specified or empty in a macro effect");
+				throw new BIPEngineException("Spec type not specified or empty in a macro effect");
 			} catch (BIPEngineException e) {
 				e.printStackTrace();
+				throw e;
 			}	
 		}
 		
 		ArrayList<BIPComponent> requireEffectComponents = wrapper.getBIPComponentInstances(effectPort.specType);
 		if (requireEffectComponents.isEmpty()) {
 			try {
-				logger.error("Spec type in require effect for component {} was defined incorrectly. It does not match any registered component types", effectPort.specType);
-				throw new BIPEngineException("Spec type in require effect was defined incorrectly");
+				logger.error("Spec type in effect for component {} was defined incorrectly. It does not match any registered component types", effectPort.specType);
+				throw new BIPEngineException("Spec type in effect was defined incorrectly");
 			} catch (BIPEngineException e) {
 				e.printStackTrace();
-				//TODO: re-throw exception
+				throw e;
 			}
 		}	
 		return requireEffectComponents;
@@ -125,18 +141,35 @@ public class GlueEncoderImpl implements GlueEncoder {
 	 * 
 	 * @param  require interaction constraints
 	 * @return Arraylist of BDDs for all the different combinations of component instances
+	 * @throws BIPEngineException 
 	 */
-	ArrayList<BDD> decomposeRequireGlue(Requires requires) {
+	ArrayList<BDD> decomposeRequireGlue(Requires requires) throws BIPEngineException {
 		ArrayList<BDD> result = new ArrayList<BDD>();
 		
+		if (requires.effect.equals(null)) {
+			try {
+				logger.error("Effect part of a Require constraint was not specified in the macro.");
+				throw new BIPEngineException("Effect part of a Require constraint was not specified");
+			} catch (BIPEngineException e) {
+				e.printStackTrace();
+				throw e;
+			}
+		}	
 		/* Find all effect component instances */
 		ArrayList<BIPComponent> requireEffectComponents =findEffectComponents(requires.effect);
 		
+		if (requires.causes.equals(null)) {
+			try {
+				logger.error("Causes part of a Require constraint was not specified in the macro.");
+				throw new BIPEngineException("Causes part of a Require constraint was not specified");
+			} catch (BIPEngineException e) {
+				e.printStackTrace();
+				throw e;
+			}
+		}
 		/* Find all causes component instances */
 		Hashtable<Port, ArrayList<BIPComponent>> portToComponents = findCausesComponents(requires.causes);
 
-
-		
 		for (BIPComponent effectInstance : requireEffectComponents) {
 			logger.debug("Require Effect port type: {} ", requires.effect.id);
 			logger.debug("PortToComponents size: {} ", portToComponents.size());
@@ -153,22 +186,42 @@ public class GlueEncoderImpl implements GlueEncoder {
 	 * 
 	 * @param  accept interaction constraints
 	 * @return Arraylist of BDDs for all the different combinations of component instances
+	 * @throws BIPEngineException 
 	 */
-	ArrayList<BDD> decomposeAcceptGlue(Accepts accept) {
+	ArrayList<BDD> decomposeAcceptGlue(Accepts accept) throws BIPEngineException {
 		ArrayList<BDD> result = new ArrayList<BDD>();
+
+		if (accept.effect.equals(null)) {
+			try {
+				logger.error("Effect part of an Accept constraint was not specified in the macro.");
+				throw new BIPEngineException("Effect part of an Accept constraint was not specified");
+			} catch (BIPEngineException e) {
+				e.printStackTrace();
+				throw e;
+			}
+		}
+		
+		/* Find all effect component instances */
+		ArrayList<BIPComponent> acceptEffectComponents = findEffectComponents(accept.effect);
+		
+		if (accept.causes.equals(null)) {
+			try {
+				logger.error("Causes part of an Accept constraint was not specified in the macro.");
+				throw new BIPEngineException("Causes part of an Accept constraint was not specified");
+			} catch (BIPEngineException e) {
+				e.printStackTrace();
+				throw e;
+			}
+		}
 		
 		/* Find all causes component instances */
 		Hashtable<Port, ArrayList<BIPComponent>> portToComponents = findCausesComponents(accept.causes);
-
-		/* Find all effect component instances */
-		ArrayList<BIPComponent> acceptEffectComponents = findEffectComponents(accept.effect);
 
 		for (BIPComponent effectInstance : acceptEffectComponents) {
 			logger.debug("Accept Effect port type: {} ", accept.effect.id);
 			logger.debug("PortToComponents size: {} ", portToComponents.size());
 			result.add(componentAccept(effectInstance, accept.effect, portToComponents));
 		}
-		
 		return result;
 	}
 
@@ -470,8 +523,9 @@ public class GlueEncoderImpl implements GlueEncoder {
 	 * This function computes the total Glue BDD that is the conjunction of the require and accept constraints.
 	 * For each require/accept macro we find the different combinations of the component instances that correspond
 	 * to each constraint and take the conjunction of all these.
+	 * @throws BIPEngineException 
 	 */
-	public BDD totalGlue() {
+	public BDD totalGlue() throws BIPEngineException {
 		
 		BDD result = engine.getBDDManager().one();
 
