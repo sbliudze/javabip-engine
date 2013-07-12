@@ -160,21 +160,20 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 		else {
 			logger.info("********************************* Register *************************************");
 			
-			/**
+			/*
 			 * For each new component instance, generate a unique identity for local use.
 			 */
 			int registeredComponentID = idGenerator.getAndIncrement(); 
 			
-			/**
+			/*
 			 * Map all component instances of the same type in the typeInstancesMapping Hashtable
 			 */
 			ArrayList<BIPComponent> componentInstances = new ArrayList<BIPComponent> ();
 			
-			/**
+			/*
 			 * If this component type already exists in the hashtable, update the ArrayList of BIPComponents
 			 * that corresponds to this component type.
 			 */
-
 			if (typeInstancesMapping.containsKey(component.getName())){
 				componentInstances.addAll(typeInstancesMapping.get(component.getName()));
 			}
@@ -228,7 +227,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 			}
 		} 
 		
-		/**
+		/*
 		 * If a component informs more than once in the same execution cycle we add the else below to prevent the 
 		 * re-computation of the current state BDD for the specific component. The  deletion of the else will not
 		 * result in any data corruption but overhead will be added.
@@ -250,7 +249,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 					logger.info("informs that is at state: {}", currentState);
 					logger.info("******************************************************************************");
 	
-					/**
+					/*
 					 * The haveAllComponentsInformed semaphore is used to indicate whether all registered components
 					 * have informed and to order one execution cycle of the engine. The semaphore is acquired in run().
 					 * 
@@ -302,22 +301,22 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	 * and send these to the BDDBIPEngine. 
 	 */
 	private void coordinatorCycleInitialization(){
-		/**
+		/*
 		 * Wait until the execute() has been called signaling that all the components have registered 
 		 */	
 		synchronized (this) { 
 			while (!isEngineExecuting) {
 				try {
-					logger.info("Waiting for the engine execute to be called...");
+					logger.debug("Waiting for the engine execute to be called...");
 					wait();
-					logger.info("Waiting for the engine execute done.");
+					logger.debug("Waiting for the engine execute done.");
 				} catch (InterruptedException e) {
 					logger.warn("Engine run is interrupted: {}", Thread.currentThread().getName());
 				}	
 			}
 		}
 			
-		/**
+		/*
 		 * For the moment, all components must be registered before execute() is called.  Therefore the engine might
 		 * as well quit if the following test fails.  However, in the future we want components to be able to 
 		 * register and unregister on the fly.  In this case running the engine with no registered components becomes
@@ -327,24 +326,24 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 			logger.error("Thread started but no components have been registered yet.");
 		}
 		
-		/**
+		/*
 		 * To order the engine to begin its execution cycle we need to know first whether all components have informed
 		 * the BIP Coordinator about their current state. For this reason, the semaphore haveAllComponentsInformed is used
 		 * that it is initialized  here with the number of registered components in the system. Note that, if components
 		 * can be registered and unregistered on the fly the semaphore has to be updated with the new number of components
 		 * in the system.
 		 */
-		/**
+		/*
 		 * Acquire permits for the number of registered components, which have not informed about their current state yet.
 		 * NB: Components may have inform the BIPCoordinator before the execute() is called
 		 */
 		synchronized (componentsHaveInformed) {
 			haveAllComponentsInformed= new Semaphore(nbComponents);
 			try {
-				logger.info("Waiting for the engine semaphore to be initialized to 0...");
+				logger.debug("Waiting for the engine semaphore to be initialized to 0...");
 				haveAllComponentsInformed.acquire(nbComponents);
 				isEngineSemaphoreReady = true;
-				logger.info("Engine semaphore initialised");
+				logger.debug("Engine semaphore initialised");
 			} catch (InterruptedException e1) {
 				e1.printStackTrace();
 				logger.error("Semaphore have all components informed acquire method for the number of registered components in the system was interrupted.");
@@ -352,15 +351,15 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 		}
 		
 		try {
-			logger.info("Waiting for the cycle initialisation acquire...");
+			logger.debug("Waiting for the cycle initialisation acquire...");
 			haveAllComponentsInformed.acquire(nbComponents - componentsHaveInformed.size());
-			logger.info("The cycle initialisation acquire successful");
+			logger.debug("The cycle initialisation acquire successful");
 		} catch (InterruptedException e1) {
 			e1.printStackTrace();
 			logger.error("Semaphore have all components informed acquire method for the number of components that still have to inform was interrupted.");
 		}
 
-		/** 
+		/* 
 		 * Compute behaviour and glue BDDs with the components that have registered before the call to execute(). 
 		 * If components were to register after the call to execute() these BDDs must be recomputed accordingly.
 		 */
@@ -385,9 +384,9 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 			engine.runOneIteration();
 
 			try {
-				logger.info("Waiting for the acquire in run()...");
+				logger.debug("Waiting for the acquire in run()...");
 				haveAllComponentsInformed.acquire(nbComponents);
-				logger.info("run() acquire successful.");
+				logger.debug("run() acquire successful.");
 			} catch (InterruptedException e) {
 				isEngineExecuting = false;
 				e.printStackTrace();

@@ -129,11 +129,13 @@ public class GlueEncoderImpl implements GlueEncoder {
 	ArrayList<BDD> decomposeRequireGlue(Requires requires) {
 		ArrayList<BDD> result = new ArrayList<BDD>();
 		
+		/* Find all effect component instances */
+		ArrayList<BIPComponent> requireEffectComponents =findEffectComponents(requires.effect);
+		
 		/* Find all causes component instances */
 		Hashtable<Port, ArrayList<BIPComponent>> portToComponents = findCausesComponents(requires.causes);
 
-		/* Find all effect component instances */
-		ArrayList<BIPComponent> requireEffectComponents =findEffectComponents(requires.effect);
+
 		
 		for (BIPComponent effectInstance : requireEffectComponents) {
 			logger.debug("Require Effect port type: {} ", requires.effect.id);
@@ -359,7 +361,6 @@ public class GlueEncoderImpl implements GlueEncoder {
 		 * For each cause port, we obtain all the component instances that provide this port and store the BDDs corresponding
 		 * to the associated port variables in a common list, which is then passed on to the BDD computing function (requireBDD).  
 		 */
-		
 		for (Enumeration<Port> portEnum = causesPortToComponents.keys(); portEnum.hasMoreElements();) {
 			Port requiredPort = portEnum.nextElement();
 			
