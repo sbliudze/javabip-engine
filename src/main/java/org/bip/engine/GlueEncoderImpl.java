@@ -296,10 +296,10 @@ public class GlueEncoderImpl implements GlueEncoder {
 		BDD allCausesBDD = engine.getBDDManager().one();
 //		int portBDDsize = behenc.getPortBDDs().size();
 		ArrayList<BDD> totalPortBDDs= new ArrayList<BDD>();
-		Hashtable<Integer, BDD[]> portToBDDs = behenc.getPortBDDs();
+		Hashtable<BIPComponent, BDD[]> portToBDDs = behenc.getPortBDDs();
 
-		for (Enumeration<Integer> portIdEnum = portToBDDs.keys(); portIdEnum.hasMoreElements(); ){
-			Integer portID = portIdEnum.nextElement();
+		for (Enumeration<BIPComponent> portIdEnum = portToBDDs.keys(); portIdEnum.hasMoreElements(); ){
+			BIPComponent portID = portIdEnum.nextElement();
 			BDD [] portBDD = portToBDDs.get(portID);
 			for (int p=0; p<portBDD.length;p++){
 				totalPortBDDs.add(portBDD[p]);
@@ -335,9 +335,6 @@ public class GlueEncoderImpl implements GlueEncoder {
 				if (nbPortBDD < auxPortBDDs.size() && auxPortBDDs.get(nbPortBDD).equals(totalPortBDD)){
 					exist =true;
 				}
-				else{
-					// TODO: Complain
-				}	
 //			for (int j = 0; j < acceptPorts.size(); j++) {
 //				ArrayList<BDD> acceptBDDs=acceptPorts.get(auxPort.get(j));
 //				for(int k=0; k< acceptBDDs.size(); k++){				
@@ -395,8 +392,6 @@ public class GlueEncoderImpl implements GlueEncoder {
 		/*
 		 * Obtain the BDD for the port variable corresponding to the effect instance of the macro
 		 */
-		// TODO: Once the hash table is changed in the behaviour encoder, remove componentId here (will not be needed)
-		Integer componentId = wrapper.getBIPComponentIdentity(holderComponent);
 		// TODO: Is it possible to have a hash table mapping port names to Port ids or BDDs without paying too much for it?
 		ArrayList<Port> componentPorts = (ArrayList<Port>) wrapper.getBehaviourByComponent(holderComponent).getEnforceablePorts();
 		logger.debug("holder component type: {}", holderComponent.getName());
@@ -408,7 +403,7 @@ public class GlueEncoderImpl implements GlueEncoder {
 			portId++;
 		}
 		logger.debug("PortId: {} ", portId);
-		effectPortBDD = behenc.getPortBDDs().get(componentId)[portId];
+		effectPortBDD = behenc.getPortBDDs().get(holderComponent)[portId];
 
 		/*
 		 * For each cause port, we obtain all the component instances that provide this port and store the BDDs corresponding
@@ -419,10 +414,7 @@ public class GlueEncoderImpl implements GlueEncoder {
 			
 			ArrayList<BIPComponent> requiredComponents = causesPortToComponents.get(requiredPort);
 			for (BIPComponent requiredComponent : requiredComponents) {
-				// TODO: As above for the behaviour encoder hash table
-
-				componentId = wrapper.getBIPComponentIdentity(requiredComponent);
-				ArrayList<Port> compPorts = (ArrayList<Port>) wrapper.getBehaviourById(componentId).getEnforceablePorts();
+				ArrayList<Port> compPorts = (ArrayList<Port>) wrapper.getBehaviourByComponent(requiredComponent).getEnforceablePorts();
 				logger.debug("causes component type: {}", requiredComponent.getName());
 				logger.debug("causes componentPorts size: {}", compPorts.size());
 				portId = 0;
@@ -430,7 +422,7 @@ public class GlueEncoderImpl implements GlueEncoder {
 				while (portId < compPorts.size() && !compPorts.get(portId).id.equals(requiredPort.id)) {
 					portId++;
 				}
-				portBDDs.add(behenc.getPortBDDs().get(componentId)[portId]);
+				portBDDs.add(behenc.getPortBDDs().get(requiredComponent)[portId]);
 				logger.debug("port BDDs size: {}", portBDDs.size());
 				
 				
@@ -466,11 +458,8 @@ public class GlueEncoderImpl implements GlueEncoder {
 		
 		/*
 		 * Obtain the BDD for the port variable corresponding to the effect instance of the macro
-		 */
-		// TODO: Once the hash table is changed in the behaviour encoder, remove componentId here (will not be needed)
-		Integer componentId = wrapper.getBIPComponentIdentity(holderComponent);
+		 */		
 		// TODO: Is it possible to have a hash table mapping port names to Port ids or BDDs without paying too much for it?
-		
 		ArrayList<Port> componentPorts = (ArrayList<Port>) wrapper.getBehaviourByComponent(holderComponent).getEnforceablePorts();
 		logger.debug("holder component type: {}", holderComponent.getName());
 		logger.debug("holder port type: {}", holderPort.id);
@@ -481,7 +470,7 @@ public class GlueEncoderImpl implements GlueEncoder {
 			portId++;
 		}
 		logger.debug("PortId: {} ", portId);
-		effectPortBDD = behenc.getPortBDDs().get(componentId)[portId];
+		effectPortBDD = behenc.getPortBDDs().get(holderComponent)[portId];
 		
 		/*
 		 * For each cause port, we obtain all the component instances that provide this port and store the BDDs corresponding
@@ -492,10 +481,8 @@ public class GlueEncoderImpl implements GlueEncoder {
 		
 		ArrayList<BIPComponent> acceptedComponents = causesPortToComponents.get(requiredPort);
 		for (BIPComponent acceptedComponent : acceptedComponents) {
-			// TODO: As above for the behaviour encoder hash table
 
-			componentId = wrapper.getBIPComponentIdentity(acceptedComponent);
-			ArrayList<Port> compPorts = (ArrayList<Port>) wrapper.getBehaviourById(componentId).getEnforceablePorts();
+			ArrayList<Port> compPorts = (ArrayList<Port>) wrapper.getBehaviourByComponent(acceptedComponent).getEnforceablePorts();
 			logger.debug("causes component type: {}", acceptedComponent.getName());
 			logger.debug("causes componentPorts size: {}", compPorts.size());
 			portId = 0;
@@ -503,7 +490,7 @@ public class GlueEncoderImpl implements GlueEncoder {
 			while (portId < compPorts.size() && !compPorts.get(portId).id.equals(requiredPort.id)) {
 				portId++;
 			}
-			portBDDs.add(behenc.getPortBDDs().get(componentId)[portId]);
+			portBDDs.add(behenc.getPortBDDs().get(acceptedComponent)[portId]);
 			logger.debug("port BDDs size: {}", portBDDs.size());
 			
 			

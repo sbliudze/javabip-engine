@@ -82,12 +82,13 @@ public class CurrentStateEncoderImpl implements CurrentStateEncoder {
 		int noPorts = ((ArrayList<Port>)wrapper.getBehaviourById(ComponentID).getEnforceablePorts()).size();
 		BDD[] portsBDDs = new BDD[noPorts];
 		BDD[] statesBDDs = new BDD[noStates];
+		BIPComponent component = wrapper.getBIPComponent(ComponentID);
 
 		for (int i = 0; i < noPorts; i++) {
-			portsBDDs[i] = behaviourEncoder.getPortBDDs().get(ComponentID)[i];
+			portsBDDs[i] = behaviourEncoder.getPortBDDs().get(component)[i];
 		}
 		for (int j = 0; j < noStates; j++) {
-			statesBDDs[j] = behaviourEncoder.getStateBDDs().get(ComponentID)[j];
+			statesBDDs[j] = behaviourEncoder.getStateBDDs().get(component)[j];
 		}
 
 		BDD partialBDD[] = new BDD[2];

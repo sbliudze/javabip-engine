@@ -43,6 +43,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	 * of registered components as the values.
 	 */
 	private Hashtable<BIPComponent, Integer> componentIdMapping = new Hashtable<BIPComponent, Integer>();
+	private ArrayList <BIPComponent> registeredComponents = new ArrayList <BIPComponent> ();
 	
 	/**
 	 * Helper hashtable with integers representing the local identities of registered components 
@@ -153,7 +154,8 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 		/**
 		 *  This condition checks whether the component has already been registered.
 		 */
-		if (componentIdMapping.contains(component)) {
+		if (registeredComponents.contains(component)){
+//		if (componentIdMapping.contains(component)) {
 			try {
 				logger.error("Component has already registered before.");
 				throw new BIPEngineException("Component has already registered before.");
@@ -187,6 +189,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 			typeInstancesMapping.put(component.getName(), componentInstances);
 			logger.debug("Component name: {}", component.getName());
 			logger.debug("Component instances size: {}", componentInstances.size());
+			registeredComponents.add(component);
 
 			componentIdMapping.put(component, registeredComponentID);
 			logger.info("Component type: {} with localID: {} ", component.getName(), registeredComponentID);
@@ -196,7 +199,8 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 			int nbComponentPorts = ((ArrayList<Port>)behaviour.getEnforceablePorts()).size();
 			int nbComponentStates = ((ArrayList<String>)behaviour.getStates()).size();
 	
-			behenc.createBDDNodes(registeredComponentID, nbComponentPorts, nbComponentStates);
+			behenc.createBDDNodes(component, nbComponentPorts, nbComponentStates);
+//			behenc.createBDDNodes(registeredComponentID, nbComponentPorts, nbComponentStates);
 			engine.informBehaviour(component, behenc.behaviourBDD(registeredComponentID));
 
 			// TODO: (minor) think whether a better data structure is possible for associating the variable 
@@ -243,7 +247,8 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 			/** 
 			 * This condition checks whether the component has already registered.
 			 */
-			if (componentIdMapping.containsKey(component)) {
+			if (registeredComponents.contains(component)){
+//			if (componentIdMapping.containsKey(component)) {
 				synchronized (componentsHaveInformed) {
 					componentsHaveInformed.add(component);
 					engine.informCurrentState(component, currstenc.inform(component, currentState, disabledPorts));

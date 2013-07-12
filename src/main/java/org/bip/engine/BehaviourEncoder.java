@@ -2,6 +2,8 @@ package org.bip.engine;
 
 import java.util.Hashtable;
 
+import org.bip.api.BIPComponent;
+
 import net.sf.javabdd.BDD;
 
 
@@ -17,12 +19,7 @@ public interface BehaviourEncoder {
 	 * @param noComponentPorts
 	 * @param noComponentStates
 	 */
-	void createBDDNodes(int componentID, int noComponentPorts, int noComponentStates);
-	
-//	/**
-//	 * @return the BDD that corresponds to the total behaviour of the system
-//	 */
-//	BDD totalBehaviour();
+	void createBDDNodes(BIPComponent component, int noComponentPorts, int noComponentStates);
 	
 	/**
 	 * 
@@ -44,12 +41,12 @@ public interface BehaviourEncoder {
 	/**
 	 * @return the BDDs that correspond to the states of each component
 	 */
-	Hashtable<Integer, BDD[]> getStateBDDs();
+    Hashtable<BIPComponent, BDD[]> getStateBDDs();
 
 	/**
 	 * @return the BDDs that correspond to the ports of each component
 	 */
-	Hashtable<Integer, BDD[]> getPortBDDs();
+    Hashtable<BIPComponent, BDD[]> getPortBDDs();
 	
 }
 
