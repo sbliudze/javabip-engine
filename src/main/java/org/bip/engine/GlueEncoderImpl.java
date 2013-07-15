@@ -244,7 +244,7 @@ public class GlueEncoderImpl implements GlueEncoder {
 		/* Find all effect component instances */
 		ArrayList<BIPComponent> acceptEffectComponents = findEffectComponents(accept.effect);
 		
-		if (accept.causes.equals(null) || accept.causes.isEmpty()) {
+		if (accept.causes.equals(null)) {
 			try {
 				logger.error("Causes part of an Accept constraint was not specified in the macro.");
 				throw new BIPEngineException("Causes part of an Accept constraint was not specified");

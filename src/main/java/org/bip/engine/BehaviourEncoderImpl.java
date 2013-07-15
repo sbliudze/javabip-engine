@@ -7,6 +7,7 @@ import java.util.Map;
 import net.sf.javabdd.BDD;
 
 import org.bip.api.BIPComponent;
+import org.bip.api.Behaviour;
 import org.bip.behaviour.Port;
 import org.bip.exceptions.BIPEngineException;
 import org.slf4j.Logger;
@@ -71,10 +72,15 @@ public class BehaviourEncoderImpl implements BehaviourEncoder {
 	/** Computes the Behavior BDD of a component */
 	public synchronized BDD behaviourBDD(int componentID) {
 		BDD componentBehaviour = engine.getBDDManager().zero(); // for OR-ing
-		ArrayList<Port> componentPorts = (ArrayList<Port>) wrapper.getBehaviourById(componentID).getEnforceablePorts();
-		ArrayList<String> componentStates = (ArrayList<String>) wrapper.getBehaviourById(componentID).getStates();
+		
+		Behaviour behaviour = wrapper.getBehaviourById(componentID);
+		
+		ArrayList<Port> componentPorts = (ArrayList<Port>) behaviour.getEnforceablePorts();
+		ArrayList<String> componentStates = (ArrayList<String>) behaviour.getStates();
+
 		int noStates = componentStates.size();
-		int noPorts = ((ArrayList<Port>)wrapper.getBehaviourById(componentID).getEnforceablePorts()).size();
+		int noPorts = componentPorts.size();
+
 		BIPComponent component = wrapper.getBIPComponent(componentID);
 
 		BDD[] portsBDDs = new BDD[noPorts];
