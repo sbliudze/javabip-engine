@@ -1,6 +1,7 @@
 package org.bip.engine;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Enumeration;
 
 import java.util.Hashtable;
@@ -66,10 +67,13 @@ public class GlueEncoderImpl implements GlueEncoder {
 		
 		Hashtable<Port, ArrayList<BIPComponent>> portToComponents = new Hashtable<Port, ArrayList<BIPComponent>>();
 
+
 		for (Port causePort : causesPorts) {
 			if (causePort.specType == null || causePort.specType.isEmpty()) {
 					logger.warn("Spec type not specified or empty in a Require macro cause");
 			} else {
+				//TODO: Can I use the same key twice in a hashtable? Not good.
+				//TODO: what if the same port appears twice? Store cardinality instead of finding again all the instances
 				portToComponents.put(causePort, wrapper.getBIPComponentInstances(causePort.specType));
 			}
 
@@ -178,8 +182,6 @@ public class GlueEncoderImpl implements GlueEncoder {
 		/* Find all effect component instances */
 		ArrayList<BIPComponent> requireEffectComponents =findEffectComponents(requires.effect);
 		
-		//TODO: consistency with Accept
-		//if (requires.causes.equals(null) || requires.causes.isEmpty()) {
 		if (requires.causes.equals(null)) {
 			try {
 				logger.error("Causes part of a Require constraint was not specified in the macro.");
@@ -189,6 +191,7 @@ public class GlueEncoderImpl implements GlueEncoder {
 				throw e;
 			}
 		}
+		
 		/* Find all causes component instances */
 		Hashtable<Port, ArrayList<BIPComponent>> portToComponents = findCausesComponents(requires.causes);
 		for (BIPComponent effectInstance : requireEffectComponents) {
@@ -269,7 +272,6 @@ public class GlueEncoderImpl implements GlueEncoder {
 	 * Computes the BDD that corresponds to a Require macro.
 	 * 
 	 * @param BDD of the port of the component holder of the Require macro
-	 * @param Arraylist of ports of the "causes" part of the Require macro
 	 * @param Hashtable of ports of the "causes" part of the Require macro 
 	 * and the corresponding port BDDs of the component instances
 	 * 
@@ -320,17 +322,38 @@ public class GlueEncoderImpl implements GlueEncoder {
 
 		return allCausesBDD;			
 	}
+	
+	/** Recursively find a subset of k elements
+	 * Use this to compute the subsets of portBDDs */
+	void processSubsets(int[] set, int k) {
+	    int[] subset = new int[k];
+	    processLargerSubsets(set, subset, 0, 0);
+	}
+
+	void processLargerSubsets(int[] set, int[] subset, int subsetSize, int nextIndex) {
+	    if (subsetSize == subset.length) {
+	    	logger.debug(Arrays.toString(subset));
+	    } else {
+	        for (int j = nextIndex; j < set.length; j++) {
+	            subset[subsetSize] = set[j];
+	            processLargerSubsets(set, subset, subsetSize + 1, j + 1);
+	        }
+	    }
+	}
 
 	/**
 	 * Computes the BDD that corresponds to an Accept macro.
 	 * 
 	 * @param BDD of the port of the component holder of the Accept macro
-	 * @param Arraylist of ports of the "causes" part of the Accept macro
 	 * @param Hashtable of ports of the "causes" part of the Accept macro 
 	 * and the corresponding port BDDs of the component instances
 	 * 
 	 *  @return the BDD that corresponds to an Accept macro.
 	 */
+	
+	//TODO: change the arguments to reflect the cardinality Hashtable<Port, ArrayList<BDD []>> acceptedPorts
+	//Hashtable can have the port as the key and an arraylist of arrays for all the different sets of the BDDs 
+	//that correspond to the cardinality
 	BDD acceptBDD(BDD acceptPortHolder, Hashtable<Port, ArrayList<BDD>> acceptedPorts) { 
 		BDD tmp;
 		BDD allCausesBDD = engine.getBDDManager().one();

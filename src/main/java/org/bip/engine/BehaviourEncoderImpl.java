@@ -94,7 +94,7 @@ public class BehaviourEncoderImpl implements BehaviourEncoder {
 		}
 
 		Hashtable<String, ArrayList<Port>> statePorts = new Hashtable<String, ArrayList<Port>>();
-		statePorts = (Hashtable<String, ArrayList<Port>>) wrapper.getBehaviourById(componentID).getStateToPorts();
+		statePorts = (Hashtable<String, ArrayList<Port>>) behaviour.getStateToPorts();
 		int c_size = 0;
 		for (Map.Entry<String, ArrayList<Port>> entry : statePorts.entrySet()) {
 			c_size = c_size + entry.getValue().size();
