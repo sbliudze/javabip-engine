@@ -13,11 +13,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Receives information about the current state and the list of disabled ports of each registered component and computes the current state BDDs.
+ * Receives information about the current state and the list of disabled ports of each 
+ * registered component and computes the current state BDDs.
  * @author mavridou
  */
 
-/** Computes the BDD of the Current State of all components */
 public class CurrentStateEncoderImpl implements CurrentStateEncoder {
 
 	private BehaviourEncoder behaviourEncoder; 
@@ -26,13 +26,24 @@ public class CurrentStateEncoderImpl implements CurrentStateEncoder {
 
 	private Logger logger = LoggerFactory.getLogger(CurrentStateEncoderImpl.class);
 
-
+	//TODO: change commends
+	/**
+	 * Computes the current State BDD. Takes as an argument the current state of the component
+	 * and computes the disjunction of the BDD corresponding to this state with the negation of 
+	 * the BDDs of all the other states of this component.
+	 * 
+	 * @param BIP Component that informs about its current state
+	 * @param index of the current state of the component to be used to find the corresponding BDD
+	 * @param Indexes of the disabled ports of this current state of the component to be used to find the corresponding BDDs
+	 * 
+	 * @return the current state BDD
+	 */
 	public BDD inform(BIPComponent component, String currentState, ArrayList<Port> disabledPorts) throws BIPEngineException {
 		ArrayList<String> componentStates = (ArrayList<String>) wrapper.getBehaviourByComponent(component).getStates();
 		
 		if (currentState == null || currentState.isEmpty()) {
 	        try {
-				logger.error("Component did not inform about its current state correctly");
+				logger.error("Current state of component {} is null or empty "+component.getName());
 				throw new BIPEngineException("Current State of component is null");
 			} catch (BIPEngineException e) {
 				e.printStackTrace();
@@ -40,18 +51,13 @@ public class CurrentStateEncoderImpl implements CurrentStateEncoder {
 			}
 	      }
 
-
-		int StateID = 0;
-		for (int i = 0; i < componentStates.size(); i++) {
-			if (componentStates.get(i).equals(currentState)) {
-				StateID = i;
-				break;
-			}
+		int stateIndex = 0;
+		while (stateIndex < componentStates.size() && !componentStates.get(stateIndex).equals(currentState)){
+			stateIndex++;
 		}
 
 		int[] indexDisabledPorts = new int[disabledPorts.size()];
 		Hashtable<String, ArrayList<Port>> allStatePorts = (Hashtable<String, ArrayList<Port>>) wrapper.getBehaviourByComponent(component).getStateToPorts();
-
 		ArrayList<Port> currentStatePorts = allStatePorts.get(currentState);
 
 
@@ -71,18 +77,30 @@ public class CurrentStateEncoderImpl implements CurrentStateEncoder {
 
 			if (!found) {
 				try {
-					throw new BIPEngineException("Disabled Port cannot be found.");
+					logger.error("Disabled port {} of component {} cannot be found."+disabledPorts.get(l)+component.getName());	
+					throw new BIPEngineException("Disabled port cannot be found.");
 				} catch (BIPEngineException e) {
 					e.printStackTrace();
-					logger.error(e.getMessage());	
+
 				} 
 			}		
 		}
 
-		return componentCurrentStateBDD(component, StateID, indexDisabledPorts);
+		return componentCurrentStateBDD(component, stateIndex, indexDisabledPorts);
 	}
-
-	private synchronized BDD componentCurrentStateBDD(BIPComponent component, int stateID, int[] disabledPorts) {
+	
+	/**
+	 * Computes the current State BDD. Takes as an argument the current state of the component
+	 * and computes the disjunction of the BDD corresponding to this state with the negation of 
+	 * the BDDs of all the other states of this component.
+	 * 
+	 * @param BIP Component that informs about its current state
+	 * @param index of the current state of the component to be used to find the corresponding BDD
+	 * @param Indexes of the disabled ports of this current state of the component to be used to find the corresponding BDDs
+	 * 
+	 * @return the current state BDD
+	 */
+	private BDD componentCurrentStateBDD(BIPComponent component, int stateID, int[] disabledPorts) {
 
 		int nbStates =  ((ArrayList<String>) wrapper.getBehaviourByComponent(component).getStates()).size();
 		BDD[] portsBDDs = behaviourEncoder.getPortBDDs().get(component);
