@@ -154,10 +154,32 @@ public class GlueEncoderImpl implements GlueEncoder {
 				e.printStackTrace();
 				throw e;
 			}
-		}	
+		}
+		
+		if (requires.effect.id.isEmpty()) {
+			try {
+				logger.error("The port at the effect part of a Require constraint was not specified.");
+				throw new BIPEngineException("The port at the effect part of a Require constraint was not specified");
+			} catch (BIPEngineException e) {
+				e.printStackTrace();
+				throw e;
+			}
+		}
+		
+		if (requires.effect.specType.isEmpty()) {
+			try {
+				logger.error("The component type of a port at the effect part of a Require constraint was not specified");
+				throw new BIPEngineException("The component type of a port at the effect part of a Require constraint was not specified");
+			} catch (BIPEngineException e) {
+				e.printStackTrace();
+				throw e;
+			}
+		}
 		/* Find all effect component instances */
 		ArrayList<BIPComponent> requireEffectComponents =findEffectComponents(requires.effect);
 		
+		//TODO: consistency with Accept
+		//if (requires.causes.equals(null) || requires.causes.isEmpty()) {
 		if (requires.causes.equals(null)) {
 			try {
 				logger.error("Causes part of a Require constraint was not specified in the macro.");
@@ -169,13 +191,11 @@ public class GlueEncoderImpl implements GlueEncoder {
 		}
 		/* Find all causes component instances */
 		Hashtable<Port, ArrayList<BIPComponent>> portToComponents = findCausesComponents(requires.causes);
-
 		for (BIPComponent effectInstance : requireEffectComponents) {
 			logger.debug("Require Effect port type: {} ", requires.effect.id);
 			logger.debug("PortToComponents size: {} ", portToComponents.size());
 			result.add(componentRequire(effectInstance, requires.effect, portToComponents));
 		}
-		
 		return result;
 	}
 	
@@ -201,10 +221,30 @@ public class GlueEncoderImpl implements GlueEncoder {
 			}
 		}
 		
+		if (accept.effect.id.isEmpty()) {
+			try {
+				logger.error("The port at the effect part of an Accept constraint was not specified.");
+				throw new BIPEngineException("The port at the effect part of an Accept constraint was not specified");
+			} catch (BIPEngineException e) {
+				e.printStackTrace();
+				throw e;
+			}
+		}
+		
+		if (accept.effect.specType.isEmpty()) {
+			try {
+				logger.error("The component type of a port at the effect part of an Accept constraint was not specified");
+				throw new BIPEngineException("The component type of a port at the effect part of an Accept constraint was not specified");
+			} catch (BIPEngineException e) {
+				e.printStackTrace();
+				throw e;
+			}
+		}
+		
 		/* Find all effect component instances */
 		ArrayList<BIPComponent> acceptEffectComponents = findEffectComponents(accept.effect);
 		
-		if (accept.causes.equals(null)) {
+		if (accept.causes.equals(null) || accept.causes.isEmpty()) {
 			try {
 				logger.error("Causes part of an Accept constraint was not specified in the macro.");
 				throw new BIPEngineException("Causes part of an Accept constraint was not specified");
@@ -239,44 +279,45 @@ public class GlueEncoderImpl implements GlueEncoder {
 	BDD requireBDD(BDD requirePortHolder, Hashtable<Port, ArrayList<BDD>> requiredPorts) {
 		BDD allCausesBDD = engine.getBDDManager().one();
 
-		logger.info("requiredPorts size: "+requiredPorts.size());
-		for (Enumeration<Port> portEnum = requiredPorts.keys(); portEnum.hasMoreElements();) {
-			Port port = portEnum.nextElement();
-			logger.info("Port: "+ port.id);
-			ArrayList<BDD> auxPortBDDs = requiredPorts.get(port);
-			logger.info("auxPortBDDs size: " + auxPortBDDs.size());
-			int size = auxPortBDDs.size();
-			BDD oneCauseBDD = engine.getBDDManager().zero();
-			
-			logger.info("auxPortBDDs get 0 " + auxPortBDDs.get(0));
-			for (int i = 0; i < size; i++) {
-				BDD monomial = engine.getBDDManager().one();				
-				for (int j = 0; j < size; j++) {
-					if (i == j) {
-						/*
-						 * Cannot use andWith here. Do not want to free the 
-						 * BDDs assigned to the ports at the Behaviour Encoder.
-						 */
-						BDD tmp = monomial.and(auxPortBDDs.get(j));
-						monomial.free();
-						monomial = tmp;
-					} else {
-						/*
-						 * Cannot use andWith here. Do not want to free the 
-						 * BDDs assigned to the ports at the Behaviour Encoder.
-						 */
-						BDD tmp = monomial.and(auxPortBDDs.get(j).not());
-						monomial.free();
-						monomial = tmp;
+		logger.debug("requiredPorts size: "+requiredPorts.size());
+			for (Enumeration<Port> portEnum = requiredPorts.keys(); portEnum.hasMoreElements();) {
+				Port port = portEnum.nextElement();
+				ArrayList<BDD> auxPortBDDs = requiredPorts.get(port);
+				
+				logger.debug("Required port: "+ port.id);
+				logger.debug("Required port BDDs size: " + auxPortBDDs.size());
+				
+				int size = auxPortBDDs.size();
+				BDD oneCauseBDD = engine.getBDDManager().zero();
+				
+				for (int i = 0; i < size; i++) {
+					BDD monomial = engine.getBDDManager().one();				
+					for (int j = 0; j < size; j++) {
+						if (i == j) {
+							/*
+							 * Cannot use andWith here. Do not want to free the 
+							 * BDDs assigned to the ports at the Behaviour Encoder.
+							 */
+							BDD tmp = monomial.and(auxPortBDDs.get(j));
+							monomial.free();
+							monomial = tmp;
+						} else {
+							/*
+							 * Cannot use andWith here. Do not want to free the 
+							 * BDDs assigned to the ports at the Behaviour Encoder.
+							 */
+							BDD tmp = monomial.and(auxPortBDDs.get(j).not());
+							monomial.free();
+							monomial = tmp;
+						}
 					}
+					oneCauseBDD.orWith(monomial);
 				}
-				oneCauseBDD.orWith(monomial);
+				allCausesBDD.andWith(oneCauseBDD);
+				auxPortBDDs.clear();
 			}
-			allCausesBDD.andWith(oneCauseBDD);
-			auxPortBDDs.clear();
-
-		}
 		allCausesBDD.orWith(requirePortHolder.not());
+
 		return allCausesBDD;			
 	}
 
@@ -290,12 +331,16 @@ public class GlueEncoderImpl implements GlueEncoder {
 	 * 
 	 *  @return the BDD that corresponds to an Accept macro.
 	 */
-	BDD acceptBDD(BDD acceptPortHolder, Hashtable<Port, ArrayList<BDD>> acceptPorts) {
-		
+	BDD acceptBDD(BDD acceptPortHolder, Hashtable<Port, ArrayList<BDD>> acceptedPorts) { 
 		BDD tmp;
 		BDD allCausesBDD = engine.getBDDManager().one();
 //		int portBDDsize = behenc.getPortBDDs().size();
 		ArrayList<BDD> totalPortBDDs= new ArrayList<BDD>();
+		
+		/*
+		 * Get all port BDDs registered in the Behaviour Encoder and 
+		 * add them in the totalPortBDDs ArrayList. 
+		 */
 		Hashtable<BIPComponent, BDD[]> portToBDDs = behenc.getPortBDDs();
 
 		for (Enumeration<BIPComponent> portIdEnum = portToBDDs.keys(); portIdEnum.hasMoreElements(); ){
@@ -312,16 +357,14 @@ public class GlueEncoderImpl implements GlueEncoder {
 //			}
 //		}
 		
-
-		
 		for (BDD totalPortBDD : totalPortBDDs){
 			boolean exist = false;
 //			for(int i=0; i<totalPortBDDs.size();i++){
 //			boolean exist = false;
 			
-			for (Enumeration<Port> portEnum = acceptPorts.keys(); portEnum.hasMoreElements();){
+			for (Enumeration<Port> portEnum = acceptedPorts.keys(); portEnum.hasMoreElements();){
 				Port port = portEnum.nextElement();
-				ArrayList<BDD> auxPortBDDs=acceptPorts.get(port);
+				ArrayList<BDD> auxPortBDDs=acceptedPorts.get(port);
 				int nbPortBDD=0;
 				
 //				for(int k=0; k< auxPortBDDs.size(); k++){				
@@ -402,7 +445,6 @@ public class GlueEncoderImpl implements GlueEncoder {
 		while (portId < componentPorts.size() && !componentPorts.get(portId).id.equals(holderPort.id)) {
 			portId++;
 		}
-		logger.debug("PortId: {} ", portId);
 		effectPortBDD = behenc.getPortBDDs().get(holderComponent)[portId];
 
 		/*
@@ -517,7 +559,7 @@ public class GlueEncoderImpl implements GlueEncoder {
 		BDD result = engine.getBDDManager().one();
 
 		logger.debug("Glue spec require Constraints size: {} ", glueSpec.requiresConstraints.size());
-		if (!glueSpec.requiresConstraints.isEmpty()) {
+		if (!glueSpec.requiresConstraints.isEmpty() || glueSpec.requiresConstraints.equals(null)) {
 			for (Requires requires : glueSpec.requiresConstraints) {
 				ArrayList<BDD> RequireBDDs = decomposeRequireGlue(requires);
 				for (BDD effectInstance : RequireBDDs) {
@@ -529,7 +571,7 @@ public class GlueEncoderImpl implements GlueEncoder {
 		}
 		
 		logger.debug("Glue spec accept Constraints size: {} ", glueSpec.acceptConstraints.size());
-		if (!glueSpec.acceptConstraints.isEmpty()) {
+		if (!glueSpec.acceptConstraints.isEmpty() || glueSpec.acceptConstraints.equals(null)) {
 			for (Accepts accepts : glueSpec.acceptConstraints) {
 				ArrayList<BDD> AcceptBDDs = decomposeAcceptGlue(accepts);
 				for (BDD effectInstance : AcceptBDDs) {
