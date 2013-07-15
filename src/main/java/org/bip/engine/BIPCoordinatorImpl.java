@@ -251,7 +251,11 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 //			if (componentIdMapping.containsKey(component)) {
 				synchronized (componentsHaveInformed) {
 					componentsHaveInformed.add(component);
-					engine.informCurrentState(component, currstenc.inform(component, currentState, disabledPorts));
+					try {
+						engine.informCurrentState(component, currstenc.inform(component, currentState, disabledPorts));
+					} catch (BIPEngineException e) {
+						e.printStackTrace();
+					}
 		
 					logger.debug("Number of components that have informed {}", componentsHaveInformed.size());
 					logger.info("********************************* Inform *************************************");

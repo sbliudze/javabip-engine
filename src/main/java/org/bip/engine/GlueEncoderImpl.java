@@ -1,7 +1,6 @@
 package org.bip.engine;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Enumeration;
 
 import java.util.Hashtable;
@@ -64,24 +63,20 @@ public class GlueEncoderImpl implements GlueEncoder {
 	 * @throws BIPEngineException 
 	 */
 	Hashtable<Port, ArrayList<BIPComponent>> findCausesComponents (ArrayList<Port> causesPorts) throws BIPEngineException{
-		
+
 		Hashtable<Port, ArrayList<BIPComponent>> portToComponents = new Hashtable<Port, ArrayList<BIPComponent>>();
 
 
 		for (Port causePort : causesPorts) {
 			if (causePort.specType == null || causePort.specType.isEmpty()) {
-					logger.warn("Spec type not specified or empty in a Require macro cause");
+				logger.warn("Spec type not specified or empty in a macro cause. Skipping the port.");
+			} else  if (causePort.id == null || causePort.id.isEmpty()) {
+				logger.warn("Port name not specified or empty in a macro cause. Skipping the port.");
 			} else {
-				//TODO: Can I use the same key twice in a hashtable? Not good.
-				//TODO: what if the same port appears twice? Store cardinality instead of finding again all the instances
-				portToComponents.put(causePort, wrapper.getBIPComponentInstances(causePort.specType));
-			}
-
-			if (causePort.id == null || causePort.id.isEmpty()) {
-				logger.warn("Port name not specified or empty in a Require macro cause");
-			} else {
-				portToComponents.put(causePort, wrapper.getBIPComponentInstances(causePort.specType));
-				if (portToComponents.get(causePort).isEmpty()) {
+				ArrayList<BIPComponent> components = wrapper.getBIPComponentInstances(causePort.specType); 
+				portToComponents.put(causePort, components);
+				
+				if (components.isEmpty()) {
 					try {
 						logger.error("Spec type in causes for component {} was defined incorrectly. It does not match any registered component types", causePort.specType);
 						throw new BIPEngineException("Spec type in causes was defined incorrectly");
@@ -89,10 +84,11 @@ public class GlueEncoderImpl implements GlueEncoder {
 						e.printStackTrace();
 						throw e;
 					}
-				}	
+				}
 			}
-		}
-			return portToComponents;
+		}	
+
+		return portToComponents;
 	}
 	
 	/**
@@ -105,25 +101,8 @@ public class GlueEncoderImpl implements GlueEncoder {
 	 */
 	ArrayList<BIPComponent> findEffectComponents (Port effectPort) throws BIPEngineException{
 		
-		if (effectPort.id == null || effectPort.id.isEmpty()) {
-			try {
-				logger.error("Port name not specified or empty in a macro cause.");
-				throw new BIPEngineException("Port name not specified or empty in a macro cause.");
-			} catch (BIPEngineException e) {
-				e.printStackTrace();
-				throw e;
-			}	
-		}
-		
-		if (effectPort.specType == null || effectPort.specType.isEmpty()) {
-			try {
-				logger.error("Spec type not specified or empty in a macro effect");
-				throw new BIPEngineException("Spec type not specified or empty in a macro effect");
-			} catch (BIPEngineException e) {
-				e.printStackTrace();
-				throw e;
-			}	
-		}
+		assert(effectPort.id != null && !effectPort.id.isEmpty());
+		assert (effectPort.specType != null && !effectPort.specType.isEmpty());
 		
 		ArrayList<BIPComponent> requireEffectComponents = wrapper.getBIPComponentInstances(effectPort.specType);
 		if (requireEffectComponents.isEmpty()) {
@@ -323,24 +302,6 @@ public class GlueEncoderImpl implements GlueEncoder {
 		return allCausesBDD;			
 	}
 	
-	/** Recursively find a subset of k elements
-	 * Use this to compute the subsets of portBDDs */
-	void processSubsets(int[] set, int k) {
-	    int[] subset = new int[k];
-	    processLargerSubsets(set, subset, 0, 0);
-	}
-
-	void processLargerSubsets(int[] set, int[] subset, int subsetSize, int nextIndex) {
-	    if (subsetSize == subset.length) {
-	    	logger.debug(Arrays.toString(subset));
-	    } else {
-	        for (int j = nextIndex; j < set.length; j++) {
-	            subset[subsetSize] = set[j];
-	            processLargerSubsets(set, subset, subsetSize + 1, j + 1);
-	        }
-	    }
-	}
-
 	/**
 	 * Computes the BDD that corresponds to an Accept macro.
 	 * 
@@ -351,13 +312,10 @@ public class GlueEncoderImpl implements GlueEncoder {
 	 *  @return the BDD that corresponds to an Accept macro.
 	 */
 	
-	//TODO: change the arguments to reflect the cardinality Hashtable<Port, ArrayList<BDD []>> acceptedPorts
-	//Hashtable can have the port as the key and an arraylist of arrays for all the different sets of the BDDs 
-	//that correspond to the cardinality
+	//TODO: change the arguments to reflect the cardinality 
 	BDD acceptBDD(BDD acceptPortHolder, Hashtable<Port, ArrayList<BDD>> acceptedPorts) { 
 		BDD tmp;
 		BDD allCausesBDD = engine.getBDDManager().one();
-//		int portBDDsize = behenc.getPortBDDs().size();
 		ArrayList<BDD> totalPortBDDs= new ArrayList<BDD>();
 		
 		/*
@@ -366,76 +324,45 @@ public class GlueEncoderImpl implements GlueEncoder {
 		 */
 		Hashtable<BIPComponent, BDD[]> portToBDDs = behenc.getPortBDDs();
 
-		for (Enumeration<BIPComponent> portIdEnum = portToBDDs.keys(); portIdEnum.hasMoreElements(); ){
-			BIPComponent portID = portIdEnum.nextElement();
-			BDD [] portBDD = portToBDDs.get(portID);
+		for (Enumeration<BIPComponent> componentsEnum = portToBDDs.keys(); componentsEnum.hasMoreElements(); ){
+			BIPComponent component = componentsEnum.nextElement();
+			BDD [] portBDD = portToBDDs.get(component);
 			for (int p=0; p<portBDD.length;p++){
 				totalPortBDDs.add(portBDD[p]);
 			}
 		}
-//		for (int i = 0; i < portBDDsize; i++) {
-//			BDD [] portBDD=behenc.getPortBDDs().get(i);
-//			for (int p=0; p<portBDD.length;p++){
-//				totalPortBDDs.add(portBDD[p]);
-//			}
-//		}
-		
-		for (BDD totalPortBDD : totalPortBDDs){
+
+		for (BDD portBDD : totalPortBDDs){
 			boolean exist = false;
-//			for(int i=0; i<totalPortBDDs.size();i++){
-//			boolean exist = false;
 			
 			for (Enumeration<Port> portEnum = acceptedPorts.keys(); portEnum.hasMoreElements();){
 				Port port = portEnum.nextElement();
-				ArrayList<BDD> auxPortBDDs=acceptedPorts.get(port);
-				int nbPortBDD=0;
+				ArrayList<BDD> currentPortInstanceBDDs=acceptedPorts.get(port);
+				int indexPortBDD=0;
 				
-//				for(int k=0; k< auxPortBDDs.size(); k++){				
-//				if (auxPortBDDs.get(k).equals(totalPortBDD)) {
-//					exist = true;
-//					break;
-//				}
-				while (nbPortBDD < auxPortBDDs.size() && !auxPortBDDs.get(nbPortBDD).equals(totalPortBDD)){
-					nbPortBDD++;
-				}
-				if (nbPortBDD < auxPortBDDs.size() && auxPortBDDs.get(nbPortBDD).equals(totalPortBDD)){
-					exist =true;
-				}
-//			for (int j = 0; j < acceptPorts.size(); j++) {
-//				ArrayList<BDD> acceptBDDs=acceptPorts.get(auxPort.get(j));
-//				for(int k=0; k< acceptBDDs.size(); k++){				
-//					if (acceptBDDs.get(k).equals(totalPortBDD)) {
-//						exist = true;
-//						break;
-//					}
-//				}
-				
-				if((totalPortBDD).equals(acceptPortHolder)){
+				//TODO: check line 555 and merge
+				if((portBDD).equals(acceptPortHolder)){
 					exist=true;
 				}
+
+				while (!exist && indexPortBDD < currentPortInstanceBDDs.size()){
+					if (currentPortInstanceBDDs.get(indexPortBDD).equals(portBDD)){
+						exist =true;
+					}
+					else {
+						indexPortBDD++;
+					}
+				}
+					
 				if (!exist) {
-					tmp = totalPortBDD.not().and(allCausesBDD);
+					tmp = portBDD.not().and(allCausesBDD);
 					allCausesBDD.free();
 					allCausesBDD = tmp;
 				}
 			}
 		}
-//				if((totalPortBDDs.get(i)).equals(acceptPortHolder)){
-//					exist=true;
-//				}
-//				if (!exist) {
-//					tmp = totalPortBDDs.get(i).not().and(allCausesBDD);
-//					allCausesBDD.free();
-//					allCausesBDD = tmp;
-//				}
-//			}
-//		}
 		
-		allCausesBDD.orWith(acceptPortHolder.not());
-		return allCausesBDD;
-//		BDD acc_bdd = acceptPortHolder.not().or(allCausesBDD);
-//		allCausesBDD.free();
-//		return acc_bdd;
+		return allCausesBDD.orWith(acceptPortHolder.not());
 	}
 
 	/**
@@ -539,35 +466,35 @@ public class GlueEncoderImpl implements GlueEncoder {
 		
 		/*
 		 * For each cause port, we obtain all the component instances that provide this port and store the BDDs corresponding
-		 * to the associated port variables in a common list, which is then passed on to the BDD computing function (requireBDD).  
+		 * to the associated port variables in a common list, which is then passed on to the BDD computing function (acceptBDD).  
 		 */		
 		for (Enumeration<Port> portEnum = causesPortToComponents.keys(); portEnum.hasMoreElements();) {
-		Port requiredPort = portEnum.nextElement();
-		
-		ArrayList<BIPComponent> acceptedComponents = causesPortToComponents.get(requiredPort);
-		for (BIPComponent acceptedComponent : acceptedComponents) {
+			Port acceptedPort = portEnum.nextElement();
 
-			ArrayList<Port> compPorts = (ArrayList<Port>) wrapper.getBehaviourByComponent(acceptedComponent).getEnforceablePorts();
-			logger.debug("causes component type: {}", acceptedComponent.getName());
-			logger.debug("causes componentPorts size: {}", compPorts.size());
-			portId = 0;
-			// TODO: As above for the port names to Ports ids hash table
-			while (portId < compPorts.size() && !compPorts.get(portId).id.equals(requiredPort.id)) {
-				portId++;
+			ArrayList<BIPComponent> acceptedComponents = causesPortToComponents.get(acceptedPort);
+			for (BIPComponent acceptedComponent : acceptedComponents) {
+
+				ArrayList<Port> compPorts = (ArrayList<Port>) wrapper.getBehaviourByComponent(acceptedComponent).getEnforceablePorts();
+				logger.debug("causes component type: {}", acceptedComponent.getName());
+				logger.debug("causes componentPorts size: {}", compPorts.size());
+				portId = 0;
+				// TODO: As above for the port names to Ports ids hash table
+				while (portId < compPorts.size() && !compPorts.get(portId).id.equals(acceptedPort.id)) {
+					portId++;
+				}
+				portBDDs.add(behenc.getPortBDDs().get(acceptedComponent)[portId]);
+				logger.debug("port BDDs size: {}", portBDDs.size());
+
+
 			}
-			portBDDs.add(behenc.getPortBDDs().get(acceptedComponent)[portId]);
+			acceptedBDDs.put(acceptedPort, portBDDs);
+			logger.debug("Port at causes of a require: {}", acceptedPort.id);
 			logger.debug("port BDDs size: {}", portBDDs.size());
-			
-			
+			/*
+			 * Should not clear portBDDs. 
+			 */
 		}
-		acceptedBDDs.put(requiredPort, portBDDs);
-		logger.debug("Port at causes of a require: {}", requiredPort.id);
-		logger.debug("port BDDs size: {}", portBDDs.size());
-		/*
-		 * Should not clear portBDDs. 
-		 */
-	}
-	
+
 		return acceptBDD(effectPortBDD, acceptedBDDs);
 	}
 	

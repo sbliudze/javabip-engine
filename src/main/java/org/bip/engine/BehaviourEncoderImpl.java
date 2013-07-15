@@ -111,10 +111,10 @@ public class BehaviourEncoderImpl implements BehaviourEncoder {
 		for (Map.Entry<String, ArrayList<Port>> entry : statePorts.entrySet()) {
 			portsValue = entry.getValue();
 			stateKey = entry.getKey();
-			for (int l = 0; l < portsValue.size(); l++) {
-				int k = 0;
-				while (portsValue.get(l) != componentPorts.get(k)) {
-					if (k == componentPorts.size() - 1) {
+			for (int i = 0; i < portsValue.size(); i++) {
+				int j = 0;
+				while (portsValue.get(i) != componentPorts.get(j)) {
+					if (j == componentPorts.size() - 1) {
 						try {
 							throw new BIPEngineException("Port not found.");
 						} catch (BIPEngineException e) {
@@ -122,74 +122,74 @@ public class BehaviourEncoderImpl implements BehaviourEncoder {
 							logger.error(e.getMessage());	
 						} 
 					}
-					k++;
+					j++;
 				}
-				if (portsValue.get(l) == componentPorts.get(k))
-					availablePorts.add(k + 1);
+				if (portsValue.get(i) == componentPorts.get(j))
+					availablePorts.add(j + 1);
 			}
-			int i = 0;
-			for (int m = 0; m < componentStates.size(); m++) {
-				if (stateKey.equals(componentStates.get(m))) {
+			int aux = 0;
+			for (int i = 0; i < componentStates.size(); i++) {
+				if (stateKey.equals(componentStates.get(i))) {
 					// TODO: algorithmic complexity?
-					i = m + 1;
+					aux = i + 1;
 					break;
 				}
 			}
 
-			for (int l = 0; l < portsValue.size(); l++) {
+			for (int i = 0; i < portsValue.size(); i++) {
 				BDD aux1 = engine.getBDDManager().one();
 				for (int j = 1; j <= noStates; j++) {
-					if (i == j)
-						c[i + l - 1] = aux1.and(statesBDDs[j - 1]);
+					if (aux == j)
+						c[aux + i - 1] = aux1.and(statesBDDs[j - 1]);
 					else
-						c[i + l - 1] = aux1.and(statesBDDs[j - 1].not());
+						c[aux + i - 1] = aux1.and(statesBDDs[j - 1].not());
 					if (j != noStates) {
 						aux1.free();
-						aux1 = c[i + l - 1];
+						aux1 = c[aux + i - 1];
 					}
 				}
 				aux1.free();
 
-				BDD aux2 = c[i + l - 1];
+				BDD aux2 = c[aux + i - 1];
 				for (int j = 1; j <= noPorts; j++) {
-					if (availablePorts.get(l) == j)
-						c[i + l - 1] = aux2.and(portsBDDs[j - 1]);
+					if (availablePorts.get(i) == j)
+						c[aux + i - 1] = aux2.and(portsBDDs[j - 1]);
 					else
-						c[i + l - 1] = aux2.and(portsBDDs[j - 1].not());
+						c[aux + i - 1] = aux2.and(portsBDDs[j - 1].not());
 					if (j != noPorts) {
 						aux2.free();
-						aux2 = c[i + l - 1];
+						aux2 = c[aux + i - 1];
 					}
 				}
 				aux2.free();
-				componentBehaviour.orWith(c[i + l - 1]);
+				componentBehaviour.orWith(c[aux + i - 1]);
 			}
 
 			if (portsValue.size() == 0) {
 
 				BDD aux1 = engine.getBDDManager().one();
-				for (int j = 1; j <= noStates; j++) {
-					if (i == j)
-						c[i - 1] = aux1.and(statesBDDs[j - 1]);
+				for (int i = 1; i <= noStates; i++) {
+					if (aux == i)
+						c[aux - 1] = aux1.and(statesBDDs[i - 1]);
 					else
-						c[i - 1] = aux1.and(statesBDDs[j - 1].not());
-					if (j != noStates) {
+						c[aux - 1] = aux1.and(statesBDDs[i - 1].not());
+					if (i != noStates) {
 						aux1.free();
-						aux1 = c[i - 1];
+						aux1 = c[aux - 1];
 					}
 				}
 				aux1.free();
 
-				BDD aux2 = c[i - 1];
-				for (int j = 1; j <= noPorts; j++) {
-					c[i - 1] = aux2.and(portsBDDs[j - 1].not());
-					if (j != noPorts) {
+				BDD aux2 = c[aux - 1];
+				for (int i = 1; i <= noPorts; i++) {
+					c[aux - 1] = aux2.and(portsBDDs[i - 1].not());
+					if (i != noPorts) {
 						aux2.free();
-						aux2 = c[i - 1];
+						aux2 = c[aux - 1];
 					}
 				}
 				aux2.free();
-				componentBehaviour.orWith(c[i - 1]);
+				componentBehaviour.orWith(c[aux - 1]);
 
 			}
 

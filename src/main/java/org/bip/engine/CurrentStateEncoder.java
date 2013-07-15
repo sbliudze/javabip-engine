@@ -5,6 +5,7 @@ import net.sf.javabdd.BDD;
 
 import org.bip.api.BIPComponent;
 import org.bip.behaviour.Port;
+import org.bip.exceptions.BIPEngineException;
 
 /**
  * Receives information about the current state and the list of disabled ports of each registered component and computes the current state BDDs.
@@ -19,8 +20,9 @@ public interface CurrentStateEncoder {
 	 * @param component
 	 * @param currentState
 	 * @param disabledPorts
+	 * @throws BIPEngineException 
 	 */
-	BDD inform(BIPComponent component, String currentState, ArrayList<Port> disabledPorts);
+	BDD inform(BIPComponent component, String currentState, ArrayList<Port> disabledPorts) throws BIPEngineException;
 	
 	/**
 	 * Setter for the OSGiBIPEngine
