@@ -1,8 +1,5 @@
 package org.bip.engine;
 
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Hashtable;
@@ -109,7 +106,6 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 
 	public BIPCoordinatorImpl() {
 
-		// redirectSystemErr();
 		//TODO: simplify dependencies
 		glueenc.setBehaviourEncoder(behenc);
 		glueenc.setEngine(engine);
@@ -151,8 +147,9 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	}
 
 	public synchronized void register(BIPComponent component, Behaviour behaviour) {
-		/**
-		 *  This condition checks whether the component has already been registered.
+		
+		/*
+		 *  The condition below checks whether the component has already been registered.
 		 */
 		if (registeredComponents.contains(component)){
 //		if (componentIdMapping.contains(component)) {
@@ -199,8 +196,11 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 			int nbComponentPorts = ((ArrayList<Port>)behaviour.getEnforceablePorts()).size();
 			int nbComponentStates = ((ArrayList<String>)behaviour.getStates()).size();
 	
-			behenc.createBDDNodes(component, nbComponentPorts, nbComponentStates);
-//			behenc.createBDDNodes(registeredComponentID, nbComponentPorts, nbComponentStates);
+			try {
+				behenc.createBDDNodes(component, ((ArrayList<Port>)behaviour.getEnforceablePorts()), ((ArrayList<String>)behaviour.getStates()));
+			} catch (BIPEngineException e) {
+				e.printStackTrace();
+			}
 			engine.informBehaviour(component, behenc.behaviourBDD(registeredComponentID));
 
 			// TODO: (minor) think whether a better data structure is possible for associating the variable 
@@ -224,7 +224,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	public synchronized void inform(BIPComponent component, String currentState, ArrayList<Port> disabledPorts) {
 		if (componentsHaveInformed.contains(component)) {
 			try {
-				logger.info("************************** Already Informed **********************************");
+				logger.info("************************ Already Have Informed *******************************");
 				logger.info("Component: {}", component.getName());
 				logger.info("informs that is at state: {}", currentState);
 				logger.info("******************************************************************************");
@@ -232,7 +232,6 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 				throw new BIPEngineException("Component has already informed the engine in this execution cycle.");
 			} catch (BIPEngineException e) {
 				e.printStackTrace();
-				
 			}
 		} 
 		
@@ -529,23 +528,4 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 		return instances; 
 	}
 	
-	/**
-	 * Redirects System.err and sends all data to a file.
-	 * 
-	 */
-	public void redirectSystemErr() {
-
-		try {
-
-			System.setErr(new PrintStream(new FileOutputStream("system_err.txt")));
-
-			// String nullString = null;
-			//
-			// Forcing an exception to have the stacktrace printed on System.err
-			// nullString = nullString.toUpperCase();
-
-		} catch (FileNotFoundException ex) {
-			ex.printStackTrace();
-		}
-	}
 }

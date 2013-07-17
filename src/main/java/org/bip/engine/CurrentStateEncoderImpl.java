@@ -26,15 +26,14 @@ public class CurrentStateEncoderImpl implements CurrentStateEncoder {
 
 	private Logger logger = LoggerFactory.getLogger(CurrentStateEncoderImpl.class);
 
-	//TODO: change commends
 	/**
-	 * Computes the current State BDD. Takes as an argument the current state of the component
-	 * and computes the disjunction of the BDD corresponding to this state with the negation of 
-	 * the BDDs of all the other states of this component.
+	 * BIP Component informs about its current State and its list of disabled Ports due to guards.
+	 * We find the index of the current state of the component and the index of the disabledPorts
+	 * to be used to find the corresponding BDDs by calling the componentCurrentStateBDD().
 	 * 
 	 * @param BIP Component that informs about its current state
-	 * @param index of the current state of the component to be used to find the corresponding BDD
-	 * @param Indexes of the disabled ports of this current state of the component to be used to find the corresponding BDDs
+	 * @param Name of the current state of the component
+	 * @param ArrayList of the disabled ports of the components
 	 * 
 	 * @return the current state BDD
 	 */
@@ -55,29 +54,28 @@ public class CurrentStateEncoderImpl implements CurrentStateEncoder {
 		while (stateIndex < componentStates.size() && !componentStates.get(stateIndex).equals(currentState)){
 			stateIndex++;
 		}
-
+		
 		int[] indexDisabledPorts = new int[disabledPorts.size()];
 		Hashtable<String, ArrayList<Port>> allStatePorts = (Hashtable<String, ArrayList<Port>>) wrapper.getBehaviourByComponent(component).getStateToPorts();
 		ArrayList<Port> currentStatePorts = allStatePorts.get(currentState);
 
 
-		for (int l = 0; l < disabledPorts.size(); l++) {
-			int k = 0;
+		for (int i = 0; i < disabledPorts.size(); i++) {
+			int j = 0;
 			int size = currentStatePorts.size();
 			boolean found = false;
-			while (!found && k < size) {
-				if (disabledPorts.get(l) == currentStatePorts.get(k)) {
-					indexDisabledPorts[l] = k;
+			while (!found && j < size) {
+				if (disabledPorts.get(i) == currentStatePorts.get(j)) {
+					indexDisabledPorts[i] = j;
 					found = true;
 				}
 				else {
-					k++;
+					j++;
 				}
 			}
-
 			if (!found) {
 				try {
-					logger.error("Disabled port {} of component {} cannot be found."+disabledPorts.get(l)+component.getName());	
+					logger.error("Disabled port {} of component {} cannot be found."+disabledPorts.get(i)+component.getName());	
 					throw new BIPEngineException("Disabled port cannot be found.");
 				} catch (BIPEngineException e) {
 					e.printStackTrace();
@@ -85,7 +83,6 @@ public class CurrentStateEncoderImpl implements CurrentStateEncoder {
 				} 
 			}		
 		}
-
 		return componentCurrentStateBDD(component, stateIndex, indexDisabledPorts);
 	}
 	
@@ -114,6 +111,7 @@ public class CurrentStateEncoderImpl implements CurrentStateEncoder {
 		}
 		
 		for (int i = 0; i < disabledPorts.length; i++) {
+			logger.debug("Conjunction of negated disabled ports.");
 			result.andWith(portsBDDs[disabledPorts[i]].not());
 		}
 		

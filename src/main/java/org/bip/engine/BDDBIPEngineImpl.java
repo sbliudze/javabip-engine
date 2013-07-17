@@ -136,8 +136,8 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		int nbComps=wrapper.getNoComponents();
 		for (int k = 0; k < nbComps; k++) {
 			if (currentStateBDDs.get(k)==null){
-				logger.info("Current state BDD is null of component {}", k);
-				logger.info("Number of registered components {}", nbComps);
+				logger.error("Current state BDD is null of component {}", k);
+				logger.error("Number of registered components {}", nbComps);
 			}
 			tmp = totalCurrentStateBdd.and(currentStateBDDs.get(k));
 			totalCurrentStateBdd.free();
