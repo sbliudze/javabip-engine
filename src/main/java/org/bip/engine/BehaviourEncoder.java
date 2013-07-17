@@ -29,11 +29,11 @@ public interface BehaviourEncoder {
 	/**
 	 * Computes and returns the BDD corresponding to the behaviour of a particular component.
 	 * 
-	 * @param componentID
+	 * @param component
 	 * 
 	 * @return BDD that corresponds to the behaviour of the component
 	 */
-	BDD behaviourBDD(int componentID);
+	BDD behaviourBDD(BIPComponent component);
 	
 	/**
 	 * Setter for the BDDBIPEngine

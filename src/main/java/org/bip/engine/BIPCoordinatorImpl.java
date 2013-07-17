@@ -201,7 +201,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 			} catch (BIPEngineException e) {
 				e.printStackTrace();
 			}
-			engine.informBehaviour(component, behenc.behaviourBDD(registeredComponentID));
+			engine.informBehaviour(component, behenc.behaviourBDD(component));
 
 			// TODO: (minor) think whether a better data structure is possible for associating the variable 
 			// position to a port.  To access the position defined below one has to first obtain the corresponding

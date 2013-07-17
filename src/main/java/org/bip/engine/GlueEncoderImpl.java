@@ -68,7 +68,6 @@ public class GlueEncoderImpl implements GlueEncoder {
 
 		Hashtable<Port, ArrayList<BDD>> portToComponents = new Hashtable<Port, ArrayList<BDD>>();
 		
-		
 		for (Port causePort : causesPorts) {
 			if (causePort.specType == null || causePort.specType.isEmpty()) {
 				logger.warn("Spec type not specified or empty in a macro cause. Skipping the port.");
@@ -97,7 +96,6 @@ public class GlueEncoderImpl implements GlueEncoder {
 				portToComponents.put(causePort, portBDDs);
 			}
 		}
-
 		return portToComponents;
 	}
 	
@@ -130,13 +128,12 @@ public class GlueEncoderImpl implements GlueEncoder {
 	}
 	
 	/**
-	 * Finds all the component instances that correspond to the effect and causes component types 
-	 * and computes the BDDs for all the different combinations of component instances by calling
-	 * the component require function.
+	 * Finds the BDDs of the ports of the components that are needed for computing one require macro and 
+	 * computes the BDD for this macro by calling the requireBDD method.
 	 * 
 	 * @param  require interaction constraints
 	 * 
-	 * @return Arraylist of BDDs for all the different combinations of component instances
+	 * @return the BDD that corresponds to a Require macro
 	 * 
 	 * @throws BIPEngineException 
 	 */
@@ -192,19 +189,18 @@ public class GlueEncoderImpl implements GlueEncoder {
 			logger.debug("PortToComponents size: {} ", portToComponents.size());
 			logger.debug("causesPortToPortComponents size: {} ", portToComponents.size());
 
-			result.add(componentRequire(effectInstance, requires.effect, portToComponents));
+			result.add(requireBDD(behenc.getBDDOfAPort(effectInstance, requires.effect.id), portToComponents));
 		}
 		return result;
 	}
-	
+
 	/**
-	 * Finds all the component instances that correspond to the effect and causes component types 
-	 * and calls the component accept function to compute the BDDs for all the different combinations 
-	 * of component instances.
+	 * Finds the BDDs of the ports of the components that are needed for computing one accept macro and 
+	 * computes the BDD for this macro by calling the acceptBDD method.
 	 * 
 	 * @param  accept interaction constraints
 	 * 
-	 * @return Arraylist of BDDs for all the different combinations of component instances
+	 * @return the BDD that corresponds to an Accept macro
 	 * 
 	 * @throws BIPEngineException 
 	 */
@@ -240,7 +236,6 @@ public class GlueEncoderImpl implements GlueEncoder {
 				throw e;
 			}
 		}
-		
 		/* Find all effect component instances */
 		ArrayList<BIPComponent> acceptEffectComponents = findEffectComponents(accept.effect);
 		
@@ -253,18 +248,13 @@ public class GlueEncoderImpl implements GlueEncoder {
 				throw e;
 			}
 		}
-		
 		/* Find all causes component instances */
 		Hashtable<Port, ArrayList<BDD>> portsToBDDs = findCausesComponents(accept.causes);
-//		if (!accept.causes.isEmpty()){
-//			logger.info("port "+ accept.causes);
-//			logger.info("PortToComponents size : {} ", portToComponents.get(accept.causes.get(0)).size());
-//		}
+
 		for (BIPComponent effectInstance : acceptEffectComponents) {
 			logger.debug("Accept Effect port type: {} ", accept.effect.id);
 			logger.debug("PortToComponents size: {} ", portsToBDDs.size());
-			
-			result.add(componentAccept(effectInstance, accept.effect, portsToBDDs));
+			result.add(acceptBDD(behenc.getBDDOfAPort(effectInstance, accept.effect.id), portsToBDDs));
 		}
 		return result;
 	}
@@ -335,10 +325,8 @@ public class GlueEncoderImpl implements GlueEncoder {
 		BDD allCausesBDD = engine.getBDDManager().one();
 		ArrayList<BDD> totalPortBDDs= new ArrayList<BDD>();
 		
-		/*
-		 * Get all port BDDs registered in the Behaviour Encoder and 
-		 * add them in the totalPortBDDs ArrayList. 
-		 */
+		/* Get all port BDDs registered in the Behaviour Encoder and 
+		 * add them in the totalPortBDDs ArrayList. */
 		Hashtable<BIPComponent, BDD[]> portToBDDs = behenc.getPortBDDs();
 
 		for (Enumeration<BIPComponent> componentsEnum = portToBDDs.keys(); componentsEnum.hasMoreElements(); ){
@@ -356,12 +344,10 @@ public class GlueEncoderImpl implements GlueEncoder {
 				Port port = portEnum.nextElement();
 				ArrayList<BDD> currentPortInstanceBDDs=acceptedPorts.get(port);
 				int indexPortBDD=0;
-				
-				//TODO: check line 555 and merge
+	
 				if((portBDD).equals(acceptPortHolder)){
 					exist=true;
 				}
-
 				while (!exist && indexPortBDD < currentPortInstanceBDDs.size()){
 					if (currentPortInstanceBDDs.get(indexPortBDD).equals(portBDD)){
 						exist =true;
@@ -370,7 +356,6 @@ public class GlueEncoderImpl implements GlueEncoder {
 						indexPortBDD++;
 					}
 				}
-					
 				if (!exist) {
 					tmp = portBDD.not().and(allCausesBDD);
 					allCausesBDD.free();
@@ -378,149 +363,10 @@ public class GlueEncoderImpl implements GlueEncoder {
 				}
 			}
 		}
-		
 		return allCausesBDD.orWith(acceptPortHolder.not());
 	}
 
-	/**
-	 * Finds the BDDs of the ports of the components that are needed for computing one require macro and 
-	 * computes the BDD for this macro by calling the requireBDD method.
-	 * 
-	 * @param the component that holds the interaction require constraint
-	 * @param the port of the holder component
-	 * @param the list of components that correspond to the previous set of ports
-	 * 
-	 * @return the BDD that corresponds to a Require macro
-	 * @throws BIPEngineException 
-	 */
-	BDD componentRequire(BIPComponent holderComponent, Port holderPort, Hashtable<Port, ArrayList<BDD>> causesPortsToBDDs) throws BIPEngineException {
-		assert(holderComponent != null & holderPort != null && causesPortsToBDDs != null);
-		
-//		Hashtable<Port, ArrayList<BDD>> requiredBDDs = new Hashtable<Port, ArrayList<BDD>>();
-//		ArrayList<BDD> portBDDs = new ArrayList<BDD>();
-		
-		/*
-		 * Obtain the BDD for the port variable corresponding to the effect instance of the macro
-		 */
-		// TODO: Is it possible to have a hash table mapping port names to Port ids or BDDs without paying too much for it?
-		BDD effectPortBDD = behenc.getBDDOfAPort(holderComponent, holderPort.id);
-//		ArrayList<Port> componentPorts = (ArrayList<Port>) wrapper.getBehaviourByComponent(holderComponent).getEnforceablePorts();
-//		logger.debug("holder component type: {}", holderComponent.getName());
-//		logger.debug("holder port type: {}", holderPort.id);
-//		logger.debug("holder componentPorts size: {}", componentPorts.size());
-//	
-//		int portId = 0;
-//		while (portId < componentPorts.size() && !componentPorts.get(portId).id.equals(holderPort.id)) {
-//			portId++;
-//		}
-//		effectPortBDD = behenc.getPortBDDs().get(holderComponent)[portId];
 
-		/*
-		 * For each cause port, we obtain all the component instances that provide this port and store the BDDs corresponding
-		 * to the associated port variables in a common list, which is then passed on to the BDD computing function (requireBDD).  
-		 */
-//		for (Enumeration<Port> portEnum = causesPortToPortBDDs.keys(); portEnum.hasMoreElements();) {
-//			Port requiredPort = portEnum.nextElement();
-//			
-//			ArrayList<BIPComponent> requiredComponents = causesPortToPortBDDs.get(requiredPort);
-//			for (BIPComponent requiredComponent : requiredComponents) {
-//				ArrayList<Port> compPorts = (ArrayList<Port>) wrapper.getBehaviourByComponent(requiredComponent).getEnforceablePorts();
-//				logger.debug("causes component type: {}", requiredComponent.getName());
-//				logger.debug("causes componentPorts size: {}", compPorts.size());
-//				portId = 0;
-//				// TODO: As above for the port names to Ports ids hash table
-//				while (portId < compPorts.size() && !compPorts.get(portId).id.equals(requiredPort.id)) {
-//					portId++;
-//				}
-//				portBDDs.add(behenc.getPortBDDs().get(requiredComponent)[portId]);
-//				logger.debug("port BDDs size: {}", portBDDs.size());
-//				
-//				
-//			}
-//			requiredBDDs.put(requiredPort, portBDDs);
-//			logger.debug("Port at causes of a require: {}", requiredPort.id);
-//			logger.debug("port BDDs size: {}", portBDDs.size());
-//			/*
-//			 * Should not clear portBDDs. 
-//			 */
-//		}
-//		logger.debug("requiredBDDs size: "+ requiredBDDs.size());
-
-//		return requireBDD(effectPortBDD, requiredBDDs);
-
-
-		return requireBDD(effectPortBDD, causesPortsToBDDs);
-	}
-
-	/**
-	 * Finds the BDDs of the ports of the components that are needed for computing one accept macro and 
-	 * computes the BDD for this macro by calling the acceptBDD method.
-	 * 
-	 * @param the component that holds the interaction accept constraint
-	 * @param the port of the holder component
-	 * @param the list of components that correspond to the previous set of ports
-	 * 
-	 * @return the BDD that corresponds to an Accept macro
-	 * @throws BIPEngineException 
-	 */
-	BDD componentAccept(BIPComponent holderComponent, Port holderPort, Hashtable<Port, ArrayList<BDD>> causesPortToBDDs) throws BIPEngineException {
-		assert(holderComponent != null & holderPort != null && causesPortToBDDs != null);	
-		
-//		Hashtable<Port, ArrayList<BDD>> acceptedBDDs = new Hashtable<Port, ArrayList<BDD>>();
-//		ArrayList<BDD> portBDDs = new ArrayList<BDD>();
-		
-		/*
-		 * Obtain the BDD for the port variable corresponding to the effect instance of the macro
-		 */		
-		// TODO: Is it possible to have a hash table mapping port names to Port ids or BDDs without paying too much for it?
-//		ArrayList<Port> componentPorts = (ArrayList<Port>) wrapper.getBehaviourByComponent(holderComponent).getEnforceablePorts();
-//		logger.debug("holder component type: {}", holderComponent.getName());
-//		logger.debug("holder port type: {}", holderPort.id);
-//		logger.debug("holder componentPorts size: {}", componentPorts.size());
-//	
-//		int portId = 0;
-//		while (portId < componentPorts.size() && !componentPorts.get(portId).id.equals(holderPort.id)) {
-//			portId++;
-//		}
-//		logger.debug("PortId: {} ", portId);
-//		effectPortBDD = behenc.getPortBDDs().get(holderComponent)[portId];
-		BDD effectPortBDD = behenc.getBDDOfAPort(holderComponent, holderPort.id);
-		
-		/*
-		 * For each cause port, we obtain all the component instances that provide this port and store the BDDs corresponding
-		 * to the associated port variables in a common list, which is then passed on to the BDD computing function (acceptBDD).  
-		 */		
-//		for (Enumeration<Port> portEnum = causesPortToComponents.keys(); portEnum.hasMoreElements();) {
-//			Port acceptedPort = portEnum.nextElement();
-//
-//			ArrayList<BIPComponent> acceptedComponents = causesPortToComponents.get(acceptedPort);
-//			for (BIPComponent acceptedComponent : acceptedComponents) {
-//
-//				ArrayList<Port> compPorts = (ArrayList<Port>) wrapper.getBehaviourByComponent(acceptedComponent).getEnforceablePorts();
-//				logger.debug("causes component type: {}", acceptedComponent.getName());
-//				logger.debug("causes componentPorts size: {}", compPorts.size());
-//				portId = 0;
-//				// TODO: As above for the port names to Ports ids hash table
-//				while (portId < compPorts.size() && !compPorts.get(portId).id.equals(acceptedPort.id)) {
-//					portId++;
-//				}
-//				portBDDs.add(behenc.getPortBDDs().get(acceptedComponent)[portId]);
-//				logger.debug("port BDDs size: {}", portBDDs.size());
-//
-//
-//			}
-//			acceptedBDDs.put(acceptedPort, portBDDs);
-//			logger.debug("Port at causes of a require: {}", acceptedPort.id);
-//			logger.debug("port BDDs size: {}", portBDDs.size());
-//			/*
-//			 * Should not clear portBDDs. 
-//			 */
-//		}
-
-		return acceptBDD(effectPortBDD, causesPortToBDDs);
-//		return acceptBDD(effectPortBDD, acceptedBDDs);
-	}
-	
 	/**
 	 * This function computes the total Glue BDD that is the conjunction of the require and accept constraints.
 	 * For each require/accept macro we find the different combinations of the component instances that correspond
