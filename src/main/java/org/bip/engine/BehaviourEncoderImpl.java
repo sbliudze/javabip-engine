@@ -54,7 +54,6 @@ public class BehaviourEncoderImpl implements BehaviourEncoder {
 		BDD[] singleNodeBDDsForStates = new BDD[nbComponentStates];
 		Hashtable <String, BDD> stateToBDD = new Hashtable<String, BDD>();
 		for (int i = 0; i < nbComponentStates; i++) {
-			
 			/*Create new variable in the BDD manager for the state of each component instance.*/
 			singleNodeBDDsForStates[i] = engine.getBDDManager().ithVar(i + auxSum);
 			if (singleNodeBDDsForStates[i] == null){
@@ -275,7 +274,7 @@ public class BehaviourEncoderImpl implements BehaviourEncoder {
 	}
 	
 	public synchronized BDD getBDDOfAState(BIPComponent component, String stateName) throws BIPEngineException {
-		Hashtable<String, BDD> aux = componentToPortToBDD.get(component);
+		Hashtable<String, BDD> aux = componentToStateToBDD.get(component);
 		if (aux.get(stateName) == null){
 			try {
 				logger.error("BDD node of state {} is null", stateName);
@@ -287,7 +286,14 @@ public class BehaviourEncoderImpl implements BehaviourEncoder {
 		}
 		return aux.get(stateName);
 	}
+	
+	public synchronized Hashtable<String, BDD> getStateToBDDOfAComponent (BIPComponent component){
+		return componentToStateToBDD.get(component);
+	}
 
+	public synchronized Hashtable<String, BDD> getPortToBDDOfAComponent (BIPComponent component){
+		return componentToPortToBDD.get(component);
+	}
 
 	
 	
