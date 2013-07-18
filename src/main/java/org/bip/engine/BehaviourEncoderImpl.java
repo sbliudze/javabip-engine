@@ -147,70 +147,70 @@ public class BehaviourEncoderImpl implements BehaviourEncoder {
 					j++;
 				}
 				if (portsValue.get(i) == componentPorts.get(j))
-					availablePorts.add(j + 1);
+					availablePorts.add(j);
 			}
 			int aux = 0;
 			for (int i = 0; i < componentStates.size(); i++) {
 				if (stateKey.equals(componentStates.get(i))) {
-					aux = i + 1;
+					aux = i;
 					break;
 				}
 			}
 
 			for (int i = 0; i < portsValue.size(); i++) {
 				BDD aux1 = engine.getBDDManager().one();
-				for (int j = 1; j <= nbStates; j++) {
+				for (int j = 0; j < nbStates; j++) {
 					if (aux == j)
-						c[aux + i - 1] = aux1.and(stateBDDs.get(component)[j-1]);
+						c[aux + i] = aux1.and(stateBDDs.get(component)[j]);
 					else
-						c[aux + i - 1] = aux1.and(stateBDDs.get(component)[j-1].not());
-					if (j != nbStates) {
+						c[aux + i] = aux1.and(stateBDDs.get(component)[j].not());
+					if (j != nbStates-1) {
 						aux1.free();
-						aux1 = c[aux + i - 1];
+						aux1 = c[aux + i];
 					}
 				}
 				aux1.free();
 
-				BDD aux2 = c[aux + i - 1];
-				for (int j = 1; j <= nbPorts; j++) {
+				BDD aux2 = c[aux + i];
+				for (int j =0 ; j < nbPorts; j++) {
 					if (availablePorts.get(i) == j)
-						c[aux + i - 1] = aux2.and(portBDDs.get(component)[j-1]);
+						c[aux + i] = aux2.and(portBDDs.get(component)[j]);
 					else
-						c[aux + i - 1] = aux2.and(portBDDs.get(component)[j-1].not());
-					if (j != nbPorts) {
+						c[aux + i] = aux2.and(portBDDs.get(component)[j].not());
+					if (j != nbPorts-1) {
 						aux2.free();
-						aux2 = c[aux + i - 1];
+						aux2 = c[aux + i];
 					}
 				}
 				aux2.free();
-				componentBehaviour.orWith(c[aux + i - 1]);
+				componentBehaviour.orWith(c[aux + i ]);
 			}
 
 			if (portsValue.size() == 0) {
 
 				BDD aux1 = engine.getBDDManager().one();
-				for (int i = 1; i <= nbStates; i++) {
+				for (int i = 0; i < nbStates; i++) {
 					if (aux == i)
-						c[aux - 1] = aux1.and(stateBDDs.get(component)[i-1]);
+						c[aux] = aux1.and(stateBDDs.get(component)[i]);
 					else
-						c[aux - 1] = aux1.and(stateBDDs.get(component)[i-1].not());
-					if (i != nbStates) {
+						c[aux] = aux1.and(stateBDDs.get(component)[i].not());
+					if (i != nbStates-1) {
 						aux1.free();
-						aux1 = c[aux - 1];
+						aux1 = c[aux];
 					}
 				}
 				aux1.free();
 
-				BDD aux2 = c[aux - 1];
-				for (int i = 1; i <= nbPorts; i++) {
-					c[aux - 1] = aux2.and(portBDDs.get(component)[i-1].not());
-					if (i != nbPorts) {
+				BDD aux2 = c[aux];
+				for (int i = 0; i < nbPorts; i++) {
+					c[aux] = aux2.and(portBDDs.get(component)[i].not());
+					if (i != nbPorts-1) {
 						aux2.free();
-						aux2 = c[aux - 1];
+						aux2 = c[aux];
 					}
 				}
 				aux2.free();
-				componentBehaviour.orWith(c[aux - 1]);
+				componentBehaviour.orWith(c[aux]);
 
 			}
 
@@ -219,9 +219,9 @@ public class BehaviourEncoderImpl implements BehaviourEncoder {
 		}
 
 		BDD aux3 = engine.getBDDManager().one();
-		for (int j = 1; j <= nbPorts; j++) {
-			c[c.length - 1] = aux3.and(portBDDs.get(component)[j-1].not());
-			if (j != nbPorts) {
+		for (int j = 0; j < nbPorts; j++) {
+			c[c.length - 1] = aux3.and(portBDDs.get(component)[j].not());
+			if (j != nbPorts-1) {
 				aux3.free();
 				aux3 = c[c.length - 1];
 			}
