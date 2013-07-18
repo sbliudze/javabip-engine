@@ -327,11 +327,11 @@ public class GlueEncoderImpl implements GlueEncoder {
 		
 		/* Get all port BDDs registered in the Behaviour Encoder and 
 		 * add them in the totalPortBDDs ArrayList. */
-		Hashtable<BIPComponent, BDD[]> portToBDDs = behenc.getPortBDDs();
+		Hashtable<BIPComponent, BDD[]> componentToBDDs = behenc.getPortBDDs();
 
-		for (Enumeration<BIPComponent> componentsEnum = portToBDDs.keys(); componentsEnum.hasMoreElements(); ){
+		for (Enumeration<BIPComponent> componentsEnum = componentToBDDs.keys(); componentsEnum.hasMoreElements(); ){
 			BIPComponent component = componentsEnum.nextElement();
-			BDD [] portBDD = portToBDDs.get(component);
+			BDD [] portBDD = componentToBDDs.get(component);
 			for (int p=0; p<portBDD.length;p++){
 				totalPortBDDs.add(portBDD[p]);
 			}

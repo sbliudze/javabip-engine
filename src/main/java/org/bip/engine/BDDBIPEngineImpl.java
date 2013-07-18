@@ -1,6 +1,7 @@
 package org.bip.engine;
 
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.Random;
@@ -23,8 +24,8 @@ import org.slf4j.LoggerFactory;
 public class BDDBIPEngineImpl implements BDDBIPEngine {
 	
 	private Logger logger = LoggerFactory.getLogger(BDDBIPEngineImpl.class);
-	private Hashtable<Integer, BDD> currentStateBDDs = new Hashtable<Integer, BDD>();
-	private Hashtable<Integer, BDD> behaviourBDDs = new Hashtable<Integer, BDD>();
+	private Hashtable<BIPComponent, BDD> currentStateBDDs = new Hashtable<BIPComponent, BDD>();
+	private Hashtable<BIPComponent, BDD> behaviourBDDs = new Hashtable<BIPComponent, BDD>();
 	/* BDD for ΛFi */
 	private BDD totalBehaviour;
 	/* BDD for Glue */
@@ -34,6 +35,7 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 	
 	private int noNodes=1000;
 	private int cacheSize=100;
+	
 	/* JavaBDD Bdd Manager */
 	private BDDFactory bdd_mgr= BDDFactory.init("java", noNodes, cacheSize); 
 	private ArrayList<Integer> positionsOfPorts = new ArrayList<Integer>();
@@ -114,12 +116,15 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 	public final void totalBehaviourBDD(){
 		
 		BDD totalBehaviourBdd = bdd_mgr.one();
+		
 		BDD tmp;
-		for (int i = 0; i < wrapper.getNoComponents(); i++) {
-			tmp = totalBehaviourBdd.and(behaviourBDDs.get(i));
+		for (Enumeration<BIPComponent> componentsEnum = behaviourBDDs.keys(); componentsEnum.hasMoreElements(); ){
+//			BIPComponent component = componentsEnum.nextElement();
+			tmp = totalBehaviourBdd.and(behaviourBDDs.get(componentsEnum.nextElement()));
 			totalBehaviourBdd.free();
 			totalBehaviourBdd = tmp;
 		}
+		
 		this.totalBehaviour=totalBehaviourBdd;
 		if (totalGlue!=null){
 			totalBehaviourAndGlue=this.totalBehaviour.and(totalGlue);		
@@ -129,17 +134,18 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		
 	}
 
-	public final BDD totalCurrentStateBdd(Hashtable<Integer, BDD> currentStateBDDs) {
+	public final BDD totalCurrentStateBdd(Hashtable<BIPComponent, BDD> currentStateBDDs) {
 
 		BDD totalCurrentStateBdd = bdd_mgr.one();
 		BDD tmp;
-		int nbComps=wrapper.getNoComponents();
-		for (int i = 0; i < nbComps; i++) {
-			if (currentStateBDDs.get(i)==null){
-				logger.error("Current state BDD is null of component {}", i);
-				logger.error("Number of registered components {}", nbComps);
+//		int nbComps=wrapper.getNoComponents();
+		for (Enumeration<BIPComponent> componentsEnum = currentStateBDDs.keys(); componentsEnum.hasMoreElements(); ){
+			BIPComponent component = componentsEnum.nextElement();
+//		for (int i = 0; i < nbComps; i++) {
+			if (currentStateBDDs.get(component)==null){
+				logger.error("Current state BDD is null of component {}", component);
 			}
-			tmp = totalCurrentStateBdd.and(currentStateBDDs.get(i));
+			tmp = totalCurrentStateBdd.and(currentStateBDDs.get(component));
 			totalCurrentStateBdd.free();
 			totalCurrentStateBdd = tmp;
 		}
@@ -255,13 +261,13 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 	}
 	
 	public synchronized void informCurrentState(BIPComponent component, BDD componentBDD) {
-		Integer id = wrapper.getBIPComponentIdentity(component);
-		currentStateBDDs.put(id, componentBDD);
+//		Integer id = wrapper.getBIPComponentIdentity(component);
+		currentStateBDDs.put(component, componentBDD);
 	}
 	
 	public synchronized void informBehaviour(BIPComponent component, BDD componentBDD) {
-		Integer id = wrapper.getBIPComponentIdentity(component);
-		behaviourBDDs.put(id, componentBDD);
+//		Integer id = wrapper.getBIPComponentIdentity(component);
+		behaviourBDDs.put(component, componentBDD);
 	}
 
 	public void informGlue(BDD totalGlue) {
