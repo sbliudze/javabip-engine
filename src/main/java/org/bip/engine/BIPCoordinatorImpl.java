@@ -399,7 +399,11 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 			logger.debug("Number of available permits in the semaphore: {}", haveAllComponentsInformed.availablePermits());
 			
 			componentsHaveInformed.clear();
-			engine.runOneIteration();
+			try {
+				engine.runOneIteration();
+			} catch (BIPEngineException e1) {
+				e1.printStackTrace();
+			}
 
 			try {
 				logger.debug("Waiting for the acquire in run()...");

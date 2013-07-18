@@ -102,7 +102,7 @@ public class BehaviourEncoderImpl implements BehaviourEncoder {
 	 * Computes the Behavior BDD of a component 
 	 */
 	public synchronized BDD behaviourBDD(BIPComponent component) {
-		BDD componentBehaviour = engine.getBDDManager().zero(); // for OR-ing
+		BDD componentBehaviourBDD = engine.getBDDManager().zero(); // for OR-ing
 		
 		Behaviour behaviour = wrapper.getBehaviourByComponent(component);
 		
@@ -137,7 +137,6 @@ public class BehaviourEncoderImpl implements BehaviourEncoder {
 				while (portsValue.get(i) != componentPorts.get(j)) {
 					if (j == componentPorts.size() - 1) {
 						try {
-							//TODO: Change error message
 							throw new BIPEngineException("Port not found.");
 						} catch (BIPEngineException e) {
 							e.printStackTrace();
@@ -183,7 +182,7 @@ public class BehaviourEncoderImpl implements BehaviourEncoder {
 					}
 				}
 				aux2.free();
-				componentBehaviour.orWith(c[aux + i ]);
+				componentBehaviourBDD.orWith(c[aux + i ]);
 			}
 
 			if (portsValue.size() == 0) {
@@ -210,7 +209,7 @@ public class BehaviourEncoderImpl implements BehaviourEncoder {
 					}
 				}
 				aux2.free();
-				componentBehaviour.orWith(c[aux]);
+				componentBehaviourBDD.orWith(c[aux]);
 
 			}
 
@@ -227,7 +226,7 @@ public class BehaviourEncoderImpl implements BehaviourEncoder {
 			}
 		}
 		aux3.free();
-		return componentBehaviour.orWith(c[c.length - 1]);
+		return componentBehaviourBDD.orWith(c[c.length - 1]);
 
 	}
 

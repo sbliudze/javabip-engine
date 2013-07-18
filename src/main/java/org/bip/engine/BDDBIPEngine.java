@@ -6,6 +6,7 @@ import net.sf.javabdd.BDD;
 import net.sf.javabdd.BDDFactory;
 
 import org.bip.api.BIPComponent;
+import org.bip.exceptions.BIPEngineException;
 
 /**
  * Receives the current state, glue and behaviour BDDs.
@@ -44,8 +45,9 @@ public interface BDDBIPEngine {
 	
 	/**
 	 * Computes possible maximal interactions and chooses one non-deterministically
+	 * @throws BIPEngineException 
 	 */
-	void runOneIteration();
+	void runOneIteration() throws BIPEngineException;
 	
 	/**
 	 * Setter for the OSGiBIPEngine
