@@ -26,7 +26,8 @@ public class BehaviourEncoderImpl implements BehaviourEncoder {
 	private volatile Hashtable<BIPComponent, BDD[]> stateBDDs = new Hashtable<BIPComponent, BDD[]>();
 	private volatile Hashtable<BIPComponent, BDD[]> portBDDs = new Hashtable<BIPComponent, BDD[]>();
 	//TODO: move the portToBDDs to the BDDEngine to simplify the dependencies
-	private Hashtable <BIPComponent, Hashtable<String, BDD>> componentToPortToBDDs = new Hashtable <BIPComponent, Hashtable<String,BDD>>();
+	private Hashtable <BIPComponent, Hashtable<String, BDD>> componentToPortToBDD = new Hashtable <BIPComponent, Hashtable<String,BDD>>();
+	private Hashtable <BIPComponent, Hashtable<String, BDD>> componentToStateToBDD = new Hashtable <BIPComponent, Hashtable<String,BDD>>();
 	private int auxSum;
 	private BDDBIPEngine engine;
 	private BIPCoordinator wrapper;
@@ -51,11 +52,22 @@ public class BehaviourEncoderImpl implements BehaviourEncoder {
 		}
 		
 		BDD[] singleNodeBDDsForStates = new BDD[nbComponentStates];
+		Hashtable <String, BDD> stateToBDD = new Hashtable<String, BDD>();
 		for (int i = 0; i < nbComponentStates; i++) {
 			
 			/*Create new variable in the BDD manager for the state of each component instance.*/
 			singleNodeBDDsForStates[i] = engine.getBDDManager().ithVar(i + auxSum);
 			if (singleNodeBDDsForStates[i] == null){
+				try {
+					logger.error("Single node BDD for state {} is equal to null", componentStates.get(i));
+					throw new BIPEngineException("Single node BDD for state is equal to null");
+				} catch (BIPEngineException e) {
+					e.printStackTrace();
+					throw e;
+				}
+			}
+			stateToBDD.put(componentStates.get(i), singleNodeBDDsForStates[i]);
+			if (stateToBDD.get(componentStates.get(i)) == null){
 				try {
 					logger.error("BDD node that corresponds to the state {} of component {} is not created.", componentStates.get(i), component.getName());
 					throw new BIPEngineException("BDD node that corresponds to a state is not created.");
@@ -65,27 +77,28 @@ public class BehaviourEncoderImpl implements BehaviourEncoder {
 				}
 			}	
 		}
+		componentToStateToBDD.put(component, stateToBDD);
 		stateBDDs.put(component, singleNodeBDDsForStates);
 
 		BDD[] singleNodeBDDsForPorts = new BDD[nbComponentPorts];
 		Hashtable <String, BDD> portToBDD = new Hashtable<String, BDD>();
-		for (int j = 0; j < nbComponentPorts; j++) {
+		for (int i = 0; i < nbComponentPorts; i++) {
 			
 			/*Create new variable in the BDD manager for the port of each component instance.*/
-			singleNodeBDDsForPorts[j] = engine.getBDDManager().ithVar(j + nbComponentStates + auxSum);
-			if (singleNodeBDDsForPorts[j] == null){
+			singleNodeBDDsForPorts[i] = engine.getBDDManager().ithVar(i + nbComponentStates + auxSum);
+			if (singleNodeBDDsForPorts[i] == null){
 				try {
-					logger.error("Single node BDD for port {} is equal to null", componentPorts.get(j));
+					logger.error("Single node BDD for port {} is equal to null", componentPorts.get(i));
 					throw new BIPEngineException("Single node BDD for port is equal to null");
 				} catch (BIPEngineException e) {
 					e.printStackTrace();
 					throw e;
 				}
 			}	
-			portToBDD.put(componentPorts.get(j).id, singleNodeBDDsForPorts[j]);
-			if (portToBDD.get(componentPorts.get(j).id) == null){
+			portToBDD.put(componentPorts.get(i).id, singleNodeBDDsForPorts[i]);
+			if (portToBDD.get(componentPorts.get(i).id) == null){
 				try {
-					logger.error("BDD node that corresponds to the port {} of component {} is not created.", componentPorts.get(j).id, component.getName());
+					logger.error("BDD node that corresponds to the port {} of component {} is not created.", componentPorts.get(i).id, component.getName());
 					throw new BIPEngineException("BDD node that corresponds to a port is not created.");
 				} catch (BIPEngineException e) {
 					e.printStackTrace();
@@ -93,7 +106,7 @@ public class BehaviourEncoderImpl implements BehaviourEncoder {
 				}
 			}	
 		}
-		componentToPortToBDDs.put(component, portToBDD);
+		componentToPortToBDD.put(component, portToBDD);
 		portBDDs.put(component, singleNodeBDDsForPorts);
 		auxSum = auxSum + nbComponentPorts + nbComponentStates;
 	}
@@ -248,7 +261,7 @@ public class BehaviourEncoderImpl implements BehaviourEncoder {
 	}
 	
 	public synchronized BDD getBDDOfAPort(BIPComponent component, String portName) throws BIPEngineException {
-		Hashtable<String, BDD> aux = componentToPortToBDDs.get(component);
+		Hashtable<String, BDD> aux = componentToPortToBDD.get(component);
 		if (aux.get(portName) == null){
 			try {
 				logger.error("BDD node of port {} is null", portName);
@@ -259,6 +272,20 @@ public class BehaviourEncoderImpl implements BehaviourEncoder {
 			}
 		}
 		return aux.get(portName);
+	}
+	
+	public synchronized BDD getBDDOfAState(BIPComponent component, String stateName) throws BIPEngineException {
+		Hashtable<String, BDD> aux = componentToPortToBDD.get(component);
+		if (aux.get(stateName) == null){
+			try {
+				logger.error("BDD node of state {} is null", stateName);
+				throw new BIPEngineException("BDD node of a state is null");
+			} catch (BIPEngineException e) {
+				e.printStackTrace();
+				throw e;
+			}
+		}
+		return aux.get(stateName);
 	}
 
 

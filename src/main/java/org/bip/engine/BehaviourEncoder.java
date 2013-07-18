@@ -56,13 +56,22 @@ public interface BehaviourEncoder {
     Hashtable<BIPComponent, BDD[]> getPortBDDs();
     
     /**
+     * @param component
+     * @param port name
      * 
-     * @param Port type
-     * 
-     * @return ArrayList of portBDDs corresponding to the port type
+     * @return BDD corresponding to a port of a component
      * @throws BIPEngineException 
      */
     BDD getBDDOfAPort(BIPComponent component, String portName) throws BIPEngineException;
+    
+    /**
+     * @param component
+     * @param state name
+     * 
+     * @return BDD corresponding to a state of a component
+     * @throws BIPEngineException 
+     */
+    BDD getBDDOfAState(BIPComponent component, String stateName) throws BIPEngineException;
 	
 }
 
