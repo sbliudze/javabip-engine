@@ -56,7 +56,7 @@ public class CurrentStateEncoderImpl implements CurrentStateEncoder {
 		ArrayList<String> componentStates = (ArrayList<String>) wrapper.getBehaviourByComponent(component).getStates();
 		Hashtable<String, BDD> statesToBDDs = behaviourEncoder.getStateToBDDOfAComponent(component);
 		Hashtable<String, BDD> portsToBDDs = behaviourEncoder.getPortToBDDOfAComponent(component);
-		BDD result = engine.getBDDManager().one().and(statesToBDDs.get(currentState));
+
 		
 //		if (currentState == null || currentState.isEmpty()) {
 //	        try {
@@ -68,7 +68,7 @@ public class CurrentStateEncoderImpl implements CurrentStateEncoder {
 //			}
 //	      }
 		
-
+		BDD result = engine.getBDDManager().one().and(statesToBDDs.get(currentState));
 
 		for (String componentState : componentStates){
 			if (!componentState.equals(currentState)){

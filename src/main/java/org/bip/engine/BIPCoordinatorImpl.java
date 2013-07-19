@@ -35,24 +35,24 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	private CurrentStateEncoder currstenc = new CurrentStateEncoderImpl();
 	private BDDBIPEngine engine = new BDDBIPEngineImpl();
 
-	/**
-	 * Helper hashtable with BIPComponents as the keys and integers representing the local identities 
-	 * of registered components as the values.
-	 */
-	private Hashtable<BIPComponent, Integer> componentIdMapping = new Hashtable<BIPComponent, Integer>();
+//	/**
+//	 * Helper hashtable with BIPComponents as the keys and integers representing the local identities 
+//	 * of registered components as the values.
+//	 */
+//	private Hashtable<BIPComponent, Integer> componentIdMapping = new Hashtable<BIPComponent, Integer>();
 	private ArrayList <BIPComponent> registeredComponents = new ArrayList <BIPComponent> ();
-	
-	/**
-	 * Helper hashtable with integers representing the local identities of registered components 
-	 * as the keys and the BIPComponents as the values.
-	 */
-	private Hashtable<Integer, BIPComponent> idComponentMapping = new Hashtable<Integer, BIPComponent>();
-	
-	/**
-	 * Helper hashtable with integers representing the local identities of registered components 
-	 * as the keys and the Behaviours of these components as the values.
-	 */
-	private Hashtable<Integer, Behaviour> idBehaviourMapping = new Hashtable<Integer, Behaviour>();
+//	
+//	/**
+//	 * Helper hashtable with integers representing the local identities of registered components 
+//	 * as the keys and the BIPComponents as the values.
+//	 */
+//	private Hashtable<Integer, BIPComponent> idComponentMapping = new Hashtable<Integer, BIPComponent>();
+//	
+//	/**
+//	 * Helper hashtable with integers representing the local identities of registered components 
+//	 * as the keys and the Behaviours of these components as the values.
+//	 */
+//	private Hashtable<Integer, Behaviour> idBehaviourMapping = new Hashtable<Integer, Behaviour>();
 	
 	/**
 	 * Helper hashtable with integers representing the local identities of registered components 
@@ -69,6 +69,8 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	 * Helper hashset of the components that have informed in an execution cycle.
 	 */
 	private HashSet<BIPComponent> componentsHaveInformed = new HashSet<BIPComponent>();
+	
+
 
 	/** Identification number for local use */
 	private AtomicInteger idGenerator = new AtomicInteger(0);
@@ -184,14 +186,15 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 			
 			componentInstances.add(component);
 			typeInstancesMapping.put(component.getName(), componentInstances);
-			logger.debug("Component name: {}", component.getName());
-			logger.debug("Component instances size: {}", componentInstances.size());
 			registeredComponents.add(component);
 
-			componentIdMapping.put(component, registeredComponentID);
+//			componentIdMapping.put(component, registeredComponentID);
+			/*
+			 * Keep the local ID for now, but use OSGI IDs later
+			 */
 			logger.info("Component type: {} with localID: {} ", component.getName(), registeredComponentID);
-			idComponentMapping.put(registeredComponentID, component);
-			idBehaviourMapping.put(registeredComponentID, behaviour);
+//			idComponentMapping.put(registeredComponentID, component);
+//			idBehaviourMapping.put(registeredComponentID, behaviour);
 			componentBehaviourMapping.put(component, behaviour);
 			int nbComponentPorts = ((ArrayList<Port>)behaviour.getEnforceablePorts()).size();
 			int nbComponentStates = ((ArrayList<String>)behaviour.getStates()).size();
@@ -203,12 +206,10 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 			}
 			engine.informBehaviour(component, behenc.behaviourBDD(component));
 
-			// TODO: (minor) think whether a better data structure is possible for associating the variable 
-			// position to a port.  To access the position defined below one has to first obtain the corresponding
-			// index in the engine.getPositionsOfPorts() array.  Is it possible to get the position directly instead
-			// of passing through this index?
 			for (int i = 0; i < nbComponentPorts; i++) {
+				//TODO: use one of the two in the BDDEngine
 				engine.getPositionsOfPorts().add(nbPorts + nbStates + nbComponentStates + i);
+				engine.getPortToPosition().put(((ArrayList<Port>)behaviour.getEnforceablePorts()).get(i), nbPorts + nbStates + nbComponentStates + i);
 			}
 			nbPorts += nbComponentPorts;
 			nbStates += nbComponentStates;
@@ -296,12 +297,13 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 		int size = allComponents.size();
 		
 		for (int i = 0; i < size; i++) {
-			BIPComponent comp = allComponents.get(i); // Better to use an iterator
+			BIPComponent comp = allComponents.get(i);
 			ArrayList<Port> compPortsToFire = portsToFire.get(comp);
 			
 			if ((compPortsToFire != null) && (!compPortsToFire.isEmpty())) {
 				port = compPortsToFire.get(0);
 				assert(port != null);
+				logger.debug("Component {} execute port {}", comp.getName(), port.id);
 				comp.execute(port.id);
 			}
 			else
@@ -420,9 +422,9 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 		//for (BIPComponent component : identityMapping.values()) {
 		//	component.deregister();
 		//}
-		componentIdMapping.clear();
-		idComponentMapping.clear();
-		idBehaviourMapping.clear();
+//		componentIdMapping.clear();
+//		idComponentMapping.clear();
+//		idBehaviourMapping.clear();
 		componentBehaviourMapping.clear();
 		componentsHaveInformed.clear();
 		return;
@@ -480,26 +482,26 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 		return nbStates;
 	}
 	
-	/**
-	 * Helper function that given the local identity of a BIPComponent Object returns the component's local identity.
-	 */
-	public Integer getBIPComponentIdentity(BIPComponent component) {
-		return componentIdMapping.get(component);
-	}
+//	/**
+//	 * Helper function that given the local identity of a BIPComponent Object returns the component's local identity.
+//	 */
+//	public Integer getBIPComponentIdentity(BIPComponent component) {
+//		return componentIdMapping.get(component);
+//	}
+//
+//	/**
+//	 * Helper function that given the local identity of a component returns the component as a BIPComponent Object.
+//	 */
+//	public BIPComponent getBIPComponent(int identity) {
+//		return idComponentMapping.get(identity);
+//	}
 
-	/**
-	 * Helper function that given the local identity of a component returns the component as a BIPComponent Object.
-	 */
-	public BIPComponent getBIPComponent(int identity) {
-		return idComponentMapping.get(identity);
-	}
-
-	/**
-	 * Helper function that given the local identity of a component returns the behaviour as a Behaviour Object.
-	 */
-	public Behaviour getBehaviourById(int identity) {
-		return idBehaviourMapping.get(identity);
-	}
+//	/**
+//	 * Helper function that given the local identity of a component returns the behaviour as a Behaviour Object.
+//	 */
+//	public Behaviour getBehaviourById(int identity) {
+//		return idBehaviourMapping.get(identity);
+//	}
 
 	/**
 	 * Helper function that given a component returns the corresponding behaviour as a Behaviour Object.
@@ -514,6 +516,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	public int getNoComponents() {
 		return nbComponents;
 	}
+
 
 	/**
 	 * Helper function that returns the registered component instances that correspond to a component type.
