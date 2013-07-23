@@ -66,7 +66,7 @@ public interface BIPCoordinator extends BIPEngine {
 	 * @param BIP component type
 	 * @return arrayList of component instances that correspond to this component type.
 	 */
-	ArrayList<BIPComponent> getBIPComponentInstances(String type);
+	Iterable <BIPComponent> getBIPComponentInstances(String type);
 
 
 	/**

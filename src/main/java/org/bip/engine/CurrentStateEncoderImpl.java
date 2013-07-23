@@ -124,17 +124,17 @@ public class CurrentStateEncoderImpl implements CurrentStateEncoder {
 		return result;
 	}
 	
-	/**
-	 * Computes the current State BDD. Takes as an argument the current state of the component
-	 * and computes the disjunction of the BDD corresponding to this state with the negation of 
-	 * the BDDs of all the other states of this component.
-	 * 
-	 * @param BIP Component that informs about its current state
-	 * @param index of the current state of the component to be used to find the corresponding BDD
-	 * @param Indexes of the disabled ports of this current state of the component to be used to find the corresponding BDDs
-	 * 
-	 * @return the current state BDD
-	 */
+//	/**
+//	 * Computes the current State BDD. Takes as an argument the current state of the component
+//	 * and computes the disjunction of the BDD corresponding to this state with the negation of 
+//	 * the BDDs of all the other states of this component.
+//	 * 
+//	 * @param BIP Component that informs about its current state
+//	 * @param index of the current state of the component to be used to find the corresponding BDD
+//	 * @param Indexes of the disabled ports of this current state of the component to be used to find the corresponding BDDs
+//	 * 
+//	 * @return the current state BDD
+//	 */
 //	private BDD componentCurrentStateBDD(BIPComponent component, int stateID, int[] disabledPorts) {
 //
 //		int nbStates =  ((ArrayList<String>) wrapper.getBehaviourByComponent(component).getStates()).size();

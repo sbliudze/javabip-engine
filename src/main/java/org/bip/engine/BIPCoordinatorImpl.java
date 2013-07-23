@@ -204,7 +204,11 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 			} catch (BIPEngineException e) {
 				e.printStackTrace();
 			}
-			engine.informBehaviour(component, behenc.behaviourBDD(component));
+			try {
+				engine.informBehaviour(component, behenc.behaviourBDD(component));
+			} catch (BIPEngineException e) {
+				e.printStackTrace();
+			}
 
 			for (int i = 0; i < nbComponentPorts; i++) {
 				//TODO: use one of the two in the BDDEngine
@@ -521,7 +525,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	/**
 	 * Helper function that returns the registered component instances that correspond to a component type.
 	 */
-	public ArrayList<BIPComponent> getBIPComponentInstances(String type) {
+	public Iterable<BIPComponent> getBIPComponentInstances(String type) {
 		ArrayList<BIPComponent> instances = typeInstancesMapping.get(type);
 		if (instances == null){
 			try {

@@ -24,7 +24,7 @@ public class BehaviourEncoderImpl implements BehaviourEncoder {
 	//TODO: pass the portBDDs, (stateBDDs ?) to the BDDEngine
 	private volatile Hashtable<BIPComponent, BDD[]> stateBDDs = new Hashtable<BIPComponent, BDD[]>();
 	private volatile Hashtable<BIPComponent, BDD[]> portBDDs = new Hashtable<BIPComponent, BDD[]>();
-	//TODO: move the portToBDDs to the BDDEngine to simplify the dependencies
+	//TODO: move the portToBDDs to the BDDEngine (?)
 	private Hashtable <BIPComponent, Hashtable<String, BDD>> componentToPortToBDD = new Hashtable <BIPComponent, Hashtable<String,BDD>>();
 	private Hashtable <BIPComponent, Hashtable<String, BDD>> componentToStateToBDD = new Hashtable <BIPComponent, Hashtable<String,BDD>>();
 	private int auxSum;
@@ -111,11 +111,21 @@ public class BehaviourEncoderImpl implements BehaviourEncoder {
 
 	/** 
 	 * Computes the Behavior BDD of a component 
+	 * @throws BIPEngineException 
 	 */
-	public synchronized BDD behaviourBDD(BIPComponent component) {
+	public synchronized BDD behaviourBDD(BIPComponent component) throws BIPEngineException {
 
 		BDD componentBehaviourBDD = engine.getBDDManager().zero();
 		Behaviour behaviour = wrapper.getBehaviourByComponent(component);
+		if (behaviour == null){
+			try {
+				logger.error("Behaviour of component {} is null", component.getName());
+				throw new BIPEngineException("Component behaviour is null");
+			} catch (BIPEngineException e) {
+				e.printStackTrace();
+				throw e;
+			}
+		}	
 		ArrayList<Port> componentPorts = (ArrayList<Port>) behaviour.getEnforceablePorts();
 		ArrayList<String> componentStates = (ArrayList<String>) behaviour.getStates();
 //		Hashtable<String, ArrayList<Port>> stateToPorts = (Hashtable<String, ArrayList<Port>>) behaviour.getStateToPorts();
@@ -299,9 +309,9 @@ public class BehaviourEncoderImpl implements BehaviourEncoder {
 		this.wrapper = wrapper;
 	}
 
-	public synchronized Hashtable<BIPComponent, BDD[]> getStateBDDs() {
-		return stateBDDs;
-	}
+//	public synchronized Hashtable<BIPComponent, BDD[]> getStateBDDs() {
+//		return stateBDDs;
+//	}
 
 	public synchronized Hashtable<BIPComponent, BDD[]> getPortBDDs() {
 		return portBDDs;
@@ -321,19 +331,19 @@ public class BehaviourEncoderImpl implements BehaviourEncoder {
 		return aux.get(portName);
 	}
 	
-	public synchronized BDD getBDDOfAState(BIPComponent component, String stateName) throws BIPEngineException {
-		Hashtable<String, BDD> aux = componentToStateToBDD.get(component);
-		if (aux.get(stateName) == null){
-			try {
-				logger.error("BDD node of state {} is null", stateName);
-				throw new BIPEngineException("BDD node of a state is null");
-			} catch (BIPEngineException e) {
-				e.printStackTrace();
-				throw e;
-			}
-		}
-		return aux.get(stateName);
-	}
+//	public synchronized BDD getBDDOfAState(BIPComponent component, String stateName) throws BIPEngineException {
+//		Hashtable<String, BDD> aux = componentToStateToBDD.get(component);
+//		if (aux.get(stateName) == null){
+//			try {
+//				logger.error("BDD node of state {} is null", stateName);
+//				throw new BIPEngineException("BDD node of a state is null");
+//			} catch (BIPEngineException e) {
+//				e.printStackTrace();
+//				throw e;
+//			}
+//		}
+//		return aux.get(stateName);
+//	}
 	
 	public synchronized Hashtable<String, BDD> getStateToBDDOfAComponent (BIPComponent component){
 		return componentToStateToBDD.get(component);

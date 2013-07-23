@@ -32,8 +32,9 @@ public interface BehaviourEncoder {
 	 * @param component
 	 * 
 	 * @return BDD that corresponds to the behaviour of the component
+	 * @throws BIPEngineException 
 	 */
-	BDD behaviourBDD(BIPComponent component);
+	BDD behaviourBDD(BIPComponent component) throws BIPEngineException;
 	
 	/**
 	 * Setter for the BDDBIPEngine

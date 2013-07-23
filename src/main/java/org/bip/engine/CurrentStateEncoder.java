@@ -8,14 +8,16 @@ import org.bip.behaviour.Port;
 import org.bip.exceptions.BIPEngineException;
 
 /**
- * Receives information about the current state and the list of disabled ports of each registered component and computes the current state BDDs.
+ * Receives information about the current state and the list of disabled ports of 
+ * each registered component and computes the current state BDDs.
  * @author mavridou
  */
 
 public interface CurrentStateEncoder {
 	
 	/**
-	 * Receives information about the current state and the list of disabled ports of each registered component.
+	 * Receives information about the current state and the list of 
+	 * disabled ports of each registered component.
 	 * Returns the current state BDD of the specified component.
 	 * @param component
 	 * @param currentState

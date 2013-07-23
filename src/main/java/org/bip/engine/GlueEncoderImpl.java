@@ -74,7 +74,7 @@ public class GlueEncoderImpl implements GlueEncoder {
 			} else  if (causePort.id == null || causePort.id.isEmpty()) {
 				logger.warn("Port name not specified or empty in a macro cause. Skipping the port.");
 			} else {
-				ArrayList<BIPComponent> components = wrapper.getBIPComponentInstances(causePort.specType);
+				ArrayList<BIPComponent> components = (ArrayList<BIPComponent>) wrapper.getBIPComponentInstances(causePort.specType);
 				ArrayList<BDD> portBDDs = new ArrayList<BDD>();
 				for (BIPComponent component: components){
 					logger.debug("Component:{} ",component.getName());
@@ -114,7 +114,7 @@ public class GlueEncoderImpl implements GlueEncoder {
 		assert(effectPort.id != null && !effectPort.id.isEmpty());
 		assert (effectPort.specType != null && !effectPort.specType.isEmpty());
 		
-		ArrayList<BIPComponent> requireEffectComponents = wrapper.getBIPComponentInstances(effectPort.specType);
+		ArrayList<BIPComponent> requireEffectComponents = (ArrayList<BIPComponent>) wrapper.getBIPComponentInstances(effectPort.specType);
 		if (requireEffectComponents.isEmpty()) {
 			try {
 				logger.error("Spec type in effect for component {} was defined incorrectly. It does not match any registered component types", effectPort.specType);
