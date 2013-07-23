@@ -57,7 +57,7 @@ public class CurrentStateEncoderImpl implements CurrentStateEncoder {
 		Hashtable<String, BDD> statesToBDDs = behaviourEncoder.getStateToBDDOfAComponent(component);
 		Hashtable<String, BDD> portsToBDDs = behaviourEncoder.getPortToBDDOfAComponent(component);
 
-		
+//TODO: put back the exception		
 //		if (currentState == null || currentState.isEmpty()) {
 //	        try {
 //				logger.error("Current state of component {} is null or empty "+component.getName());

@@ -137,52 +137,58 @@ public class BehaviourEncoderImpl implements BehaviourEncoder {
 		BDD tmp;
 		for (String componentState: componentStates){
 			logger.debug("Component State: "+componentState);
-				BDD oneStateToPortsBDD = engine.getBDDManager().one(); 
-				tmp = oneStateToPortsBDD.and(stateToBDD.get(componentState));
-				oneStateToPortsBDD.free();
-				oneStateToPortsBDD = tmp;
-				for (String otherState : componentStates){
-					if (!componentState.equals(otherState)){
-						logger.debug("Negated State: "+otherState);
-						tmp =oneStateToPortsBDD.and(stateToBDD.get(otherState).not());
-						oneStateToPortsBDD.free();
-						oneStateToPortsBDD=tmp;
-					}
+
+			BDD onlyState = engine.getBDDManager().one().and(stateToBDD.get(componentState)); 
+//			tmp = oneStateToPortsBDD.and(stateToBDD.get(componentState));
+//			oneStateToPortsBDD.free();
+//			oneStateToPortsBDD = tmp;
+
+			for (String otherState : componentStates){
+				if (!componentState.equals(otherState)){
+					logger.debug("Negated State: "+otherState);
+					tmp =onlyState.and(stateToBDD.get(otherState).not());
+					onlyState.free();
+					onlyState=tmp;
 				}
-				ArrayList<Port> statePorts= behaviour.getStateToPorts().get(componentState);
-				if (!statePorts.isEmpty()){
-					for (Port port: statePorts){
-						logger.debug("Component state port: "+port);
-						tmp = oneStateToPortsBDD.and(portToBDD.get(port.id));
-						oneStateToPortsBDD.free();
-						oneStateToPortsBDD = tmp;
-						for (Port otherPort: componentPorts){
-							if (!port.equals(otherPort)){
-								logger.debug("Negated ports: "+otherPort);
-								tmp = oneStateToPortsBDD.and(portToBDD.get(otherPort.id).not());
-								oneStateToPortsBDD.free();
-								oneStateToPortsBDD=tmp;
-							}		
-						}
-						tmp=componentBehaviourBDD.or(oneStateToPortsBDD);
-						componentBehaviourBDD.free();
-						componentBehaviourBDD=tmp;
-					}
-				}
-				else{	
+			}
+			ArrayList<Port> statePorts= behaviour.getStateToPorts().get(componentState);
+			if (!statePorts.isEmpty()){
+				for (Port port: statePorts){
+					logger.debug("Component state port: "+port);
+					BDD ports = engine.getBDDManager().one().and(onlyState);
+					tmp = ports.and(portToBDD.get(port.id));
+					ports.free();
+					ports = tmp;
 					for (Port otherPort: componentPorts){
-						logger.debug("All negated ports: "+otherPort);
-						tmp = oneStateToPortsBDD.andWith(portToBDD.get(otherPort.id).not());
+						if (!port.equals(otherPort)){
+							logger.debug("Negated ports: "+otherPort);
+							ports.andWith(portToBDD.get(otherPort.id).not());
+//							tmp = oneStateToPortsBDD.and(portToBDD.get(otherPort.id).not());
+//							oneStateToPortsBDD.free();
+//							oneStateToPortsBDD=tmp;
+						}		
 					}
-					componentBehaviourBDD.orWith(oneStateToPortsBDD);
-				}		
+					componentBehaviourBDD.orWith(ports);
+//					tmp=componentBehaviourBDD.or(onlyState);
+//					componentBehaviourBDD.free();
+//					componentBehaviourBDD=tmp;
+				}
+			}
+			else{	
+				for (Port otherPort: componentPorts){
+					logger.debug("All negated ports: "+otherPort);
+					onlyState.andWith(portToBDD.get(otherPort.id).not());
+				}
+				componentBehaviourBDD.orWith(onlyState);
+			}		
 		}
-		
+
 		BDD allNegatedPortsBDD = engine.getBDDManager().one();
 		for(Port port: componentPorts){
-			tmp = allNegatedPortsBDD.and(portToBDD.get(port.id).not());
-			allNegatedPortsBDD.free();
-			allNegatedPortsBDD=tmp;
+			allNegatedPortsBDD.andWith(portToBDD.get(port.id).not());
+//			tmp = allNegatedPortsBDD.and(portToBDD.get(port.id).not());
+//			allNegatedPortsBDD.free();
+//			allNegatedPortsBDD=tmp;
 		}	
 //		int nbStatePortsBDDs = 0;
 //		for (Map.Entry<String, ArrayList<Port>> entry : stateToPorts.entrySet()) {
