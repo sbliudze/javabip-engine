@@ -2,6 +2,7 @@ package org.bip.engine;
 
 import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.List;
 
 import java.util.Hashtable;
 
@@ -64,11 +65,11 @@ public class GlueEncoderImpl implements GlueEncoder {
 	 * 
 	 * @throws BIPEngineException 
 	 */
-	Hashtable<Port, ArrayList<BDD>> findCausesComponents (ArrayList<Port> causesPorts) throws BIPEngineException{
+	Hashtable<Port, ArrayList<BDD>> findCausesComponents (List<Port> requireCause) throws BIPEngineException{
 
 		Hashtable<Port, ArrayList<BDD>> portToComponents = new Hashtable<Port, ArrayList<BDD>>();
 		
-		for (Port causePort : causesPorts) {
+		for (Port causePort : requireCause) {
 			if (causePort.specType == null || causePort.specType.isEmpty()) {
 				logger.warn("Spec type not specified or empty in a macro cause. Skipping the port.");
 			} else  if (causePort.id == null || causePort.id.isEmpty()) {
@@ -183,13 +184,14 @@ public class GlueEncoderImpl implements GlueEncoder {
 		}
 		
 		/* Find all causes component instances */
-		Hashtable<Port, ArrayList<BDD>> portToComponents = findCausesComponents(requires.causes);
+		List<List<Port>> requireCauses=requires.causes;
+		List<Hashtable<Port, ArrayList<BDD>>> allPorts = new ArrayList<Hashtable<Port, ArrayList<BDD>>>();
 		for (BIPComponent effectInstance : requireEffectComponents) {
 			logger.debug("Require Effect port type: {} ", requires.effect.id);
-			logger.debug("PortToComponents size: {} ", portToComponents.size());
-			logger.debug("causesPortToPortComponents size: {} ", portToComponents.size());
-
-			result.add(requireBDD(behenc.getBDDOfAPort(effectInstance, requires.effect.id), portToComponents));
+			for (List<Port> requireCause : requireCauses){
+				allPorts.add(findCausesComponents(requireCause));
+			}	
+			result.add(requireBDD(behenc.getBDDOfAPort(effectInstance, requires.effect.id), allPorts));
 		}
 		return result;
 	}
@@ -269,13 +271,16 @@ public class GlueEncoderImpl implements GlueEncoder {
 	 *  @return the BDD that corresponds to a Require macro.
 	 */
 	// TODO: Think of the cardinality issue (move to Accept)
-	BDD requireBDD(BDD requirePortHolder, Hashtable<Port, ArrayList<BDD>> requiredPorts) {
-		BDD allCausesBDD = engine.getBDDManager().one();
+	BDD requireBDD(BDD requirePortHolder, List<Hashtable<Port, ArrayList<BDD>>> requiredPorts) {
+		
+		BDD allDisjunctiveCauses = engine.getBDDManager().zero();
 
 		logger.debug("requiredPorts size: "+requiredPorts.size());
-			for (Enumeration<Port> portEnum = requiredPorts.keys(); portEnum.hasMoreElements();) {
+		for(Hashtable<Port, ArrayList<BDD>> requiredPort : requiredPorts){
+			BDD allCausesBDD = engine.getBDDManager().one();
+			for (Enumeration<Port> portEnum = requiredPort.keys(); portEnum.hasMoreElements();) {
 				Port port = portEnum.nextElement();
-				ArrayList<BDD> auxPortBDDs = requiredPorts.get(port);
+				ArrayList<BDD> auxPortBDDs = requiredPort.get(port);
 				logger.debug("Required port BDDs size: " + auxPortBDDs.size());
 				
 				logger.debug("Required port: "+ port.id);
@@ -305,9 +310,11 @@ public class GlueEncoderImpl implements GlueEncoder {
 				}
 				allCausesBDD.andWith(oneCauseBDD);
 			}
-		allCausesBDD.orWith(requirePortHolder.not());
+			allDisjunctiveCauses.orWith(allCausesBDD);
+		}
+		allDisjunctiveCauses.orWith(requirePortHolder.not());
 
-		return allCausesBDD;			
+		return allDisjunctiveCauses;			
 	}
 	
 	/**

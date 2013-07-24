@@ -35,14 +35,6 @@ public interface BDDBIPEngine {
 	 */
 	void informGlue(BDD totalGlue);
 	
-//	/**
-//	 * @param totalBehaviour BDD corresponding to the total behaviour of the components of the system
-//	 */
-//	void informTotalBehaviour(BDD totalBehaviour);
-	
-	/**
-	 * 
-	 */
 	void totalBehaviourBDD();
 	
 	/**

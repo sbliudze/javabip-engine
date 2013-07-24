@@ -233,15 +233,8 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		for (int k = 0; k < chosenInteraction.length; k++)
 			logger.debug("{}",chosenInteraction[k]);
 
-//		int offset = 0;
-
 		for (Enumeration<BIPComponent> componentsEnum = behaviourBDDs.keys(); componentsEnum.hasMoreElements(); ){
 			BIPComponent component = componentsEnum.nextElement();
-			
-//		for (int i = 0; i < behaviourBDDs.size(); i++) {
-//			BIPComponent component = wrapper.getBIPComponent(i);
-
-//			int portsize = ((ArrayList<Port>)wrapper.getBehaviourById(i).getEnforceablePorts()).size();
 			
 			logger.debug("Component: "+component.getName());
 			
@@ -254,29 +247,17 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 			
 			ArrayList <Port> enabledPorts = new ArrayList<Port>();
 
-//			for (int j = 0; j < componentPorts.size(); j++) {
-//				if (chosenInteraction[positionsOfPorts.get(j + offset)] == 1) {
-//					enabledPorts.add(((ArrayList<Port>)wrapper.getBehaviourByComponent(component).getEnforceablePorts()).get(j));
-//				}
-//			}
-//			Hashtable<Port, Integer> aux=wrapper.getPositionOfPorts();
 			for (Port componentPort : componentPorts){
 				if(chosenInteraction[portToPosition.get(componentPort)]==1){
 					enabledPorts.add(componentPort);
 				}
 			}
-//			for (int j = 0; j < componentPorts.size(); j++) {
-//				if (chosenInteraction[positionsOfPorts.get(j + offset)] == 1) {
-//					enabledPorts.add(componentPorts.get(j));
-//				}
-//			}
 			if (!enabledPorts.isEmpty()) {
 				logger.info("Chosen Component: {}", component.getName());
 				logger.info("Chosen Port: {}", enabledPorts.get(0).id);
 			}
 			chosenPorts.put(component, enabledPorts);
 			chosenComponents.add(component);
-//			offset +=componentPorts.size();
 		}
 		
 		logger.info("*************************************************************************");
@@ -287,12 +268,10 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 	}
 	
 	public synchronized void informCurrentState(BIPComponent component, BDD componentBDD) {
-//		Integer id = wrapper.getBIPComponentIdentity(component);
 		currentStateBDDs.put(component, componentBDD);
 	}
 	
 	public synchronized void informBehaviour(BIPComponent component, BDD componentBDD) {
-//		Integer id = wrapper.getBIPComponentIdentity(component);
 		behaviourBDDs.put(component, componentBDD);
 	}
 

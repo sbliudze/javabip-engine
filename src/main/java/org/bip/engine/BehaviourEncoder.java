@@ -46,10 +46,10 @@ public interface BehaviourEncoder {
 	 */
     void setBIPCoordinator(BIPCoordinator wrapper);
     
-//	/**
-//	 * @return the BDDs that correspond to the states of each component
-//	 */
-//    Hashtable<BIPComponent, BDD[]> getStateBDDs();
+	/**
+	 * @return the BDDs that correspond to the states of each component
+	 */
+    Hashtable<BIPComponent, BDD[]> getStateBDDs();
 
 	/**
 	 * @return the BDDs that correspond to the ports of each component
@@ -65,14 +65,14 @@ public interface BehaviourEncoder {
      */
     BDD getBDDOfAPort(BIPComponent component, String portName) throws BIPEngineException;
     
-//    /**
-//     * @param component
-//     * @param state name
-//     * 
-//     * @return BDD corresponding to a state of a component
-//     * @throws BIPEngineException 
-//     */
-//    BDD getBDDOfAState(BIPComponent component, String stateName) throws BIPEngineException;
+    /**
+     * @param component
+     * @param state name
+     * 
+     * @return BDD corresponding to a state of a component
+     * @throws BIPEngineException 
+     */
+    BDD getBDDOfAState(BIPComponent component, String stateName) throws BIPEngineException;
     
     /**
      * @param component 

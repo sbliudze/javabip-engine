@@ -23,33 +23,6 @@ import org.bip.behaviour.Port;
 
 public interface BIPCoordinator extends BIPEngine {
 
-//	/**
-//	 * Returns the unique identity assigned to a component instance for 
-//	 * local use in the BIP engine.
-//	 * 
-//	 * @param BIP component instance
-//	 * @return the unique identity of the specified BIP component
-//	 */
-//	Integer getBIPComponentIdentity(BIPComponent component);
-	
-//	/**
-//	 * Returns the BIP component that corresponds to the unique identity 
-//	 * provided as a parameter.
-//	 * 
-//	 * @param Identity of a component instance
-//	 * @return BIP component specified by the identity
-//	 */
-//	BIPComponent getBIPComponent(int componentIdentity);
-	
-//	/**
-//	 * Returns the Behaviour of the BIP component that corresponds to 
-//	 * the unique identity provided as a parameter.
-//	 * 
-//	 * @param identity of a component instance
-//	 * @return behaviour of the BIP component instance specified by the identity
-//	 */
-//	Behaviour getBehaviourById(int componentIdentity);
-	
 	/**
 	 * Returns the Behaviour of the BIP component.
 	 * 
