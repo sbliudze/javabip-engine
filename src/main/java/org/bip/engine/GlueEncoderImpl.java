@@ -65,7 +65,7 @@ public class GlueEncoderImpl implements GlueEncoder {
 	 * 
 	 * @throws BIPEngineException 
 	 */
-	Hashtable<Port, ArrayList<BDD>> findCausesComponents (List<Port> requireCause) throws BIPEngineException{
+	Hashtable<Port, ArrayList<BDD>> findCausesComponents (Iterable<Port> requireCause) throws BIPEngineException{
 
 		Hashtable<Port, ArrayList<BDD>> portToComponents = new Hashtable<Port, ArrayList<BDD>>();
 		
@@ -79,7 +79,7 @@ public class GlueEncoderImpl implements GlueEncoder {
 				ArrayList<BDD> portBDDs = new ArrayList<BDD>();
 				for (BIPComponent component: components){
 					logger.debug("Component:{} ",component.getName());
-					logger.debug("Port:{} ", causePort);
+					logger.info("Causes ports:{} ", causePort);
 					portBDDs.add(behenc.getBDDOfAPort(component, causePort.id));
 				}
 	 
@@ -187,7 +187,7 @@ public class GlueEncoderImpl implements GlueEncoder {
 		List<List<Port>> requireCauses=requires.causes;
 		List<Hashtable<Port, ArrayList<BDD>>> allPorts = new ArrayList<Hashtable<Port, ArrayList<BDD>>>();
 		for (BIPComponent effectInstance : requireEffectComponents) {
-			logger.debug("Require Effect port type: {} ", requires.effect.id);
+			logger.info("Require Effect port type: {} ", requires.effect.id);
 			for (List<Port> requireCause : requireCauses){
 				allPorts.add(findCausesComponents(requireCause));
 			}	
