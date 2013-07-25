@@ -154,7 +154,8 @@ public class BehaviourEncoderImpl implements BehaviourEncoder {
 					ports.free();
 					ports = tmp;
 					for (Port otherPort: componentPorts){
-						if (!port.equals(otherPort)){
+//						if (port.id.contentEquals(otherPort.id)){
+						if (!port.id.equals(otherPort.id)){
 							logger.debug("Negated ports: "+otherPort);
 							ports.andWith(portToBDD.get(otherPort.id).not());
 						}		

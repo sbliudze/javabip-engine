@@ -79,7 +79,7 @@ public class GlueEncoderImpl implements GlueEncoder {
 				ArrayList<BDD> portBDDs = new ArrayList<BDD>();
 				for (BIPComponent component: components){
 					logger.debug("Component:{} ",component.getName());
-					logger.info("Causes ports:{} ", causePort);
+					logger.debug("Causes ports:{} ", causePort);
 					portBDDs.add(behenc.getBDDOfAPort(component, causePort.id));
 				}
 	 
@@ -141,7 +141,7 @@ public class GlueEncoderImpl implements GlueEncoder {
 	ArrayList<BDD> decomposeRequireGlue(Requires requires) throws BIPEngineException {
 		ArrayList<BDD> result = new ArrayList<BDD>();
 		
-		if (requires.effect.equals(null)) {
+		if (requires.effect == null) {
 			try {
 				logger.error("Effect part of a Require constraint was not specified in the macro.");
 				throw new BIPEngineException("Effect part of a Require constraint was not specified");
@@ -173,7 +173,7 @@ public class GlueEncoderImpl implements GlueEncoder {
 		/* Find all effect component instances */
 		ArrayList<BIPComponent> requireEffectComponents =findEffectComponents(requires.effect);
 		
-		if (requires.causes.equals(null)) {
+		if (requires.causes == null) {
 			try {
 				logger.error("Causes part of a Require constraint was not specified in the macro.");
 				throw new BIPEngineException("Causes part of a Require constraint was not specified");
@@ -186,12 +186,14 @@ public class GlueEncoderImpl implements GlueEncoder {
 		/* Find all causes component instances */
 		List<List<Port>> requireCauses=requires.causes;
 		List<Hashtable<Port, ArrayList<BDD>>> allPorts = new ArrayList<Hashtable<Port, ArrayList<BDD>>>();
+		//TODO: dont recompute the causes for each component instance
 		for (BIPComponent effectInstance : requireEffectComponents) {
 			logger.info("Require Effect port type: {} ", requires.effect.id);
 			for (List<Port> requireCause : requireCauses){
 				allPorts.add(findCausesComponents(requireCause));
 			}	
 			result.add(requireBDD(behenc.getBDDOfAPort(effectInstance, requires.effect.id), allPorts));
+			allPorts.clear();
 		}
 		return result;
 	}
@@ -209,7 +211,7 @@ public class GlueEncoderImpl implements GlueEncoder {
 	ArrayList<BDD> decomposeAcceptGlue(Accepts accept) throws BIPEngineException {
 		ArrayList<BDD> result = new ArrayList<BDD>();
 
-		if (accept.effect.equals(null)) {
+		if (accept.effect == null) {
 			try {
 				logger.error("Effect part of an Accept constraint was not specified in the macro.");
 				throw new BIPEngineException("Effect part of an Accept constraint was not specified");
@@ -241,7 +243,7 @@ public class GlueEncoderImpl implements GlueEncoder {
 		/* Find all effect component instances */
 		ArrayList<BIPComponent> acceptEffectComponents = findEffectComponents(accept.effect);
 		
-		if (accept.causes.equals(null)) {
+		if (accept.causes == null) {
 			try {
 				logger.error("Causes part of an Accept constraint was not specified in the macro.");
 				throw new BIPEngineException("Causes part of an Accept constraint was not specified");
@@ -275,7 +277,7 @@ public class GlueEncoderImpl implements GlueEncoder {
 		
 		BDD allDisjunctiveCauses = engine.getBDDManager().zero();
 
-		logger.debug("requiredPorts size: "+requiredPorts.size());
+		logger.info("requiredPorts size: "+requiredPorts.size());
 		for(Hashtable<Port, ArrayList<BDD>> requiredPort : requiredPorts){
 			BDD allCausesBDD = engine.getBDDManager().one();
 			for (Enumeration<Port> portEnum = requiredPort.keys(); portEnum.hasMoreElements();) {
@@ -283,7 +285,7 @@ public class GlueEncoderImpl implements GlueEncoder {
 				ArrayList<BDD> auxPortBDDs = requiredPort.get(port);
 				logger.debug("Required port BDDs size: " + auxPortBDDs.size());
 				
-				logger.debug("Required port: "+ port.id);
+				logger.info("Required port: "+ port.id);
 				
 				int size = auxPortBDDs.size();
 
