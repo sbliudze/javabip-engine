@@ -202,8 +202,8 @@ public class BehaviourEncoderImpl implements BehaviourEncoder {
 		Hashtable<String, BDD> aux = componentToPortToBDD.get(component);
 		if (aux.get(portName) == null){
 			try {
-				logger.error("BDD node of port {} is null", portName);
-				throw new BIPEngineException("BDD node of a port is null");
+				logger.error("BDD node of port {} of component {} is null", portName, component.getName());
+				throw new BIPEngineException("BDD node of a port "+ portName +" of component "+ component.getName() +"is null");
 			} catch (BIPEngineException e) {
 				e.printStackTrace();
 				throw e;
