@@ -51,7 +51,6 @@ public class CurrentStateEncoderImpl implements CurrentStateEncoder {
 	public BDD inform(BIPComponent component, String currentState, ArrayList<Port> disabledPorts) throws BIPEngineException {
 		assert(component != null);
 		assert (currentState != null && !currentState.isEmpty());
-		assert (disabledPorts != null);
 		
 		ArrayList<String> componentStates = (ArrayList<String>) wrapper.getBehaviourByComponent(component).getStates();
 		Hashtable<String, BDD> statesToBDDs = behaviourEncoder.getStateToBDDOfAComponent(component);
@@ -67,6 +66,7 @@ public class CurrentStateEncoderImpl implements CurrentStateEncoder {
 			}
 	      }
 		
+		logger.debug("Current state BDD of component "+ component.getName() + statesToBDDs.get(currentState));
 		BDD result = engine.getBDDManager().one().and(statesToBDDs.get(currentState));
 
 		for (String componentState : componentStates){
@@ -74,9 +74,9 @@ public class CurrentStateEncoderImpl implements CurrentStateEncoder {
 				result.andWith(statesToBDDs.get(componentState).not());
 			}
 		}
-		
+
 		for (Port disabledPort : disabledPorts){
-			logger.debug("Conjunction of negated disabled ports.");
+			logger.debug("Conjunction of negated disabled ports: "+ disabledPort.id+ " of component "+ disabledPort.specType);
 			result.andWith(portsToBDDs.get(disabledPort.id).not());
 		}
 		

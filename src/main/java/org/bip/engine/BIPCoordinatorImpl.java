@@ -178,6 +178,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 			 * Keep the local ID for now, but use OSGI IDs later
 			 */
 			logger.info("Component type: {} with localID: {} ", component.getName(), registeredComponentID);
+			
 			componentBehaviourMapping.put(component, behaviour);
 			int nbComponentPorts = ((ArrayList<Port>)behaviour.getEnforceablePorts()).size();
 			int nbComponentStates = ((ArrayList<String>)behaviour.getStates()).size();
@@ -251,6 +252,9 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 					logger.info("********************************* Inform *************************************");
 					logger.info("Component: {}", component.getName());
 					logger.info("informs that is at state: {}", currentState);
+					for (Port disabledPort : disabledPorts){
+						logger.info("with disabled port: "+disabledPort.id);
+					}
 					logger.info("******************************************************************************");
 	
 					/*
