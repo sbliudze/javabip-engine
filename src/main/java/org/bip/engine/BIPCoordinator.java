@@ -7,6 +7,7 @@ import org.bip.api.BIPComponent;
 import org.bip.api.BIPEngine;
 import org.bip.api.Behaviour;
 import org.bip.behaviour.Port;
+import org.bip.exceptions.BIPEngineException;
 
 /**
  * Orchestrates the execution of the behaviour, glue and current state encoders.
@@ -38,8 +39,10 @@ public interface BIPCoordinator extends BIPEngine {
 	 * 
 	 * @param BIP component type
 	 * @return arrayList of component instances that correspond to this component type.
+	 * @throws BIPEngineException 
+	 * @throws InterruptedException 
 	 */
-	Iterable <BIPComponent> getBIPComponentInstances(String type);
+	Iterable <BIPComponent> getBIPComponentInstances(String type) throws BIPEngineException;
 
 
 	/**

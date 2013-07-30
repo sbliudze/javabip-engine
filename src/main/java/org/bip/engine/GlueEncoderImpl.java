@@ -64,6 +64,7 @@ public class GlueEncoderImpl implements GlueEncoder {
 	 * @return Hashtable with the causes ports as keys and the set of component instances that correspond to them as values
 	 * 
 	 * @throws BIPEngineException 
+	 * @throws InterruptedException 
 	 */
 	Hashtable<Port, ArrayList<BDD>> findCausesComponents (Iterable<Port> requireCause) throws BIPEngineException{
 
@@ -109,6 +110,7 @@ public class GlueEncoderImpl implements GlueEncoder {
 	 * @return ArrayList with the set of component instances that correspond to the effect port
 	 * 
 	 * @throws BIPEngineException 
+	 * @throws InterruptedException 
 	 */
 	ArrayList<BIPComponent> findEffectComponents (Port effectPort) throws BIPEngineException{
 		
@@ -119,7 +121,7 @@ public class GlueEncoderImpl implements GlueEncoder {
 		if (requireEffectComponents.isEmpty()) {
 			try {
 				logger.error("Spec type in effect for component {} was defined incorrectly. It does not match any registered component types", effectPort.specType);
-				throw new BIPEngineException("Spec type in effect was defined incorrectly");
+				throw new BIPEngineException("Spec type in effect for component"+ effectPort.specType +"was defined incorrectly. It does not match any registered component types");
 			} catch (BIPEngineException e) {
 				e.printStackTrace();
 				throw e;
@@ -137,8 +139,9 @@ public class GlueEncoderImpl implements GlueEncoder {
 	 * @return the BDD that corresponds to a Require macro
 	 * 
 	 * @throws BIPEngineException 
+	 * @throws InterruptedException 
 	 */
-	ArrayList<BDD> decomposeRequireGlue(Requires requires) throws BIPEngineException {
+	ArrayList<BDD> decomposeRequireGlue(Requires requires) throws BIPEngineException{
 		ArrayList<BDD> result = new ArrayList<BDD>();
 		
 		if (requires.effect == null) {
@@ -188,7 +191,7 @@ public class GlueEncoderImpl implements GlueEncoder {
 		List<Hashtable<Port, ArrayList<BDD>>> allPorts = new ArrayList<Hashtable<Port, ArrayList<BDD>>>();
 		//TODO: dont recompute the causes for each component instance
 		for (BIPComponent effectInstance : requireEffectComponents) {
-			logger.info("Require Effect port type: {} ", requires.effect.id);
+			logger.debug("Require Effect port type: {} ", requires.effect.id);
 			for (List<Port> requireCause : requireCauses){
 				allPorts.add(findCausesComponents(requireCause));
 			}	
@@ -207,8 +210,9 @@ public class GlueEncoderImpl implements GlueEncoder {
 	 * @return the BDD that corresponds to an Accept macro
 	 * 
 	 * @throws BIPEngineException 
+	 * @throws InterruptedException 
 	 */
-	ArrayList<BDD> decomposeAcceptGlue(Accepts accept) throws BIPEngineException {
+	ArrayList<BDD> decomposeAcceptGlue(Accepts accept) throws BIPEngineException{
 		ArrayList<BDD> result = new ArrayList<BDD>();
 
 		if (accept.effect == null) {
@@ -277,15 +281,14 @@ public class GlueEncoderImpl implements GlueEncoder {
 		
 		BDD allDisjunctiveCauses = engine.getBDDManager().zero();
 
-		logger.info("requiredPorts size: "+requiredPorts.size());
+		logger.debug("requiredPorts size: "+requiredPorts.size());
 		for(Hashtable<Port, ArrayList<BDD>> requiredPort : requiredPorts){
 			BDD allCausesBDD = engine.getBDDManager().one();
 			for (Enumeration<Port> portEnum = requiredPort.keys(); portEnum.hasMoreElements();) {
 				Port port = portEnum.nextElement();
 				ArrayList<BDD> auxPortBDDs = requiredPort.get(port);
 				logger.debug("Required port BDDs size: " + auxPortBDDs.size());
-				
-				logger.info("Required port: "+ port.id);
+				logger.debug("Required port: "+ port.id);
 				
 				int size = auxPortBDDs.size();
 
@@ -382,8 +385,9 @@ public class GlueEncoderImpl implements GlueEncoder {
 	 * to each constraint and take the conjunction of all these.
 	 * 
 	 * @throws BIPEngineException 
+	 * @throws InterruptedException 
 	 */
-	public BDD totalGlue() throws BIPEngineException {
+	public BDD totalGlue() throws BIPEngineException{
 		
 		BDD result = engine.getBDDManager().one();
 

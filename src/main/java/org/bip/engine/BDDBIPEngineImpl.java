@@ -116,7 +116,7 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 	}
 	
 
-	public final void totalBehaviourBDD(){
+	public final void totalBehaviourBDD() throws BIPEngineException{
 		
 		BDD totalBehaviourBdd = bdd_mgr.one();
 		BDD tmp;
@@ -129,7 +129,16 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		this.totalBehaviour=totalBehaviourBdd;
 //		synchronized (totalBehaviourAndGlue) {
 			if (totalGlue!=null){
-				totalBehaviourAndGlue=this.totalBehaviour.and(totalGlue);		
+				totalBehaviourAndGlue=this.totalBehaviour.and(totalGlue);	
+				if (totalBehaviourAndGlue == null) {
+					try {
+						logger.error("Total Behaviour and Glue is null");
+						throw new BIPEngineException("Total Behaviour and Glue is null");
+					} catch (BIPEngineException e) {
+						e.printStackTrace();
+						throw e;	
+					}
+				}	
 				this.totalBehaviour.free();
 				totalGlue.free();
 			}
@@ -165,9 +174,27 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 
 		/* Λi Ci */
 		BDD totalCurrentState = totalCurrentStateBdd(currentStateBDDs);
+		if (totalCurrentState==null ) {
+			try {
+				logger.error("Total Current States BDD is null");
+				throw new BIPEngineException("Total Current States BDD is null");
+			} catch (BIPEngineException e) {
+				e.printStackTrace();
+				throw e;	
+			}
+		}	
 
 		/* Compute global BDD: solns= Λi Fi Λ G Λ (Λi Ci) */
 		BDD solns = totalBehaviourAndGlue.and(totalCurrentState);
+		if (solns==null ) {
+			try {
+				logger.error("Global BDD is null");
+				throw new BIPEngineException("Global BDD is null");
+			} catch (BIPEngineException e) {
+				e.printStackTrace();
+				throw e;	
+			}
+		}	
 		totalCurrentState.free();
 		ArrayList<byte[]> a = new ArrayList<byte[]>();
 
@@ -275,13 +302,22 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		behaviourBDDs.put(component, componentBDD);
 	}
 
-	public void informGlue(BDD totalGlue) {
+	public void informGlue(BDD totalGlue) throws BIPEngineException {
 
 		this.totalGlue = totalGlue;
 		//TODO: Fix synchronized
 //		synchronized (totalBehaviourAndGlue) {
 			if (totalBehaviour!=null){
-				totalBehaviourAndGlue=totalBehaviour.and(this.totalGlue);		
+				totalBehaviourAndGlue=totalBehaviour.and(this.totalGlue);	
+				if (totalBehaviourAndGlue == null ) {
+					try {
+						logger.error("Total Behaviour and Glue is null");
+						throw new BIPEngineException("Total Behaviour and Glue is null");
+					} catch (BIPEngineException e) {
+						e.printStackTrace();
+						throw e;	
+					}
+				}	
 				totalBehaviour.free();
 				this.totalGlue.free();
 			}

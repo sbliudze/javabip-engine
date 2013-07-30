@@ -34,6 +34,8 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	private BehaviourEncoder behenc = new BehaviourEncoderImpl();
 	private CurrentStateEncoder currstenc = new CurrentStateEncoderImpl();
 	private BDDBIPEngine engine = new BDDBIPEngineImpl();
+	
+	Thread currentThread = null;
 
 	private ArrayList <BIPComponent> registeredComponents = new ArrayList <BIPComponent> ();
 	
@@ -115,7 +117,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 		}
 	}
 	
-	private synchronized void orderGlueEncoderToComputeTotalGlueAndInformEngine() throws BIPEngineException {
+	private synchronized void orderGlueEncoderToComputeTotalGlueAndInformEngine() throws BIPEngineException{
 		engine.informGlue(glueenc.totalGlue());
 	}
 	
@@ -126,8 +128,9 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	 * the engine should be re-ordered to compute the total Behaviour BDD. Not that, in case of insertion of
 	 * components this function need not be called, since we can just take the conjunction of the previous total 
 	 * Behaviour BDD and the Behaviour BDD representing the new component to compute the new total Behaviour BDD.
+	 * @throws BIPEngineException 
 	 */
-	private synchronized void orderEngineToComputeTotalBehaviour() {
+	private synchronized void orderEngineToComputeTotalBehaviour() throws BIPEngineException {
 		engine.totalBehaviourBDD();
 	}
 
@@ -299,6 +302,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	 * Initialization phase. Orders the Behaviour and Current State Encoders to compute their total BDDs 
 	 * and send these to the BDDBIPEngine. 
 	 * @throws BIPEngineException 
+	 * @throws InterruptedException 
 	 */
 	private void coordinatorCycleInitialization() throws BIPEngineException{
 		/*
@@ -367,13 +371,15 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 		orderGlueEncoderToComputeTotalGlueAndInformEngine();
 	}
 	
-	public void run() {
+	public void run(){
 		logger.info("Engine thread is started.");
 		
 		try {
 			coordinatorCycleInitialization();
 		} catch (BIPEngineException e1) {
 			e1.printStackTrace();
+			isEngineExecuting=false;
+			engineThread.interrupt();
 		}
 		/**
 		 * Start the Engine cycle
@@ -443,7 +449,6 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 		else {
 			synchronized (this){
 				isEngineExecuting = true;
-				
 				notifyAll();
 			}
 		}
@@ -480,16 +485,20 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 
 	/**
 	 * Helper function that returns the registered component instances that correspond to a component type.
+	 * @throws BIPEngineException 
 	 */
-	public Iterable<BIPComponent> getBIPComponentInstances(String type) {
+	public Iterable<BIPComponent> getBIPComponentInstances(String type) throws BIPEngineException{
 		ArrayList<BIPComponent> instances = typeInstancesMapping.get(type);
 		if (instances == null){
 			try {
 				logger.error("No registered component instances for the: {} ",type +
 						" component type. Possible reasons: The name of the component instances was specified in another way at registration.");
-				throw new BIPEngineException("No registered component instances for this component type");
+				throw new BIPEngineException("Exception in thread "+Thread.currentThread().getName()+" No registered component instances for the component type: " + type );
 			} catch (BIPEngineException e) {
 				e.printStackTrace();
+				
+				throw e;
+			
 			}
 		}
 		return instances; 

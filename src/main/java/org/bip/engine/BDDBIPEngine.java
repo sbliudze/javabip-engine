@@ -32,10 +32,11 @@ public interface BDDBIPEngine {
 	
 	/**
 	 * @param totalGlue BDD corresponding to the total glue of the components of the system
+	 * @throws BIPEngineException 
 	 */
-	void informGlue(BDD totalGlue);
+	void informGlue(BDD totalGlue) throws BIPEngineException;
 	
-	void totalBehaviourBDD();
+	void totalBehaviourBDD() throws BIPEngineException;
 	
 	/**
 	 * Computes possible maximal interactions and chooses one non-deterministically

@@ -80,8 +80,11 @@ public class BehaviourEncoderImpl implements BehaviourEncoder {
 
 		BDD[] singleNodeBDDsForPorts = new BDD[nbComponentPorts];
 		Hashtable <String, BDD> portToBDD = new Hashtable<String, BDD>();
+		logger.debug("Number of component port: "+ nbComponentPorts);
+		logger.debug("Number of component states: "+nbComponentStates);
+		logger.debug("auxSum: "+auxSum);
+		
 		for (int i = 0; i < nbComponentPorts; i++) {
-			
 			/*Create new variable in the BDD manager for the port of each component instance.*/
 			singleNodeBDDsForPorts[i] = engine.getBDDManager().ithVar(i + nbComponentStates + auxSum);
 			if (singleNodeBDDsForPorts[i] == null){
@@ -93,6 +96,7 @@ public class BehaviourEncoderImpl implements BehaviourEncoder {
 					throw e;
 				}
 			}	
+			logger.debug("Port {} to BDD {} ",componentPorts.get(i).id, singleNodeBDDsForPorts[i] );
 			portToBDD.put(componentPorts.get(i).id, singleNodeBDDsForPorts[i]);
 			if (portToBDD.get(componentPorts.get(i).id) == null){
 				try {
@@ -104,6 +108,7 @@ public class BehaviourEncoderImpl implements BehaviourEncoder {
 				}
 			}	
 		}
+		
 		componentToPortToBDD.put(component, portToBDD);
 		portBDDs.put(component, singleNodeBDDsForPorts);
 		auxSum = auxSum + nbComponentPorts + nbComponentStates;
