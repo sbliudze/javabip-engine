@@ -215,6 +215,9 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 				logger.info("************************ Already Have Informed *******************************");
 				logger.info("Component: {}", component.getName());
 				logger.info("informs that is at state: {}", currentState);
+				for (Port disabledPort : disabledPorts){
+					logger.info("with disabled port: "+disabledPort.id);
+				}
 				logger.info("******************************************************************************");
 				logger.error("Component has already informed the engine in this execution cycle.");
 				throw new BIPEngineException("Component has already informed the engine in this execution cycle.");

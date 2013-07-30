@@ -51,7 +51,7 @@ public class CurrentStateEncoderImpl implements CurrentStateEncoder {
 	public BDD inform(BIPComponent component, String currentState, ArrayList<Port> disabledPorts) throws BIPEngineException {
 		assert(component != null);
 		assert (currentState != null && !currentState.isEmpty());
-		assert (disabledPorts != null && !disabledPorts.isEmpty());
+		assert (disabledPorts != null);
 		
 		ArrayList<String> componentStates = (ArrayList<String>) wrapper.getBehaviourByComponent(component).getStates();
 		Hashtable<String, BDD> statesToBDDs = behaviourEncoder.getStateToBDDOfAComponent(component);

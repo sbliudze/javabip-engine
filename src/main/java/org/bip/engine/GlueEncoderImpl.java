@@ -83,7 +83,6 @@ public class GlueEncoderImpl implements GlueEncoder {
 					logger.debug("Causes ports:{} ", causePort);
 					portBDDs.add(behenc.getBDDOfAPort(component, causePort.id));
 				}
-	 
 				logger.debug("Number of BDDs for port {} {}", causePort.id , portBDDs.size() );
 
 				if (portBDDs.isEmpty() || portBDDs==null || portBDDs.get(0) == null) {
@@ -146,8 +145,8 @@ public class GlueEncoderImpl implements GlueEncoder {
 		
 		if (requires.effect == null) {
 			try {
-				logger.error("Effect part of a Require constraint was not specified in the macro.");
-				throw new BIPEngineException("Effect part of a Require constraint was not specified");
+				logger.error("Effect part of a Require constraint was not specified.");
+				throw new BIPEngineException("Effect part of a Require constraint was not specified.");
 			} catch (BIPEngineException e) {
 				e.printStackTrace();
 				throw e;
@@ -157,7 +156,7 @@ public class GlueEncoderImpl implements GlueEncoder {
 		if (requires.effect.id.isEmpty()) {
 			try {
 				logger.error("The port at the effect part of a Require constraint was not specified.");
-				throw new BIPEngineException("The port at the effect part of a Require constraint was not specified");
+				throw new BIPEngineException("The port at the effect part of a Require constraint was not specified.");
 			} catch (BIPEngineException e) {
 				e.printStackTrace();
 				throw e;
@@ -166,8 +165,8 @@ public class GlueEncoderImpl implements GlueEncoder {
 		
 		if (requires.effect.specType.isEmpty()) {
 			try {
-				logger.error("The component type of a port at the effect part of a Require constraint was not specified");
-				throw new BIPEngineException("The component type of a port at the effect part of a Require constraint was not specified");
+				logger.error("The component type of a port at the effect part of a Require constraint was not specified.");
+				throw new BIPEngineException("The component type of a port at the effect part of a Require constraint was not specified.");
 			} catch (BIPEngineException e) {
 				e.printStackTrace();
 				throw e;
@@ -281,15 +280,15 @@ public class GlueEncoderImpl implements GlueEncoder {
 		
 		BDD allDisjunctiveCauses = engine.getBDDManager().zero();
 
-		logger.debug("requiredPorts size: "+requiredPorts.size());
+		logger.info("requiredPorts size: "+requiredPorts.size());
 		for(Hashtable<Port, ArrayList<BDD>> requiredPort : requiredPorts){
 			BDD allCausesBDD = engine.getBDDManager().one();
+			logger.info("Hashtable requiredPorts size: "+requiredPort.size());
 			for (Enumeration<Port> portEnum = requiredPort.keys(); portEnum.hasMoreElements();) {
 				Port port = portEnum.nextElement();
 				ArrayList<BDD> auxPortBDDs = requiredPort.get(port);
 				logger.debug("Required port BDDs size: " + auxPortBDDs.size());
-				logger.debug("Required port: "+ port.id);
-				
+				logger.debug("Required port: "+ port.id);	
 				int size = auxPortBDDs.size();
 
 				BDD oneCauseBDD = engine.getBDDManager().zero();
