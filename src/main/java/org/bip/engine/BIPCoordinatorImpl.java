@@ -141,8 +141,8 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 		 */
 		if (registeredComponents.contains(component)){
 			try {
-				logger.error("Component has already registered before.");
-				throw new BIPEngineException("Component has already registered before.");
+				logger.error("Component "+component.getName()+" has already registered before.");
+				throw new BIPEngineException("Component "+component.getName()+" has already registered before.");
 			} catch (BIPEngineException e) {
 				e.printStackTrace();
 
@@ -220,8 +220,8 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 					logger.info("with disabled port: "+disabledPort.id);
 				}
 				logger.info("******************************************************************************");
-				logger.error("Component has already informed the engine in this execution cycle.");
-				throw new BIPEngineException("Component has already informed the engine in this execution cycle.");
+				logger.error("Component "+ component.getName() +" has already informed the engine in this execution cycle.");
+				throw new BIPEngineException("Component "+ component.getName() +" has already informed the engine in this execution cycle.");
 			} catch (BIPEngineException e) {
 				e.printStackTrace();
 			}
@@ -274,8 +274,8 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 				 */
 			} else {
 				try {
-					logger.error("Component has not registered yet.");
-					throw new BIPEngineException("Component has not registered yet.");
+					logger.error("Component " +component.getName()+" has not registered yet.");
+					throw new BIPEngineException("Component " +component.getName()+" has not registered yet.");
 				} catch (BIPEngineException e) {
 					e.printStackTrace();					
 				}
@@ -356,8 +356,8 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 				isEngineSemaphoreReady = true;
 				logger.debug("Engine semaphore initialised");
 			} catch (InterruptedException e1) {
-				e1.printStackTrace();
-				logger.error("Semaphore have all components informed acquire method for the number of registered components in the system was interrupted.");
+				logger.error("Semaphore's haveAllComponentsInformed acquire method for the number of registered components in the system was interrupted.");
+				e1.printStackTrace();		
 			}
 		}
 		
@@ -366,8 +366,8 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 			haveAllComponentsInformed.acquire(nbComponents - componentsHaveInformed.size());
 			logger.debug("The cycle initialisation acquire successful");
 		} catch (InterruptedException e1) {
+			logger.error("Semaphore's haveAllComponentsInformed acquire method for the number of components that still have to inform was interrupted.");
 			e1.printStackTrace();
-			logger.error("Semaphore have all components informed acquire method for the number of components that still have to inform was interrupted.");
 		}
 
 		/* 
@@ -411,7 +411,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 			} catch (InterruptedException e) {
 				isEngineExecuting = false;
 				e.printStackTrace();
-				logger.error("Semaphore have all components informed acquire method for the number of registered components in the system was interrupted.");
+				logger.error("Semaphore's haveAllComponentsInformed acquire method for the number of registered components in the system was interrupted.");
 			}	
 		}
 		
@@ -500,12 +500,11 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 			try {
 				logger.error("No registered component instances for the: {} ",type +
 						" component type. Possible reasons: The name of the component instances was specified in another way at registration.");
-				throw new BIPEngineException("Exception in thread "+Thread.currentThread().getName()+" No registered component instances for the component type: " + type );
+				throw new BIPEngineException("Exception in thread "+Thread.currentThread().getName()+" No registered component instances for the component type: " + type + 
+						"Possible reasons: The name of the component instances was specified in another way at registration.");
 			} catch (BIPEngineException e) {
 				e.printStackTrace();
-				
 				throw e;
-			
 			}
 		}
 		return instances; 

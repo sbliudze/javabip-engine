@@ -46,7 +46,8 @@ public class GlueEncoderImpl implements GlueEncoder {
 			try {
 				logger.error("The glue parser has failed to compute the glue object.\n" +
 						"\tPossible reasons: Corrupt or non-existant glue XML file.");
-				throw new BIPEngineException("Glue parser outputs null");
+				throw new BIPEngineException("The glue parser has failed to compute the glue object.\n" +
+						"\tPossible reasons: Corrupt or non-existant glue XML file.");
 			} catch (BIPEngineException e) {
 				e.printStackTrace();
 				throw e;
@@ -88,7 +89,7 @@ public class GlueEncoderImpl implements GlueEncoder {
 				if (portBDDs.isEmpty() || portBDDs==null || portBDDs.get(0) == null) {
 					try {
 						logger.error("Port {} in causes was defined incorrectly. It does not match any registered port types", causePort.id);
-						throw new BIPEngineException("Port in causes was defined incorrectly");
+						throw new BIPEngineException("Port "+causePort.id+" in causes was defined incorrectly. It does not match any registered port types");
 					} catch (BIPEngineException e) {
 						e.printStackTrace();
 						throw e;	
@@ -121,7 +122,7 @@ public class GlueEncoderImpl implements GlueEncoder {
 		if (requireEffectComponents.isEmpty()) {
 			try {
 				logger.error("Spec type in effect for component {} was defined incorrectly. It does not match any registered component types", effectPort.specType);
-				throw new BIPEngineException("Spec type in effect for component"+ effectPort.specType +"was defined incorrectly. It does not match any registered component types");
+				throw new BIPEngineException("Spec type in effect for component "+ effectPort.specType +" was defined incorrectly. It does not match any registered component types");
 			} catch (BIPEngineException e) {
 				e.printStackTrace();
 				throw e;
