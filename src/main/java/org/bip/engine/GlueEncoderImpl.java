@@ -335,7 +335,7 @@ public class GlueEncoderImpl implements GlueEncoder {
 	 */
 	//TODO: change the arguments to reflect the cardinality 
 	BDD acceptBDD(BDD acceptPortHolder, Hashtable<Port, ArrayList<BDD>> acceptedPorts) { 
-//		BDD tmp;
+		BDD tmp;
 		
 		ArrayList<BDD> totalPortBDDs= new ArrayList<BDD>();
 		
@@ -352,32 +352,66 @@ public class GlueEncoderImpl implements GlueEncoder {
 		}
 		logger.debug("totalPortBDDs size: "+totalPortBDDs.size());
 		BDD allCausesBDD = engine.getBDDManager().one();
-
-		for (BDD portBDD : totalPortBDDs){
-			boolean exist = false;
-			
-			for (Enumeration<Port> portEnum = acceptedPorts.keys(); portEnum.hasMoreElements();){
-				Port port = portEnum.nextElement();
-				ArrayList<BDD> currentPortInstanceBDDs=acceptedPorts.get(port);
-				logger.debug("currentPortInstanceBDDs size"+currentPortInstanceBDDs.size());
-				int indexPortBDD=0;
-	
-				if((portBDD).equals(acceptPortHolder)){
-					exist=true;
-				}
-				while (!exist && indexPortBDD < currentPortInstanceBDDs.size()){
-					if (currentPortInstanceBDDs.get(indexPortBDD).equals(portBDD)){
-						exist =true;
-						
+		
+		//TODO: Improve the  below
+		if (acceptedPorts.size()>1){
+			for (BDD portBDD : totalPortBDDs){
+				boolean exist = false;
+				
+				for (Enumeration<Port> portEnum = acceptedPorts.keys(); portEnum.hasMoreElements();){
+					Port port = portEnum.nextElement();
+					ArrayList<BDD> currentPortInstanceBDDs=acceptedPorts.get(port);
+					logger.debug("currentPortInstanceBDDs size"+currentPortInstanceBDDs.size());
+					int indexPortBDD=0;
+		
+					if((portBDD).equals(acceptPortHolder)){
+						exist=true;
 					}
-					else {
-						indexPortBDD++;
+					while (!exist && indexPortBDD < currentPortInstanceBDDs.size()){
+						if (currentPortInstanceBDDs.get(indexPortBDD).equals(portBDD)){
+							exist =true;
+							
+						}
+						else {
+							indexPortBDD++;
+						}
+					}
+				}
+					if (!exist) {
+						//allCausesBDD.andWith(portBDD.not());
+						tmp = portBDD.not().and(allCausesBDD);
+						allCausesBDD.free();
+						allCausesBDD = tmp;
+					}
+			}
+		}
+		else{
+			for (BDD portBDD : totalPortBDDs){
+				boolean exist = false;
+				
+				for (Enumeration<Port> portEnum = acceptedPorts.keys(); portEnum.hasMoreElements();){
+					Port port = portEnum.nextElement();
+					ArrayList<BDD> currentPortInstanceBDDs=acceptedPorts.get(port);
+					int indexPortBDD=0;
+		
+					if((portBDD).equals(acceptPortHolder)){
+						exist=true;
+					}
+					while (!exist && indexPortBDD < currentPortInstanceBDDs.size()){
+						if (currentPortInstanceBDDs.get(indexPortBDD).equals(portBDD)){
+							exist =true;
+						}
+						else {
+							indexPortBDD++;
+						}
+					}
+					if (!exist) {
+						tmp = portBDD.not().and(allCausesBDD);
+						allCausesBDD.free();
+						allCausesBDD = tmp;
 					}
 				}
 			}
-				if (!exist) {
-					allCausesBDD.andWith(portBDD.not());
-				}
 		}
 		return allCausesBDD.orWith(acceptPortHolder.not());
 	}
