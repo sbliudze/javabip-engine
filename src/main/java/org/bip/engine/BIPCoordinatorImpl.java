@@ -3,6 +3,7 @@ package org.bip.engine;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Hashtable;
+import java.util.Map;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -206,9 +207,13 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 		}
 	}
 	
+	
 	/**
 	 * Components call the inform function to give information about their current state and their number of
-	 * disabled ports by guards.
+	 * disabled ports by guards that do not have to do with data transfer.
+	 * 
+	 * If the guards of a transition do not have information valuable for data transfer then only this inform is called for a particular component.
+	 * Otherwise, also the other inform function is called.
 	 */
 	public synchronized void inform(BIPComponent component, String currentState, ArrayList<Port> disabledPorts) {
 		if (componentsHaveInformed.contains(component)) {
@@ -282,6 +287,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 			}
 		}
 	}
+
 
 	/**
 	 * BDDBIPEngine informs the BIPCoordinator for the components (and their associated ports) that are part of the chosen interaction.
