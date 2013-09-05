@@ -6,31 +6,32 @@ import net.sf.javabdd.BDD;
 
 import org.bip.api.BIPComponent;
 import org.bip.behaviour.Port;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class DataEncoderImpl implements DataEncoder{
 
-	@Override
+	private BehaviourEncoder behaviourEncoder; 
+	private BDDBIPEngine engine;
+	private BIPCoordinator wrapper;
+
+	private Logger logger = LoggerFactory.getLogger(CurrentStateEncoderImpl.class);
+	
 	public BDD inform(Map<BIPComponent, Port> disabledCombinations) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
-	@Override
 	public void setBIPCoordinator(BIPCoordinator wrapper) {
-		// TODO Auto-generated method stub
-		
+		this.wrapper= wrapper;	
 	}
 
-	@Override
 	public void setBehaviourEncoder(BehaviourEncoder behaviourEncoder) {
-		// TODO Auto-generated method stub
-		
+		this.behaviourEncoder=behaviourEncoder;
 	}
 
-	@Override
 	public void setEngine(BDDBIPEngine engine) {
-		// TODO Auto-generated method stub
-		
+		this.engine=engine;
 	}
 
 }
