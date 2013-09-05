@@ -27,7 +27,7 @@ public interface DataEncoder {
 	BDD inform(Map<BIPComponent, Port> disabledCombinations);
 	
 	/**
-	 * Setter for the OSGiBIPEngine
+	 * Setter for the BIPCoordinator
 	 */
 	void setBIPCoordinator(BIPCoordinator wrapper);
 	/**

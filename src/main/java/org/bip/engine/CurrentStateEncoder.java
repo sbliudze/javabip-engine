@@ -36,7 +36,7 @@ public interface CurrentStateEncoder {
 	BDD inform(BIPComponent component, String currentState, ArrayList<Port> disabledPorts) throws BIPEngineException;
 	
 	/**
-	 * Setter for the OSGiBIPEngine
+	 * Setter for the BIPCoordinator
 	 */
 	void setBIPCoordinator(BIPCoordinator wrapper);
 	/**
