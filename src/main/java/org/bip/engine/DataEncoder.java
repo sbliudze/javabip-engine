@@ -1,9 +1,10 @@
 package org.bip.engine;
 import java.util.Map;
 
+import net.sf.javabdd.BDD;
+
 import org.bip.api.BIPComponent;
 import org.bip.behaviour.Port;
-import org.bip.exceptions.BIPEngineException;
 
 public interface DataEncoder {
 	
@@ -19,9 +20,11 @@ public interface DataEncoder {
 	 * is called for a particular component, this cannot be called anymore for this particular
 	 * component.
 	 * 
+	 * Returns the BDD corresponding to the disabled combination of ports of component instances.
+	 * 
 	 * @param A map that gives information about a disabled interaction of ports of component instances according to data transfer information
 	 */
-	void inform(Map<BIPComponent, Port> disabledCombinations);
+	BDD inform(Map<BIPComponent, Port> disabledCombinations);
 	
 	/**
 	 * Setter for the OSGiBIPEngine
