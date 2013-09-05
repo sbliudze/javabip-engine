@@ -20,7 +20,7 @@ public interface DataEncoder {
 	 * is called for a particular component, this cannot be called anymore for this particular
 	 * component.
 	 * 
-	 * Returns the BDD corresponding to the disabled combination of ports of component instances.
+	 * Returns to the core engine the BDD corresponding to the disabled combination of ports of component instances.
 	 * 
 	 * @param A map that gives information about a disabled interaction of ports of component instances according to data transfer information
 	 */
