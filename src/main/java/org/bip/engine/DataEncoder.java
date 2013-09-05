@@ -8,13 +8,18 @@ import org.bip.exceptions.BIPEngineException;
 public interface DataEncoder {
 	
 	/**
-	 * Receives information about the current state and the list of 
-	 * disabled ports of each registered component.
-	 * Returns the current state BDD of the specified component.
-	 * @param component
-	 * @param currentState
-	 * @param disabledPorts
-	 * @throws BIPEngineException 
+	 * Receives information about the disabled ports due to data transfer information
+	 * of a registered component. These ports are of different component instances.
+	 * In the current implementation of the Port Object there is no information 
+	 * about the holder component of a port. Therefore, the information about the 
+	 * component holders has to be explicitly provided in the inform function.
+	 * 
+	 * It can be called several times through one component during one execution
+	 * cycle of the engine. When the inform function implemented in the current state encoder
+	 * is called for a particular component, this cannot be called anymore for this particular
+	 * component.
+	 * 
+	 * @param A map that gives information about a disabled interaction of ports of component instances according to data transfer information
 	 */
 	void inform(Map<BIPComponent, Port> disabledCombinations);
 	
