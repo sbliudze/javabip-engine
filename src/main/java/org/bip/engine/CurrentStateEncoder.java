@@ -17,8 +17,17 @@ public interface CurrentStateEncoder {
 	
 	/**
 	 * Receives information about the current state and the list of 
-	 * disabled ports of each registered component.
+	 * disabled ports of each registered component due to guards that are not dealing with data transfer.
+	 * If there are no disabled ports at this current state then this list is empty. 
+	 * A port that requires data transfer may still be disabled no matter what data 
+	 * transfer occurs afterwards. Therefore, the ports specified within the list of 
+	 * disabled ports may contain data ports.
+	 * 
+	 * The Current State Encoder gets this information through the Data Coordinator. When the inform is called,
+	 * it means that all the calls to informSpecific have finished at this execution cycle for the particular component.
+	 * 
 	 * Returns the current state BDD of the specified component.
+	 * 
 	 * @param component
 	 * @param currentState
 	 * @param disabledPorts
