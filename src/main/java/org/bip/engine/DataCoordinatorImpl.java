@@ -14,7 +14,7 @@ import org.bip.glue.BIPGlue;
 // engine. DataCoordinatorImpl takes care of only of data querying and passing to BIP executors.
 
 // TODO
-// DataCordinator intercepts call register and inform from BIPExecutor. For each BIPComponent it
+// DataCoordinator intercepts call register and inform from BIPExecutor. For each BIPComponent it
 // creates a Proxy of BIPComponent (also BIPComponent class) that is registered with BIPCoordinator.
 // This BIPComponent proxy is the identity provided to BIPCordinator. Now, DataCordinator implements
 // just BIPEngine interface so it able also to intercept informs and translate it into proper informs.
