@@ -55,11 +55,9 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	 * Helper hashset of the components that have informed in an execution cycle.
 	 */
 	private HashSet<BIPComponent> componentsHaveInformed = new HashSet<BIPComponent>();
-	
 
-
-	/** Identification number for local use */
-	private AtomicInteger idGenerator = new AtomicInteger(0);
+//	/** Identification number for local use */
+//	private AtomicInteger idGenerator = new AtomicInteger(0);
 
 	/** Number of ports of components registered */
 	private int nbPorts;
@@ -155,7 +153,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 			/*
 			 * For each new component instance, generate a unique identity for local use.
 			 */
-			int registeredComponentID = idGenerator.getAndIncrement(); 
+//			int registeredComponentID = idGenerator.getAndIncrement(); 
 			
 			/*
 			 * Map all component instances of the same type in the typeInstancesMapping Hashtable
@@ -178,7 +176,8 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 			/*
 			 * Keep the local ID for now, but use OSGI IDs later
 			 */
-			logger.info("Component type: {} with localID: {} ", component.getName(), registeredComponentID);
+			logger.info("Component : {}", component.getName());
+//			logger.info("Component type: {} with localID: {} ", component.getName(), registeredComponentID);
 			
 			componentBehaviourMapping.put(component, behaviour);
 			int nbComponentPorts = ((ArrayList<Port>)behaviour.getEnforceablePorts()).size();

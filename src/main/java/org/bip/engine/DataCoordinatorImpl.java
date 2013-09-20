@@ -9,7 +9,22 @@ import org.bip.api.DataCoordinator;
 import org.bip.behaviour.Port;
 import org.bip.glue.BIPGlue;
 
-public class DataCoordinatorImpl implements DataCoordinator{
+// There is no need for DataCoordinator interface, just DataCoordinatorImpl will implement BIP engine interface.
+// DataCoordinatorImpl needs BIP coordinator ( BIP Engine again ) that actual does all the computation of BIP
+// engine. DataCoordinatorImpl takes care of only of data querying and passing to BIP executors.
+
+// TODO
+// DataCordinator intercepts call register and inform from BIPExecutor. For each BIPComponent it
+// creates a Proxy of BIPComponent (also BIPComponent class) that is registered with BIPCoordinator.
+// This BIPComponent proxy is the identity provided to BIPCordinator. Now, DataCordinator implements
+// just BIPEngine interface so it able also to intercept informs and translate it into proper informs.
+// BIPComponent Proxy can intercept execute functions invoked by BIPCoordinator and enrich with data
+// provided by DataCoordinatorImpl. Thus, Proxy BIPComponent knows about DataCoordinatorImpl, and
+// original BIPcomponent, so BIPcomponent proxy can query DataCoordinatorIMpl for the data and call
+// function execute of the original BIPComponent with proper data.
+
+
+public class DataCoordinatorImpl implements BIPEngine{
 
 	@Override
 	public void specifyGlue(BIPGlue glue) {
