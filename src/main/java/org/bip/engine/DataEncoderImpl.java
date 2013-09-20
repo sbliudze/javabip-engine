@@ -22,6 +22,8 @@ public class DataEncoderImpl implements DataEncoder{
 	 * conjunction of all of them on-the-fly. When all the registered components have informed
 	 * at an execution cycle then take the conjunction of the above total BDD with the global BDD.
 	 * 
+	 * Actually we do not care about the number of components that have informed. We care whether the semaphore has been totally freed.
+	 * 
 	 * Otherwise, the Data Encoder needs to compute and keep the total BDD. It needs to know when
 	 * all the components will have informed the engine about their current state and only then
 	 * send the total BDD to the core engine.

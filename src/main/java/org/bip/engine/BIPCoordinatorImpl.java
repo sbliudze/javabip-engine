@@ -267,11 +267,18 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 					 * have informed and to order one execution cycle of the engine. The semaphore is acquired in run().
 					 * 
 					 * When a component informs, we first check if the haveAllComponentsInformed semaphore has been acquired before
-					 *  and then we release.
+					 * and then we release.
+					 *  
+					 * This block is synchronized with the number of components that have informed. Therefore, the haveAllComponentsInformed
+					 * semaphore cannot be released by any other component at the same time.   
 					 */
 					// TODO: If we remove the else above, we have to make sure that the semaphore is not released for the second time 
 					if (isEngineSemaphoreReady){
 						haveAllComponentsInformed.release();
+						logger.debug("Number of available permits in the semaphore: {}", haveAllComponentsInformed.availablePermits());
+						if (haveAllComponentsInformed.availablePermits()==0){
+							//TODO: inform DataEncoder that all informSpecific have finished
+						}
 					}
 				}
 				/**
