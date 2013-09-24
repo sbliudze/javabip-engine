@@ -6,7 +6,6 @@ import java.util.Hashtable;
 import org.bip.api.BIPComponent;
 import org.bip.api.BIPEngine;
 import org.bip.api.Behaviour;
-import org.bip.api.DataCoordinator;
 import org.bip.behaviour.Port;
 import org.bip.glue.BIPGlue;
 import org.slf4j.Logger;
@@ -27,7 +26,7 @@ import org.slf4j.LoggerFactory;
 // function execute of the original BIPComponent with proper data.
 
 
-public class DataCoordinatorImpl implements BIPEngine{
+public class DataCoordinatorImpl implements DataCoordinator{
 	
 	private Logger logger = LoggerFactory.getLogger(BIPCoordinatorImpl.class);
 
@@ -42,14 +41,13 @@ public class DataCoordinatorImpl implements BIPEngine{
 	/**
 	 * Create instances of all the the Data Encoder and of the BIPCoordinator
 	 */
-	private DataEncoder dataencoder = new DataEncoderImpl();
+	private DataEncoder dataEncoder = new DataEncoderImpl();
 	private BIPCoordinator BIPCoordinator = new BIPCoordinatorImpl();
 	private BDDBIPEngine engine = new BDDBIPEngineImpl();
 	
 	public DataCoordinatorImpl() {
-		
-		dataencoder.setBIPCoordinator(BIPCoordinator);
-		dataencoder.setEngine(engine);
+		dataEncoder.setBIPCoordinator(BIPCoordinator);
+		dataEncoder.setEngine(engine);
 	}
 
 	@Override

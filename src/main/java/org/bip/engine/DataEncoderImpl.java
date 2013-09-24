@@ -5,7 +5,6 @@ import java.util.Map;
 import net.sf.javabdd.BDD;
 
 import org.bip.api.BIPComponent;
-import org.bip.api.DataCoordinator;
 import org.bip.behaviour.Port;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -35,6 +35,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	private BehaviourEncoder behenc = new BehaviourEncoderImpl();
 	private CurrentStateEncoder currstenc = new CurrentStateEncoderImpl();
 	private BDDBIPEngine engine = new BDDBIPEngineImpl();
+	private InteractionExecutor interactionExecutor;
 	
 	Thread currentThread = null;
 
@@ -499,6 +500,10 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	 */
 	public int getNoComponents() {
 		return nbComponents;
+	}
+	
+	public void setInteractionExecutor(InteractionExecutor interactionExecutor){
+		this.interactionExecutor = interactionExecutor;
 	}
 
 
