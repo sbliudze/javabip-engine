@@ -76,6 +76,11 @@ public interface BIPCoordinator extends BIPEngine, InteractionExecutor {
 	 */
 	void executeComponents(ArrayList<BIPComponent> allComponents, Hashtable<BIPComponent, ArrayList<Port>> portsToFire);
 	
+	/**
+	 * Set the interaction Execute instance either as DataCoordinator or as BIPCoordinator depending
+	 * on whether there are data transfer between the components or not respectively.
+	 */
+	
 	void setInteractionExecutor(InteractionExecutor interactionExecutor);
 	
 	

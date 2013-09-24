@@ -145,7 +145,6 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 				throw new BIPEngineException("Component "+component.getName()+" has already registered before.");
 			} catch (BIPEngineException e) {
 				e.printStackTrace();
-
 			}
 		} 
 		else {
@@ -462,7 +461,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	 * be re-initialized with the new number of components. If a component unregisters from the system then we can use the 
 	 * reducePermits(int reduction) on the semaphore to shrink the number of available permits by the indicated reduction. 
 	 * 
-	 * Check if the interactionExecutor has been set to DataCoordinator. Otherwise set it to BIPCoordinator.				
+	 * We also check here if the interactionExecutor has been set to DataCoordinator. Otherwise set it to BIPCoordinator.				
 	 */
 	public void execute() {
 		if (isEngineExecuting) {
