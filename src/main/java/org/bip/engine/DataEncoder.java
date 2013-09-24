@@ -4,6 +4,7 @@ import java.util.Map;
 import net.sf.javabdd.BDD;
 
 import org.bip.api.BIPComponent;
+import org.bip.api.DataCoordinator;
 import org.bip.behaviour.Port;
 
 public interface DataEncoder {
@@ -29,11 +30,8 @@ public interface DataEncoder {
 	/**
 	 * Setter for the BIPCoordinator
 	 */
-	void setBIPCoordinator(BIPCoordinator wrapper);
-	/**
-	 * Setter for the BehaviourEncoder
-	 */
-	void setBehaviourEncoder(BehaviourEncoder behaviourEncoder);
+	void setBIPCoordinator(BIPCoordinator bipCoordinator);
+	
 	/**
 	 * Setter for the BDDBIPEngine
 	 */

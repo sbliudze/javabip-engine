@@ -5,13 +5,14 @@ import java.util.Map;
 import net.sf.javabdd.BDD;
 
 import org.bip.api.BIPComponent;
+import org.bip.api.DataCoordinator;
 import org.bip.behaviour.Port;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class DataEncoderImpl implements DataEncoder{
 
-	private BehaviourEncoder behaviourEncoder; 
+	private DataCoordinator dataCoordinator; 
 	private BDDBIPEngine engine;
 	private BIPCoordinator wrapper;
 
@@ -22,7 +23,7 @@ public class DataEncoderImpl implements DataEncoder{
 	 * conjunction of all of them on-the-fly. When all the registered components have informed
 	 * at an execution cycle then take the conjunction of the above total BDD with the global BDD.
 	 * 
-	 * Actually we do not care about the number of components that have informed. We care whether the semaphore has been totally freed.
+	 * Actually we do not care about the number of components that have informed. We care whether the semaphore has been totally released.
 	 * 
 	 * Otherwise, the Data Encoder needs to compute and keep the total BDD. It needs to know when
 	 * all the components will have informed the engine about their current state and only then
@@ -43,9 +44,6 @@ public class DataEncoderImpl implements DataEncoder{
 		this.wrapper= wrapper;	
 	}
 
-	public void setBehaviourEncoder(BehaviourEncoder behaviourEncoder) {
-		this.behaviourEncoder=behaviourEncoder;
-	}
 
 	public void setEngine(BDDBIPEngine engine) {
 		this.engine=engine;

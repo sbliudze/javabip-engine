@@ -1,6 +1,7 @@
 package org.bip.engine;
 
 import java.util.ArrayList;
+import java.util.Hashtable;
 
 import org.bip.api.BIPComponent;
 import org.bip.api.BIPEngine;
@@ -8,6 +9,8 @@ import org.bip.api.Behaviour;
 import org.bip.api.DataCoordinator;
 import org.bip.behaviour.Port;
 import org.bip.glue.BIPGlue;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 // There is no need for DataCoordinator interface, just DataCoordinatorImpl will implement BIP engine interface.
 // DataCoordinatorImpl needs BIP coordinator ( BIP Engine again ) that actual does all the computation of BIP
@@ -25,6 +28,29 @@ import org.bip.glue.BIPGlue;
 
 
 public class DataCoordinatorImpl implements BIPEngine{
+	
+	private Logger logger = LoggerFactory.getLogger(BIPCoordinatorImpl.class);
+
+	private ArrayList <BIPComponent> registeredComponents = new ArrayList <BIPComponent> ();
+	
+	/**
+	 * Helper hashtable with integers representing the local identities of registered components 
+	 * as the keys and the Behaviours of these components as the values.
+	 */
+	private Hashtable<BIPComponent, Behaviour> componentBehaviourMapping = new Hashtable<BIPComponent, Behaviour>();
+	
+	/**
+	 * Create instances of all the the Data Encoder and of the BIPCoordinator
+	 */
+	private DataEncoder dataencoder = new DataEncoderImpl();
+	private BIPCoordinator BIPCoordinator = new BIPCoordinatorImpl();
+	private BDDBIPEngine engine = new BDDBIPEngineImpl();
+	
+	public DataCoordinatorImpl() {
+		
+		dataencoder.setBIPCoordinator(BIPCoordinator);
+		dataencoder.setEngine(engine);
+	}
 
 	@Override
 	public void specifyGlue(BIPGlue glue) {
