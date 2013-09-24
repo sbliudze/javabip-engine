@@ -22,7 +22,7 @@ import org.bip.exceptions.BIPEngineException;
   * @author mavridou
  */
 
-public interface BIPCoordinator extends BIPEngine {
+public interface BIPCoordinator extends BIPEngine, InteractionExecutor {
 
 	/**
 	 * Returns the Behaviour of the BIP component.
@@ -43,7 +43,6 @@ public interface BIPCoordinator extends BIPEngine {
 	 * @throws InterruptedException 
 	 */
 	Iterable <BIPComponent> getBIPComponentInstances(String type) throws BIPEngineException;
-
 
 	/**
 	 * Returns the number of registered component instances in the system.
@@ -76,6 +75,8 @@ public interface BIPCoordinator extends BIPEngine {
 	 * @param allComponents, all components
 	 */
 	void executeComponents(ArrayList<BIPComponent> allComponents, Hashtable<BIPComponent, ArrayList<Port>> portsToFire);
+	
+	void setInteractionExecutor(InteractionExecutor interactionExecutor);
 	
 	
 }

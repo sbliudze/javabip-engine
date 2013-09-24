@@ -48,6 +48,7 @@ public class DataCoordinatorImpl implements DataCoordinator{
 	public DataCoordinatorImpl() {
 		dataEncoder.setBIPCoordinator(BIPCoordinator);
 		dataEncoder.setEngine(engine);
+		BIPCoordinator.setInteractionExecutor(this);
 	}
 
 	@Override

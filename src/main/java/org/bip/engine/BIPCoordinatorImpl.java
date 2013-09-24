@@ -461,6 +461,8 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	 * registered components have informed. In future, that components may be able to register on the fly the semaphore needs 
 	 * be re-initialized with the new number of components. If a component unregisters from the system then we can use the 
 	 * reducePermits(int reduction) on the semaphore to shrink the number of available permits by the indicated reduction. 
+	 * 
+	 * Check if the interactionExecutor has been set to DataCoordinator. Otherwise set it to BIPCoordinator.				
 	 */
 	public void execute() {
 		if (isEngineExecuting) {
@@ -470,6 +472,9 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 			synchronized (this){
 				isEngineExecuting = true;
 				notifyAll();
+				if (this.interactionExecutor == null){
+					setInteractionExecutor(this);
+				}
 			}
 		}
 	}
@@ -505,8 +510,6 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	public void setInteractionExecutor(InteractionExecutor interactionExecutor){
 		this.interactionExecutor = interactionExecutor;
 	}
-
-
 	/**
 	 * Helper function that returns the registered component instances that correspond to a component type.
 	 * @throws BIPEngineException 
