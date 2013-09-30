@@ -150,7 +150,7 @@ public class BehaviourEncoderImpl implements BehaviourEncoder {
 					onlyState=tmp;
 				}
 			}
-			ArrayList<Port> statePorts= behaviour.getStateToPorts().get(componentState);
+			ArrayList<Port> statePorts= (ArrayList<Port>) behaviour.getStateToPorts().get(componentState);
 			if (!statePorts.isEmpty()){
 				for (Port port: statePorts){
 					logger.debug("Component state port: "+port);
