@@ -25,26 +25,26 @@ import org.slf4j.LoggerFactory;
 // original BIPcomponent, so BIPcomponent proxy can query DataCoordinatorIMpl for the data and call
 // function execute of the original BIPComponent with proper data.
 
+public class DataCoordinatorImpl implements DataCoordinator {
 
-public class DataCoordinatorImpl implements DataCoordinator{
-	
 	private Logger logger = LoggerFactory.getLogger(BIPCoordinatorImpl.class);
 
-	private ArrayList <BIPComponent> registeredComponents = new ArrayList <BIPComponent> ();
-	
+	private ArrayList<BIPComponent> registeredComponents = new ArrayList<BIPComponent>();
+
 	/**
-	 * Helper hashtable with integers representing the local identities of registered components 
-	 * as the keys and the Behaviours of these components as the values.
+	 * Helper hashtable with integers representing the local identities of
+	 * registered components as the keys and the Behaviours of these components
+	 * as the values.
 	 */
 	private Hashtable<BIPComponent, Behaviour> componentBehaviourMapping = new Hashtable<BIPComponent, Behaviour>();
-	
+
 	/**
 	 * Create instances of all the the Data Encoder and of the BIPCoordinator
 	 */
 	private DataEncoder dataEncoder = new DataEncoderImpl();
 	private BIPCoordinator BIPCoordinator = new BIPCoordinatorImpl();
 	private BDDBIPEngine engine = new BDDBIPEngineImpl();
-	
+
 	public DataCoordinatorImpl() {
 		dataEncoder.setBIPCoordinator(BIPCoordinator);
 		dataEncoder.setEngine(engine);
@@ -53,38 +53,40 @@ public class DataCoordinatorImpl implements DataCoordinator{
 
 	@Override
 	public void specifyGlue(BIPGlue glue) {
-		// TODO Auto-generated method stub
-		
+		BIPCoordinator.specifyGlue(glue);
 	}
 
 	@Override
 	public void register(BIPComponent component, Behaviour behaviour) {
-		// TODO Auto-generated method stub
-		
+		BIPCoordinator.register(component, behaviour);
 	}
 
-	@Override
+	//@Override
 	public void inform(BIPComponent component, String currentState, ArrayList<Port> disabledPorts) {
-		// TODO Auto-generated method stub
-		
+		// received inform about globally disabled ports for one component
+		// now we know which ports have not decided on their availability
+		// after all informs (? easy version)
+		// for each undecided port of each component :
+		// port -> transition -> guard expression -> guard tree -> tree of Guards -> list of DataIn needed
+		// for each DataIn variable get from the new Glue info about components providing it
+		// executor.getData()
+		// executor.checkEnabledness()
+		// inform the engine
 	}
 
 	@Override
 	public void start() {
-		// TODO Auto-generated method stub
-		
+		BIPCoordinator.start();
 	}
 
 	@Override
 	public void stop() {
-		// TODO Auto-generated method stub
-		
+		BIPCoordinator.stop();
 	}
 
 	@Override
 	public void execute() {
-		// TODO Auto-generated method stub
-		
+		BIPCoordinator.execute();
 	}
 
 }
