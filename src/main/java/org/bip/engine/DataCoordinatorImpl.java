@@ -136,7 +136,6 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor {
 					Port port = compPortsToFire.next();
 					assert(port != null);
 					logger.debug("Component {} execute port {}", component.getName(), port.id);
-					
 					//TODO: Find out which components are sending data to this component
 					//TODO: Change the following execute to the one that specifies data for execution of transitions. In particular, change this:
 					component.execute(port.id);
@@ -144,8 +143,11 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor {
 				    // void execute(String portID, Map<String, ?> data);
 				}
 			}
-			else
-				component.execute(null);
+			else{
+				//TODO: will never get to this. The engine can send the list of non-participating components in the end.
+				//TODO: If this happens here throw an exception.
+//					component.execute(null);
+			}
 		}	
 		
 	}

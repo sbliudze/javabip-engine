@@ -299,6 +299,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	/**
 	 * BDDBIPEngine informs the BIPCoordinator for the components (and their associated ports) that are part of the chosen interactionS.
 	 */
+	//TODO: after finishing with the changes in the BDDBIPEngine this function should not be called any more.
 	public synchronized void executeComponents(ArrayList<BIPComponent> allComponents, Hashtable<BIPComponent, ArrayList<Port>> portsToFire) {
 		Port port = null;
 		int size = allComponents.size();
@@ -337,8 +338,11 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 					component.execute(port.id);
 				}
 			}
-			else
-				component.execute(null);
+			else{
+				//TODO: will never get to this. The engine can send the list of non-participating components in the end.
+				//TODO: If this happens here throw an exception.
+//				component.execute(null);
+			}
 		}	
 	}
 	
