@@ -124,7 +124,6 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor {
 		}
 	}
 
-	@Override
 	public void executeInteraction(Map<BIPComponent, Iterable<Port>> portsToFire) {
 		// TODO Auto-generated method stub
 		
