@@ -529,11 +529,16 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 		return instances; 
 	}
 
-
-	@Override
+	/**
+	 * This function should not do anything but give a warning.
+	 * 
+	 * BIPCoordinator and DataCoordinator both implement the BIPEngine interface, where the 
+	 * informSpecific function is. DataCoordinator is responsible for sending the disabledCombinations 
+	 * of the informSpecific directly to the DataEncoder. The BIPCoordinator should not participate in this.
+	 * 
+	 */
 	public void informSpecific(Map<BIPComponent, Port> arg0) {
-		// TODO Auto-generated method stub
-		
+		logger.warn("InformSpecific of BIPCoordinator is called. That should never happen. All the information should be passed directly from the DataCoordinator to the DataEncoder.");
 	}
 	
 }
