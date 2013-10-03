@@ -528,5 +528,12 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 		}
 		return instances; 
 	}
+
+
+	@Override
+	public void informSpecific(Map<BIPComponent, Port> arg0) {
+		// TODO Auto-generated method stub
+		
+	}
 	
 }

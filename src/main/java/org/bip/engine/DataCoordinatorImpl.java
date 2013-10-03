@@ -2,6 +2,7 @@ package org.bip.engine;
 
 import java.util.ArrayList;
 import java.util.Hashtable;
+import java.util.Map;
 
 import org.bip.api.BIPComponent;
 import org.bip.api.BIPEngine;
@@ -103,6 +104,12 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor {
 	@Override
 	public void execute() {
 		BIPCoordinator.execute();
+	}
+
+	@Override
+	public void informSpecific(Map<BIPComponent, Port> arg0) {
+		// TODO Auto-generated method stub
+		
 	}
 
 }
