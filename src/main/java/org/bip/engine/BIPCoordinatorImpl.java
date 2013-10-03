@@ -3,6 +3,7 @@ package org.bip.engine;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Hashtable;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -296,25 +297,49 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 
 
 	/**
-	 * BDDBIPEngine informs the BIPCoordinator for the components (and their associated ports) that are part of the chosen interaction.
+	 * BDDBIPEngine informs the BIPCoordinator for the components (and their associated ports) that are part of the chosen interactionS.
 	 */
 	public synchronized void executeComponents(ArrayList<BIPComponent> allComponents, Hashtable<BIPComponent, ArrayList<Port>> portsToFire) {
 		Port port = null;
 		int size = allComponents.size();
 		
 		for (int i = 0; i < size; i++) {
-			BIPComponent comp = allComponents.get(i);
-			ArrayList<Port> compPortsToFire = portsToFire.get(comp);
+			BIPComponent component = allComponents.get(i);
+			ArrayList<Port> compPortsToFire = portsToFire.get(component);
 			
 			if ((compPortsToFire != null) && (!compPortsToFire.isEmpty())) {
+				//TODO: make this more general. Also for the case where more than one ports of the same component are fired.
 				port = compPortsToFire.get(0);
 				assert(port != null);
-				logger.debug("Component {} execute port {}", comp.getName(), port.id);
-				comp.execute(port.id);
+				logger.debug("Component {} execute port {}", component.getName(), port.id);
+				component.execute(port.id);
 			}
 			else
-				comp.execute(null);
+				component.execute(null);
 		}
+	}
+	
+	/**
+	 * BDDBIPEngine informs the BIPCoordinator for the components (and their associated ports) that are part of the same chosen interaction.
+	 */
+	public void executeInteraction(Map<BIPComponent, Iterable<Port>> portsToFire) {
+		Iterator <BIPComponent> interactionComponents = portsToFire.keySet().iterator();
+		
+		while(interactionComponents.hasNext()){
+			BIPComponent component = interactionComponents.next();
+			Iterator<Port> compPortsToFire = portsToFire.get(component).iterator();
+			
+			if (compPortsToFire != null && compPortsToFire.hasNext()) {
+				while (compPortsToFire != null && compPortsToFire.hasNext()){
+					Port port = compPortsToFire.next();
+					assert(port != null);
+					logger.debug("Component {} execute port {}", component.getName(), port.id);
+					component.execute(port.id);
+				}
+			}
+			else
+				component.execute(null);
+		}	
 	}
 	
 	/**
@@ -479,6 +504,18 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	}
 	
 	/**
+	 * This function should not do anything but give a warning.
+	 * 
+	 * BIPCoordinator and DataCoordinator both implement the BIPEngine interface, where the 
+	 * informSpecific function is. DataCoordinator is responsible for sending the disabledCombinations 
+	 * of the informSpecific directly to the DataEncoder. The BIPCoordinator should not participate in this.
+	 * 
+	 */
+	public void informSpecific(Map<BIPComponent, Port> disabledCombinations) {
+		logger.warn("InformSpecific of BIPCoordinator is called. That should never happen. All the information should be passed directly from the DataCoordinator to the DataEncoder.");
+	}
+	
+	/**
 	 * Helper function that returns the total number of ports of the registered components.
 	 */
 	public int getNoPorts() {
@@ -527,24 +564,6 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 			}
 		}
 		return instances; 
-	}
-
-	/**
-	 * This function should not do anything but give a warning.
-	 * 
-	 * BIPCoordinator and DataCoordinator both implement the BIPEngine interface, where the 
-	 * informSpecific function is. DataCoordinator is responsible for sending the disabledCombinations 
-	 * of the informSpecific directly to the DataEncoder. The BIPCoordinator should not participate in this.
-	 * 
-	 */
-	public void informSpecific(Map<BIPComponent, Port> disabledCombinations) {
-		logger.warn("InformSpecific of BIPCoordinator is called. That should never happen. All the information should be passed directly from the DataCoordinator to the DataEncoder.");
-	}
-
-
-	public void executeInteraction(Map<BIPComponent, Iterable<Port>> portsToFire) {
-		// TODO Auto-generated method stub
-		
 	}
 	
 }

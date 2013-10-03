@@ -125,7 +125,28 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor {
 	}
 
 	public void executeInteraction(Map<BIPComponent, Iterable<Port>> portsToFire) {
-		// TODO Auto-generated method stub
+		Iterator <BIPComponent> interactionComponents = portsToFire.keySet().iterator();
+		
+		while(interactionComponents.hasNext()){
+			BIPComponent component = interactionComponents.next();
+			Iterator<Port> compPortsToFire = portsToFire.get(component).iterator();
+			
+			if (compPortsToFire != null && compPortsToFire.hasNext()) {
+				while (compPortsToFire != null && compPortsToFire.hasNext()){
+					Port port = compPortsToFire.next();
+					assert(port != null);
+					logger.debug("Component {} execute port {}", component.getName(), port.id);
+					
+					//TODO: Find out which components are sending data to this component
+					//TODO: Change the following execute to the one that specifies data for execution of transitions. In particular, change this:
+					component.execute(port.id);
+					//to this:
+				    // void execute(String portID, Map<String, ?> data);
+				}
+			}
+			else
+				component.execute(null);
+		}	
 		
 	}
 
