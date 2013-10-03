@@ -7,6 +7,7 @@ import org.bip.api.BIPComponent;
 import org.bip.api.BIPEngine;
 import org.bip.api.Behaviour;
 import org.bip.behaviour.Port;
+import org.bip.exceptions.BIPEngineException;
 import org.bip.glue.BIPGlue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,7 +47,6 @@ public class DataCoordinatorImpl implements DataCoordinator {
 	private BDDBIPEngine engine = new BDDBIPEngineImpl();
 
 	public DataCoordinatorImpl() {
-		dataEncoder.setBIPCoordinator(BIPCoordinator);
 		dataEncoder.setEngine(engine);
 		BIPCoordinator.setInteractionExecutor(this);
 	}
@@ -59,6 +59,23 @@ public class DataCoordinatorImpl implements DataCoordinator {
 	@Override
 	public void register(BIPComponent component, Behaviour behaviour) {
 		BIPCoordinator.register(component, behaviour);
+		
+		/*
+		 *  The condition below checks whether the component has already been registered.
+		 */
+		if (registeredComponents.contains(component)){
+			try {
+				logger.error("Component "+component.getName()+" has already registered before.");
+				throw new BIPEngineException("Component "+component.getName()+" has already registered before.");
+			} catch (BIPEngineException e) {
+				e.printStackTrace();
+			}
+		} 
+		else {				
+			registeredComponents.add(component);		
+			componentBehaviourMapping.put(component, behaviour);
+		}
+		
 	}
 
 	//@Override
