@@ -540,5 +540,12 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	public void informSpecific(Map<BIPComponent, Port> arg0) {
 		logger.warn("InformSpecific of BIPCoordinator is called. That should never happen. All the information should be passed directly from the DataCoordinator to the DataEncoder.");
 	}
+
+
+	@Override
+	public void executeInteraction(Map<BIPComponent, Iterable<Port>> portsToFire) {
+		// TODO Auto-generated method stub
+		
+	}
 	
 }
