@@ -26,7 +26,7 @@ import org.slf4j.LoggerFactory;
 // original BIPcomponent, so BIPcomponent proxy can query DataCoordinatorIMpl for the data and call
 // function execute of the original BIPComponent with proper data.
 
-public class DataCoordinatorImpl implements DataCoordinator {
+public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor {
 
 	private Logger logger = LoggerFactory.getLogger(BIPCoordinatorImpl.class);
 
@@ -75,7 +75,6 @@ public class DataCoordinatorImpl implements DataCoordinator {
 			registeredComponents.add(component);		
 			componentBehaviourMapping.put(component, behaviour);
 		}
-		
 	}
 
 	//@Override
