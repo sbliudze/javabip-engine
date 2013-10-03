@@ -2,7 +2,9 @@ package org.bip.engine;
 
 import java.util.ArrayList;
 import java.util.Hashtable;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 
 import org.bip.api.BIPComponent;
 import org.bip.api.BIPEngine;
@@ -52,15 +54,11 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor {
 		BIPCoordinator.setInteractionExecutor(this);
 	}
 
-	@Override
 	public void specifyGlue(BIPGlue glue) {
 		BIPCoordinator.specifyGlue(glue);
 	}
 
-	@Override
 	public void register(BIPComponent component, Behaviour behaviour) {
-		BIPCoordinator.register(component, behaviour);
-		
 		/*
 		 *  The condition below checks whether the component has already been registered.
 		 */
@@ -75,10 +73,10 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor {
 		else {				
 			registeredComponents.add(component);		
 			componentBehaviourMapping.put(component, behaviour);
+			BIPCoordinator.register(component, behaviour);
 		}
 	}
 
-	//@Override
 	public void inform(BIPComponent component, String currentState, ArrayList<Port> disabledPorts) {
 		// received inform about globally disabled ports for one component
 		// now we know which ports have not decided on their availability
@@ -88,29 +86,42 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor {
 		// for each DataIn variable get from the new Glue info about components providing it
 		// executor.getData()
 		// executor.checkEnabledness()
-		// inform the engine
+		// inform the BIPCoordinator
 	}
 
-	@Override
 	public void start() {
 		BIPCoordinator.start();
 	}
 
-	@Override
 	public void stop() {
 		BIPCoordinator.stop();
 	}
 
-	@Override
 	public void execute() {
 		BIPCoordinator.execute();
 	}
 
-	@Override
-	public void informSpecific(Map<BIPComponent, Port> disabledCombinations) {
-		
-		dataEncoder.informSpecific(disabledCombinations);
-		
+	public void informSpecific(Map<BIPComponent, Port> disabledCombinations) throws BIPEngineException {
+		if (disabledCombinations.isEmpty()){
+			try {
+				logger.error("No disabled combination specified in informSpecific. Map of disabledCombinations is empty.");
+				throw new BIPEngineException("No disabled combination specified in informSpecific. Map of disabledCombinations is empty.");
+			} catch (BIPEngineException e) {
+				e.printStackTrace();
+			}	
+		}
+		else{
+			Iterator <BIPComponent> disabledComponents = disabledCombinations.keySet().iterator();
+			while (disabledComponents.hasNext()){
+				BIPComponent component = disabledComponents.next();
+				if (!registeredComponents.contains(component)){
+					logger.error("Component "+component.getName()+" specified in the disabledCombinations of informSpecific was not registered.");
+					throw new BIPEngineException("Component "+component.getName()+" specified in the disabledCombinations of informSpecific was not registered.");
+				} 
+			}
+			//TODO: Throw exceptions about the ports in the DataEncoder (?)
+			dataEncoder.informSpecific(disabledCombinations);
+		}
 	}
 
 }
