@@ -24,12 +24,7 @@ public interface DataEncoder {
 	 * 
 	 * @param A map that gives information about a disabled interaction of ports of component instances according to data transfer information
 	 */
-	BDD inform(Map<BIPComponent, Port> disabledCombinations);
-	
-	/**
-	 * Setter for the BIPCoordinator
-	 */
-	void setBIPCoordinator(BIPCoordinator bipCoordinator);
+	BDD informSpecific(Map<BIPComponent, Port> disabledCombinations);
 	
 	/**
 	 * Setter for the BDDBIPEngine

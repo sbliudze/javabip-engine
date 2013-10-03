@@ -107,8 +107,9 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor {
 	}
 
 	@Override
-	public void informSpecific(Map<BIPComponent, Port> arg0) {
-		// TODO Auto-generated method stub
+	public void informSpecific(Map<BIPComponent, Port> disabledCombinations) {
+		
+		dataEncoder.informSpecific(disabledCombinations);
 		
 	}
 

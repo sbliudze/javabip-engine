@@ -34,13 +34,9 @@ public class DataEncoderImpl implements DataEncoder{
 	 * 3. Transfering information regarding the number of components that have informed.
 	 * @see org.bip.engine.DataEncoder#inform(java.util.Map)
 	 */
-	public BDD inform(Map<BIPComponent, Port> disabledCombinations) {
+	public BDD informSpecific(Map<BIPComponent, Port> disabledCombinations) {
 		// TODO Auto-generated method stub
 		return null;
-	}
-
-	public void setBIPCoordinator(BIPCoordinator wrapper) {
-		this.wrapper= wrapper;	
 	}
 
 
