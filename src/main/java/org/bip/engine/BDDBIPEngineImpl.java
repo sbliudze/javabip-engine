@@ -273,7 +273,8 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 			} 
 			
 			ArrayList <Port> enabledPorts = new ArrayList<Port>();
-
+			
+			//TODO: Change! to executeInteractions
 			for (Port componentPort : componentPorts){
 				if(chosenInteraction[portToPosition.get(componentPort)]==1){
 					enabledPorts.add(componentPort);

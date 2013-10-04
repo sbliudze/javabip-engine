@@ -10,6 +10,6 @@ import org.bip.exceptions.BIPEngineException;
 
 public interface InteractionExecutor {
 	
-	public void executeInteraction(Iterable<Map<BIPComponent, Iterable<Port>>> portsToFire) throws BIPEngineException;
+	public void executeInteractions(Iterable<Map<BIPComponent, Iterable<Port>>> portsToFire) throws BIPEngineException;
 
 }

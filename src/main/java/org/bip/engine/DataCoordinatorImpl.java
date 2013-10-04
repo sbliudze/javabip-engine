@@ -132,8 +132,8 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor {
 	 * @throws BIPEngineException 
 	 */
 	
-	//TODO: when changes in Engine are finished test it
-	public void executeInteraction(Iterable<Map<BIPComponent, Iterable<Port>>> portsToFire) throws BIPEngineException {
+	//TODO: when changes in Engine are finished test it and delete executeComponent
+	public void executeInteractions(Iterable<Map<BIPComponent, Iterable<Port>>> portsToFire) throws BIPEngineException {
 		Iterator <Map<BIPComponent, Iterable<Port>>> enabledCombinations = portsToFire.iterator();
 		/*
 		 * This is a list of components participating in the chosen-by-the-engine interactions. 
