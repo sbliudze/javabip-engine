@@ -152,7 +152,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 			logger.info("********************************* Register *************************************");
 			
 			/*
-			 * For each new component instance, generate a unique identity for local use.
+			 * For each new component instance, generate a unique identity for local use. No need to have this anymore.
 			 */
 //			int registeredComponentID = idGenerator.getAndIncrement(); 
 			
@@ -173,12 +173,10 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 			typeInstancesMapping.put(component.getName(), componentInstances);
 			registeredComponents.add(component);
 
-//			componentIdMapping.put(component, registeredComponentID);
 			/*
 			 * Keep the local ID for now, but use OSGI IDs later
 			 */
 			logger.info("Component : {}", component.getName());
-//			logger.info("Component type: {} with localID: {} ", component.getName(), registeredComponentID);
 			
 			componentBehaviourMapping.put(component, behaviour);
 			int nbComponentPorts = ((ArrayList<Port>)behaviour.getEnforceablePorts()).size();
@@ -244,7 +242,6 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 			 * This condition checks whether the component has already registered.
 			 */
 			if (registeredComponents.contains(component)){
-//			if (componentIdMapping.containsKey(component)) {
 				synchronized (componentsHaveInformed) {
 					componentsHaveInformed.add(component);
 					try {
@@ -309,7 +306,6 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 			ArrayList<Port> compPortsToFire = portsToFire.get(component);
 			
 			if ((compPortsToFire != null) && (!compPortsToFire.isEmpty())) {
-				//TODO: make this more general. Also for the case where more than one ports of the same component are fired.
 				port = compPortsToFire.get(0);
 				assert(port != null);
 				logger.debug("Component {} execute port {}", component.getName(), port.id);
