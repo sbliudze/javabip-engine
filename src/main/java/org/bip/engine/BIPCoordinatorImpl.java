@@ -6,7 +6,6 @@ import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.Semaphore;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import org.bip.api.*;
 import org.bip.behaviour.Port;
@@ -150,11 +149,6 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 		} 
 		else {
 			logger.info("********************************* Register *************************************");
-			
-			/*
-			 * For each new component instance, generate a unique identity for local use. No need to have this anymore.
-			 */
-//			int registeredComponentID = idGenerator.getAndIncrement(); 
 			
 			/*
 			 * Map all component instances of the same type in the typeInstancesMapping Hashtable
@@ -318,28 +312,76 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	
 	/**
 	 * BDDBIPEngine informs the BIPCoordinator for the components (and their associated ports) that are part of the same chosen interaction.
+	 * 
+	 * Through this function all the components need to be notified.
+ 	 * If they are participating in an interaction then their port to be fired is sent to them through the execute function of the BIPExecutor.
+	 * If they are not participating in an interaction then null is sent to them.
+	 * @throws BIPEngineException 
 	 */
-	public void executeInteraction(Map<BIPComponent, Iterable<Port>> portsToFire) {
-		Iterator <BIPComponent> interactionComponents = portsToFire.keySet().iterator();
-		
-		while(interactionComponents.hasNext()){
-			BIPComponent component = interactionComponents.next();
-			Iterator<Port> compPortsToFire = portsToFire.get(component).iterator();
-			
-			if (compPortsToFire != null && compPortsToFire.hasNext()) {
-				while (compPortsToFire != null && compPortsToFire.hasNext()){
-					Port port = compPortsToFire.next();
-					assert(port != null);
-					logger.debug("Component {} execute port {}", component.getName(), port.id);
-					component.execute(port.id);
+	//TODO: when changes in Engine are finished TEST it
+	public void executeInteraction(Iterable<Map<BIPComponent, Iterable<Port>>> portsToFire) throws BIPEngineException {
+		Iterator <Map<BIPComponent, Iterable<Port>>> enabledCombinations = portsToFire.iterator();
+		/*
+		 * This is a list of components participating in the chosen-by-the-engine interactions. 
+		 * This keeps track of the chosen components in order to differentiate them from the non chosen ones. 
+		 * Through this function all the components need to be notified. Either by sending null to them or the 
+		 * port to be fired.
+		 */
+		ArrayList <BIPComponent> enabledComponents = new ArrayList<BIPComponent>();
+		while (enabledCombinations.hasNext()){
+			Map <BIPComponent, Iterable<Port>> oneInteraction = enabledCombinations.next();
+			Iterator <BIPComponent> interactionComponents = oneInteraction.keySet().iterator();
+			while(interactionComponents.hasNext()){
+				BIPComponent component = interactionComponents.next();
+				enabledComponents.add(component);
+				Iterator<Port> compPortsToFire = oneInteraction.get(component).iterator();
+				/*
+				 * If the Iterator<Port> is null or empty for a chosen component, throw an exception.
+				 * This should not happen.
+				 */
+				if (compPortsToFire == null || !compPortsToFire.hasNext()) {
+					try {
+						logger.error("In a chosen by the engine interaction, associated to component "+ component.getName() +
+								" is a null or empty list of ports to be fired.");
+						throw new BIPEngineException("Exception in thread: "+Thread.currentThread().getName()+" In a chosen by the engine interaction, associated to component "+ component.getName() +
+								" is a null or empty list of ports to be fired.");
+					} catch (BIPEngineException e) {
+						e.printStackTrace();
+						throw e;
+					}
 				}
+				else{
+					while (compPortsToFire.hasNext()){
+						Port port = compPortsToFire.next();
+						/*
+						 * If the port is null or empty for a chosen component, throw an exception.
+						 * This should not happen.
+						 */
+						if (port == null || port.id.isEmpty()) {
+							try {
+								logger.error("In a chosen by the engine interaction, associated to component "+ component.getName() +
+										" the port to be fired is null or empty.");
+								throw new BIPEngineException("Exception in thread: "+Thread.currentThread().getName()+" In a chosen by the engine interaction, associated to component "+ component.getName() +
+										" the port to be fired is null or empty.");
+							} catch (BIPEngineException e) {
+								e.printStackTrace();
+								throw e;
+							}
+						}
+						logger.debug("Component {} execute port {}", component.getName(), port.id);
+						component.execute(port.id);
+					}
+				}
+			}	
+		}
+		/* 
+		 * send null to the components that are not part of the overall interaction
+		 */
+		for (BIPComponent component: registeredComponents){
+			if (!enabledComponents.contains(component)){
+				component.execute(null);
 			}
-			else{
-				//TODO: will never get to this. The engine can send the list of non-participating components in the end.
-				//TODO: If this happens here throw an exception.
-//				component.execute(null);
-			}
-		}	
+		}
 	}
 	
 	/**
