@@ -1,19 +1,21 @@
 package org.bip.engine;
 
 import java.util.Map;
+import java.util.Set;
 
 import net.sf.javabdd.BDD;
 
 import org.bip.api.BIPComponent;
 import org.bip.behaviour.Port;
+import org.bip.exceptions.BIPEngineException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class DataEncoderImpl implements DataEncoder{
 
-	private DataCoordinator dataCoordinator; 
 	private BDDBIPEngine engine;
-	private BIPCoordinator wrapper;
+	private BehaviourEncoder behaviourEncoder; 
+	
 
 	private Logger logger = LoggerFactory.getLogger(CurrentStateEncoderImpl.class);
 	
@@ -32,16 +34,43 @@ public class DataEncoderImpl implements DataEncoder{
 	 * 1. BDD complexity (especially in the conjunction with the global BDD)
 	 * 2. Number of function calls
 	 * 3. Transfering information regarding the number of components that have informed.
+	 * 4. Here also is the questions whether the DataEncoder should save the BDDs or not at each execution cycle.
 	 * @see org.bip.engine.DataEncoder#inform(java.util.Map)
 	 */
-	public BDD informSpecific(Map<BIPComponent, Port> disabledCombinations) {
-		// TODO Auto-generated method stub
-		return null;
+	public BDD informSpecific(Map<BIPComponent, Port> disabledCombinations) throws BIPEngineException {
+		/*
+		 * The disabledCombinations and disabledComponents are checked in the DataCoordinator,
+		 * wherein exceptions are thrown. Here, we just use assertion.
+		 */
+		assert(disabledCombinations != null);
+		Set<BIPComponent> disabledComponents= disabledCombinations.keySet();
+		assert (disabledComponents != null);
+
+		BDD result = engine.getBDDManager().one();
+		
+		for (BIPComponent component : disabledComponents){
+			Port port = disabledCombinations.get(component);
+			if (port == null || port.id.isEmpty()){
+		        try {
+					logger.error("Disabled port {} is null or empty "+port.id);
+					throw new BIPEngineException("Disabled port {} is null or empty "+port.id);
+				} catch (BIPEngineException e) {
+					e.printStackTrace();
+					throw e;
+				}
+		      }
+			result.andWith(behaviourEncoder.getBDDOfAPort(component, port.id).not());
+		}
+		return result;
 	}
 
 
 	public void setEngine(BDDBIPEngine engine) {
 		this.engine=engine;
+	}
+
+	public void setBehaviourEncoder(BehaviourEncoder behaviourEncoder) {
+		this.behaviourEncoder = behaviourEncoder;
 	}
 
 }

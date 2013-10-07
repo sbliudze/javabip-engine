@@ -305,8 +305,10 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 				logger.debug("Component {} execute port {}", component.getName(), port.id);
 				component.execute(port.id);
 			}
-			else
+			else{
+				logger.debug("BIPCoordinator sends null to BIPComponent: "+component.getName());
 				component.execute(null);
+			}
 		}
 	}
 	
