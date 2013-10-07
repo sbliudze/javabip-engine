@@ -85,7 +85,6 @@ public class CurrentStateEncoderImpl implements CurrentStateEncoder {
 	
 	public void setBIPCoordinator(BIPCoordinator wrapper) {
 		this.wrapper = wrapper;
-
 	}
 
 	public void setBehaviourEncoder(BehaviourEncoder behaviourEncoder) {

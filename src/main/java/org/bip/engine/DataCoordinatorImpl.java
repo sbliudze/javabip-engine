@@ -119,7 +119,8 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor {
 				} 
 			}
 			//TODO: Throw exceptions about the ports in the DataEncoder (?)
-			dataEncoder.informSpecific(disabledCombinations);
+			engine.informSpecific(dataEncoder.informSpecific(disabledCombinations));
+//			dataEncoder.informSpecific(disabledCombinations);
 		}
 	}
 	

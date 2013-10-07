@@ -61,6 +61,8 @@ public interface BDDBIPEngine {
 	
 	Hashtable<Port, Integer> getPortToPosition();
 
+	void informSpecific(BDD informSpecific);
+
 
 
 }

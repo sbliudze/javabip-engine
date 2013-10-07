@@ -27,6 +27,7 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 	
 	private Logger logger = LoggerFactory.getLogger(BDDBIPEngineImpl.class);
 	private Hashtable<BIPComponent, BDD> currentStateBDDs = new Hashtable<BIPComponent, BDD>();
+	private ArrayList <BDD> disabledCombinationBDDs = new ArrayList<BDD>();
 	private Hashtable<BIPComponent, BDD> behaviourBDDs = new Hashtable<BIPComponent, BDD>();
 	/* BDD for ΛFi */
 	private BDD totalBehaviour;
@@ -146,7 +147,6 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 	}
 
 	public final BDD totalCurrentStateBdd(Hashtable<BIPComponent, BDD> currentStateBDDs) {
-
 		BDD totalCurrentStateBdd = bdd_mgr.one();
 		BDD tmp;
 
@@ -299,6 +299,11 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		currentStateBDDs.put(component, componentBDD);
 	}
 	
+	public void informSpecific(BDD informSpecific) {
+		disabledCombinationBDDs.add(informSpecific);
+		
+	}
+	
 	public synchronized void informBehaviour(BIPComponent component, BDD componentBDD) {
 		behaviourBDDs.put(component, componentBDD);
 	}
@@ -340,5 +345,7 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 	public synchronized BDDFactory getBDDManager() {
 		return bdd_mgr;
 	}
+
+
 
 }
