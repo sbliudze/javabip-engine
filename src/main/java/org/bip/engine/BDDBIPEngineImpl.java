@@ -40,7 +40,7 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 	private int noNodes=10000;
 	private int cacheSize=1000;
 	
-	/* JavaBDD Bdd Manager */
+	/* Use JavaBDD Bdd Manager */
 	private BDDFactory bdd_mgr= BDDFactory.init("java", noNodes, cacheSize); 
 	private ArrayList<Integer> positionsOfPorts = new ArrayList<Integer>();
 	Hashtable<Port, Integer> portToPosition= new Hashtable<Port, Integer>();
@@ -162,6 +162,24 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		}
 		return totalCurrentStateBdd;	
 	}
+	
+
+	public final BDD totalDisabledCombinationsBdd(ArrayList<BDD> disabledCombinationBDDs) {
+		BDD totalDisabledCombinationBdd = bdd_mgr.one();
+		BDD tmp;
+
+		for (BDD disabledCombinationBDD : disabledCombinationBDDs ){
+			if (disabledCombinationBDD==null){
+				logger.error("Disabled Combination BDD is null");
+				//TODO: Add exception
+			}
+//			totalDisabledCombinationBdd.andWith(disabledCombinationBDD);
+			tmp = totalDisabledCombinationBdd.and(disabledCombinationBDD);
+			totalDisabledCombinationBdd.free();
+			totalDisabledCombinationBdd = tmp;
+		}
+		return totalDisabledCombinationBdd;	
+	}
 
 	public final void runOneIteration() throws BIPEngineException {
 		byte[] chosenInteraction;
@@ -172,20 +190,49 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 
 		cubeMaximals.add(0, cubeMaximal);
 
-		/* Λi Ci */
-		BDD totalCurrentState = totalCurrentStateBdd(currentStateBDDs);
-		if (totalCurrentState==null ) {
-			try {
-				logger.error("Total Current States BDD is null");
-				throw new BIPEngineException("Total Current States BDD is null");
-			} catch (BIPEngineException e) {
-				e.printStackTrace();
-				throw e;	
-			}
-		}	
+		BDD totalCurrentStateAndDisabledCombinations;
 
+		if (!disabledCombinationBDDs.isEmpty() || disabledCombinationBDDs != null){
+			BDD totalDisabledCombination = totalDisabledCombinationsBdd(disabledCombinationBDDs);
+			if (totalDisabledCombination==null) {
+				try {
+					logger.error("Total Disabled Combination BDD is null, although there are disabled Combinations.");
+					throw new BIPEngineException("Total Disabled Combination BDD is null, although there are disabled combinations.");
+				} catch (BIPEngineException e) {
+					e.printStackTrace();
+					throw e;	
+				}
+			}
+			/* Λi Ci */
+			totalCurrentStateAndDisabledCombinations = totalCurrentStateBdd(currentStateBDDs).and(totalDisabledCombination);
+			if (totalCurrentStateAndDisabledCombinations==null) {
+				try {
+					logger.error("Total Current States BDD is null");
+					throw new BIPEngineException("Total Current States BDD is null with disabled combinations");
+				} catch (BIPEngineException e) {
+					e.printStackTrace();
+					throw e;	
+				}
+			}
+		}
+		else{
+			/* Λi Ci */
+			totalCurrentStateAndDisabledCombinations = totalCurrentStateBdd(currentStateBDDs);
+
+			if (totalCurrentStateAndDisabledCombinations==null) {
+				try {
+					logger.error("Total Current States BDD is null");
+					throw new BIPEngineException("Total Current States BDD is null");
+				} catch (BIPEngineException e) {
+					e.printStackTrace();
+					throw e;	
+				}
+			}	
+		}
+		
 		/* Compute global BDD: solns= Λi Fi Λ G Λ (Λi Ci) */
-		BDD solns = totalBehaviourAndGlue.and(totalCurrentState);
+		BDD solns = totalBehaviourAndGlue.and(totalCurrentStateAndDisabledCombinations);
+
 		if (solns==null ) {
 			try {
 				logger.error("Global BDD is null");
@@ -195,7 +242,7 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 				throw e;	
 			}
 		}	
-		totalCurrentState.free();
+		totalCurrentStateAndDisabledCombinations.free();
 		ArrayList<byte[]> a = new ArrayList<byte[]>();
 
 		a.addAll(solns.allsat()); // TODO, can we find random maximal
@@ -290,18 +337,21 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		
 		logger.info("*************************************************************************");
 
+
 		wrapper.executeComponents(chosenComponents, chosenPorts);
 
 		solns.free();
+//		currentStateBDDs.clear();
+//		disabledCombinationBDDs.clear();
+
 	}
 	
 	public synchronized void informCurrentState(BIPComponent component, BDD componentBDD) {
 		currentStateBDDs.put(component, componentBDD);
 	}
 	
-	public void informSpecific(BDD informSpecific) {
+	public synchronized void informSpecific(BDD informSpecific) {
 		disabledCombinationBDDs.add(informSpecific);
-		
 	}
 	
 	public synchronized void informBehaviour(BIPComponent component, BDD componentBDD) {
