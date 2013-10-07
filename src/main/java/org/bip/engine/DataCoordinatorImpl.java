@@ -81,7 +81,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor {
 		// now we know which ports have not decided on their availability
 		// after all informs (? easy version)
 		// for each undecided port of each component :
-		// port -> transition -> guard expression -> guard tree -> tree of Guards -> list of DataIn needed
+		// port -> transition -> guard expression -> guard tree -> list of Guards -> list of DataIn needed
 		// for each DataIn variable get from the new Glue info about components providing it
 		// executor.getData()
 		// executor.checkEnabledness()
