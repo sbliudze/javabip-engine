@@ -70,25 +70,6 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 	// I think it is not good. Has to be investigated.
 	private BDDBIPEngine engine = new BDDBIPEngineImpl();
 
-	/**
-	 * Boolean field that shows whether the haveAllComponentsInformed semaphore
-	 * is acquired for the number of components and therefore, the components
-	 * can start informing the engine and releasing the semaphore.
-	 */
-	private boolean isEngineSemaphoreReady = false;
-
-	/**
-	 * Semaphore that controls when the runOneIteration() function of the
-	 * BDDBIPEngine class can be called. It can be called after all registered
-	 * components have inform the BIPCoordinator about their current state.
-	 */
-	private Semaphore haveAllComponentsInformed;
-	/**
-	 * Boolean variable that shows whether the execute() was called.
-	 */
-	private boolean isEngineExecuting = false;
-	/** Number of components registered */
-	private int nbComponents;
 	ArrayList<DataWire> dataWires;
 
 	public DataCoordinatorImpl() {
@@ -120,7 +101,6 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 				registeredComponents.add(component);
 				componentBehaviourMapping.put(component, behaviour);
 				BIPCoordinator.register(component, behaviour);
-				nbComponents++;
 			}
 			ArrayList<BIPComponent> componentInstances = new ArrayList<BIPComponent>();
 
@@ -146,12 +126,12 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 		// easy implementation: when all the components have informed
 		// TODO the data wiring process does not need all the components having
 		// informed
-		if (isLastInform(component, currentState, disabledPorts)) {
-			try {
-				wireData();
-			} catch (BIPEngineException e) {
-				e.printStackTrace();
-			}
+
+		try {
+			wireData();
+		} catch (BIPEngineException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 	}
 
@@ -174,12 +154,6 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 		// inform the BIPCoordinator
 	}
 
-	/**
-	 * 
-	 * @param dataInNeeded
-	 * @param behaviour
-	 * @throws BIPEngineException
-	 */
 	private void getDataWires(Iterable<String> dataInNeeded, Behaviour behaviour) throws BIPEngineException {
 		// mapping inData <-> outData, where
 		// in outData we have a name and a list of components providing it.
@@ -314,89 +288,6 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 		return instances;
 	}
 
-	private boolean isLastInform(BIPComponent component, String currentState, ArrayList<Port> disabledPorts) {
-		if (componentsHaveInformed.contains(component)) {
-			try {
-				logger.info("************************ Already Have Informed *******************************");
-				logger.info("Component: {}", component.getName());
-				logger.info("informs that is at state: {}", currentState);
-				for (Port disabledPort : disabledPorts) {
-					logger.info("with disabled port: " + disabledPort.id);
-				}
-				logger.info("******************************************************************************");
-				logger.error("Component " + component.getName() + " has already informed the engine in this execution cycle.");
-				throw new BIPEngineException("Component " + component.getName() + " has already informed the engine in this execution cycle.");
-			} catch (BIPEngineException e) {
-				e.printStackTrace();
-			}
-		}
-
-		/*
-		 * If a component informs more than once in the same execution cycle we
-		 * add the else below to prevent the re-computation of the current state
-		 * BDD for the specific component. The deletion of the else will not
-		 * result in any data corruption but overhead will be added.
-		 */
-		else {
-
-			/**
-			 * This condition checks whether the component has already
-			 * registered.
-			 */
-			if (registeredComponents.contains(component)) {
-				synchronized (componentsHaveInformed) {
-					componentsHaveInformed.add(component);
-					// inform the BIPCoordinator
-					logger.debug("Number of components that have informed {}", componentsHaveInformed.size());
-					logger.info("********************************* Inform *************************************");
-					logger.info("Component: {}", component.getName());
-					logger.info("informs that is at state: {}", currentState);
-					for (Port disabledPort : disabledPorts) {
-						logger.info("with disabled port: " + disabledPort.id);
-					}
-					logger.info("******************************************************************************");
-
-					/*
-					 * The haveAllComponentsInformed semaphore is used to
-					 * indicate whether all registered components have informed
-					 * and to order one execution cycle of the engine. The
-					 * semaphore is acquired in run().
-					 * 
-					 * When a component informs, we first check if the
-					 * haveAllComponentsInformed semaphore has been acquired
-					 * before and then we release.
-					 * 
-					 * This block is synchronized with the number of components
-					 * that have informed. Therefore, the
-					 * haveAllComponentsInformed semaphore cannot be released by
-					 * any other component at the same time.
-					 */
-					// TODO: If we remove the else above, we have to make sure
-					// that the semaphore is not released for the second time
-					if (isEngineSemaphoreReady) {
-						haveAllComponentsInformed.release();
-						logger.debug("Number of available permits in the semaphore: {}", haveAllComponentsInformed.availablePermits());
-						if (haveAllComponentsInformed.availablePermits() == 0) {
-							return true;
-						}
-					}
-				}
-				/**
-				 * An exception is thrown when a component informs the
-				 * Coordinator without being registered first.
-				 */
-			} else {
-				try {
-					logger.error("Component " + component.getName() + " has not registered yet.");
-					throw new BIPEngineException("Component " + component.getName() + " has not registered yet.");
-				} catch (BIPEngineException e) {
-					e.printStackTrace();
-				}
-			}
-		}
-		return false;
-	}
-
 	private ArrayList<Port> getUndecidedPorts(BIPComponent component, ArrayList<Port> disabledPorts) {
 		ArrayList<Port> undecidedPorts = new ArrayList<Port>();
 		Behaviour behaviour = componentBehaviourMapping.get(component);
@@ -428,7 +319,6 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 	}
 
 	public void execute() {
-		isEngineExecuting = true;
 		BIPCoordinator.execute();
 	}
 
@@ -545,42 +435,6 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 
 	@Override
 	public void run() {
-		synchronized (componentsHaveInformed) {
-			haveAllComponentsInformed = new Semaphore(nbComponents);
-			try {
-				logger.debug("Waiting for the engine semaphore to be initialized to 0...");
-				haveAllComponentsInformed.acquire(nbComponents);
-				isEngineSemaphoreReady = true;
-				logger.debug("Engine semaphore initialised");
-			} catch (InterruptedException e1) {
-				logger.error("Semaphore's haveAllComponentsInformed acquire method for the number of registered components in the system was interrupted.");
-				e1.printStackTrace();
-			}
-		}
-		while (isEngineExecuting) {
-
-			logger.debug("isEngineExecuting: {} ", isEngineExecuting);
-			logger.debug("noComponents: {}, componentCounter: {}", nbComponents, componentsHaveInformed.size());
-			logger.debug("Number of available permits in the semaphore: {}", haveAllComponentsInformed.availablePermits());
-
-			componentsHaveInformed.clear();
-			try {
-				engine.runOneIteration();
-			} catch (BIPEngineException e1) {
-				e1.printStackTrace();
-			}
-
-			try {
-				logger.debug("Waiting for the acquire in run()...");
-				haveAllComponentsInformed.acquire(nbComponents);
-				logger.debug("run() acquire successful.");
-			} catch (InterruptedException e) {
-				isEngineExecuting = false;
-				e.printStackTrace();
-				logger.error("Semaphore's haveAllComponentsInformed acquire method for the number of registered components in the system was interrupted.");
-			}
-		}
-
 		// TODO: unregister components and notify the component that the engine
 		// is not working
 		// for (BIPComponent component : identityMapping.values()) {
