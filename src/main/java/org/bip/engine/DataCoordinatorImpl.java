@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.Semaphore;
 
 import org.bip.api.BIPComponent;
@@ -142,6 +143,8 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 		// for each component store its undecided ports
 		componentUndecidedPorts.put(component, getUndecidedPorts(component, disabledPorts));
 		// easy implementation: when all the components have informed
+		// TODO the data wiring process does not need all the components having
+		// informed
 		if (isLastInform(component, currentState, disabledPorts)) {
 			try {
 				wireData();
@@ -198,9 +201,27 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 	}
 
 	private Iterable<Map<String, Object>> getDataValueTable(Hashtable<String, ArrayList<Object>> dataEvaluation) {
-		ArrayList<Map<String, Object>> result = new ArrayList<Map<String,Object>>();
-		 
+		ArrayList<Map<String, Object>> result = new ArrayList<Map<String, Object>>();
+		Hashtable<String, Object> dataRow = new Hashtable<String, Object>();
+		for (Entry<String, ArrayList<Object>> entry : dataEvaluation.entrySet()) {
+			dataRow.put(entry.getKey(), entry.getValue().iterator().next());
+			// dataRow.putAll(t)
+		}
 		return result;
+	}
+
+	private Map<String, Object> getNextRow(Hashtable<String, ArrayList<Object>> dataEvaluation) {
+
+		for (Entry<String, ArrayList<Object>> entry : dataEvaluation.entrySet()) {
+			Iterator iterator = entry.getValue().iterator();
+			while (iterator.hasNext()) {
+				Hashtable<String, Object> dataRow = new Hashtable<String, Object>();
+				dataRow.put(entry.getKey(), iterator.next());
+			}
+
+			// dataRow.putAll(getNextRow(dataEvaluation));//.remove(entry.getKey())));
+		}
+		return null;
 	}
 
 	public Iterable<BIPComponent> getBIPComponentInstances(String type) throws BIPEngineException {
