@@ -4,6 +4,9 @@ import static org.junit.Assert.assertEquals;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Hashtable;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import org.bip.api.BIPComponent;
 import org.bip.api.ExecutableBehaviour;
@@ -55,7 +58,32 @@ public class DataCoordinatorTests implements BIPComponent {
 		//assertEquals(0,coordinator.getUndecidedPorts(this, new ArrayList<Port>(Arrays.asList(firstPort, secondPort, thirdPort))).size());
 		//in order to run this test make the tested function public
 	}
-
+	
+	@Test
+	@Ignore
+	public void testDataTransformation() {
+		Hashtable<String, ArrayList<Object>> dataEvaluation = new Hashtable<String, ArrayList<Object>>();
+		ArrayList<Object> array1 = new ArrayList<Object>(Arrays.asList("Buenos Aires", "Córdoba", "La Plata"));
+		ArrayList<Object> array2 = new ArrayList<Object>(Arrays.asList(1, 2, 4, 2));
+		ArrayList<Object> array3 = new ArrayList<Object>(Arrays.asList(true, false, true));
+		dataEvaluation.put("town", array1);
+		dataEvaluation.put("count", array2);
+		dataEvaluation.put("isGood", array3);
+		DataCoordinatorImpl coordinator = new DataCoordinatorImpl();
+		ArrayList<Map<String, Object>> result = new ArrayList<Map<String,Object>>();
+		//result = (ArrayList<Map<String, Object>>) coordinator.getDataValueTable(dataEvaluation);
+		
+		//assertEquals(36, result.size());
+		//in order to run this test make the tested function public
+		
+		for (Map<String, Object> map : result) {
+			for (Entry<String, Object> entry : map.entrySet()) {
+				System.out.println(entry.getKey() + "-" + entry.getValue());
+			}
+			System.out.println();
+		}
+	}
+	
 	@Override
 	public String getName() {
 		return "DataTest";
@@ -72,12 +100,12 @@ public class DataCoordinatorTests implements BIPComponent {
 	@Override
 	public void inform(String portID) {
 	}
-	
+
 	@Override
 	public <T> T getData(String name, Class<T> clazz) {
 		return null;
 	}
-	
+
 	public boolean f() {
 		return true;
 	}

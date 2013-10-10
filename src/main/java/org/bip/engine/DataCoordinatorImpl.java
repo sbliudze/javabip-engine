@@ -1,6 +1,7 @@
 package org.bip.engine;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Iterator;
@@ -173,6 +174,12 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 		// inform the BIPCoordinator
 	}
 
+	/**
+	 * 
+	 * @param dataInNeeded
+	 * @param behaviour
+	 * @throws BIPEngineException
+	 */
 	private void getDataWires(Iterable<String> dataInNeeded, Behaviour behaviour) throws BIPEngineException {
 		// mapping inData <-> outData, where
 		// in outData we have a name and a list of components providing it.
@@ -200,28 +207,95 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 		getDataValueTable(dataEvaluation);
 	}
 
+	/**
+	 * This function takes the structure build from data received from the
+	 * executors and changes it to the structure with which the executor can be
+	 * questioned vie checkEnabledness method
+	 * 
+	 * @param dataEvaluation
+	 *            Table bipData <-> possible evaluations
+	 * @return List of all possible entries, where each entry consists of the
+	 *         same number of pairs bipData <-> value
+	 */
 	private Iterable<Map<String, Object>> getDataValueTable(Hashtable<String, ArrayList<Object>> dataEvaluation) {
 		ArrayList<Map<String, Object>> result = new ArrayList<Map<String, Object>>();
-		Hashtable<String, Object> dataRow = new Hashtable<String, Object>();
-		for (Entry<String, ArrayList<Object>> entry : dataEvaluation.entrySet()) {
-			dataRow.put(entry.getKey(), entry.getValue().iterator().next());
-			// dataRow.putAll(t)
+
+		if (dataEvaluation == null || dataEvaluation.entrySet().isEmpty()) {
+			// throw exception
+			return null;
+		}
+
+		// for one bipData get iterator over its values
+		Entry<String, ArrayList<Object>> entry = dataEvaluation.entrySet().iterator().next();
+		Iterator<Object> iterator = entry.getValue().iterator();
+
+		// for each value of this first bipData
+		while (iterator.hasNext()) {
+			// create one map, where
+			// all the different pairs name<->value will be stored
+			// put there the current value of the first bipData
+			Hashtable<String, Object> dataRow = new Hashtable<String, Object>();
+			String keyCopy = entry.getKey();
+			dataRow.put(keyCopy, iterator.next());
+
+			// remove the current data from the initial data table
+			// so that it is not treated again further
+			ArrayList<Object> valuesCopy = dataEvaluation.remove(keyCopy);
+			// treat the other bipData variables
+			result.addAll(getNextTableRow(dataEvaluation, dataRow));
+			// restore the current data
+			dataEvaluation.put(keyCopy, valuesCopy);
 		}
 		return result;
 	}
 
-	private Map<String, Object> getNextRow(Hashtable<String, ArrayList<Object>> dataEvaluation) {
-
-		for (Entry<String, ArrayList<Object>> entry : dataEvaluation.entrySet()) {
-			Iterator iterator = entry.getValue().iterator();
-			while (iterator.hasNext()) {
-				Hashtable<String, Object> dataRow = new Hashtable<String, Object>();
-				dataRow.put(entry.getKey(), iterator.next());
-			}
-
-			// dataRow.putAll(getNextRow(dataEvaluation));//.remove(entry.getKey())));
+	/**
+	 * This function helps the function getDataValueTable to transform the
+	 * structure for the checkEnabledness method
+	 * 
+	 * @param dataEvaluation
+	 *            Table bipData <-> possible evaluations
+	 * @param dataRow
+	 *            The current row of bipData <-> value pairs already treated
+	 *            that needs to be augmented
+	 * @return List of possible entries, where each entry consists of the a
+	 *         number of pairs bipData <-> value
+	 */
+	private Collection<Map<String, Object>> getNextTableRow(Hashtable<String, ArrayList<Object>> dataEvaluation, Map<String, Object> dataRow) {
+		ArrayList<Map<String, Object>> result = new ArrayList<Map<String, Object>>();
+		// if there is no more data left, it means we have constructed one map
+		// of all the bipData variables
+		if (dataEvaluation == null || dataEvaluation.entrySet().isEmpty()) {
+			result.add(dataRow);
+			return result;
 		}
-		return null;
+
+		// for one bipData get iterator over its values
+		Entry<String, ArrayList<Object>> entry = dataEvaluation.entrySet().iterator().next();
+		Iterator<Object> iterator = entry.getValue().iterator();
+
+		// for each value of this bipData
+		while (iterator.hasNext()) {
+			// create a new map, where
+			// all the different pairs name<->value will be stored
+			// copy there all the previous values
+			// (this must be done to escape
+			// change of one variable that leads to change of all its copies
+			Map<String, Object> thisRow = new Hashtable<String, Object>();
+			thisRow.putAll(dataRow);
+			// put there the current value of the bipData
+			thisRow.put(entry.getKey(), iterator.next());
+
+			// remove the current data from the initial data table
+			// so that it is not treated again further
+			String keyCopy = entry.getKey();
+			ArrayList<Object> valuesCopy = dataEvaluation.remove(keyCopy);
+			// treat the other bipData variables
+			result.addAll(getNextTableRow(dataEvaluation, thisRow));
+			// restore the current data
+			dataEvaluation.put(keyCopy, valuesCopy);
+		}
+		return result;
 	}
 
 	public Iterable<BIPComponent> getBIPComponentInstances(String type) throws BIPEngineException {
