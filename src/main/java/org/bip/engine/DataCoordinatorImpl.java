@@ -146,7 +146,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 				// for each DataIn variable get info which components provide it
 				// as their outData
 				Iterable<Map<String, Object>> dataTable = getDataWires(dataIn, component);
-				component.checkEnabledness(port, dataTable);
+				ArrayList<Boolean> portActive = (ArrayList<Boolean>) component.checkEnabledness(port, dataTable);
 			}
 		}
 		// executor.getData()
