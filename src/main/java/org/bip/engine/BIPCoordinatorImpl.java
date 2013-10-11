@@ -7,6 +7,8 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.Semaphore;
 
+import net.sf.javabdd.BDD;
+
 import org.bip.api.*;
 import org.bip.behaviour.Port;
 import org.bip.exceptions.BIPEngineException;
@@ -26,7 +28,6 @@ import org.slf4j.LoggerFactory;
 public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 
 	private Logger logger = LoggerFactory.getLogger(BIPCoordinatorImpl.class);
-	
 	/**
 	 * Create instances of all the the Glue Encoder, the Behaviour Encoder, 
 	 * the Current State Encoder, the Symbolic BIP Engine
@@ -56,9 +57,6 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	 * Helper hashset of the components that have informed in an execution cycle.
 	 */
 	private HashSet<BIPComponent> componentsHaveInformed = new HashSet<BIPComponent>();
-
-//	/** Identification number for local use */
-//	private AtomicInteger idGenerator = new AtomicInteger(0);
 
 	/** Number of ports of components registered */
 	private int nbPorts;
@@ -107,7 +105,6 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 
 		engine.setOSGiBIPEngine(this);
 	}
-
 
 	public synchronized void specifyGlue(BIPGlue glue) {
 		try {
@@ -558,6 +555,11 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	public void informSpecific(BIPComponent decidingComponent, Port decidingPort, Map<BIPComponent, Port> disabledCombinations) throws BIPEngineException {
 		logger.warn("InformSpecific of BIPCoordinator is called. That should never happen. All the information should be passed directly from the DataCoordinator to the DataEncoder.");
 	}
+	
+	public void informSpecific(BDD disabledCombination){
+		engine.informSpecific(disabledCombination);
+	}
+
 	
 	/**
 	 * Helper function that returns the total number of ports of the registered components.

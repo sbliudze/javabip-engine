@@ -17,18 +17,12 @@ import org.bip.glue.DataWire;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-// There is no need for DataCoordinator interface, just DataCoordinatorImpl will implement BIP engine interface.
-// DataCoordinatorImpl needs BIP coordinator ( BIP Engine again ) that actual does all the computation of BIP
-// engine. DataCoordinatorImpl takes care of only of data querying and passing to BIP executors.
-
-// DataCoordinator intercepts call register and inform from BIPExecutor. For each BIPComponent it
-// creates a Proxy of BIPComponent (also BIPComponent class) that is registered with BIPCoordinator.
-// This BIPComponent proxy is the identity provided to BIPCordinator. Now, DataCordinator implements
-// just BIPEngine interface so it able also to intercept informs and translate it into proper informs.
-// BIPComponent Proxy can intercept execute functions invoked by BIPCoordinator and enrich with data
-// provided by DataCoordinatorImpl. Thus, Proxy BIPComponent knows about DataCoordinatorImpl, and
-// original BIPcomponent, so BIPcomponent proxy can query DataCoordinatorIMpl for the data and call
-// function execute of the original BIPComponent with proper data.
+/** There is no need for DataCoordinator interface, just DataCoordinatorImpl will implement BIP engine interface.
+* DataCoordinatorImpl needs BIP coordinator ( BIP Engine again ) that actual does all the computation of BIP
+* engine. DataCoordinatorImpl takes care of only of data querying and passing to BIP executors.
+* 
+* DataCoordinator intercepts call register and inform from BIPExecutor. 
+*/
 
 public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runnable {
 
@@ -62,12 +56,11 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 	private BIPCoordinator BIPCoordinator = new BIPCoordinatorImpl();
 	// TODO the dataCoordinator and the BIPcoordinator have different engines.
 	// I think it is not good. Has to be investigated.
-	private BDDBIPEngine engine = new BDDBIPEngineImpl();
+	//private BDDBIPEngine engine = new BDDBIPEngineImpl();
 
 	ArrayList<DataWire> dataWires;
 
 	public DataCoordinatorImpl() {
-		dataEncoder.setEngine(engine);
 		BIPCoordinator.setInteractionExecutor(this);
 	}
 
@@ -164,7 +157,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 					throw new BIPEngineException("Component " + component.getName() + " specified in the disabledCombinations of informSpecific was not registered.");
 				}
 			}
-			engine.informSpecific(dataEncoder.informSpecific(decidingComponent, decidingPort, disabledCombinations));
+			BIPCoordinator.informSpecific(dataEncoder.informSpecific(decidingComponent, decidingPort, disabledCombinations));
 
 		}
 	}
