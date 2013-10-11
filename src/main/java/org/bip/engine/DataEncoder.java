@@ -40,7 +40,7 @@ public interface DataEncoder {
      * @param data glue
      * @throws BIPEngineException 
      */
-    void specifyDataGlue(ArrayList<DataWire> dataGlue) throws BIPEngineException;
+    void specifyDataGlue(Iterable<DataWire> dataGlue) throws BIPEngineException;
     
     void createDataBDDNodes() throws BIPEngineException;
 	

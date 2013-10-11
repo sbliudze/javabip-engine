@@ -2,6 +2,7 @@ package org.bip.engine;
 
 import java.util.ArrayList;
 import java.util.Hashtable;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -24,7 +25,7 @@ public class DataEncoderImpl implements DataEncoder{
 	private BDDBIPEngine engine;
 	private BehaviourEncoder behaviourEncoder; 
 	
-	ArrayList<DataWire> dataGlueSpec;
+	Iterator<DataWire> dataGlueSpec;
 
 	private Logger logger = LoggerFactory.getLogger(CurrentStateEncoderImpl.class);
 	
@@ -75,8 +76,8 @@ public class DataEncoderImpl implements DataEncoder{
 		return result;
 	}
 	
-	public void specifyDataGlue(ArrayList<DataWire> dataGlue) throws BIPEngineException {
-		if (dataGlue == null || dataGlue.isEmpty()) {
+	public void specifyDataGlue(Iterable<DataWire> dataGlue) throws BIPEngineException {
+		if (dataGlue == null || !dataGlue.iterator().hasNext()) {
 			try {
 				logger.error("The glue parser has failed to compute the data glue.\n" +
 						"\tPossible reasons: No data transfer or corrupt/non-existant glue XML file.");
@@ -87,12 +88,26 @@ public class DataEncoderImpl implements DataEncoder{
 				throw e;
 			}
 		}
-		this.dataGlueSpec = dataGlue;
+		this.dataGlueSpec = dataGlue.iterator();
 	}
 	
 	public synchronized void createDataBDDNodes() throws BIPEngineException {
-		for (DataWire dataWire : dataGlueSpec){
-			
+		while (dataGlueSpec.hasNext()){
+			DataWire dataWire = dataGlueSpec.next();
+			/*
+			 * These are not ports actually. In the specType the type of the component is stored.
+			 * In the id the name of the data variable is stored.
+			 * 
+			 * Input data are always assigned to transitions. Therefore, I need the list of ports of the component
+			 * that will re receiving the data.
+			 */
+			Port inData = dataWire.from;
+			 /* 
+			 * Output data are not associated to transitions. Here, will take the conjunction of all possible
+			 * transitions of a component.
+			 */
+			Port outData = dataWire.to;
+
 		}
 
 	}
