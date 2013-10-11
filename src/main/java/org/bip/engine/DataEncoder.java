@@ -7,6 +7,11 @@ import org.bip.api.BIPComponent;
 import org.bip.behaviour.Port;
 import org.bip.exceptions.BIPEngineException;
 
+/**
+ * Deals with the DataGlue.
+ * Encodes the informSpecific information.
+ * @author mavridou
+ */
 public interface DataEncoder {
 	
 	/**

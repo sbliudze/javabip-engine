@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 * engine. DataCoordinatorImpl takes care of only of data querying and passing to BIP executors.
 * 
 * DataCoordinator intercepts call register and inform from BIPExecutor. 
+* @authors: mavridou, zolotukhina
 */
 
 public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runnable {
@@ -48,17 +49,14 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 	 * correspond to the component type specified in the key.
 	 */
 	private Hashtable<String, ArrayList<BIPComponent>> typeInstancesMapping = new Hashtable<String, ArrayList<BIPComponent>>();
+	
+	ArrayList<DataWire> dataWires;
 
 	/**
 	 * Create instances of all the the Data Encoder and of the BIPCoordinator
 	 */
 	private DataEncoder dataEncoder = new DataEncoderImpl();
 	private BIPCoordinator BIPCoordinator = new BIPCoordinatorImpl();
-	// TODO the dataCoordinator and the BIPcoordinator have different engines.
-	// I think it is not good. Has to be investigated.
-	//private BDDBIPEngine engine = new BDDBIPEngineImpl();
-
-	ArrayList<DataWire> dataWires;
 
 	public DataCoordinatorImpl() {
 		BIPCoordinator.setInteractionExecutor(this);
@@ -66,7 +64,6 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 
 	public void specifyGlue(BIPGlue glue) {
 		BIPCoordinator.specifyGlue(glue);
-		// this.glue = glue;
 		this.dataWires = glue.dataWires;
 	}
 
@@ -117,13 +114,13 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 		try {
 			wireData();
 		} catch (BIPEngineException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		//TODO: Inform the BIPCoordinator only after all the informSpecifics for the particular component have finished
+		BIPCoordinator.inform(component, currentState, disabledPorts);
 	}
 	
 	public void informSpecific(BIPComponent decidingComponent, Port decidingPort, Map<BIPComponent, Port> disabledCombinations) throws BIPEngineException {
-		
 		if (disabledCombinations.isEmpty()){
 			try {
 				logger.error("No disabled combination specified in informSpecific. Map of disabledCombinations is empty.");
@@ -173,9 +170,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 	 * 
 	 * @throws BIPEngineException
 	 */
-
-	// TODO: when changes in Engine are finished test it and delete
-	// executeComponent
+	//TODO: test this
 	public void executeInteractions(Iterable<Map<BIPComponent, Iterable<Port>>> portsToFire) throws BIPEngineException {
 		Iterator<Map<BIPComponent, Iterable<Port>>> enabledCombinations = portsToFire.iterator();
 		/*
@@ -431,7 +426,10 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 		}
 		return undecidedPorts;
 	}
-	
+	/**
+	 * Helper function that returns the registered component instances that correspond to a component type.
+	 * @throws BIPEngineException 
+	 */
 	public Iterable<BIPComponent> getBIPComponentInstances(String type) throws BIPEngineException {
 		ArrayList<BIPComponent> instances = typeInstancesMapping.get(type);
 		if (instances == null) {

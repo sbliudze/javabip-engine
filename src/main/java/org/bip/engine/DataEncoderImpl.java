@@ -11,6 +11,11 @@ import org.bip.exceptions.BIPEngineException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Deals with the DataGlue.
+ * Encodes the informSpecific information.
+ * @author mavridou
+ */
 public class DataEncoderImpl implements DataEncoder{
 
 	private BDDBIPEngine engine;

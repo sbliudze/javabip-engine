@@ -23,7 +23,10 @@ import org.slf4j.LoggerFactory;
  * @author mavridou
  */
 
-/** Computes the BDD of the glue */
+/**
+ *  Computes the BDD of the glue
+ *  @author mavridou
+ *   */
 public class GlueEncoderImpl implements GlueEncoder {
 	private Logger logger = LoggerFactory.getLogger(GlueEncoderImpl.class);
 
