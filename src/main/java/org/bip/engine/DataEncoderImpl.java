@@ -1,7 +1,5 @@
 package org.bip.engine;
 
-import java.util.ArrayList;
-import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
@@ -24,6 +22,7 @@ public class DataEncoderImpl implements DataEncoder{
 
 	private BDDBIPEngine engine;
 	private BehaviourEncoder behaviourEncoder; 
+	private DataCoordinator dataCoordinator;
 	
 	Iterator<DataWire> dataGlueSpec;
 
@@ -102,6 +101,7 @@ public class DataEncoderImpl implements DataEncoder{
 			 * that will re receiving the data.
 			 */
 			Port inData = dataWire.from;
+			String inComponentType = inData.specType;
 			 /* 
 			 * Output data are not associated to transitions. Here, will take the conjunction of all possible
 			 * transitions of a component.
@@ -109,6 +109,7 @@ public class DataEncoderImpl implements DataEncoder{
 			 * TODO: Should try to find a way to limit down the possible transitions here
 			 */
 			Port outData = dataWire.to;
+			String outComponentType = outData.specType;
 
 		}
 
@@ -120,6 +121,10 @@ public class DataEncoderImpl implements DataEncoder{
 
 	public void setBehaviourEncoder(BehaviourEncoder behaviourEncoder) {
 		this.behaviourEncoder = behaviourEncoder;
+	}
+	
+	public void setDataCoordinator(DataCoordinator dataCoordinator) {
+		this.dataCoordinator = dataCoordinator;
 	}
 
 
