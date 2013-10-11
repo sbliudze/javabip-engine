@@ -117,4 +117,10 @@ public class DataCoordinatorTests implements BIPComponent {
 	public boolean h() {
 		return false;
 	}
+
+	@Override
+	public Iterable<Boolean> checkEnabledness(Port port, Iterable<Map<String, Object>> data) {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }

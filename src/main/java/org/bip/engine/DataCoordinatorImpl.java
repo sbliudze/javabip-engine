@@ -145,8 +145,8 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 				Iterable<String> dataIn = portToDataInForGuard.get(port);
 				// for each DataIn variable get info which components provide it
 				// as their outData
-				getDataWires(dataIn, componentBehaviourMapping.get(component));
-
+				Iterable<Map<String, Object>> dataTable = getDataWires(dataIn, component);
+				component.checkEnabledness(port, dataTable);
 			}
 		}
 		// executor.getData()
@@ -154,7 +154,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 		// inform the BIPCoordinator
 	}
 
-	private void getDataWires(Iterable<String> dataInNeeded, Behaviour behaviour) throws BIPEngineException {
+	private Iterable<Map<String, Object>> getDataWires(Iterable<String> dataInNeeded, BIPComponent component) throws BIPEngineException {
 		// mapping inData <-> outData, where
 		// in outData we have a name and a list of components providing it.
 		// for one inData there can be several outData variables
@@ -164,12 +164,12 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 			for (DataWire wire : this.dataWires) {
 				// for this dataVariable: all the values that it can take
 				ArrayList<Object> dataValues = new ArrayList<Object>();
-				if (wire.to.id.equals(inDataItem) && wire.to.specType.equals(behaviour.getComponentType())) {
+				if (wire.to.id.equals(inDataItem) && wire.to.specType.equals(componentBehaviourMapping.get(component).getComponentType())) {
 
 					ArrayList<BIPComponent> fromComponents = (ArrayList<BIPComponent>) getBIPComponentInstances(wire.from.specType);
-					for (BIPComponent component : fromComponents) {
+					for (BIPComponent aComponent : fromComponents) {
 						// TODO add type instead of int
-						dataValues.add(component.getData(inDataItem, int.class));
+						dataValues.add(aComponent.getData(inDataItem, int.class));
 					}
 				}
 				dataEvaluation.put(inDataItem, dataValues);
@@ -178,7 +178,10 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 			// Iterable<Boolean> checkEnabledness(Port port,
 			// Iterable<Map<String, Object>> data)
 		}
-		getDataValueTable(dataEvaluation);
+		Iterable<Map<String, Object>> dataTable = getDataValueTable(dataEvaluation);
+
+		return dataTable;
+
 	}
 
 	/**
@@ -322,7 +325,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 		BIPCoordinator.execute();
 	}
 
-	public void informSpecific(Map<BIPComponent, Port> disabledCombinations) throws BIPEngineException {
+	public void informSpecific(BIPComponent component, Port port, Map<BIPComponent, Port> disabledCombinations) throws BIPEngineException {
 		if (disabledCombinations.isEmpty()) {
 			try {
 				logger.error("No disabled combination specified in informSpecific. Map of disabledCombinations is empty.");
@@ -333,10 +336,10 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 		} else {
 			Iterator<BIPComponent> disabledComponents = disabledCombinations.keySet().iterator();
 			while (disabledComponents.hasNext()) {
-				BIPComponent component = disabledComponents.next();
-				if (!registeredComponents.contains(component)) {
-					logger.error("Component " + component.getName() + " specified in the disabledCombinations of informSpecific was not registered.");
-					throw new BIPEngineException("Component " + component.getName() + " specified in the disabledCombinations of informSpecific was not registered.");
+				BIPComponent aComponent = disabledComponents.next();
+				if (!registeredComponents.contains(aComponent)) {
+					logger.error("Component " + aComponent.getName() + " specified in the disabledCombinations of informSpecific was not registered.");
+					throw new BIPEngineException("Component " + aComponent.getName() + " specified in the disabledCombinations of informSpecific was not registered.");
 				}
 			}
 			// TODO: Throw exceptions about the ports in the DataEncoder (?)
