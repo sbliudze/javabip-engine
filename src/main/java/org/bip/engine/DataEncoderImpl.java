@@ -23,6 +23,7 @@ public class DataEncoderImpl implements DataEncoder{
 	private BDDBIPEngine engine;
 	private BehaviourEncoder behaviourEncoder; 
 	
+	ArrayList<DataWire> dataGlueSpec;
 
 	private Logger logger = LoggerFactory.getLogger(CurrentStateEncoderImpl.class);
 	
@@ -84,7 +85,18 @@ public class DataEncoderImpl implements DataEncoder{
 
 
 	public void specifyDataGlue(ArrayList<DataWire> dataGlue) throws BIPEngineException {
-		// TODO Auto-generated method stub
+		if (dataGlue == null || dataGlue.isEmpty()) {
+			try {
+				logger.error("The glue parser has failed to compute the data glue.\n" +
+						"\tPossible reasons: No data transfer or corrupt/non-existant glue XML file.");
+				throw new BIPEngineException("The glue parser has failed to compute the data glue.\n" +
+						"\tPossible reasons: No data transfer or corrupt/non-existant glue XML file.");
+			} catch (BIPEngineException e) {
+				e.printStackTrace();
+				throw e;
+			}
+		}
+		this.dataGlueSpec = dataGlue;
 		
 	}
 
