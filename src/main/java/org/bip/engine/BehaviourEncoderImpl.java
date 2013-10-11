@@ -4,6 +4,7 @@ import java.util.Hashtable;
 import java.util.ArrayList;
 
 import net.sf.javabdd.BDD;
+import net.sf.javabdd.BDDFactory;
 
 import org.bip.api.BIPComponent;
 import org.bip.api.Behaviour;

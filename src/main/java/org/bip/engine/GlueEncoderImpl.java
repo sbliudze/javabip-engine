@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Hashtable;
 
 import net.sf.javabdd.BDD;
+import net.sf.javabdd.BDDFactory;
 
 import org.bip.api.BIPComponent;
 import org.bip.behaviour.Port;
@@ -320,6 +321,8 @@ public class GlueEncoderImpl implements GlueEncoder {
 			logger.debug("allDisjunctiveCausesBDD: "+ allDisjunctiveCauses);
 		}
 		allDisjunctiveCauses.orWith(requirePortHolder.not());
+		
+
 
 		return allDisjunctiveCauses;			
 	}
@@ -377,12 +380,12 @@ public class GlueEncoderImpl implements GlueEncoder {
 						}
 					}
 				}
-					if (!exist) {
-						//allCausesBDD.andWith(portBDD.not());
-						tmp = portBDD.not().and(allCausesBDD);
-						allCausesBDD.free();
-						allCausesBDD = tmp;
-					}
+				if (!exist) {
+					//allCausesBDD.andWith(portBDD.not());
+					tmp = portBDD.not().and(allCausesBDD);
+					allCausesBDD.free();
+					allCausesBDD = tmp;
+				}
 			}
 		}
 		else{

@@ -37,7 +37,8 @@ public class DataEncoderImpl implements DataEncoder{
 	 * 4. Here also is the questions whether the DataEncoder should save the BDDs or not at each execution cycle.
 	 * @see org.bip.engine.DataEncoder#inform(java.util.Map)
 	 */
-	public BDD informSpecific(Map<BIPComponent, Port> disabledCombinations) throws BIPEngineException {
+
+	public BDD informSpecific(BIPComponent decidingComponent, Port decidingPort, Map<BIPComponent, Port> disabledCombinations) throws BIPEngineException {
 		/*
 		 * The disabledCombinations and disabledComponents are checked in the DataCoordinator,
 		 * wherein exceptions are thrown. Here, we just use assertion.
@@ -46,7 +47,7 @@ public class DataEncoderImpl implements DataEncoder{
 		Set<BIPComponent> disabledComponents= disabledCombinations.keySet();
 		assert (disabledComponents != null);
 
-		BDD result = engine.getBDDManager().one();
+		BDD result = engine.getBDDManager().zero();
 		
 		for (BIPComponent component : disabledComponents){
 			Port port = disabledCombinations.get(component);
@@ -59,7 +60,8 @@ public class DataEncoderImpl implements DataEncoder{
 					throw e;
 				}
 		      }
-			result.andWith(behaviourEncoder.getBDDOfAPort(component, port.id).not());
+			//TODO: to be updated
+//			result.andWith(behaviourEncoder.getBDDOfAPort(component, port.id).not());
 		}
 		return result;
 	}
@@ -72,5 +74,8 @@ public class DataEncoderImpl implements DataEncoder{
 	public void setBehaviourEncoder(BehaviourEncoder behaviourEncoder) {
 		this.behaviourEncoder = behaviourEncoder;
 	}
+
+
+
 
 }

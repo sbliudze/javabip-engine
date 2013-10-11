@@ -182,6 +182,7 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 	}
 
 	public final void runOneIteration() throws BIPEngineException {
+
 		byte[] chosenInteraction;
 		ArrayList<byte[]> cubeMaximals = new ArrayList<byte[]>();
 		Hashtable<BIPComponent, ArrayList<Port>> chosenPorts = new Hashtable<BIPComponent, ArrayList<Port>>();
@@ -244,6 +245,13 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		}	
 		totalCurrentStateAndDisabledCombinations.free();
 		ArrayList<byte[]> a = new ArrayList<byte[]>();
+		
+
+		/*
+		 * Re-ordering function and statistics printouts
+		 */
+		bdd_mgr.reorder(BDDFactory.REORDER_SIFTITE);
+		logger.info("Reorder stats: "+bdd_mgr.getReorderStats());
 
 		a.addAll(solns.allsat()); // TODO, can we find random maximal
 								  // interaction without getting all solutions
@@ -340,6 +348,7 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 
 		wrapper.executeComponents(chosenComponents, chosenPorts);
 
+
 		solns.free();
 //		currentStateBDDs.clear();
 //		disabledCombinationBDDs.clear();
@@ -365,6 +374,8 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 //		synchronized (totalBehaviourAndGlue) {
 			if (totalBehaviour!=null){
 				totalBehaviourAndGlue=totalBehaviour.and(this.totalGlue);	
+//				bdd_mgr.reorder(BDDFactory.REORDER_SIFTITE);
+//				logger.info("Reorder stats: "+bdd_mgr.getReorderStats());
 				if (totalBehaviourAndGlue == null ) {
 					try {
 						logger.error("Total Behaviour and Glue is null");
