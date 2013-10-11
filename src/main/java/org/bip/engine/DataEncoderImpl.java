@@ -1,5 +1,7 @@
 package org.bip.engine;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
@@ -7,6 +9,7 @@ import java.util.Set;
 import net.sf.javabdd.BDD;
 
 import org.bip.api.BIPComponent;
+import org.bip.api.Behaviour;
 import org.bip.behaviour.Port;
 import org.bip.exceptions.BIPEngineException;
 import org.bip.glue.DataWire;
@@ -91,6 +94,12 @@ public class DataEncoderImpl implements DataEncoder{
 	}
 	
 	public synchronized void createDataBDDNodes() throws BIPEngineException {
+		/*
+		 * Store in the Arraylists below all the possible in and out ports.
+		 * Later to take their cross product.
+		 */
+		ArrayList<Port> allOutPorts = new ArrayList<Port>();
+		ArrayList<Port> allInPorts = new ArrayList<Port>();
 		while (dataGlueSpec.hasNext()){
 			DataWire dataWire = dataGlueSpec.next();
 			/*
@@ -102,6 +111,10 @@ public class DataEncoderImpl implements DataEncoder{
 			 */
 			Port inData = dataWire.from;
 			String inComponentType = inData.specType;
+			Iterable<BIPComponent> inComponentInstances = dataCoordinator.getBIPComponentInstances(inComponentType);
+			for (BIPComponent component: inComponentInstances){
+//				allInPorts.addAll();
+			}
 			 /* 
 			 * Output data are not associated to transitions. Here, will take the conjunction of all possible
 			 * transitions of a component.
@@ -110,7 +123,18 @@ public class DataEncoderImpl implements DataEncoder{
 			 */
 			Port outData = dataWire.to;
 			String outComponentType = outData.specType;
-
+			Iterable<BIPComponent> outComponentInstances = dataCoordinator.getBIPComponentInstances(outComponentType);
+			for (BIPComponent component: outComponentInstances){
+				allOutPorts.addAll((Collection<? extends Port>) dataCoordinator.getBehaviourByComponent(component).getEnforceablePorts());
+			}
+		}
+		/*
+		 * Take the cross product of all the ports to create the d-variables 
+		 */
+		for (Port inPort: allInPorts){
+			for (Port outPort :allOutPorts){
+				//TODO: Create a d-variable
+			}
 		}
 
 	}
