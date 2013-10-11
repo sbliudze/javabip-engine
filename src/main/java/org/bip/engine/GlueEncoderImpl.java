@@ -316,8 +316,6 @@ public class GlueEncoderImpl implements GlueEncoder {
 				}
 				allCausesBDD.andWith(oneCauseBDD);
 				logger.debug("allCausesBDD: "+ allCausesBDD);
-				engine.getBDDManager().reorder(BDDFactory.REORDER_SIFTITE);
-				logger.info("Reorder stats: "+engine.getBDDManager().getReorderStats());
 			}
 			allDisjunctiveCauses.orWith(allCausesBDD);
 			logger.debug("allDisjunctiveCausesBDD: "+ allDisjunctiveCauses);
@@ -388,8 +386,6 @@ public class GlueEncoderImpl implements GlueEncoder {
 					allCausesBDD.free();
 					allCausesBDD = tmp;
 				}
-				engine.getBDDManager().reorder(BDDFactory.REORDER_SIFTITE);
-				logger.info("Reorder stats: "+engine.getBDDManager().getReorderStats());
 			}
 		}
 		else{
@@ -418,12 +414,8 @@ public class GlueEncoderImpl implements GlueEncoder {
 						allCausesBDD = tmp;
 					}
 				}
-				engine.getBDDManager().reorder(BDDFactory.REORDER_SIFTITE);
-				logger.info("Reorder stats: "+engine.getBDDManager().getReorderStats());
 			}
 		}
-		engine.getBDDManager().reorder(BDDFactory.REORDER_SIFTITE);
-		logger.info("Reorder stats: "+engine.getBDDManager().getReorderStats());
 		return allCausesBDD.orWith(acceptPortHolder.not());
 	}
 
@@ -447,8 +439,6 @@ public class GlueEncoderImpl implements GlueEncoder {
 				for (BDD effectInstance : RequireBDDs) {
 					result.andWith(effectInstance);
 				}
-				engine.getBDDManager().reorder(BDDFactory.REORDER_SIFTITE);
-				logger.info("Reorder stats: "+engine.getBDDManager().getReorderStats());
 			}
 		} else {
 			logger.warn("No require constraints provided (usually there should be some).");
@@ -461,14 +451,10 @@ public class GlueEncoderImpl implements GlueEncoder {
 				for (BDD effectInstance : AcceptBDDs) {
 					result.andWith(effectInstance);
 				}
-				engine.getBDDManager().reorder(BDDFactory.REORDER_SIFTITE);
-				logger.info("Reorder stats: "+engine.getBDDManager().getReorderStats());
 			}
 		} else {
 			logger.warn("No accept constraints were provided (usually there should be some).");
 		}
-		engine.getBDDManager().reorder(BDDFactory.REORDER_SIFTITE);
-		logger.info("Reorder stats: "+engine.getBDDManager().getReorderStats());
 		return result;
 	}
 

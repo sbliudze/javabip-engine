@@ -182,8 +182,6 @@ public class BehaviourEncoderImpl implements BehaviourEncoder {
 		for(Port port: componentPorts){
 			allNegatedPortsBDD.andWith(portToBDD.get(port.id).not());
 		}
-		engine.getBDDManager().reorder(BDDFactory.REORDER_SIFTITE);
-		logger.info("Reorder stats: "+engine.getBDDManager().getReorderStats());
 			
 		return componentBehaviourBDD.orWith(allNegatedPortsBDD);
 

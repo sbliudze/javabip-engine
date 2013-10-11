@@ -126,8 +126,6 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 			tmp = totalBehaviourBdd.and(behaviourBDDs.get(componentsEnum.nextElement()));
 			totalBehaviourBdd.free();
 			totalBehaviourBdd = tmp;
-			bdd_mgr.reorder(BDDFactory.REORDER_SIFTITE);
-			logger.info("Reorder stats: "+bdd_mgr.getReorderStats());
 		}
 		this.totalBehaviour=totalBehaviourBdd;
 //		synchronized (totalBehaviourAndGlue) {
@@ -145,8 +143,6 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 				this.totalBehaviour.free();
 				totalGlue.free();
 			}
-			bdd_mgr.reorder(BDDFactory.REORDER_SIFTITE);
-			logger.info("Reorder stats: "+bdd_mgr.getReorderStats());
 //		}
 	}
 
@@ -163,8 +159,6 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 			tmp = totalCurrentStateBdd.and(currentStateBDDs.get(component));
 			totalCurrentStateBdd.free();
 			totalCurrentStateBdd = tmp;
-			bdd_mgr.reorder(BDDFactory.REORDER_SIFTITE);
-			logger.info("Reorder stats: "+bdd_mgr.getReorderStats());
 		}
 		return totalCurrentStateBdd;	
 	}
@@ -201,8 +195,6 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 
 		if (!disabledCombinationBDDs.isEmpty() || disabledCombinationBDDs != null){
 			BDD totalDisabledCombination = totalDisabledCombinationsBdd(disabledCombinationBDDs);
-			bdd_mgr.reorder(BDDFactory.REORDER_SIFTITE);
-			logger.info("Reorder stats: "+bdd_mgr.getReorderStats());
 			if (totalDisabledCombination==null) {
 				try {
 					logger.error("Total Disabled Combination BDD is null, although there are disabled Combinations.");
@@ -214,8 +206,6 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 			}
 			/* Λi Ci */
 			totalCurrentStateAndDisabledCombinations = totalCurrentStateBdd(currentStateBDDs).and(totalDisabledCombination);
-			bdd_mgr.reorder(BDDFactory.REORDER_SIFTITE);
-			logger.info("Reorder stats: "+bdd_mgr.getReorderStats());
 			if (totalCurrentStateAndDisabledCombinations==null) {
 				try {
 					logger.error("Total Current States BDD is null");
@@ -229,8 +219,6 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		else{
 			/* Λi Ci */
 			totalCurrentStateAndDisabledCombinations = totalCurrentStateBdd(currentStateBDDs);
-			bdd_mgr.reorder(BDDFactory.REORDER_SIFTITE);
-			logger.info("Reorder stats: "+bdd_mgr.getReorderStats());
 
 			if (totalCurrentStateAndDisabledCombinations==null) {
 				try {
@@ -245,8 +233,6 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		
 		/* Compute global BDD: solns= Λi Fi Λ G Λ (Λi Ci) */
 		BDD solns = totalBehaviourAndGlue.and(totalCurrentStateAndDisabledCombinations);
-		bdd_mgr.reorder(BDDFactory.REORDER_SIFTITE);
-		logger.info("Reorder stats: "+bdd_mgr.getReorderStats());
 
 		if (solns==null ) {
 			try {
@@ -260,16 +246,12 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		totalCurrentStateAndDisabledCombinations.free();
 		ArrayList<byte[]> a = new ArrayList<byte[]>();
 		
-//		logger.info("Reorder method: "+bdd_mgr.getReorderMethod());
-		logger.info("Reordering gain: "+bdd_mgr.reorderGain());
-//		bdd_mgr.enableReorder();
-//		bdd_mgr.autoReorder(BDDFactory.REORDER_SIFTITE, 10);
+
+		/*
+		 * Re-ordering function and statistics printouts
+		 */
 		bdd_mgr.reorder(BDDFactory.REORDER_SIFTITE);
-//		bdd_mgr.autoReorder(BDDFactory.REORDER_RANDOM);
-//		logger.info("Reorder method: "+bdd_mgr.getReorderMethod());
-//		logger.info("Reordering gain: "+bdd_mgr.reorderGain());
 		logger.info("Reorder stats: "+bdd_mgr.getReorderStats());
-//		logger.info("Reorder times: "+bdd_mgr.getReorderTimes());
 
 		a.addAll(solns.allsat()); // TODO, can we find random maximal
 								  // interaction without getting all solutions
@@ -392,8 +374,8 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 //		synchronized (totalBehaviourAndGlue) {
 			if (totalBehaviour!=null){
 				totalBehaviourAndGlue=totalBehaviour.and(this.totalGlue);	
-				bdd_mgr.reorder(BDDFactory.REORDER_SIFTITE);
-				logger.info("Reorder stats: "+bdd_mgr.getReorderStats());
+//				bdd_mgr.reorder(BDDFactory.REORDER_SIFTITE);
+//				logger.info("Reorder stats: "+bdd_mgr.getReorderStats());
 				if (totalBehaviourAndGlue == null ) {
 					try {
 						logger.error("Total Behaviour and Glue is null");
