@@ -1,5 +1,6 @@
 package org.bip.engine;
 
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.Set;
 
@@ -8,6 +9,7 @@ import net.sf.javabdd.BDD;
 import org.bip.api.BIPComponent;
 import org.bip.behaviour.Port;
 import org.bip.exceptions.BIPEngineException;
+import org.bip.glue.DataWire;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -78,6 +80,12 @@ public class DataEncoderImpl implements DataEncoder{
 
 	public void setBehaviourEncoder(BehaviourEncoder behaviourEncoder) {
 		this.behaviourEncoder = behaviourEncoder;
+	}
+
+
+	public void specifyDataGlue(ArrayList<DataWire> dataGlue) throws BIPEngineException {
+		// TODO Auto-generated method stub
+		
 	}
 
 

@@ -61,10 +61,29 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 	public DataCoordinatorImpl() {
 		BIPCoordinator.setInteractionExecutor(this);
 	}
-
+	
+	/**
+	 * Sends interactions-glue to the BIP Coordinator
+	 * Sends data-glue to the Data Encoder. 
+	 */
 	public void specifyGlue(BIPGlue glue) {
 		BIPCoordinator.specifyGlue(glue);
 		this.dataWires = glue.dataWires;
+		if (dataWires.isEmpty() || dataWires==null){
+			logger.error("Data wires information not specified in XML file, although DataCoordinator is set as the wrapper");
+			try {
+				throw new BIPEngineException("Data wires information not specified in XML file, although DataCoordinator is set as the wrapper");
+			} catch (BIPEngineException e) {
+				e.printStackTrace();
+			}
+		}
+		else{
+			try {
+				dataEncoder.specifyDataGlue(dataWires);
+			} catch (BIPEngineException e) {
+				e.printStackTrace();
+			}
+		}
 	}
 
 	public void register(BIPComponent component, Behaviour behaviour) {
