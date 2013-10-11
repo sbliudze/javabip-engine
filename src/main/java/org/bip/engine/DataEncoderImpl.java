@@ -113,7 +113,7 @@ public class DataEncoderImpl implements DataEncoder{
 			String inComponentType = inData.specType;
 			Iterable<BIPComponent> inComponentInstances = dataCoordinator.getBIPComponentInstances(inComponentType);
 			for (BIPComponent component: inComponentInstances){
-//				allInPorts.addAll();
+				allInPorts.addAll((Collection<? extends Port>) dataCoordinator.getBehaviourByComponent(component).portsNeedingData(inData.id));
 			}
 			 /* 
 			 * Output data are not associated to transitions. Here, will take the conjunction of all possible
