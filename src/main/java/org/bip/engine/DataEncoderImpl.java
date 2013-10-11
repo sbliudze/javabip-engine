@@ -105,6 +105,8 @@ public class DataEncoderImpl implements DataEncoder{
 			 /* 
 			 * Output data are not associated to transitions. Here, will take the conjunction of all possible
 			 * transitions of a component.
+			 * 
+			 * TODO: Should try to find a way to limit down the possible transitions here
 			 */
 			Port outData = dataWire.to;
 
