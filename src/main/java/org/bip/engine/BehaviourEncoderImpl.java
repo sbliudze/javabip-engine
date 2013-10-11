@@ -4,7 +4,6 @@ import java.util.Hashtable;
 import java.util.ArrayList;
 
 import net.sf.javabdd.BDD;
-import net.sf.javabdd.BDDFactory;
 
 import org.bip.api.BIPComponent;
 import org.bip.api.Behaviour;
@@ -18,7 +17,9 @@ import org.slf4j.LoggerFactory;
  * @author mavridou
  */
 
-/** Computes the BDD of the behaviour of all components */
+/** Computes the BDD of the behaviour of all components
+ * @author mavridou
+ *  */
 public class BehaviourEncoderImpl implements BehaviourEncoder {
 
 	private Logger logger = LoggerFactory.getLogger(BehaviourEncoderImpl.class);

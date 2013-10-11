@@ -50,7 +50,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 	 */
 	private Hashtable<String, ArrayList<BIPComponent>> typeInstancesMapping = new Hashtable<String, ArrayList<BIPComponent>>();
 	
-	ArrayList<DataWire> dataWires;
+	private ArrayList<DataWire> dataWires;
 
 	/**
 	 * Create instances of all the the Data Encoder and of the BIPCoordinator
@@ -173,7 +173,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 	//TODO: test this
 	public void executeInteractions(Iterable<Map<BIPComponent, Iterable<Port>>> portsToFire) throws BIPEngineException {
 		Iterator<Map<BIPComponent, Iterable<Port>>> enabledCombinations = portsToFire.iterator();
-		/*
+		/**
 		 * This is a list of components participating in the
 		 * chosen-by-the-engine interactions. This keeps track of the chosen
 		 * components in order to differentiate them from the non chosen ones.
@@ -242,7 +242,6 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 		}
 	}
 
-	@Override
 	public void run() {
 		// TODO: unregister components and notify the component that the engine
 		// is not working

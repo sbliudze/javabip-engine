@@ -9,7 +9,6 @@ import org.bip.exceptions.BIPEngineException;
 /**
  * 
  * @author mavridou
- *
  */
 public interface InteractionExecutor {
 	
