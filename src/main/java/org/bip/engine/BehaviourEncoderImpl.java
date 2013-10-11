@@ -4,6 +4,7 @@ import java.util.Hashtable;
 import java.util.ArrayList;
 
 import net.sf.javabdd.BDD;
+import net.sf.javabdd.BDDFactory;
 
 import org.bip.api.BIPComponent;
 import org.bip.api.Behaviour;
@@ -181,6 +182,8 @@ public class BehaviourEncoderImpl implements BehaviourEncoder {
 		for(Port port: componentPorts){
 			allNegatedPortsBDD.andWith(portToBDD.get(port.id).not());
 		}
+		engine.getBDDManager().reorder(BDDFactory.REORDER_SIFTITE);
+		logger.info("Reorder stats: "+engine.getBDDManager().getReorderStats());
 			
 		return componentBehaviourBDD.orWith(allNegatedPortsBDD);
 

@@ -100,11 +100,28 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor {
 		BIPCoordinator.execute();
 	}
 
-	public void informSpecific(Map<BIPComponent, Port> disabledCombinations) throws BIPEngineException {
+	public void informSpecific(BIPComponent decidingComponent, Port decidingPort, Map<BIPComponent, Port> disabledCombinations) throws BIPEngineException {
+		
 		if (disabledCombinations.isEmpty()){
 			try {
 				logger.error("No disabled combination specified in informSpecific. Map of disabledCombinations is empty.");
 				throw new BIPEngineException("No disabled combination specified in informSpecific. Map of disabledCombinations is empty.");
+			} catch (BIPEngineException e) {
+				e.printStackTrace();
+			}	
+		}
+		else if(!registeredComponents.contains(decidingComponent)){
+			try {
+				logger.error("Deciding component specified in informSpecific is not in the list of registered components");
+				throw new BIPEngineException("Deciding component specified in informSpecific is not in the list of registered components");
+			} catch (BIPEngineException e) {
+				e.printStackTrace();
+			}	
+		}
+		else if(!componentBehaviourMapping.get(decidingComponent).getEnforceablePorts().iterator().equals(decidingPort)){
+			try {
+				logger.error("Deciding port in informSpecific is not specified in the behaviour of the deciding component.");
+				throw new BIPEngineException("Deciding port in informSpecific is not specified in the behaviour of the deciding component.");
 			} catch (BIPEngineException e) {
 				e.printStackTrace();
 			}	
@@ -118,10 +135,9 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor {
 					throw new BIPEngineException("Component "+component.getName()+" specified in the disabledCombinations of informSpecific was not registered.");
 				} 
 			}
-			//TODO: Throw exceptions about the ports in the DataEncoder (?)
-			engine.informSpecific(dataEncoder.informSpecific(disabledCombinations));
-//			dataEncoder.informSpecific(disabledCombinations);
+			engine.informSpecific(dataEncoder.informSpecific(decidingComponent, decidingPort, disabledCombinations));
 		}
+		
 	}
 	
 	/**
@@ -202,5 +218,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor {
 			}
 		}
 	}
+
+
 
 }

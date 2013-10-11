@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Hashtable;
 
 import net.sf.javabdd.BDD;
+import net.sf.javabdd.BDDFactory;
 
 import org.bip.api.BIPComponent;
 import org.bip.behaviour.Port;
@@ -68,17 +69,23 @@ public class CurrentStateEncoderImpl implements CurrentStateEncoder {
 		
 		logger.debug("Current state BDD of component "+ component.getName() + statesToBDDs.get(currentState));
 		BDD result = engine.getBDDManager().one().and(statesToBDDs.get(currentState));
+		engine.getBDDManager().reorder(BDDFactory.REORDER_SIFTITE);
+		logger.info("Reorder stats: "+engine.getBDDManager().getReorderStats());
 
 		for (String componentState : componentStates){
 			if (!componentState.equals(currentState)){
 				result.andWith(statesToBDDs.get(componentState).not());
 			}
 		}
+		engine.getBDDManager().reorder(BDDFactory.REORDER_SIFTITE);
+		logger.info("Reorder stats: "+engine.getBDDManager().getReorderStats());
 
 		for (Port disabledPort : disabledPorts){
 			logger.debug("Conjunction of negated disabled ports: "+ disabledPort.id+ " of component "+ disabledPort.specType);
 			result.andWith(portsToBDDs.get(disabledPort.id).not());
 		}
+		engine.getBDDManager().reorder(BDDFactory.REORDER_SIFTITE);
+		logger.info("Reorder stats: "+engine.getBDDManager().getReorderStats());
 		
 		return result;
 	}
