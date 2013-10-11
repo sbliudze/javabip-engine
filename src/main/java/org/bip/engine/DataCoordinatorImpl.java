@@ -2,12 +2,10 @@ package org.bip.engine;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.concurrent.Semaphore;
 
 import org.bip.api.BIPComponent;
 import org.bip.api.BIPEngine;
@@ -49,11 +47,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 	 * cycle.
 	 */
 	private Hashtable<BIPComponent, ArrayList<Port>> componentUndecidedPorts = new Hashtable<BIPComponent, ArrayList<Port>>();
-	/**
-	 * Helper hashset of the components that have informed in an execution
-	 * cycle.
-	 */
-	private HashSet<BIPComponent> componentsHaveInformed = new HashSet<BIPComponent>();
+
 	/**
 	 * Helper hashtable with strings as keys representing the component type of
 	 * the registered components and ArrayList of BIPComponent instances that
@@ -133,6 +127,154 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+	}
+	
+	public void informSpecific(BIPComponent decidingComponent, Port decidingPort, Map<BIPComponent, Port> disabledCombinations) throws BIPEngineException {
+		
+		if (disabledCombinations.isEmpty()){
+			try {
+				logger.error("No disabled combination specified in informSpecific. Map of disabledCombinations is empty.");
+				throw new BIPEngineException("No disabled combination specified in informSpecific. Map of disabledCombinations is empty.");
+			} catch (BIPEngineException e) {
+				e.printStackTrace();
+			}	
+		}
+		else if(!registeredComponents.contains(decidingComponent)){
+			try {
+				logger.error("Deciding component specified in informSpecific is not in the list of registered components");
+				throw new BIPEngineException("Deciding component specified in informSpecific is not in the list of registered components");
+			} catch (BIPEngineException e) {
+				e.printStackTrace();
+			}	
+		}
+		else if(!componentBehaviourMapping.get(decidingComponent).getEnforceablePorts().iterator().equals(decidingPort)){
+			try {
+				logger.error("Deciding port in informSpecific is not specified in the behaviour of the deciding component.");
+				throw new BIPEngineException("Deciding port in informSpecific is not specified in the behaviour of the deciding component.");
+			} catch (BIPEngineException e) {
+				e.printStackTrace();
+			}	
+		}
+		else{
+			Iterator <BIPComponent> disabledComponents = disabledCombinations.keySet().iterator();
+			while (disabledComponents.hasNext()){
+				BIPComponent component = disabledComponents.next();
+				if (!registeredComponents.contains(component)) {
+					logger.error("Component " + component.getName() + " specified in the disabledCombinations of informSpecific was not registered.");
+					throw new BIPEngineException("Component " + component.getName() + " specified in the disabledCombinations of informSpecific was not registered.");
+				}
+			}
+			engine.informSpecific(dataEncoder.informSpecific(decidingComponent, decidingPort, disabledCombinations));
+
+		}
+	}
+
+	/**
+	 * BDDBIPEngine informs the BIPCoordinator for the components (and their
+	 * associated ports) that are part of the same chosen interaction.
+	 * 
+	 * Through this function all the components need to be notified. If they are
+	 * participating in an interaction then their port to be fired is sent to
+	 * them through the execute function of the BIPExecutor. If they are not
+	 * participating in an interaction then null is sent to them.
+	 * 
+	 * @throws BIPEngineException
+	 */
+
+	// TODO: when changes in Engine are finished test it and delete
+	// executeComponent
+	public void executeInteractions(Iterable<Map<BIPComponent, Iterable<Port>>> portsToFire) throws BIPEngineException {
+		Iterator<Map<BIPComponent, Iterable<Port>>> enabledCombinations = portsToFire.iterator();
+		/*
+		 * This is a list of components participating in the
+		 * chosen-by-the-engine interactions. This keeps track of the chosen
+		 * components in order to differentiate them from the non chosen ones.
+		 * Through this function all the components need to be notified. Either
+		 * by sending null to them or the port to be fired.
+		 */
+		ArrayList<BIPComponent> enabledComponents = new ArrayList<BIPComponent>();
+		while (enabledCombinations.hasNext()) {
+			Map<BIPComponent, Iterable<Port>> oneInteraction = enabledCombinations.next();
+			Iterator<BIPComponent> interactionComponents = oneInteraction.keySet().iterator();
+			while (interactionComponents.hasNext()) {
+				BIPComponent component = interactionComponents.next();
+				enabledComponents.add(component);
+				Iterator<Port> compPortsToFire = oneInteraction.get(component).iterator();
+				/*
+				 * If the Iterator<Port> is null or empty for a chosen
+				 * component, throw an exception. This should not happen.
+				 */
+				if (compPortsToFire == null || !compPortsToFire.hasNext()) {
+					try {
+						logger.error("In a chosen by the engine interaction, associated to component " + component.getName() + " is a null or empty list of ports to be fired.");
+						throw new BIPEngineException("Exception in thread: " + Thread.currentThread().getName() + " In a chosen by the engine interaction, associated to component "
+								+ component.getName() + " is a null or empty list of ports to be fired.");
+					} catch (BIPEngineException e) {
+						e.printStackTrace();
+						throw e;
+					}
+				} else {
+					while (compPortsToFire.hasNext()) {
+						Port port = compPortsToFire.next();
+						/*
+						 * If the port is null or empty for a chosen component,
+						 * throw an exception. This should not happen.
+						 */
+						if (port == null || port.id.isEmpty()) {
+							try {
+								logger.error("In a chosen by the engine interaction, associated to component " + component.getName() + " the port to be fired is null or empty.");
+								throw new BIPEngineException("Exception in thread: " + Thread.currentThread().getName() + " In a chosen by the engine interaction, associated to component "
+										+ component.getName() + " the port to be fired is null or empty.");
+							} catch (BIPEngineException e) {
+								e.printStackTrace();
+								throw e;
+							}
+						}
+						logger.debug("Component {} execute port {}", component.getName(), port.id);
+						// TODO: Find out which components are sending data to
+						// this component
+						// TODO: Change the following execute to the one that
+						// specifies data for execution of transitions. In
+						// particular, change this:
+						component.execute(port.id);
+						// to this:
+						// void execute(String portID, Map<String, ?> data);
+					}
+				}
+			}
+		}
+		/*
+		 * send null to the components that are not part of the overall
+		 * interaction
+		 */
+		for (BIPComponent component : registeredComponents) {
+			if (!enabledComponents.contains(component)) {
+				component.execute(null);
+			}
+		}
+	}
+
+	@Override
+	public void run() {
+		// TODO: unregister components and notify the component that the engine
+		// is not working
+		// for (BIPComponent component : identityMapping.values()) {
+		// component.deregister();
+		// }
+		componentBehaviourMapping.clear();
+		return;
+	}
+	
+	public void start() {
+		BIPCoordinator.start();
+	}
+
+	public void stop() {
+		BIPCoordinator.stop();
+	}
+
+	public void execute() {
+		BIPCoordinator.execute();
 	}
 
 	private void wireData() throws BIPEngineException {
@@ -275,22 +417,6 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 		return result;
 	}
 
-	public Iterable<BIPComponent> getBIPComponentInstances(String type) throws BIPEngineException {
-		ArrayList<BIPComponent> instances = typeInstancesMapping.get(type);
-		if (instances == null) {
-			try {
-				logger.error("No registered component instances for the: {} ", type
-						+ " component type. Possible reasons: The name of the component instances was specified in another way at registration.");
-				throw new BIPEngineException("Exception in thread " + Thread.currentThread().getName() + " No registered component instances for the component type: " + type
-						+ "Possible reasons: The name of the component instances was specified in another way at registration.");
-			} catch (BIPEngineException e) {
-				e.printStackTrace();
-				throw e;
-			}
-		}
-		return instances;
-	}
-
 	private ArrayList<Port> getUndecidedPorts(BIPComponent component, ArrayList<Port> disabledPorts) {
 		ArrayList<Port> undecidedPorts = new ArrayList<Port>();
 		Behaviour behaviour = componentBehaviourMapping.get(component);
@@ -312,156 +438,27 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 		}
 		return undecidedPorts;
 	}
-
-	public void start() {
-		BIPCoordinator.start();
-	}
-
-	public void stop() {
-		BIPCoordinator.stop();
-	}
-
-	public void execute() {
-		BIPCoordinator.execute();
-	}
-
-
-public void informSpecific(BIPComponent decidingComponent, Port decidingPort, Map<BIPComponent, Port> disabledCombinations) throws BIPEngineException {
-		
-		if (disabledCombinations.isEmpty()){
+	
+	public Iterable<BIPComponent> getBIPComponentInstances(String type) throws BIPEngineException {
+		ArrayList<BIPComponent> instances = typeInstancesMapping.get(type);
+		if (instances == null) {
 			try {
-				logger.error("No disabled combination specified in informSpecific. Map of disabledCombinations is empty.");
-				throw new BIPEngineException("No disabled combination specified in informSpecific. Map of disabledCombinations is empty.");
+				logger.error("No registered component instances for the: {} ", type
+						+ " component type. Possible reasons: The name of the component instances was specified in another way at registration.");
+				throw new BIPEngineException("Exception in thread " + Thread.currentThread().getName() + " No registered component instances for the component type: " + type
+						+ "Possible reasons: The name of the component instances was specified in another way at registration.");
 			} catch (BIPEngineException e) {
 				e.printStackTrace();
-			}	
-		}
-		else if(!registeredComponents.contains(decidingComponent)){
-			try {
-				logger.error("Deciding component specified in informSpecific is not in the list of registered components");
-				throw new BIPEngineException("Deciding component specified in informSpecific is not in the list of registered components");
-			} catch (BIPEngineException e) {
-				e.printStackTrace();
-			}	
-		}
-		else if(!componentBehaviourMapping.get(decidingComponent).getEnforceablePorts().iterator().equals(decidingPort)){
-			try {
-				logger.error("Deciding port in informSpecific is not specified in the behaviour of the deciding component.");
-				throw new BIPEngineException("Deciding port in informSpecific is not specified in the behaviour of the deciding component.");
-			} catch (BIPEngineException e) {
-				e.printStackTrace();
-			}	
-		}
-		else{
-			Iterator <BIPComponent> disabledComponents = disabledCombinations.keySet().iterator();
-			while (disabledComponents.hasNext()){
-				BIPComponent component = disabledComponents.next();
-				if (!registeredComponents.contains(component)) {
-					logger.error("Component " + component.getName() + " specified in the disabledCombinations of informSpecific was not registered.");
-					throw new BIPEngineException("Component " + component.getName() + " specified in the disabledCombinations of informSpecific was not registered.");
-				}
-			}
-			engine.informSpecific(dataEncoder.informSpecific(decidingComponent, decidingPort, disabledCombinations));
-
-		}
-	}
-
-	/**
-	 * BDDBIPEngine informs the BIPCoordinator for the components (and their
-	 * associated ports) that are part of the same chosen interaction.
-	 * 
-	 * Through this function all the components need to be notified. If they are
-	 * participating in an interaction then their port to be fired is sent to
-	 * them through the execute function of the BIPExecutor. If they are not
-	 * participating in an interaction then null is sent to them.
-	 * 
-	 * @throws BIPEngineException
-	 */
-
-	// TODO: when changes in Engine are finished test it and delete
-	// executeComponent
-	public void executeInteractions(Iterable<Map<BIPComponent, Iterable<Port>>> portsToFire) throws BIPEngineException {
-		Iterator<Map<BIPComponent, Iterable<Port>>> enabledCombinations = portsToFire.iterator();
-		/*
-		 * This is a list of components participating in the
-		 * chosen-by-the-engine interactions. This keeps track of the chosen
-		 * components in order to differentiate them from the non chosen ones.
-		 * Through this function all the components need to be notified. Either
-		 * by sending null to them or the port to be fired.
-		 */
-		ArrayList<BIPComponent> enabledComponents = new ArrayList<BIPComponent>();
-		while (enabledCombinations.hasNext()) {
-			Map<BIPComponent, Iterable<Port>> oneInteraction = enabledCombinations.next();
-			Iterator<BIPComponent> interactionComponents = oneInteraction.keySet().iterator();
-			while (interactionComponents.hasNext()) {
-				BIPComponent component = interactionComponents.next();
-				enabledComponents.add(component);
-				Iterator<Port> compPortsToFire = oneInteraction.get(component).iterator();
-				/*
-				 * If the Iterator<Port> is null or empty for a chosen
-				 * component, throw an exception. This should not happen.
-				 */
-				if (compPortsToFire == null || !compPortsToFire.hasNext()) {
-					try {
-						logger.error("In a chosen by the engine interaction, associated to component " + component.getName() + " is a null or empty list of ports to be fired.");
-						throw new BIPEngineException("Exception in thread: " + Thread.currentThread().getName() + " In a chosen by the engine interaction, associated to component "
-								+ component.getName() + " is a null or empty list of ports to be fired.");
-					} catch (BIPEngineException e) {
-						e.printStackTrace();
-						throw e;
-					}
-				} else {
-					while (compPortsToFire.hasNext()) {
-						Port port = compPortsToFire.next();
-						/*
-						 * If the port is null or empty for a chosen component,
-						 * throw an exception. This should not happen.
-						 */
-						if (port == null || port.id.isEmpty()) {
-							try {
-								logger.error("In a chosen by the engine interaction, associated to component " + component.getName() + " the port to be fired is null or empty.");
-								throw new BIPEngineException("Exception in thread: " + Thread.currentThread().getName() + " In a chosen by the engine interaction, associated to component "
-										+ component.getName() + " the port to be fired is null or empty.");
-							} catch (BIPEngineException e) {
-								e.printStackTrace();
-								throw e;
-							}
-						}
-						logger.debug("Component {} execute port {}", component.getName(), port.id);
-						// TODO: Find out which components are sending data to
-						// this component
-						// TODO: Change the following execute to the one that
-						// specifies data for execution of transitions. In
-						// particular, change this:
-						component.execute(port.id);
-						// to this:
-						// void execute(String portID, Map<String, ?> data);
-					}
-				}
+				throw e;
 			}
 		}
-		/*
-		 * send null to the components that are not part of the overall
-		 * interaction
-		 */
-		for (BIPComponent component : registeredComponents) {
-			if (!enabledComponents.contains(component)) {
-				component.execute(null);
-			}
-		}
+		return instances;
 	}
 
-	@Override
-	public void run() {
-		// TODO: unregister components and notify the component that the engine
-		// is not working
-		// for (BIPComponent component : identityMapping.values()) {
-		// component.deregister();
-		// }
-		componentBehaviourMapping.clear();
-		componentsHaveInformed.clear();
-		return;
-	}
+
+
+
+
 
 
 }
