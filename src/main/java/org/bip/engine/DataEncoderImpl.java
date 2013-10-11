@@ -1,6 +1,7 @@
 package org.bip.engine;
 
 import java.util.ArrayList;
+import java.util.Hashtable;
 import java.util.Map;
 import java.util.Set;
 
@@ -73,17 +74,7 @@ public class DataEncoderImpl implements DataEncoder{
 		}
 		return result;
 	}
-
-
-	public void setEngine(BDDBIPEngine engine) {
-		this.engine=engine;
-	}
-
-	public void setBehaviourEncoder(BehaviourEncoder behaviourEncoder) {
-		this.behaviourEncoder = behaviourEncoder;
-	}
-
-
+	
 	public void specifyDataGlue(ArrayList<DataWire> dataGlue) throws BIPEngineException {
 		if (dataGlue == null || dataGlue.isEmpty()) {
 			try {
@@ -97,8 +88,25 @@ public class DataEncoderImpl implements DataEncoder{
 			}
 		}
 		this.dataGlueSpec = dataGlue;
-		
 	}
+	
+	public synchronized void createDataBDDNodes() throws BIPEngineException {
+		for (DataWire dataWire : dataGlueSpec){
+			
+		}
+
+	}
+
+	public void setEngine(BDDBIPEngine engine) {
+		this.engine=engine;
+	}
+
+	public void setBehaviourEncoder(BehaviourEncoder behaviourEncoder) {
+		this.behaviourEncoder = behaviourEncoder;
+	}
+
+
+
 
 
 
