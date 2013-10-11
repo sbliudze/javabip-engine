@@ -3,6 +3,8 @@ package org.bip.engine;
 import java.util.ArrayList;
 import java.util.Hashtable;
 
+import net.sf.javabdd.BDD;
+
 import org.bip.api.BIPComponent;
 import org.bip.api.BIPEngine;
 import org.bip.api.Behaviour;
@@ -82,6 +84,8 @@ public interface BIPCoordinator extends BIPEngine, InteractionExecutor {
 	 */
 	
 	void setInteractionExecutor(InteractionExecutor interactionExecutor);
+	
+    void informSpecific(BDD disabledCombination);
 	
 	
 }

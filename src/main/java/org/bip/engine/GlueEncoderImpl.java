@@ -7,8 +7,6 @@ import java.util.List;
 import java.util.Hashtable;
 
 import net.sf.javabdd.BDD;
-import net.sf.javabdd.BDDFactory;
-
 import org.bip.api.BIPComponent;
 import org.bip.behaviour.Port;
 import org.bip.exceptions.BIPEngineException;
@@ -23,7 +21,10 @@ import org.slf4j.LoggerFactory;
  * @author mavridou
  */
 
-/** Computes the BDD of the glue */
+/**
+ *  Computes the BDD of the glue
+ *  @author mavridou
+ *   */
 public class GlueEncoderImpl implements GlueEncoder {
 	private Logger logger = LoggerFactory.getLogger(GlueEncoderImpl.class);
 

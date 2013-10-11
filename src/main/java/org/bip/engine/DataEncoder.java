@@ -1,4 +1,5 @@
 package org.bip.engine;
+import java.util.ArrayList;
 import java.util.Map;
 
 import net.sf.javabdd.BDD;
@@ -6,7 +7,13 @@ import net.sf.javabdd.BDD;
 import org.bip.api.BIPComponent;
 import org.bip.behaviour.Port;
 import org.bip.exceptions.BIPEngineException;
+import org.bip.glue.DataWire;
 
+/**
+ * Deals with the DataGlue.
+ * Encodes the informSpecific information.
+ * @author mavridou
+ */
 public interface DataEncoder {
 	
 	/**
@@ -27,6 +34,15 @@ public interface DataEncoder {
 	 * @throws BIPEngineException 
 	 */
 	BDD informSpecific(BIPComponent decidingComponent, Port decidingPort, Map<BIPComponent, Port> disabledCombinations) throws BIPEngineException;
+	
+    /**
+     * Receives the information about the data glue of the system.
+     * @param data glue
+     * @throws BIPEngineException 
+     */
+    void specifyDataGlue(Iterable<DataWire> dataGlue) throws BIPEngineException;
+    
+    void createDataBDDNodes() throws BIPEngineException;
 	
 	/**
 	 * Setter for the BDDBIPEngine

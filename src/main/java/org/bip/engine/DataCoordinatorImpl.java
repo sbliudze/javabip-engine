@@ -17,18 +17,13 @@ import org.bip.glue.DataWire;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-// There is no need for DataCoordinator interface, just DataCoordinatorImpl will implement BIP engine interface.
-// DataCoordinatorImpl needs BIP coordinator ( BIP Engine again ) that actual does all the computation of BIP
-// engine. DataCoordinatorImpl takes care of only of data querying and passing to BIP executors.
-
-// DataCoordinator intercepts call register and inform from BIPExecutor. For each BIPComponent it
-// creates a Proxy of BIPComponent (also BIPComponent class) that is registered with BIPCoordinator.
-// This BIPComponent proxy is the identity provided to BIPCordinator. Now, DataCordinator implements
-// just BIPEngine interface so it able also to intercept informs and translate it into proper informs.
-// BIPComponent Proxy can intercept execute functions invoked by BIPCoordinator and enrich with data
-// provided by DataCoordinatorImpl. Thus, Proxy BIPComponent knows about DataCoordinatorImpl, and
-// original BIPcomponent, so BIPcomponent proxy can query DataCoordinatorIMpl for the data and call
-// function execute of the original BIPComponent with proper data.
+/** There is no need for DataCoordinator interface, just DataCoordinatorImpl will implement BIP engine interface.
+* DataCoordinatorImpl needs BIP coordinator ( BIP Engine again ) that actual does all the computation of BIP
+* engine. DataCoordinatorImpl takes care of only of data querying and passing to BIP executors.
+* 
+* DataCoordinator intercepts call register and inform from BIPExecutor. 
+* @authors: mavridou, zolotukhina
+*/
 
 public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runnable {
 
@@ -54,27 +49,41 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 	 * correspond to the component type specified in the key.
 	 */
 	private Hashtable<String, ArrayList<BIPComponent>> typeInstancesMapping = new Hashtable<String, ArrayList<BIPComponent>>();
+	
+	private ArrayList<DataWire> dataWires;
 
 	/**
 	 * Create instances of all the the Data Encoder and of the BIPCoordinator
 	 */
 	private DataEncoder dataEncoder = new DataEncoderImpl();
 	private BIPCoordinator BIPCoordinator = new BIPCoordinatorImpl();
-	// TODO the dataCoordinator and the BIPcoordinator have different engines.
-	// I think it is not good. Has to be investigated.
-	private BDDBIPEngine engine = new BDDBIPEngineImpl();
-
-	ArrayList<DataWire> dataWires;
 
 	public DataCoordinatorImpl() {
-		dataEncoder.setEngine(engine);
 		BIPCoordinator.setInteractionExecutor(this);
 	}
-
+	
+	/**
+	 * Sends interactions-glue to the BIP Coordinator
+	 * Sends data-glue to the Data Encoder. 
+	 */
 	public void specifyGlue(BIPGlue glue) {
 		BIPCoordinator.specifyGlue(glue);
-		// this.glue = glue;
 		this.dataWires = glue.dataWires;
+		if (dataWires.isEmpty() || dataWires==null){
+			logger.error("Data wires information not specified in XML file, although DataCoordinator is set as the wrapper");
+			try {
+				throw new BIPEngineException("Data wires information not specified in XML file, although DataCoordinator is set as the wrapper");
+			} catch (BIPEngineException e) {
+				e.printStackTrace();
+			}
+		}
+		else{
+			try {
+				dataEncoder.specifyDataGlue(dataWires);
+			} catch (BIPEngineException e) {
+				e.printStackTrace();
+			}
+		}
 	}
 
 	public void register(BIPComponent component, Behaviour behaviour) {
@@ -124,13 +133,13 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 		try {
 			wireData();
 		} catch (BIPEngineException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		//TODO: Inform the BIPCoordinator only after all the informSpecifics for the particular component have finished
+		BIPCoordinator.inform(component, currentState, disabledPorts);
 	}
 	
 	public void informSpecific(BIPComponent decidingComponent, Port decidingPort, Map<BIPComponent, Port> disabledCombinations) throws BIPEngineException {
-		
 		if (disabledCombinations.isEmpty()){
 			try {
 				logger.error("No disabled combination specified in informSpecific. Map of disabledCombinations is empty.");
@@ -164,7 +173,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 					throw new BIPEngineException("Component " + component.getName() + " specified in the disabledCombinations of informSpecific was not registered.");
 				}
 			}
-			engine.informSpecific(dataEncoder.informSpecific(decidingComponent, decidingPort, disabledCombinations));
+			BIPCoordinator.informSpecific(dataEncoder.informSpecific(decidingComponent, decidingPort, disabledCombinations));
 
 		}
 	}
@@ -180,12 +189,10 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 	 * 
 	 * @throws BIPEngineException
 	 */
-
-	// TODO: when changes in Engine are finished test it and delete
-	// executeComponent
+	//TODO: test this
 	public void executeInteractions(Iterable<Map<BIPComponent, Iterable<Port>>> portsToFire) throws BIPEngineException {
 		Iterator<Map<BIPComponent, Iterable<Port>>> enabledCombinations = portsToFire.iterator();
-		/*
+		/**
 		 * This is a list of components participating in the
 		 * chosen-by-the-engine interactions. This keeps track of the chosen
 		 * components in order to differentiate them from the non chosen ones.
@@ -254,7 +261,6 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 		}
 	}
 
-	@Override
 	public void run() {
 		// TODO: unregister components and notify the component that the engine
 		// is not working
@@ -445,7 +451,10 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 		}
 		return undecidedPorts;
 	}
-	
+	/**
+	 * Helper function that returns the registered component instances that correspond to a component type.
+	 * @throws BIPEngineException 
+	 */
 	public Iterable<BIPComponent> getBIPComponentInstances(String type) throws BIPEngineException {
 		ArrayList<BIPComponent> instances = typeInstancesMapping.get(type);
 		if (instances == null) {

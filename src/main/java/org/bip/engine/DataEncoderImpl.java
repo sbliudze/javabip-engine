@@ -1,5 +1,8 @@
 package org.bip.engine;
 
+import java.util.ArrayList;
+import java.util.Hashtable;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -8,14 +11,21 @@ import net.sf.javabdd.BDD;
 import org.bip.api.BIPComponent;
 import org.bip.behaviour.Port;
 import org.bip.exceptions.BIPEngineException;
+import org.bip.glue.DataWire;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Deals with the DataGlue.
+ * Encodes the informSpecific information.
+ * @author mavridou
+ */
 public class DataEncoderImpl implements DataEncoder{
 
 	private BDDBIPEngine engine;
 	private BehaviourEncoder behaviourEncoder; 
 	
+	Iterator<DataWire> dataGlueSpec;
 
 	private Logger logger = LoggerFactory.getLogger(CurrentStateEncoderImpl.class);
 	
@@ -65,7 +75,42 @@ public class DataEncoderImpl implements DataEncoder{
 		}
 		return result;
 	}
+	
+	public void specifyDataGlue(Iterable<DataWire> dataGlue) throws BIPEngineException {
+		if (dataGlue == null || !dataGlue.iterator().hasNext()) {
+			try {
+				logger.error("The glue parser has failed to compute the data glue.\n" +
+						"\tPossible reasons: No data transfer or corrupt/non-existant glue XML file.");
+				throw new BIPEngineException("The glue parser has failed to compute the data glue.\n" +
+						"\tPossible reasons: No data transfer or corrupt/non-existant glue XML file.");
+			} catch (BIPEngineException e) {
+				e.printStackTrace();
+				throw e;
+			}
+		}
+		this.dataGlueSpec = dataGlue.iterator();
+	}
+	
+	public synchronized void createDataBDDNodes() throws BIPEngineException {
+		while (dataGlueSpec.hasNext()){
+			DataWire dataWire = dataGlueSpec.next();
+			/*
+			 * These are not ports actually. In the specType the type of the component is stored.
+			 * In the id the name of the data variable is stored.
+			 * 
+			 * Input data are always assigned to transitions. Therefore, I need the list of ports of the component
+			 * that will re receiving the data.
+			 */
+			Port inData = dataWire.from;
+			 /* 
+			 * Output data are not associated to transitions. Here, will take the conjunction of all possible
+			 * transitions of a component.
+			 */
+			Port outData = dataWire.to;
 
+		}
+
+	}
 
 	public void setEngine(BDDBIPEngine engine) {
 		this.engine=engine;
@@ -74,6 +119,9 @@ public class DataEncoderImpl implements DataEncoder{
 	public void setBehaviourEncoder(BehaviourEncoder behaviourEncoder) {
 		this.behaviourEncoder = behaviourEncoder;
 	}
+
+
+
 
 
 
