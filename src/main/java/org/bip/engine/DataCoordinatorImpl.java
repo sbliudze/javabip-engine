@@ -11,7 +11,9 @@ import org.bip.api.BIPComponent;
 import org.bip.api.BIPEngine;
 import org.bip.api.Behaviour;
 import org.bip.behaviour.Port;
+import org.bip.behaviour.Transition;
 import org.bip.exceptions.BIPEngineException;
+import org.bip.glue.Accepts;
 import org.bip.glue.BIPGlue;
 import org.bip.glue.DataWire;
 import org.slf4j.Logger;
@@ -49,8 +51,9 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 	 * correspond to the component type specified in the key.
 	 */
 	private Hashtable<String, ArrayList<BIPComponent>> typeInstancesMapping = new Hashtable<String, ArrayList<BIPComponent>>();
-	
+
 	private ArrayList<DataWire> dataWires;
+	private ArrayList<Accepts> accepts;
 
 	/**
 	 * Create instances of all the the Data Encoder and of the BIPCoordinator
@@ -69,15 +72,15 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 	public void specifyGlue(BIPGlue glue) {
 		BIPCoordinator.specifyGlue(glue);
 		this.dataWires = glue.dataWires;
-		if (dataWires.isEmpty() || dataWires==null){
+		this.accepts = glue.acceptConstraints;
+		if (dataWires.isEmpty() || dataWires == null) {
 			logger.error("Data wires information not specified in XML file, although DataCoordinator is set as the wrapper");
 			try {
 				throw new BIPEngineException("Data wires information not specified in XML file, although DataCoordinator is set as the wrapper");
 			} catch (BIPEngineException e) {
 				e.printStackTrace();
 			}
-		}
-		else{
+		} else {
 			try {
 				dataEncoder.specifyDataGlue(dataWires);
 			} catch (BIPEngineException e) {
@@ -131,7 +134,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 		// informed
 
 		try {
-			wireData();
+			doInformSpecific(component);
 		} catch (BIPEngineException e) {
 			e.printStackTrace();
 		}
@@ -283,28 +286,24 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 		BIPCoordinator.execute();
 	}
 
-	private void wireData() throws BIPEngineException {
-		for (BIPComponent component : registeredComponents) {
-			// mapping port <-> data it needs for computing guards
-			Map<Port, Iterable<String>> portToDataInForGuard = componentBehaviourMapping.get(component).portToDataInForGuard();
-			// for each undecided port of each component :
-			for (Port port : componentUndecidedPorts.get(component)) {
-				// get list of DataIn needed for its guards
-				Iterable<String> dataIn = portToDataInForGuard.get(port);
-				// for each DataIn variable get info which components provide it
-				// as their outData
-				Iterable<Map<String, Object>> dataTable = getDataWires(dataIn, component);
-				ArrayList<Boolean> portActive = (ArrayList<Boolean>) component.checkEnabledness(port, dataTable);
-				Map<BIPComponent, Port> disabledCombinations = new Hashtable<BIPComponent, Port>();
-				for (int i=0; i<portActive.size(); i++)
-				{
-					if (!(portActive.get(i)))
-					{
-						//disabledCombinations.put();
-					}
+	private void doInformSpecific(BIPComponent component) throws BIPEngineException {
+		// mapping port <-> data it needs for computing guards
+		Map<Port, Iterable<String>> portToDataInForGuard = componentBehaviourMapping.get(component).portToDataInForGuard();
+		// for each undecided port of each component :
+		for (Port port : componentUndecidedPorts.get(component)) {
+			// get list of DataIn needed for its guards
+			Iterable<String> dataIn = portToDataInForGuard.get(port);
+			// for each DataIn variable get info which components provide it
+			// as their outData
+			Iterable<Map<String, Object>> dataTable = getDataWires(dataIn, component);
+			ArrayList<Boolean> portActive = (ArrayList<Boolean>) component.checkEnabledness(port, dataTable);
+			Map<BIPComponent, Port> disabledCombinations = new Hashtable<BIPComponent, Port>();
+			for (int i = 0; i < portActive.size(); i++) {
+				if (!(portActive.get(i))) {
+					// disabledCombinations.put();
 				}
-				this.informSpecific(component, port, disabledCombinations);
 			}
+			this.informSpecific(component, port, disabledCombinations);
 		}
 	}
 
@@ -451,6 +450,36 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 		}
 		return undecidedPorts;
 	}
+
+	/**
+	 * For this component, find out which ports provide this dataOut
+	 * @param component
+	 * @param dataOut
+	 * @return
+	 */
+	private ArrayList<Port> getDataOutPorts(BIPComponent component, String dataOut) {
+		ArrayList<Port> dataOutPorts = new ArrayList<Port>();
+		Behaviour behaviour = componentBehaviourMapping.get(component);
+		// for each port of this component:
+		// find the ports of other components that this port accepts
+		for (Port port : behaviour.getEnforceablePorts()) {
+			Collection<Port> causePorts = new ArrayList<Port>();
+			for (Accepts accept : accepts) {
+				if (accept.effect.equals(port)) {
+					causePorts = accept.causes;
+					break;
+				}
+			}
+			for (Port causePort : causePorts) {
+				ArrayList<Port> portsRequiringData = (ArrayList<Port>) behaviour.portsNeedingData(dataOut);
+				if (portsRequiringData.contains(causePort)) {
+					dataOutPorts.add(port);
+				}
+			}
+		}
+		return dataOutPorts;
+	}
+
 	/**
 	 * Helper function that returns the registered component instances that correspond to a component type.
 	 * @throws BIPEngineException 
