@@ -27,7 +27,7 @@ import org.slf4j.LoggerFactory;
 * @authors: mavridou, zolotukhina
 */
 
-public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runnable {
+public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runnable, DataCoordinator{
 
 	private Logger logger = LoggerFactory.getLogger(BIPCoordinatorImpl.class);
 
@@ -63,6 +63,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 
 	public DataCoordinatorImpl() {
 		BIPCoordinator.setInteractionExecutor(this);
+		dataEncoder.setDataCoordinator(this);
 	}
 	
 	/**
@@ -498,6 +499,13 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 			}
 		}
 		return instances;
+	}
+	
+	/**
+	 * Helper function that given a component returns the corresponding behaviour as a Behaviour Object.
+	 */
+	public Behaviour getBehaviourByComponent(BIPComponent component) {
+		return componentBehaviourMapping.get(component);
 	}
 
 

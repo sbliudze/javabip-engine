@@ -1,5 +1,4 @@
 package org.bip.engine;
-import java.util.ArrayList;
 import java.util.Map;
 
 import net.sf.javabdd.BDD;
@@ -48,4 +47,9 @@ public interface DataEncoder {
 	 * Setter for the BDDBIPEngine
 	 */
 	void setEngine(BDDBIPEngine engine);
+	
+	/**
+	 * Setter for the DataCoordinator
+	 */
+	void setDataCoordinator(DataCoordinator dataCoordinator);
 }
