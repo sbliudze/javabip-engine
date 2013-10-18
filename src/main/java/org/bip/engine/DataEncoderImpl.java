@@ -118,17 +118,20 @@ public class DataEncoderImpl implements DataEncoder{
 			 /* 
 			 * Output data are not associated to transitions. Here, will take the conjunction of all possible
 			 * transitions of a component.
-			 * 
-			 * TODO: Should try to find a way to limit down the possible transitions here
-			 * Take a look at the DataCoordinator
 			 */
 			Port outData = dataWire.from;
 			String outComponentType = outData.specType;
 			Iterable<BIPComponent> outComponentInstances = dataCoordinator.getBIPComponentInstances(outComponentType);
 			for (BIPComponent component: outComponentInstances){
-				allOutPorts.addAll((Collection<? extends Port>) dataCoordinator.getBehaviourByComponent(component).getEnforceablePorts());
-				//allOutPorts.addAll((Collection<? extends Port>) dataCoordinator.g
+				/*
+				 * Limit down the possible combinations by using the getDataOutPorts function of the DataCoordinator
+				 */
+				//allOutPorts.addAll((Collection<? extends Port>) dataCoordinator.getBehaviourByComponent(component).getEnforceablePorts());
+				allOutPorts.addAll((Collection<? extends Port>) dataCoordinator.getDataOutPorts(component, outData.id));
 			}
+		}
+		if (engine.getBDDManager().varNum() < (allInPorts.size() * allOutPorts.size())){
+			engine.getBDDManager().setVarNum(allInPorts.size() * allOutPorts.size());
 		}
 		/*
 		 * Take the cross product of all the ports to create the d-variables 
