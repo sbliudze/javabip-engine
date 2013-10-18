@@ -9,7 +9,6 @@ import java.util.Set;
 import net.sf.javabdd.BDD;
 
 import org.bip.api.BIPComponent;
-import org.bip.api.Behaviour;
 import org.bip.behaviour.Port;
 import org.bip.exceptions.BIPEngineException;
 import org.bip.glue.DataWire;
@@ -103,13 +102,14 @@ public class DataEncoderImpl implements DataEncoder{
 		while (dataGlueSpec.hasNext()){
 			DataWire dataWire = dataGlueSpec.next();
 			/*
+			 * IMPORTANT
 			 * These are not ports actually. In the specType the type of the component is stored.
 			 * In the id the name of the data variable is stored.
 			 * 
 			 * Input data are always assigned to transitions. Therefore, I need the list of ports of the component
 			 * that will re receiving the data.
 			 */
-			Port inData = dataWire.from;
+			Port inData = dataWire.to;
 			String inComponentType = inData.specType;
 			Iterable<BIPComponent> inComponentInstances = dataCoordinator.getBIPComponentInstances(inComponentType);
 			for (BIPComponent component: inComponentInstances){
@@ -120,8 +120,9 @@ public class DataEncoderImpl implements DataEncoder{
 			 * transitions of a component.
 			 * 
 			 * TODO: Should try to find a way to limit down the possible transitions here
+			 * Take a look at the DataCoordinator
 			 */
-			Port outData = dataWire.to;
+			Port outData = dataWire.from;
 			String outComponentType = outData.specType;
 			Iterable<BIPComponent> outComponentInstances = dataCoordinator.getBIPComponentInstances(outComponentType);
 			for (BIPComponent component: outComponentInstances){
