@@ -30,6 +30,7 @@ public class DataEncoderImpl implements DataEncoder{
 	Iterator<DataWire> dataGlueSpec;
 
 	private Logger logger = LoggerFactory.getLogger(CurrentStateEncoderImpl.class);
+	private ArrayList<BDD> dBddVariable;
 	
 	/*
 	 * Possible implementation: Send each combination's BDD to the engine that takes the 
@@ -133,14 +134,26 @@ public class DataEncoderImpl implements DataEncoder{
 			}
 		}
 
+		int currentSystemBddSize = dataCoordinator.getNoPorts() + dataCoordinator.getNoStates();
 		
 		/*
 		 * Take the cross product of all the ports to create the d-variables 
 		 */
 		for (Port inPort: allInPorts){
 			for (Port outPort :allOutPorts){
-				
-				//TODO: Create a d-variable
+				/*Create new variable in the BDD manager for the port of each component instance.*/
+				dBddVariable.add(engine.getBDDManager().ithVar(currentSystemBddSize+1));
+				if (dBddVariable == null || dBddVariable.isEmpty()){
+					try {
+						logger.error("Single node BDD for d variable for ports "+ inPort.id+" and "+ outPort.id+ " is equal to null");
+						throw new BIPEngineException("Single node BDD for d variable for ports "+ inPort.id+" and "+ outPort.id+ " is equal to null");
+					} catch (BIPEngineException e) {
+						e.printStackTrace();
+						throw e;
+					}
+				}	
+				//TODO: maybe it would make sense here to store to which ports this d-variable corresponds to	
+				currentSystemBddSize+=1;
 			}
 		}
 
