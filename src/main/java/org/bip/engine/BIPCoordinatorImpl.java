@@ -576,17 +576,17 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	}
 	
 	/**
-	 * Helper function that given a component returns the corresponding behaviour as a Behaviour Object.
-	 */
-	public Behaviour getBehaviourByComponent(BIPComponent component) {
-		return componentBehaviourMapping.get(component);
-	}
-
-	/**
 	 * Helper function that returns the number of registered components in the system.
 	 */
 	public int getNoComponents() {
 		return nbComponents;
+	}
+	
+	/**
+	 * Helper function that given a component returns the corresponding behaviour as a Behaviour Object.
+	 */
+	public Behaviour getBehaviourByComponent(BIPComponent component) {
+		return componentBehaviourMapping.get(component);
 	}
 	
 	public void setInteractionExecutor(InteractionExecutor interactionExecutor){

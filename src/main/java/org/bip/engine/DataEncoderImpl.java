@@ -2,6 +2,7 @@ package org.bip.engine;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
@@ -90,6 +91,7 @@ public class DataEncoderImpl implements DataEncoder{
 			}
 		}
 		this.dataGlueSpec = dataGlue.iterator();
+		createDataBDDNodes();
 	}
 	
 	public synchronized void createDataBDDNodes() throws BIPEngineException {
@@ -130,14 +132,14 @@ public class DataEncoderImpl implements DataEncoder{
 				allOutPorts.addAll((Collection<? extends Port>) dataCoordinator.getDataOutPorts(component, outData.id));
 			}
 		}
-		if (engine.getBDDManager().varNum() < (allInPorts.size() * allOutPorts.size())){
-			engine.getBDDManager().setVarNum(allInPorts.size() * allOutPorts.size());
-		}
+
+		
 		/*
 		 * Take the cross product of all the ports to create the d-variables 
 		 */
 		for (Port inPort: allInPorts){
 			for (Port outPort :allOutPorts){
+				
 				//TODO: Create a d-variable
 			}
 		}

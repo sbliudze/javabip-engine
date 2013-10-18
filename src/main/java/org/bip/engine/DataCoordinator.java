@@ -41,4 +41,20 @@ public interface DataCoordinator extends BIPEngine, InteractionExecutor {
 	 * @return ArrayList of ports of that are related to the dataOut 
 	 */
 	ArrayList<Port> getDataOutPorts(BIPComponent component, String dataOut);
+	
+	/**
+	 * Returns the total number of ports of registered component 
+	 * instances in the system.
+	 * 
+	 * @return number of ports of registered components
+	 */
+	int getNoPorts();
+
+	/**
+	 * Returns the total number of states of registered component 
+	 * instances in the system.
+	 * 
+	 * @return number of states of registered components
+	 */
+	int getNoStates();
 }
