@@ -127,6 +127,7 @@ public class DataEncoderImpl implements DataEncoder{
 			Iterable<BIPComponent> outComponentInstances = dataCoordinator.getBIPComponentInstances(outComponentType);
 			for (BIPComponent component: outComponentInstances){
 				allOutPorts.addAll((Collection<? extends Port>) dataCoordinator.getBehaviourByComponent(component).getEnforceablePorts());
+				//allOutPorts.addAll((Collection<? extends Port>) dataCoordinator.g
 			}
 		}
 		/*

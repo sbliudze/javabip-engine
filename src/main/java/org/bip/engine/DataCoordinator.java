@@ -1,8 +1,11 @@
 package org.bip.engine;
 
+import java.util.ArrayList;
+
 import org.bip.api.BIPComponent;
 import org.bip.api.BIPEngine;
 import org.bip.api.Behaviour;
+import org.bip.behaviour.Port;
 import org.bip.exceptions.BIPEngineException;
 
 /**
@@ -29,5 +32,14 @@ public interface DataCoordinator extends BIPEngine, InteractionExecutor {
 	 * @throws InterruptedException 
 	 */
 	Iterable <BIPComponent> getBIPComponentInstances(String type) throws BIPEngineException;
+	
+	/**
+	 * Helper getter method that gives the DataOutPorts of a particular component
+	 * that are connected to a dataOut variable.
+	 * 
+	 * @param BIPComponent instance, dataOut variable
+	 * @return ArrayList of ports of that are related to the dataOut 
+	 */
+	ArrayList<Port> getDataOutPorts(BIPComponent component, String dataOut);
 	
 }

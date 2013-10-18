@@ -458,7 +458,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 	 * @param dataOut
 	 * @return
 	 */
-	private ArrayList<Port> getDataOutPorts(BIPComponent component, String dataOut) {
+	public ArrayList<Port> getDataOutPorts(BIPComponent component, String dataOut) {
 		ArrayList<Port> dataOutPorts = new ArrayList<Port>();
 		Behaviour behaviour = componentBehaviourMapping.get(component);
 		// for each port of this component:
