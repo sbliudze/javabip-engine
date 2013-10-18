@@ -151,10 +151,4 @@ public class DataEncoderImpl implements DataEncoder{
 		this.dataCoordinator = dataCoordinator;
 	}
 
-
-
-
-
-
-
 }

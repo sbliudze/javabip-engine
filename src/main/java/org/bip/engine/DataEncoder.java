@@ -40,8 +40,6 @@ public interface DataEncoder {
      * @throws BIPEngineException 
      */
     void specifyDataGlue(Iterable<DataWire> dataGlue) throws BIPEngineException;
-    
-    void createDataBDDNodes() throws BIPEngineException;
 	
 	/**
 	 * Setter for the BDDBIPEngine
