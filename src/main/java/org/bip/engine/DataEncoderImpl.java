@@ -19,7 +19,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Deals with the DataGlue.
  * Encodes the informSpecific information.
- * @author mavridou
+ * @author Anastasia Mavridou
  */
 public class DataEncoderImpl implements DataEncoder{
 

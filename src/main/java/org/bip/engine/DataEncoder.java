@@ -11,7 +11,7 @@ import org.bip.glue.DataWire;
 /**
  * Deals with the DataGlue.
  * Encodes the informSpecific information.
- * @author mavridou
+ * @author Anastasia Mavridou
  */
 public interface DataEncoder {
 	
