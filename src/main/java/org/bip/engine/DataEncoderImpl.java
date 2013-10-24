@@ -5,7 +5,6 @@ import java.util.Collection;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
 import net.sf.javabdd.BDD;
@@ -50,7 +49,6 @@ public class DataEncoderImpl implements DataEncoder{
 	 * 4. Here also is the questions whether the DataEncoder should save the BDDs or not at each execution cycle.
 	 * @see org.bip.engine.DataEncoder#inform(java.util.Map)
 	 */
-
 	public BDD informSpecific(BIPComponent decidingComponent, Port decidingPort, Map<BIPComponent, Port> disabledCombinations) throws BIPEngineException {
 		/*
 		 * The disabledCombinations and disabledComponents are checked in the DataCoordinator,
@@ -94,6 +92,8 @@ public class DataEncoderImpl implements DataEncoder{
 		this.dataGlueSpec = dataGlue.iterator();
 		createDataBDDNodes();
 	}
+
+
 	
 	public synchronized void createDataBDDNodes() throws BIPEngineException {
 		/*
@@ -102,7 +102,6 @@ public class DataEncoderImpl implements DataEncoder{
 		 */
 		ArrayList<Port> componentOutPorts = new ArrayList<Port>();
 		ArrayList<Port> componentInPorts = new ArrayList<Port>();
-		
 		/*
 		 * Get the number of BDD-nodes of the System. We base this on the assumption that all the components
 		 * have registered before. Therefore, we know the size of the BDD nodes created for states and ports,
@@ -113,6 +112,7 @@ public class DataEncoderImpl implements DataEncoder{
 		
 		while (dataGlueSpec.hasNext()){
 			DataWire dataWire = dataGlueSpec.next();
+			//TODO: Split this to two methods inData and outData
 			/*
 			 * IMPORTANT
 			 * These are not ports actually. In the specType the type of the component is stored.
