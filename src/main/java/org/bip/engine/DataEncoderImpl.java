@@ -2,7 +2,6 @@ package org.bip.engine;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
@@ -24,7 +23,6 @@ import org.slf4j.LoggerFactory;
 public class DataEncoderImpl implements DataEncoder{
 
 	private BDDBIPEngine engine;
-	private BehaviourEncoder behaviourEncoder; 
 	private DataCoordinator dataCoordinator;
 	
 	Iterator<DataWire> dataGlueSpec;
@@ -168,19 +166,12 @@ public class DataEncoderImpl implements DataEncoder{
 			componentOutPorts.clear();
 		}
 
-
-
-
 	}
 
 	public void setEngine(BDDBIPEngine engine) {
 		this.engine=engine;
 	}
 
-	public void setBehaviourEncoder(BehaviourEncoder behaviourEncoder) {
-		this.behaviourEncoder = behaviourEncoder;
-	}
-	
 	public void setDataCoordinator(DataCoordinator dataCoordinator) {
 		this.dataCoordinator = dataCoordinator;
 	}
