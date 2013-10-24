@@ -150,8 +150,9 @@ public class DataEncoderImpl implements DataEncoder{
 			 * Clear the componentInPorts and componentOutPorts for the next dataWire components.
 			 */
 			for (Port inPort: componentInPorts){
-//				Entry<Port, Port> inOutPortPair = new Entry<Port, Port> (inPort, inPort);
 				for (Port outPort :componentOutPorts){
+					BiDirectionalPair inOutPortsPair = new BiDirectionalPair(inPort, outPort);
+					if (!portsToDVarBDDMappingMap.containsKey(inOutPortsPair)){
 					/*Create new variable in the BDD manager for the d-variables.*/
 					currentSystemBddSize++;
 					dBddVariable.add(engine.getBDDManager().ithVar(currentSystemBddSize));
@@ -164,13 +165,13 @@ public class DataEncoderImpl implements DataEncoder{
 							throw e;
 						}
 					}
-					//portsToDVarBDDMappingMap.put(, dBddVariable.get(currentSystemBddSize-initialSystemBDDSize));
+					portsToDVarBDDMappingMap.put(inOutPortsPair, dBddVariable.get(currentSystemBddSize-initialSystemBDDSize));
+					}
 				}
 			}
 			componentInPorts.clear();
 			componentOutPorts.clear();
 		}
-
 	}
 
 	public void setEngine(BDDBIPEngine engine) {
