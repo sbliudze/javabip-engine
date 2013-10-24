@@ -100,8 +100,15 @@ public class DataEncoderImpl implements DataEncoder{
 		 * Store in the Arraylists below all the possible in and out ports.
 		 * Later to take their cross product.
 		 */
-		ArrayList<Port> allOutPorts = new ArrayList<Port>();
-		ArrayList<Port> allInPorts = new ArrayList<Port>();
+		ArrayList<Port> componentOutPorts = new ArrayList<Port>();
+		ArrayList<Port> componentInPorts = new ArrayList<Port>();
+		/*
+		 * Get the number of BDD-nodes of the System. We base this on the assumption that all the components
+		 * have registered before. Therefore, we know the size of the BDD nodes created for states and ports,
+		 * which is the current System BDD size.
+		 */
+		int currentSystemBddSize = dataCoordinator.getNoPorts() + dataCoordinator.getNoStates();
+		
 		while (dataGlueSpec.hasNext()){
 			DataWire dataWire = dataGlueSpec.next();
 			/*
@@ -116,7 +123,7 @@ public class DataEncoderImpl implements DataEncoder{
 			String inComponentType = inData.specType;
 			Iterable<BIPComponent> inComponentInstances = dataCoordinator.getBIPComponentInstances(inComponentType);
 			for (BIPComponent component: inComponentInstances){
-				allInPorts.addAll((Collection<? extends Port>) dataCoordinator.getBehaviourByComponent(component).portsNeedingData(inData.id));
+				componentInPorts.addAll((Collection<? extends Port>) dataCoordinator.getBehaviourByComponent(component).portsNeedingData(inData.id));
 			}
 			 /* 
 			 * Output data are not associated to transitions. Here, will take the conjunction of all possible
@@ -130,32 +137,39 @@ public class DataEncoderImpl implements DataEncoder{
 				 * Limit down the possible combinations by using the getDataOutPorts function of the DataCoordinator
 				 */
 				//allOutPorts.addAll((Collection<? extends Port>) dataCoordinator.getBehaviourByComponent(component).getEnforceablePorts());
-				allOutPorts.addAll((Collection<? extends Port>) dataCoordinator.getDataOutPorts(component, outData.id));
+				componentOutPorts.addAll((Collection<? extends Port>) dataCoordinator.getDataOutPorts(component, outData.id));
 			}
+			/*
+			 * Here take the cross product of in and out variables to create the d-variables for one data-wire
+			 * Store this in a Map with the ports as the key and the d-variable as a value.
+			 * 
+			 * Before creating the d-variable check for dublicates in the Map. If this does not exist then create it.
+			 * 
+			 * Clear the componentInPorts and componentOutPorts for the next dataWire components.
+			 */
+			for (Port inPort: componentInPorts){
+				for (Port outPort :componentOutPorts){
+					/*Create new variable in the BDD manager for the d-variables.*/
+					dBddVariable.add(engine.getBDDManager().ithVar(currentSystemBddSize+1));
+					if (dBddVariable == null || dBddVariable.isEmpty()){
+						try {
+							logger.error("Single node BDD for d variable for ports "+ inPort.id+" and "+ outPort.id+ " is equal to null");
+							throw new BIPEngineException("Single node BDD for d variable for ports "+ inPort.id+" and "+ outPort.id+ " is equal to null");
+						} catch (BIPEngineException e) {
+							e.printStackTrace();
+							throw e;
+						}
+					}	
+					//TODO: maybe it would make sense here to store to which ports this d-variable corresponds to	
+					currentSystemBddSize+=1;
+				}
+			}
+			componentInPorts.clear();
+			componentOutPorts.clear();
 		}
 
-		int currentSystemBddSize = dataCoordinator.getNoPorts() + dataCoordinator.getNoStates();
-		
-		/*
-		 * Take the cross product of all the ports to create the d-variables 
-		 */
-		for (Port inPort: allInPorts){
-			for (Port outPort :allOutPorts){
-				/*Create new variable in the BDD manager for the port of each component instance.*/
-				dBddVariable.add(engine.getBDDManager().ithVar(currentSystemBddSize+1));
-				if (dBddVariable == null || dBddVariable.isEmpty()){
-					try {
-						logger.error("Single node BDD for d variable for ports "+ inPort.id+" and "+ outPort.id+ " is equal to null");
-						throw new BIPEngineException("Single node BDD for d variable for ports "+ inPort.id+" and "+ outPort.id+ " is equal to null");
-					} catch (BIPEngineException e) {
-						e.printStackTrace();
-						throw e;
-					}
-				}	
-				//TODO: maybe it would make sense here to store to which ports this d-variable corresponds to	
-				currentSystemBddSize+=1;
-			}
-		}
+
+
 
 	}
 
