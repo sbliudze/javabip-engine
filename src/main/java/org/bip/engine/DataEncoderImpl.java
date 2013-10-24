@@ -2,8 +2,10 @@ package org.bip.engine;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import net.sf.javabdd.BDD;
@@ -26,7 +28,7 @@ public class DataEncoderImpl implements DataEncoder{
 	private DataCoordinator dataCoordinator;
 	
 	Iterator<DataWire> dataGlueSpec;
-
+	Map <BiDirectionalPair, BDD> portsToDVarBDDMappingMap = new Hashtable<BiDirectionalPair, BDD>();
 	private Logger logger = LoggerFactory.getLogger(CurrentStateEncoderImpl.class);
 	private ArrayList<BDD> dBddVariable;
 	
@@ -100,12 +102,14 @@ public class DataEncoderImpl implements DataEncoder{
 		 */
 		ArrayList<Port> componentOutPorts = new ArrayList<Port>();
 		ArrayList<Port> componentInPorts = new ArrayList<Port>();
+		
 		/*
 		 * Get the number of BDD-nodes of the System. We base this on the assumption that all the components
 		 * have registered before. Therefore, we know the size of the BDD nodes created for states and ports,
 		 * which is the current System BDD size.
 		 */
-		int currentSystemBddSize = dataCoordinator.getNoPorts() + dataCoordinator.getNoStates();
+		int initialSystemBDDSize = dataCoordinator.getNoPorts() + dataCoordinator.getNoStates();
+		int currentSystemBddSize = initialSystemBDDSize;
 		
 		while (dataGlueSpec.hasNext()){
 			DataWire dataWire = dataGlueSpec.next();
@@ -146,9 +150,11 @@ public class DataEncoderImpl implements DataEncoder{
 			 * Clear the componentInPorts and componentOutPorts for the next dataWire components.
 			 */
 			for (Port inPort: componentInPorts){
+//				Entry<Port, Port> inOutPortPair = new Entry<Port, Port> (inPort, inPort);
 				for (Port outPort :componentOutPorts){
 					/*Create new variable in the BDD manager for the d-variables.*/
-					dBddVariable.add(engine.getBDDManager().ithVar(currentSystemBddSize+1));
+					currentSystemBddSize++;
+					dBddVariable.add(engine.getBDDManager().ithVar(currentSystemBddSize));
 					if (dBddVariable == null || dBddVariable.isEmpty()){
 						try {
 							logger.error("Single node BDD for d variable for ports "+ inPort.id+" and "+ outPort.id+ " is equal to null");
@@ -157,9 +163,8 @@ public class DataEncoderImpl implements DataEncoder{
 							e.printStackTrace();
 							throw e;
 						}
-					}	
-					//TODO: maybe it would make sense here to store to which ports this d-variable corresponds to	
-					currentSystemBddSize+=1;
+					}
+					//portsToDVarBDDMappingMap.put(, dBddVariable.get(currentSystemBddSize-initialSystemBDDSize));
 				}
 			}
 			componentInPorts.clear();
