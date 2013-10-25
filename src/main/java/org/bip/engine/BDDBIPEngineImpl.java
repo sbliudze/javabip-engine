@@ -316,7 +316,6 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 
 		for (Enumeration<BIPComponent> componentsEnum = behaviourBDDs.keys(); componentsEnum.hasMoreElements(); ){
 			BIPComponent component = componentsEnum.nextElement();
-			
 			logger.debug("Component: "+component.getName());
 			
 			Behaviour componentBehaviour = wrapper.getBehaviourByComponent(component);
@@ -324,10 +323,8 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 			ArrayList<Port> componentPorts = (ArrayList<Port>) componentBehaviour.getEnforceablePorts();
 			if (componentPorts == null || componentPorts.isEmpty()){
 				logger.warn("Component {} does not have any enforceable ports.", component.getName());		
-			} 
-			
+			} 			
 			ArrayList <Port> enabledPorts = new ArrayList<Port>();
-			
 			//TODO: Change! to executeInteractions
 			for (Port componentPort : componentPorts){
 				if(chosenInteraction[portToPosition.get(componentPort)]==1){

@@ -93,7 +93,7 @@ public class DataEncoderImpl implements DataEncoder{
 		createDataBDDNodes();
 	}
 	
-	private ArrayList<Port> inPorts(Port inData) throws BIPEngineException {
+	private Iterable<Port> inPorts(Port inData) throws BIPEngineException {
 		/*
 		 * Store in the Arraylist below all the possible out ports.
 		 * Later to take their cross product.
@@ -115,7 +115,7 @@ public class DataEncoderImpl implements DataEncoder{
 		return componentInPorts;
 	}
 	
-	private ArrayList<Port> outPorts (Port outData) throws BIPEngineException {
+	private Iterable<Port> outPorts (Port outData) throws BIPEngineException {
 		/*
 		 * Store in the Arraylist below all the possible in ports.
 		 * Later to take their cross product.
@@ -132,7 +132,7 @@ public class DataEncoderImpl implements DataEncoder{
 			 * Limit down the possible combinations by using the getDataOutPorts function of the DataCoordinator
 			 */
 			//allOutPorts.addAll((Collection<? extends Port>) dataCoordinator.getBehaviourByComponent(component).getEnforceablePorts());
-			componentOutPorts.addAll((Collection<? extends Port>) dataCoordinator.getDataOutPorts(component, outData.id));
+			componentOutPorts.addAll(dataCoordinator.getDataOutPorts(component, outData.id));
 		}
 		return componentOutPorts;
 	}
@@ -148,8 +148,8 @@ public class DataEncoderImpl implements DataEncoder{
 		
 		while (dataGlueSpec.hasNext()){
 			DataWire dataWire = dataGlueSpec.next();
-			ArrayList<Port> componentInPorts = inPorts(dataWire.to);
-			ArrayList<Port> componentOutPorts = outPorts(dataWire.from);
+			Iterable<Port> componentInPorts = inPorts(dataWire.to);
+			Iterable<Port> componentOutPorts = outPorts(dataWire.from);
 			/*
 			 * Here take the cross product of in and out variables to create the d-variables for one data-wire
 			 * Store this in a Map with the ports as the key and the d-variable as a value.
@@ -189,5 +189,5 @@ public class DataEncoderImpl implements DataEncoder{
 	public void setDataCoordinator(DataCoordinator dataCoordinator) {
 		this.dataCoordinator = dataCoordinator;
 	}
-
+	
 }
