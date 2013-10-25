@@ -1,17 +1,16 @@
 package org.bip.engine;
 
+import java.util.ArrayList;
+
 import org.bip.api.BIPComponent;
 import org.bip.api.BIPEngine;
 import org.bip.api.Behaviour;
+import org.bip.behaviour.Port;
 import org.bip.exceptions.BIPEngineException;
 
 /**
- * As it is now there is no need for a DataCoordinator interface. If that continues to be the case then the
- * DataCoordinatorImpl can implement the BIPEngine and the InteractionExecutor directly and delete this interface.
- * 
  * @author mavridou
  */
-
 public interface DataCoordinator extends BIPEngine, InteractionExecutor {
 
 	/**
@@ -34,4 +33,28 @@ public interface DataCoordinator extends BIPEngine, InteractionExecutor {
 	 */
 	Iterable <BIPComponent> getBIPComponentInstances(String type) throws BIPEngineException;
 	
+	/**
+	 * Helper getter method that gives the DataOutPorts of a particular component
+	 * that are connected to a dataOut variable.
+	 * 
+	 * @param BIPComponent instance, dataOut variable
+	 * @return ArrayList of ports of that are related to the dataOut 
+	 */
+	ArrayList<Port> getDataOutPorts(BIPComponent component, String dataOut);
+	
+	/**
+	 * Returns the total number of ports of registered component 
+	 * instances in the system.
+	 * 
+	 * @return number of ports of registered components
+	 */
+	int getNoPorts();
+
+	/**
+	 * Returns the total number of states of registered component 
+	 * instances in the system.
+	 * 
+	 * @return number of states of registered components
+	 */
+	int getNoStates();
 }

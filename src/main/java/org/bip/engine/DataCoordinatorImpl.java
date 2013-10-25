@@ -53,7 +53,12 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 	private Hashtable<String, ArrayList<BIPComponent>> typeInstancesMapping = new Hashtable<String, ArrayList<BIPComponent>>();
 
 	private ArrayList<DataWire> dataWires;
-	//private ArrayList<Accepts> accepts;
+	
+	/** Number of ports of components registered */
+	private int nbPorts;
+
+	/** Number of states of components registered */
+	private int nbStates;
 
 	/**
 	 * Create instances of all the the Data Encoder and of the BIPCoordinator
@@ -107,6 +112,8 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 			} else {
 				registeredComponents.add(component);
 				componentBehaviourMapping.put(component, behaviour);
+				nbPorts += ((ArrayList<Port>)behaviour.getEnforceablePorts()).size();;
+				nbStates += ((ArrayList<String>)behaviour.getStates()).size();
 				BIPCoordinator.register(component, behaviour);
 			}
 			ArrayList<BIPComponent> componentInstances = new ArrayList<BIPComponent>();
@@ -143,6 +150,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 		BIPCoordinator.inform(component, currentState, disabledPorts);
 	}
 	
+	//TODO: Do we need the Map of disabledCombinations? Or just the BIPComponents that are disabled?
 	public void informSpecific(BIPComponent decidingComponent, Port decidingPort, Map<BIPComponent, Port> disabledCombinations) throws BIPEngineException {
 		if (disabledCombinations.isEmpty()){
 			try {
@@ -508,6 +516,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 	 * @param dataOut
 	 * @return
 	 */
+
 //	private ArrayList<Port> getDataOutPorts(BIPComponent component, String dataOut) {
 //		ArrayList<Port> dataOutPorts = new ArrayList<Port>();
 //		Behaviour behaviour = componentBehaviourMapping.get(component);
@@ -559,6 +568,20 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 	 */
 	public Behaviour getBehaviourByComponent(BIPComponent component) {
 		return componentBehaviourMapping.get(component);
+	}
+	
+	/**
+	 * Helper function that returns the total number of ports of the registered components.
+	 */
+	public int getNoPorts() {
+		return nbPorts;
+	}
+	
+	/**
+	 * Helper function that returns the total number of states of the registered components.
+	 */
+	public int getNoStates() {
+		return nbStates;
 	}
 
 

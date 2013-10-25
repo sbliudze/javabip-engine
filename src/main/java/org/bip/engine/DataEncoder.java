@@ -11,7 +11,7 @@ import org.bip.glue.DataWire;
 /**
  * Deals with the DataGlue.
  * Encodes the informSpecific information.
- * @author mavridou
+ * @author Anastasia Mavridou
  */
 public interface DataEncoder {
 	
@@ -40,8 +40,6 @@ public interface DataEncoder {
      * @throws BIPEngineException 
      */
     void specifyDataGlue(Iterable<DataWire> dataGlue) throws BIPEngineException;
-    
-    void createDataBDDNodes() throws BIPEngineException;
 	
 	/**
 	 * Setter for the BDDBIPEngine
@@ -52,4 +50,8 @@ public interface DataEncoder {
 	 * Setter for the DataCoordinator
 	 */
 	void setDataCoordinator(DataCoordinator dataCoordinator);
+	/**
+	 * Setter for the Behaviour Encoder
+	 */
+	void setBehaviourEncoder(BehaviourEncoder behaviourEncoder);
 }

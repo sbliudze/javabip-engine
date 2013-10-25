@@ -43,7 +43,7 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 	private BDDFactory bdd_mgr= BDDFactory.init("java", noNodes, cacheSize); 
 	private ArrayList<Integer> positionsOfPorts = new ArrayList<Integer>();
 	Hashtable<Port, Integer> portToPosition= new Hashtable<Port, Integer>();
-
+	Hashtable<BiDirectionalPair, Integer> dVariablesToPosition = new Hashtable<BiDirectionalPair, Integer>();
 	private BIPCoordinator wrapper;
 
 
@@ -316,7 +316,6 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 
 		for (Enumeration<BIPComponent> componentsEnum = behaviourBDDs.keys(); componentsEnum.hasMoreElements(); ){
 			BIPComponent component = componentsEnum.nextElement();
-			
 			logger.debug("Component: "+component.getName());
 			
 			Behaviour componentBehaviour = wrapper.getBehaviourByComponent(component);
@@ -324,10 +323,8 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 			ArrayList<Port> componentPorts = (ArrayList<Port>) componentBehaviour.getEnforceablePorts();
 			if (componentPorts == null || componentPorts.isEmpty()){
 				logger.warn("Component {} does not have any enforceable ports.", component.getName());		
-			} 
-			
+			} 			
 			ArrayList <Port> enabledPorts = new ArrayList<Port>();
-			
 			//TODO: Change! to executeInteractions
 			for (Port componentPort : componentPorts){
 				if(chosenInteraction[portToPosition.get(componentPort)]==1){
@@ -398,6 +395,20 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		return portToPosition;
 	}
 	
+	/**
+	 * @return the dVariablesToPosition
+	 */
+	public Hashtable<BiDirectionalPair, Integer> getdVariablesToPosition() {
+		return dVariablesToPosition;
+	}
+
+	/**
+	 * @param dVariablesToPosition the dVariablesToPosition to set
+	 */
+	public void setdVariablesToPosition(Hashtable<BiDirectionalPair, Integer> dVariablesToPosition) {
+		this.dVariablesToPosition = dVariablesToPosition;
+	}
+
 	public void setOSGiBIPEngine(BIPCoordinator wrapper) {
 		this.wrapper = wrapper;
 	}
