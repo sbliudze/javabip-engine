@@ -163,9 +163,13 @@ public class DataEncoderImpl implements DataEncoder{
 					//TODO: Ports do not have component holder information, Change below 
 					BiDirectionalPair inOutPortsPair = new BiDirectionalPair(inPort, outPort);
 					if (!portsToDVarBDDMappingMap.containsKey(inOutPortsPair)){
-					/*Create new variable in the BDD manager for the d-variables.*/
+					/*Create new variable in the BDD manager for the d-variables.
+					 * Does it start from 0 or 1 ? 
+					 * if from 0 increase later
+					 * */
 					currentSystemBddSize++;
 					dBddVariable.add(engine.getBDDManager().ithVar(currentSystemBddSize));
+					engine.getdVariablesToPosition().put(inOutPortsPair, currentSystemBddSize);
 					if (dBddVariable == null || dBddVariable.isEmpty()){
 						try {
 							logger.error("Single node BDD for d variable for ports "+ inPort.id+" and "+ outPort.id+ " is equal to null");
