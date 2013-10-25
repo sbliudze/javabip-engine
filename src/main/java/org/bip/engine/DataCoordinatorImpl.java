@@ -151,6 +151,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 		BIPCoordinator.inform(component, currentState, disabledPorts);
 	}
 	
+	//TODO: Do we need the Map of disabledCombinations? Or just the BIPComponents that are disabled?
 	public void informSpecific(BIPComponent decidingComponent, Port decidingPort, Map<BIPComponent, Port> disabledCombinations) throws BIPEngineException {
 		if (disabledCombinations.isEmpty()){
 			try {
