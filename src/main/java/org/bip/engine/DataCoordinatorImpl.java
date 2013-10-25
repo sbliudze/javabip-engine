@@ -53,7 +53,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 	private Hashtable<String, ArrayList<BIPComponent>> typeInstancesMapping = new Hashtable<String, ArrayList<BIPComponent>>();
 
 	private ArrayList<DataWire> dataWires;
-	private ArrayList<Accepts> accepts;
+	//private ArrayList<Accepts> accepts;
 
 	/**
 	 * Create instances of all the the Data Encoder and of the BIPCoordinator
@@ -73,7 +73,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 	public void specifyGlue(BIPGlue glue) {
 		BIPCoordinator.specifyGlue(glue);
 		this.dataWires = glue.dataWires;
-		this.accepts = glue.acceptConstraints;
+		//this.accepts = glue.acceptConstraints;
 		if (dataWires.isEmpty() || dataWires == null) {
 			logger.error("Data wires information not specified in XML file, although DataCoordinator is set as the wrapper");
 			try {
@@ -294,14 +294,63 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 		for (Port port : componentUndecidedPorts.get(component)) {
 			// get list of DataIn needed for its guards
 			Iterable<String> dataIn = portToDataInForGuard.get(port);
+			
+			// for each data its different evaluations
+			Hashtable<String, ArrayList<Object>> dataEvaluation = new Hashtable<String, ArrayList<Object>>();
+			//map dataName <-> mapping dataValue - components giving this value 
+			Hashtable<String, Hashtable<Object, ArrayList<BIPComponent>>> dataHelper = new Hashtable<String, Hashtable<Object, ArrayList<BIPComponent>>>();
+
 			// for each DataIn variable get info which components provide it
 			// as their outData
-			Iterable<Map<String, Object>> dataTable = getDataWires(dataIn, component);
+			// mapping inData <-> outData, where
+			// in outData we have a name and a list of components providing it.
+			// for one inData there can be several outData variables
+			for (String inDataItem : dataIn) {
+				// mapping dataValue - components giving this value 
+				Hashtable<Object, ArrayList<BIPComponent>> map = new Hashtable<Object, ArrayList<BIPComponent>>();
+				for (DataWire wire : this.dataWires) {
+					// for this dataVariable: all the values that it can take
+					ArrayList<Object> dataValues = new ArrayList<Object>();
+					if (wire.isIncoming(inDataItem, componentBehaviourMapping.get(component).getComponentType())) {
+						//for each component of this type, call getData
+						for (BIPComponent aComponent : getBIPComponentInstances(wire.from.specType)) {
+							Object inValue = aComponent.getData(wire.from.id, int.class);
+							dataValues.add(inValue);
+							
+							ArrayList<BIPComponent> componentList = new ArrayList<BIPComponent>();
+							if (map.containsKey(inValue)) {
+								componentList = map.get(inValue);
+							} else {
+								map.put(inValue, componentList);
+							}
+							componentList.add(aComponent);
+						}
+						dataHelper.put(inDataItem,map);
+					}
+					dataEvaluation.put(inDataItem, dataValues);
+				}
+			}
+			
+			ArrayList<Map<String, Object>> dataTable = (ArrayList<Map<String, Object>>) getDataValueTable(dataEvaluation);
+			//the result provided must have the same order - put comment
 			ArrayList<Boolean> portActive = (ArrayList<Boolean>) component.checkEnabledness(port, dataTable);
+			
 			Map<BIPComponent, Port> disabledCombinations = new Hashtable<BIPComponent, Port>();
+			
 			for (int i = 0; i < portActive.size(); i++) {
 				if (!(portActive.get(i))) {
-					// disabledCombinations.put();
+					Map<String, Object> theseDatas = dataTable.get(i);
+					for (Entry<String, Object> entry : theseDatas.entrySet()) {
+						
+						Hashtable<Object, ArrayList<BIPComponent>> valueToComponents = dataHelper.get(entry.getKey());
+					
+						Iterable<BIPComponent> components = valueToComponents.get(entry.getValue());
+						for (BIPComponent comp : components) {
+//							for (Port p : getDataOutPorts()) {
+//								disabledCombinations.put(comp, p);
+//							}
+						}
+					}
 				}
 			}
 			this.informSpecific(component, port, disabledCombinations);
@@ -453,33 +502,37 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 	}
 
 	/**
-	 * For this component, find out which ports provide this dataOut
+	 * For this component, find out which ports of it provide this dataOut
+	 * Independent of the instance of component
 	 * @param component
 	 * @param dataOut
 	 * @return
 	 */
-	private ArrayList<Port> getDataOutPorts(BIPComponent component, String dataOut) {
-		ArrayList<Port> dataOutPorts = new ArrayList<Port>();
-		Behaviour behaviour = componentBehaviourMapping.get(component);
-		// for each port of this component:
-		// find the ports of other components that this port accepts
-		for (Port port : behaviour.getEnforceablePorts()) {
-			Collection<Port> causePorts = new ArrayList<Port>();
-			for (Accepts accept : accepts) {
-				if (accept.effect.equals(port)) {
-					causePorts = accept.causes;
-					break;
-				}
-			}
-			for (Port causePort : causePorts) {
-				ArrayList<Port> portsRequiringData = (ArrayList<Port>) behaviour.portsNeedingData(dataOut);
-				if (portsRequiringData.contains(causePort)) {
-					dataOutPorts.add(port);
-				}
-			}
-		}
-		return dataOutPorts;
-	}
+//	private ArrayList<Port> getDataOutPorts(BIPComponent component, String dataOut) {
+//		ArrayList<Port> dataOutPorts = new ArrayList<Port>();
+//		Behaviour behaviour = componentBehaviourMapping.get(component);
+//		// for each port of this component:
+//		// find the ports of other components that this port accepts
+//		for (Port port : behaviour.getEnforceablePorts()) {
+//			Collection<Port> causePorts = new ArrayList<Port>();
+//			for (Accepts accept : accepts) {
+//				if (accept.effect.equals(port)) {
+//					causePorts = accept.causes;
+//					break;
+//				}
+//			}
+//			//for each port of other components
+//			//get the ones that require this dataOut
+//			//but! it must be don with their behaviour, not this one.
+//			for (Port causePort : causePorts) {
+//				ArrayList<Port> portsRequiringData = (ArrayList<Port>) behaviour.portsNeedingData(dataOut);
+//				if (portsRequiringData.contains(causePort)) {
+//					dataOutPorts.add(port);
+//				}
+//			}
+//		}
+//		return dataOutPorts;
+//	}
 
 	/**
 	 * Helper function that returns the registered component instances that correspond to a component type.
