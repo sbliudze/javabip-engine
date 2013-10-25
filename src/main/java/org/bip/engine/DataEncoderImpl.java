@@ -27,10 +27,10 @@ public class DataEncoderImpl implements DataEncoder{
 	private DataCoordinator dataCoordinator;
 	
 	Iterator<DataWire> dataGlueSpec;
-	Map <BiDirectionalPair, BDD> portsToDVarBDDMappingMap = new Hashtable<BiDirectionalPair, BDD>();
+	Map <BiDirectionalPair, BDD> portsToDVarBDDMapping = new Hashtable<BiDirectionalPair, BDD>();
 	private Logger logger = LoggerFactory.getLogger(CurrentStateEncoderImpl.class);
-	private ArrayList<BDD> dBddVariable;
-	
+//	private ArrayList<BDD> dBddVariable;
+
 	/*
 	 * Possible implementation: Send each combination's BDD to the engine that takes the 
 	 * conjunction of all of them on-the-fly. When all the registered components have informed
@@ -58,7 +58,8 @@ public class DataEncoderImpl implements DataEncoder{
 		Set<BIPComponent> disabledComponents= disabledCombinations.keySet();
 		assert (disabledComponents != null);
 
-		BDD result = engine.getBDDManager().zero();
+		//for Or-ing
+		BDD result = engine.getBDDManager().one();
 		
 		for (BIPComponent component : disabledComponents){
 			Port port = disabledCombinations.get(component);
@@ -71,8 +72,9 @@ public class DataEncoderImpl implements DataEncoder{
 					throw e;
 				}
 		      }
-			//TODO: to be updated
-//			result.andWith(behaviourEncoder.getBDDOfAPort(component, port.id).not());
+			
+			BiDirectionalPair portsPair = new BiDirectionalPair(decidingPort, port);
+			result.orWith(portsToDVarBDDMapping.get(portsPair).not());
 		}
 		return result;
 	}
@@ -162,15 +164,19 @@ public class DataEncoderImpl implements DataEncoder{
 				for (Port outPort :componentOutPorts){
 					//TODO: Ports do not have component holder information, Change below 
 					BiDirectionalPair inOutPortsPair = new BiDirectionalPair(inPort, outPort);
-					if (!portsToDVarBDDMappingMap.containsKey(inOutPortsPair)){
+					if (!portsToDVarBDDMapping.containsKey(inOutPortsPair)){
 					/*Create new variable in the BDD manager for the d-variables.
 					 * Does it start from 0 or 1 ? 
 					 * if from 0 increase later
-					 * */
+					 */
 					currentSystemBddSize++;
-					dBddVariable.add(engine.getBDDManager().ithVar(currentSystemBddSize));
+					portsToDVarBDDMapping.put(inOutPortsPair, engine.getBDDManager().ithVar(currentSystemBddSize));
+//					dBddVariable.add(engine.getBDDManager().ithVar(currentSystemBddSize));
+					/*
+					 * Store the position of the d-variables in the BDD manager
+					 */
 					engine.getdVariablesToPosition().put(inOutPortsPair, currentSystemBddSize);
-					if (dBddVariable == null || dBddVariable.isEmpty()){
+					if (portsToDVarBDDMapping.get(inOutPortsPair)== null || portsToDVarBDDMapping.get(inOutPortsPair).isZero()){
 						try {
 							logger.error("Single node BDD for d variable for ports "+ inPort.id+" and "+ outPort.id+ " is equal to null");
 							throw new BIPEngineException("Single node BDD for d variable for ports "+ inPort.id+" and "+ outPort.id+ " is equal to null");
@@ -179,7 +185,7 @@ public class DataEncoderImpl implements DataEncoder{
 							throw e;
 						}
 					}
-					portsToDVarBDDMappingMap.put(inOutPortsPair, dBddVariable.get(currentSystemBddSize-initialSystemBDDSize));
+//					portsToDVarBDDMapping.put(inOutPortsPair, dBddVariable.get(currentSystemBddSize-initialSystemBDDSize));
 					}
 				}
 			}
