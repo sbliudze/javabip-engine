@@ -50,4 +50,8 @@ public interface DataEncoder {
 	 * Setter for the DataCoordinator
 	 */
 	void setDataCoordinator(DataCoordinator dataCoordinator);
+	/**
+	 * Setter for the Behaviour Encoder
+	 */
+	void setBehaviourEncoder(BehaviourEncoder behaviourEncoder);
 }

@@ -25,6 +25,7 @@ public class DataEncoderImpl implements DataEncoder{
 
 	private BDDBIPEngine engine;
 	private DataCoordinator dataCoordinator;
+	private BehaviourEncoder behaviourEncoder;
 	
 	Iterator<DataWire> dataGlueSpec;
 	Map <BiDirectionalPair, BDD> portsToDVarBDDMapping = new Hashtable<BiDirectionalPair, BDD>();
@@ -170,7 +171,9 @@ public class DataEncoderImpl implements DataEncoder{
 					 * if from 0 increase later
 					 */
 					currentSystemBddSize++;
-					portsToDVarBDDMapping.put(inOutPortsPair, engine.getBDDManager().ithVar(currentSystemBddSize));
+					BDD temp = engine.getBDDManager().ithVar(currentSystemBddSize);
+					temp = 
+					portsToDVarBDDMapping.put(inOutPortsPair, temp);
 //					dBddVariable.add(engine.getBDDManager().ithVar(currentSystemBddSize));
 					/*
 					 * Store the position of the d-variables in the BDD manager
@@ -194,6 +197,10 @@ public class DataEncoderImpl implements DataEncoder{
 
 	public void setEngine(BDDBIPEngine engine) {
 		this.engine=engine;
+	}
+	
+	public void setBehaviourEncoder(BehaviourEncoder behaviourEncoder) {
+		this.behaviourEncoder=behaviourEncoder;
 	}
 
 	public void setDataCoordinator(DataCoordinator dataCoordinator) {
