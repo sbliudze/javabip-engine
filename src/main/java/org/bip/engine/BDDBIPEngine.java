@@ -61,6 +61,15 @@ public interface BDDBIPEngine {
 	
 	Hashtable<Port, Integer> getPortToPosition();
 
+	/**
+	 * @return the dVariablesToPosition
+	 */
+	Hashtable<BiDirectionalPair, Integer> getdVariablesToPosition() ;
+	/**
+	 * @param dVariablesToPosition the dVariablesToPosition to set
+	 */
+	void setdVariablesToPosition(Hashtable<BiDirectionalPair, Integer> dVariablesToPosition);
+	
 	void informSpecific(BDD informSpecific);
 
 

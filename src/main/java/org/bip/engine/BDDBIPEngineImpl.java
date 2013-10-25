@@ -43,7 +43,7 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 	private BDDFactory bdd_mgr= BDDFactory.init("java", noNodes, cacheSize); 
 	private ArrayList<Integer> positionsOfPorts = new ArrayList<Integer>();
 	Hashtable<Port, Integer> portToPosition= new Hashtable<Port, Integer>();
-
+	Hashtable<BiDirectionalPair, Integer> dVariablesToPosition = new Hashtable<BiDirectionalPair, Integer>();
 	private BIPCoordinator wrapper;
 
 
@@ -395,6 +395,20 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		return portToPosition;
 	}
 	
+	/**
+	 * @return the dVariablesToPosition
+	 */
+	public Hashtable<BiDirectionalPair, Integer> getdVariablesToPosition() {
+		return dVariablesToPosition;
+	}
+
+	/**
+	 * @param dVariablesToPosition the dVariablesToPosition to set
+	 */
+	public void setdVariablesToPosition(Hashtable<BiDirectionalPair, Integer> dVariablesToPosition) {
+		this.dVariablesToPosition = dVariablesToPosition;
+	}
+
 	public void setOSGiBIPEngine(BIPCoordinator wrapper) {
 		this.wrapper = wrapper;
 	}
