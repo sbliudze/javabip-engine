@@ -10,6 +10,7 @@ import java.util.Map.Entry;
 import org.bip.api.BIPComponent;
 import org.bip.api.BIPEngine;
 import org.bip.api.Behaviour;
+import org.bip.behaviour.Data;
 import org.bip.behaviour.Port;
 import org.bip.behaviour.Transition;
 import org.bip.exceptions.BIPEngineException;
@@ -297,11 +298,11 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 
 	private void doInformSpecific(BIPComponent component) throws BIPEngineException {
 		// mapping port <-> data it needs for computing guards
-		Map<Port, Iterable<String>> portToDataInForGuard = componentBehaviourMapping.get(component).portToDataInForGuard();
+		Map<Port, Iterable<Data>> portToDataInForGuard = componentBehaviourMapping.get(component).portToDataInForGuard();
 		// for each undecided port of each component :
 		for (Port port : componentUndecidedPorts.get(component)) {
 			// get list of DataIn needed for its guards
-			Iterable<String> dataIn = portToDataInForGuard.get(port);
+			Iterable<Data> dataIn = portToDataInForGuard.get(port);
 			
 			// for each data its different evaluations
 			Hashtable<String, ArrayList<Object>> dataEvaluation = new Hashtable<String, ArrayList<Object>>();
@@ -313,16 +314,16 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 			// mapping inData <-> outData, where
 			// in outData we have a name and a list of components providing it.
 			// for one inData there can be several outData variables
-			for (String inDataItem : dataIn) {
+			for (Data inDataItem : dataIn) {
 				// mapping dataValue - components giving this value 
 				Hashtable<Object, ArrayList<BIPComponent>> map = new Hashtable<Object, ArrayList<BIPComponent>>();
 				for (DataWire wire : this.dataWires) {
 					// for this dataVariable: all the values that it can take
 					ArrayList<Object> dataValues = new ArrayList<Object>();
-					if (wire.isIncoming(inDataItem, componentBehaviourMapping.get(component).getComponentType())) {
+					if (wire.isIncoming(inDataItem.name(), componentBehaviourMapping.get(component).getComponentType())) {
 						//for each component of this type, call getData
 						for (BIPComponent aComponent : getBIPComponentInstances(wire.from.specType)) {
-							Object inValue = aComponent.getData(wire.from.id, int.class);
+							Object inValue = aComponent.getData(wire.from.id, inDataItem.type());
 							dataValues.add(inValue);
 							
 							ArrayList<BIPComponent> componentList = new ArrayList<BIPComponent>();
@@ -333,9 +334,9 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 							}
 							componentList.add(aComponent);
 						}
-						dataHelper.put(inDataItem,map);
+						dataHelper.put(inDataItem.name(),map);
 					}
-					dataEvaluation.put(inDataItem, dataValues);
+					dataEvaluation.put(inDataItem.name(), dataValues);
 				}
 			}
 			

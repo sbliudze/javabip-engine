@@ -31,9 +31,9 @@ public class DataCoordinatorTests implements BIPComponent {
 		ArrayList<Port> allPorts = new ArrayList<Port>();
 		ArrayList<String> states = new ArrayList<String>();
 		ArrayList<Guard> guards = new ArrayList<Guard>();
-		guards.add(new Guard("f", this.getClass().getMethod("f"), new ArrayList<String>(Arrays.asList("Buenos Aires", "Córdoba", "La Plata"))));
-		guards.add(new Guard("g", this.getClass().getMethod("g"), new ArrayList<String>(Arrays.asList("delta", "alfa"))));
-		guards.add(new Guard("h", this.getClass().getMethod("h"), new ArrayList<String>(Arrays.asList("c", "b", "a"))));
+		//guards.add(new Guard("f", this.getClass().getMethod("f"), new ArrayList<String>(Arrays.asList("Buenos Aires", "Córdoba", "La Plata"))));
+		//guards.add(new Guard("g", this.getClass().getMethod("g"), new ArrayList<String>(Arrays.asList("delta", "alfa"))));
+		//guards.add(new Guard("h", this.getClass().getMethod("h"), new ArrayList<String>(Arrays.asList("c", "b", "a"))));
 		allTransitions.add(new ExecutorTransition("first", "initial", "1", "f&g&!h", null));
 		allTransitions.add(new ExecutorTransition("second", "initial", "2", "(f|g)&!h", null));
 		allTransitions.add(new ExecutorTransition("third", "initial", "3", "(f|g)&h", null));
