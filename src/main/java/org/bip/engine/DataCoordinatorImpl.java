@@ -253,12 +253,18 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 						logger.debug("Component {} execute port {}", component.getName(), port.id);
 						// TODO: Find out which components are sending data to
 						// this component
-						// TODO: Change the following execute to the one that
-						// specifies data for execution of transitions. In
-						// particular, change this:
-						component.execute(port.id);
-						// to this:
-						// void execute(String portID, Map<String, ?> data);
+						Iterable<Data> portToDataInForTransition = componentBehaviourMapping.get(component).portToDataInForTransition(port);
+						Hashtable<String, Object> nameToValue  = new Hashtable<String, Object>();
+						for (Data dataItem : portToDataInForTransition) {
+							for (BIPComponent aComponent : oneInteraction.keySet()) {
+								String dataOutName =dataIsProvided(aComponent, component, dataItem.name()); 
+								if (dataOutName!=null && !dataOutName.isEmpty()) {
+									Object dataValue = aComponent.getData(dataOutName, dataItem.type());
+									nameToValue.put(dataItem.name(), dataValue);
+								}
+							}
+						}
+						component.execute(port.id, nameToValue);
 					}
 				}
 			}
@@ -272,6 +278,16 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 				component.execute(null);
 			}
 		}
+	}
+
+	private String dataIsProvided(BIPComponent providingComponent, BIPComponent requiringComponent, String dataName) {
+		for (DataWire wire : this.dataWires) {
+			if (wire.isIncoming(dataName, componentBehaviourMapping.get(requiringComponent).getComponentType())
+					&& wire.from.specType.equals(componentBehaviourMapping.get(providingComponent).getComponentType())) {
+				return wire.from.id;
+			}
+		}
+		return "";
 	}
 
 	public void run() {

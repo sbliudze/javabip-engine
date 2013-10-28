@@ -123,4 +123,10 @@ public class DataCoordinatorTests implements BIPComponent {
 		// TODO Auto-generated method stub
 		return null;
 	}
+
+	@Override
+	public void execute(String portID, Map<String, ?> data) {
+		// TODO Auto-generated method stub
+		
+	}
 }
