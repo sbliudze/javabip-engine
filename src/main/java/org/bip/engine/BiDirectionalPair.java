@@ -24,5 +24,13 @@ public final class BiDirectionalPair {
 		  public int hashCode() {
 		    return a.hashCode() ^ b.hashCode();
 		  }	
+		  
+		  public Object getFirst(){
+			return a;
+		  }
+		  
+		  public Object getSecond(){
+			return b;
+		  }
 	
 }

@@ -64,11 +64,11 @@ public interface BDDBIPEngine {
 	/**
 	 * @return the dVariablesToPosition
 	 */
-	Hashtable<BiDirectionalPair, Integer> getdVariablesToPosition() ;
+	Hashtable<Integer, BiDirectionalPair> getdVariablesToPosition() ;
 	/**
 	 * @param dVariablesToPosition the dVariablesToPosition to set
 	 */
-	void setdVariablesToPosition(Hashtable<BiDirectionalPair, Integer> dVariablesToPosition);
+	void setdVariablesToPosition(Hashtable<Integer, BiDirectionalPair> dVariablesToPosition);
 	
 	/**
 	 * @param positionsOfDVariables the positionsOfDVariables to set

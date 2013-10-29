@@ -1,6 +1,7 @@
 package org.bip.engine;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.Iterator;
@@ -43,7 +44,7 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 	private BDDFactory bdd_mgr= BDDFactory.init("java", noNodes, cacheSize); 
 	private ArrayList<Integer> positionsOfPorts = new ArrayList<Integer>();
 	Hashtable<Port, Integer> portToPosition= new Hashtable<Port, Integer>();
-	Hashtable<BiDirectionalPair, Integer> dVariablesToPosition = new Hashtable<BiDirectionalPair, Integer>();
+	Hashtable<Integer, BiDirectionalPair> dVariablesToPosition = new Hashtable<Integer, BiDirectionalPair>();
 	ArrayList<Integer> positionsOfDVariables = new ArrayList<Integer>();
 
 	private BIPCoordinator wrapper;
@@ -314,6 +315,19 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		logger.info("ChosenInteraction: ");
 		for (int k = 0; k < chosenInteraction.length; k++)
 			logger.debug("{}",chosenInteraction[k]);
+		
+		/*
+		 * NEW STUFF
+		 * 
+		 * TODO: HAVE TO CREATE THE MAP: BIPComponent, port
+		 */
+		ArrayList<Port> interactionPorts = new ArrayList<Port>();
+		Hashtable<BIPComponent, ArrayList<Port>> oneInteraction = new Hashtable<BIPComponent, ArrayList<Port>>();
+		for (Integer i: positionsOfDVariables){
+//			BiDirectionalPair pair = dVariablesToPosition.get(i);
+//			interactionPorts.add((Port) pair.getFirst());
+//			interactionPorts.addAll((Collection<? extends Port>) pair.getSecond());
+		}
 
 		for (Enumeration<BIPComponent> componentsEnum = behaviourBDDs.keys(); componentsEnum.hasMoreElements(); ){
 			BIPComponent component = componentsEnum.nextElement();
@@ -395,14 +409,14 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 	/**
 	 * @return the dVariablesToPosition
 	 */
-	public Hashtable<BiDirectionalPair, Integer> getdVariablesToPosition() {
+	public Hashtable<Integer, BiDirectionalPair> getdVariablesToPosition() {
 		return dVariablesToPosition;
 	}
 
 	/**
 	 * @param dVariablesToPosition the dVariablesToPosition to set
 	 */
-	public void setdVariablesToPosition(Hashtable<BiDirectionalPair, Integer> dVariablesToPosition) {
+	public void setdVariablesToPosition(Hashtable<Integer, BiDirectionalPair> dVariablesToPosition) {
 		this.dVariablesToPosition = dVariablesToPosition;
 	}
 	

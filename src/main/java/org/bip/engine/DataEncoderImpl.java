@@ -188,7 +188,7 @@ public class DataEncoderImpl implements DataEncoder{
 						/*
 						 * Store the position of the d-variables in the BDD manager
 						 */
-						engine.getdVariablesToPosition().put(inOutPortsPair, currentSystemBddSize);
+						engine.getdVariablesToPosition().put(currentSystemBddSize, inOutPortsPair);
 						engine.getPositionsOfDVariables().add(currentSystemBddSize);
 						if (portsToDVarBDDMapping.get(inOutPortsPair)== null || portsToDVarBDDMapping.get(inOutPortsPair).isZero()){
 							try {
