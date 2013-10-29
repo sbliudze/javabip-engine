@@ -91,7 +91,6 @@ public class DataEncoderImpl implements DataEncoder{
 		 * Later to take their cross product.
 		 */
 		ArrayList<Port> componentInPorts = new ArrayList<Port>();
-		
 		/*
 		 * IMPORTANT
 		 * These are not ports actually. In the specType the type of the component is stored.
@@ -121,7 +120,6 @@ public class DataEncoderImpl implements DataEncoder{
 		ArrayList<ArrayList<Port>> allOutPorts = new ArrayList<ArrayList<Port>>();	
 		ArrayList<Port> componentOutPorts = new ArrayList<Port>();
 		ArrayList<BDD> componentOutBDDs = new ArrayList<BDD>();
-
 		 /* 
 		 * Output data are not associated to transitions. Here, will take the conjunction of all possible
 		 * transitions of a component.
@@ -191,6 +189,7 @@ public class DataEncoderImpl implements DataEncoder{
 						 * Store the position of the d-variables in the BDD manager
 						 */
 						engine.getdVariablesToPosition().put(inOutPortsPair, currentSystemBddSize);
+						engine.getPositionsOfDVariables().add(currentSystemBddSize);
 						if (portsToDVarBDDMapping.get(inOutPortsPair)== null || portsToDVarBDDMapping.get(inOutPortsPair).isZero()){
 							try {
 								logger.error("Single node BDD for d variable for ports "+ inPort.id+" and "+ outPorts.toString()+ " is equal to null");

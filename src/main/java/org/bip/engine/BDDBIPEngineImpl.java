@@ -44,8 +44,9 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 	private ArrayList<Integer> positionsOfPorts = new ArrayList<Integer>();
 	Hashtable<Port, Integer> portToPosition= new Hashtable<Port, Integer>();
 	Hashtable<BiDirectionalPair, Integer> dVariablesToPosition = new Hashtable<BiDirectionalPair, Integer>();
-	private BIPCoordinator wrapper;
+	ArrayList<Integer> positionsOfDVariables = new ArrayList<Integer>();
 
+	private BIPCoordinator wrapper;
 
 	/** 
 	 * Counts the number of enabled ports in the Maximal cube chosen 
@@ -318,10 +319,8 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 			BIPComponent component = componentsEnum.nextElement();
 			logger.debug("Component: "+component.getName());
 			
-			Behaviour componentBehaviour = wrapper.getBehaviourByComponent(component);
-			// TODO: Use Iterators!
-			ArrayList<Port> componentPorts = (ArrayList<Port>) componentBehaviour.getEnforceablePorts();
-			if (componentPorts == null || componentPorts.isEmpty()){
+			Iterable <Port> componentPorts = wrapper.getBehaviourByComponent(component).getEnforceablePorts();
+			if (componentPorts == null || !componentPorts.iterator().hasNext()){
 				logger.warn("Component {} does not have any enforceable ports.", component.getName());		
 			} 			
 			ArrayList <Port> enabledPorts = new ArrayList<Port>();
@@ -340,8 +339,6 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		}
 		
 		logger.info("*************************************************************************");
-
-
 		wrapper.executeComponents(chosenComponents, chosenPorts);
 
 
@@ -407,6 +404,20 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 	 */
 	public void setdVariablesToPosition(Hashtable<BiDirectionalPair, Integer> dVariablesToPosition) {
 		this.dVariablesToPosition = dVariablesToPosition;
+	}
+	
+	/**
+	 * @return the positionsOfDVariables
+	 */
+	public ArrayList<Integer> getPositionsOfDVariables() {
+		return positionsOfDVariables;
+	}
+
+	/**
+	 * @param positionsOfDVariables the positionsOfDVariables to set
+	 */
+	public void setPositionsOfDVariables(ArrayList<Integer> positionsOfDVariables) {
+		this.positionsOfDVariables = positionsOfDVariables;
 	}
 
 	public void setOSGiBIPEngine(BIPCoordinator wrapper) {
