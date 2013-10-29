@@ -29,7 +29,7 @@ public class DataEncoderImpl implements DataEncoder{
 	Iterator<DataWire> dataGlueSpec;
 	Map <BiDirectionalPair, BDD> portsToDVarBDDMapping = new Hashtable<BiDirectionalPair, BDD>();
 	private Logger logger = LoggerFactory.getLogger(CurrentStateEncoderImpl.class);
-	ArrayList<BDD> componentOutBDDs = new ArrayList<BDD>();
+	ArrayList<ArrayList<BDD>> componentOutBDDs = new ArrayList<ArrayList<BDD>>();
 	ArrayList<BDD> componentInBDDs = new ArrayList<BDD>();
 
 //	public BDD informSpecific(BIPComponent decidingComponent, Port decidingPort, Map<BIPComponent, Port> disabledCombinations) throws BIPEngineException {
