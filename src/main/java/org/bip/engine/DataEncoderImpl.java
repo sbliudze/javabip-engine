@@ -52,32 +52,59 @@ public class DataEncoderImpl implements DataEncoder{
 	 * 4. Here also is the questions whether the DataEncoder should save the BDDs or not at each execution cycle.
 	 * @see org.bip.engine.DataEncoder#inform(java.util.Map)
 	 */
-	public BDD informSpecific(BIPComponent decidingComponent, Port decidingPort, Map<BIPComponent, Port> disabledCombinations) throws BIPEngineException {
+//	public BDD informSpecific(BIPComponent decidingComponent, Port decidingPort, Map<BIPComponent, Port> disabledCombinations) throws BIPEngineException {
+//		/*
+//		 * The disabledCombinations and disabledComponents are checked in the DataCoordinator,
+//		 * wherein exceptions are thrown. Here, we just use assertion.
+//		 */
+//		assert(disabledCombinations != null);
+//		Set<BIPComponent> disabledComponents= disabledCombinations.keySet();
+//		assert (disabledComponents != null);
+//
+//		//for Or-ing
+//		BDD result = engine.getBDDManager().one();
+//		
+//		for (BIPComponent component : disabledComponents){
+//			Port port = disabledCombinations.get(component);
+//			if (port == null || port.id.isEmpty()){
+//		        try {
+//					logger.error("Disabled port {} is null or empty "+port.id);
+//					throw new BIPEngineException("Disabled port {} is null or empty "+port.id);
+//				} catch (BIPEngineException e) {
+//					e.printStackTrace();
+//					throw e;
+//				}
+//		      }
+//			
+//			BiDirectionalPair portsPair = new BiDirectionalPair(decidingPort, port);
+//			result.orWith(portsToDVarBDDMapping.get(portsPair).not());
+//		}
+//		return result;
+//	}
+	
+	public BDD informSpecific(BIPComponent decidingComponent, Port decidingPort, Iterable<BIPComponent> disabledComponents) throws BIPEngineException {
 		/*
 		 * The disabledCombinations and disabledComponents are checked in the DataCoordinator,
 		 * wherein exceptions are thrown. Here, we just use assertion.
 		 */
-		assert(disabledCombinations != null);
-		Set<BIPComponent> disabledComponents= disabledCombinations.keySet();
-		assert (disabledComponents != null);
-
+		assert(disabledComponents != null);
 		//for Or-ing
 		BDD result = engine.getBDDManager().one();
 		
 		for (BIPComponent component : disabledComponents){
-			Port port = disabledCombinations.get(component);
-			if (port == null || port.id.isEmpty()){
-		        try {
-					logger.error("Disabled port {} is null or empty "+port.id);
-					throw new BIPEngineException("Disabled port {} is null or empty "+port.id);
-				} catch (BIPEngineException e) {
-					e.printStackTrace();
-					throw e;
-				}
-		      }
-			
-			BiDirectionalPair portsPair = new BiDirectionalPair(decidingPort, port);
-			result.orWith(portsToDVarBDDMapping.get(portsPair).not());
+//			Port port = disabledCombinations.get(component);
+//			if (port == null || port.id.isEmpty()){
+//		        try {
+//					logger.error("Disabled port {} is null or empty "+port.id);
+//					throw new BIPEngineException("Disabled port {} is null or empty "+port.id);
+//				} catch (BIPEngineException e) {
+//					e.printStackTrace();
+//					throw e;
+//				}
+//		      }
+//			
+//			BiDirectionalPair portsPair = new BiDirectionalPair(decidingPort, port);
+//			result.orWith(portsToDVarBDDMapping.get(portsPair).not());
 		}
 		return result;
 	}
