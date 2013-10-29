@@ -1,6 +1,4 @@
 package org.bip.engine;
-import java.util.Map;
-
 import net.sf.javabdd.BDD;
 
 import org.bip.api.BIPComponent;

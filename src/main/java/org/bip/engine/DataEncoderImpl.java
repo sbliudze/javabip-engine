@@ -5,7 +5,6 @@ import java.util.Collection;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
 
 import net.sf.javabdd.BDD;
 
@@ -158,14 +157,12 @@ public class DataEncoderImpl implements DataEncoder{
 		String outComponentType = outData.specType;
 		Iterable<BIPComponent> outComponentInstances = dataCoordinator.getBIPComponentInstances(outComponentType);
 		for (BIPComponent component: outComponentInstances){
-			
+			ArrayList<Port> allOutPorts = new ArrayList<Port>();
 			/*
-			 * Limit down the possible combinations by using the getDataOutPorts function of the DataCoordinator
+			 * Take the disjunction of all possible ports of this component
 			 */
-			//allOutPorts.addAll((Collection<? extends Port>) dataCoordinator.getBehaviourByComponent(component).getEnforceablePorts());
-			//TODO: Fix it
-//			ArrayList<Port> dataOutPorts = dataCoordinator.getDataOutPorts(component, outData.id);
-//			componentOutPorts.addAll(dataOutPorts);
+			HelperFunctions.addAll(allOutPorts, dataCoordinator.getBehaviourByComponent(component).getEnforceablePorts());
+			componentOutPorts.add(allOutPorts);
 //			for (Port port : dataOutPorts){
 //				componentOutBDDs.add(behaviourEncoder.getBDDOfAPort(component, port.id));
 //			}
