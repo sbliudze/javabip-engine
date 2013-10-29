@@ -183,6 +183,7 @@ public class DataEncoderImpl implements DataEncoder{
 						 */
 						currentSystemBddSize++;
 						BDD temp = engine.getBDDManager().ithVar(currentSystemBddSize);
+						//TODO: Fix that
 						temp = componentInBDDs.get(currentSystemBddSize-initialSystemBDDSize).and(componentOutBDDs.get(currentSystemBddSize));
 						portsToDVarBDDMapping.put(inOutPortsPair, temp);
 		//					dBddVariable.add(engine.getBDDManager().ithVar(currentSystemBddSize));
