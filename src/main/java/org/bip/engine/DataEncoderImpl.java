@@ -31,36 +31,6 @@ public class DataEncoderImpl implements DataEncoder{
 	private Logger logger = LoggerFactory.getLogger(CurrentStateEncoderImpl.class);
 	Map<ArrayList<Port>,ArrayList<BDD>> componentOutBDDs = new Hashtable<ArrayList<Port>, ArrayList<BDD>>();
 	Map<Port, BDD> componentInBDDs = new Hashtable<Port, BDD>();
-
-//	public BDD informSpecific(BIPComponent decidingComponent, Port decidingPort, Map<BIPComponent, Port> disabledCombinations) throws BIPEngineException {
-//		/*
-//		 * The disabledCombinations and disabledComponents are checked in the DataCoordinator,
-//		 * wherein exceptions are thrown. Here, we just use assertion.
-//		 */
-//		assert(disabledCombinations != null);
-//		Set<BIPComponent> disabledComponents= disabledCombinations.keySet();
-//		assert (disabledComponents != null);
-//
-//		//for Or-ing
-//		BDD result = engine.getBDDManager().one();
-//		
-//		for (BIPComponent component : disabledComponents){
-//			Port port = disabledCombinations.get(component);
-//			if (port == null || port.id.isEmpty()){
-//		        try {
-//					logger.error("Disabled port {} is null or empty "+port.id);
-//					throw new BIPEngineException("Disabled port {} is null or empty "+port.id);
-//				} catch (BIPEngineException e) {
-//					e.printStackTrace();
-//					throw e;
-//				}
-//		      }
-//			
-//			BiDirectionalPair portsPair = new BiDirectionalPair(decidingPort, port);
-//			result.orWith(portsToDVarBDDMapping.get(portsPair).not());
-//		}
-//		return result;
-//	}
 	
 	/*
 	 * Possible implementation: Send each combination's BDD to the engine that takes the 
