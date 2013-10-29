@@ -396,58 +396,51 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 			//the result provided must have the same order - put comment
 			ArrayList<Boolean> portActive = (ArrayList<Boolean>) component.checkEnabledness(port, dataTable);
 			
-			Map<BIPComponent, Port> disabledCombinations = new Hashtable<BIPComponent, Port>();
-			
 			for (int i = 0; i < portActive.size(); i++) {
+				ArrayList<BIPComponent> disabledComponents = new ArrayList<BIPComponent>();
 				if (!(portActive.get(i))) {
 					Map<String, Object> theseDatas = dataTable.get(i);
+					
 					for (Entry<String, Object> entry : theseDatas.entrySet()) {
 						
 						Hashtable<Object, ArrayList<BIPComponent>> valueToComponents = dataHelper.get(entry.getKey());
 					
 						Iterable<BIPComponent> components = valueToComponents.get(entry.getValue());
-						for (BIPComponent comp : components) {
-//							for (Port p : getDataOutPorts()) {
-//								disabledCombinations.put(comp, p);
-//							}
-						}
+						HelperFunctions.addAll(disabledComponents, components);
 					}
 				}
+				this.informSpecific(component, port, disabledComponents);
 			}
-			this.informSpecific(component, port, disabledCombinations);
+
 		}
 	}
 
-	private Iterable<Map<String, Object>> getDataWires(Iterable<String> dataInNeeded, BIPComponent component) throws BIPEngineException {
-		// mapping inData <-> outData, where
-		// in outData we have a name and a list of components providing it.
-		// for one inData there can be several outData variables
-		// for each data its different evaluations
-		Hashtable<String, ArrayList<Object>> dataEvaluation = new Hashtable<String, ArrayList<Object>>();
-		for (String inDataItem : dataInNeeded) {
-			for (DataWire wire : this.dataWires) {
-				// for this dataVariable: all the values that it can take
-				ArrayList<Object> dataValues = new ArrayList<Object>();
-				if (wire.to.id.equals(inDataItem) && wire.to.specType.equals(componentBehaviourMapping.get(component).getComponentType())) {
-
-					ArrayList<BIPComponent> fromComponents = (ArrayList<BIPComponent>) getBIPComponentInstances(wire.from.specType);
-					for (BIPComponent aComponent : fromComponents) {
-						// TODO add type instead of int
-						Map<String, Map<BIPComponent, Port>> dataNameToComponent = new Hashtable<String, Map<BIPComponent,Port>>();
-						//TODO: for each outData get a list of ports providing it at the current state
-						//if there are several ports, put each of them in disabledCombinations
-						//dataNameToComponent.put(inDataItem, (new Hashtable<BIPComponent, Port>()).put(aComponent, port));
-						dataValues.add(aComponent.getData(inDataItem, int.class));
-					}
-				}
-				dataEvaluation.put(inDataItem, dataValues);
-			}
-		}
-		Iterable<Map<String, Object>> dataTable = getDataValueTable(dataEvaluation);
-
-		return dataTable;
-
-	}
+//	private Iterable<Map<String, Object>> getDataWires(Iterable<String> dataInNeeded, BIPComponent component) throws BIPEngineException {
+//		// mapping inData <-> outData, where
+//		// in outData we have a name and a list of components providing it.
+//		// for one inData there can be several outData variables
+//		// for each data its different evaluations
+//		Hashtable<String, ArrayList<Object>> dataEvaluation = new Hashtable<String, ArrayList<Object>>();
+//		for (String inDataItem : dataInNeeded) {
+//			for (DataWire wire : this.dataWires) {
+//				// for this dataVariable: all the values that it can take
+//				ArrayList<Object> dataValues = new ArrayList<Object>();
+//				if (wire.to.id.equals(inDataItem) && wire.to.specType.equals(componentBehaviourMapping.get(component).getComponentType())) {
+//
+//					ArrayList<BIPComponent> fromComponents = (ArrayList<BIPComponent>) getBIPComponentInstances(wire.from.specType);
+//					for (BIPComponent aComponent : fromComponents) {
+//						// TODO add type instead of int
+//						dataValues.add(aComponent.getData(inDataItem, int.class));
+//					}
+//				}
+//				dataEvaluation.put(inDataItem, dataValues);
+//			}
+//		}
+//		Iterable<Map<String, Object>> dataTable = getDataValueTable(dataEvaluation);
+//
+//		return dataTable;
+//
+//	}
 
 	/**
 	 * This function takes the structure build from data received from the
