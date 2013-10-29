@@ -120,12 +120,10 @@ public class DataCoordinatorTests implements BIPComponent {
 
 	@Override
 	public Iterable<Boolean> checkEnabledness(Port port, Iterable<Map<String, Object>> data) {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public void execute(String portID, Map<String, ?> data) {
-		// TODO Auto-generated method stub	
 	}
 }
