@@ -33,14 +33,14 @@ public interface DataCoordinator extends BIPEngine, InteractionExecutor {
 	 */
 	Iterable <BIPComponent> getBIPComponentInstances(String type) throws BIPEngineException;
 	
-	/**
-	 * Helper getter method that gives the DataOutPorts of a particular component
-	 * that are connected to a dataOut variable.
-	 * 
-	 * @param BIPComponent instance, dataOut variable
-	 * @return ArrayList of ports of that are related to the dataOut 
-	 */
-	ArrayList<Port> getDataOutPorts(BIPComponent component, String dataOut);
+//	/**
+//	 * Helper getter method that gives the DataOutPorts of a particular component
+//	 * that are connected to a dataOut variable.
+//	 * 
+//	 * @param BIPComponent instance, dataOut variable
+//	 * @return ArrayList of ports of that are related to the dataOut 
+//	 */
+//	ArrayList<Port> getDataOutPorts(BIPComponent component, String dataOut);
 	
 	/**
 	 * Returns the total number of ports of registered component 

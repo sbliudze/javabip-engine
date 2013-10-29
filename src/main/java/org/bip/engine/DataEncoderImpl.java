@@ -143,11 +143,12 @@ public class DataEncoderImpl implements DataEncoder{
 			 * Limit down the possible combinations by using the getDataOutPorts function of the DataCoordinator
 			 */
 			//allOutPorts.addAll((Collection<? extends Port>) dataCoordinator.getBehaviourByComponent(component).getEnforceablePorts());
-			ArrayList<Port> dataOutPorts = dataCoordinator.getDataOutPorts(component, outData.id);
-			componentOutPorts.addAll(dataOutPorts);
-			for (Port port : dataOutPorts){
-				componentOutBDDs.add(behaviourEncoder.getBDDOfAPort(component, port.id));
-			}
+			//TODO: Fix it
+//			ArrayList<Port> dataOutPorts = dataCoordinator.getDataOutPorts(component, outData.id);
+//			componentOutPorts.addAll(dataOutPorts);
+//			for (Port port : dataOutPorts){
+//				componentOutBDDs.add(behaviourEncoder.getBDDOfAPort(component, port.id));
+//			}
 		}
 		return componentOutPorts;
 	}
