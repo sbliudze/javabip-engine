@@ -70,6 +70,16 @@ public interface BDDBIPEngine {
 	 */
 	void setdVariablesToPosition(Hashtable<BiDirectionalPair, Integer> dVariablesToPosition);
 	
+	/**
+	 * @param positionsOfDVariables the positionsOfDVariables to set
+	 */
+	void setPositionsOfDVariables(ArrayList<Integer> positionsOfDVariables);
+	
+	/**
+	 * @return the positionsOfDVariables
+	 */
+	public ArrayList<Integer> getPositionsOfDVariables();
+	
 	void informSpecific(BDD informSpecific);
 
 
