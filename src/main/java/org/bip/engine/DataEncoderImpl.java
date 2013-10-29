@@ -29,8 +29,8 @@ public class DataEncoderImpl implements DataEncoder{
 	Iterator<DataWire> dataGlueSpec;
 	Map <BiDirectionalPair, BDD> portsToDVarBDDMapping = new Hashtable<BiDirectionalPair, BDD>();
 	private Logger logger = LoggerFactory.getLogger(CurrentStateEncoderImpl.class);
-	ArrayList<ArrayList<BDD>> componentOutBDDs = new ArrayList<ArrayList<BDD>>();
-	ArrayList<BDD> componentInBDDs = new ArrayList<BDD>();
+	Map<ArrayList<Port>,ArrayList<BDD>> componentOutBDDs = new Hashtable<ArrayList<Port>, ArrayList<BDD>>();
+	Map<Port, BDD> componentInBDDs = new Hashtable<Port, BDD>();
 
 //	public BDD informSpecific(BIPComponent decidingComponent, Port decidingPort, Map<BIPComponent, Port> disabledCombinations) throws BIPEngineException {
 //		/*
@@ -137,7 +137,7 @@ public class DataEncoderImpl implements DataEncoder{
 			Iterable<Port> dataInPorts = dataCoordinator.getBehaviourByComponent(component).portsNeedingData(inData.id);
 			componentInPorts.addAll((Collection<? extends Port>) dataInPorts);
 			for (Port port : dataInPorts){
-				componentInBDDs.add(behaviourEncoder.getBDDOfAPort(component, port.id));
+				componentInBDDs.put(port, behaviourEncoder.getBDDOfAPort(component, port.id));
 			}
 		}
 		return componentInPorts;
@@ -167,7 +167,7 @@ public class DataEncoderImpl implements DataEncoder{
 			for (Port port : componentOutPorts){
 				componentOutBDDs.add(behaviourEncoder.getBDDOfAPort(component, port.id));
 			}
-			this.componentOutBDDs.add(componentOutBDDs);
+			this.componentOutBDDs.put(componentOutPorts, componentOutBDDs);
 			componentOutBDDs.clear();
 			componentOutPorts.clear();
 		}
@@ -191,41 +191,47 @@ public class DataEncoderImpl implements DataEncoder{
 			 * Store this in a Map with the ports as the key and the d-variable as a value.
 			 * 
 			 * Before creating the d-variable check for dublicates in the Map. If this does not exist then create it.
-			 * 
-			 * Clear the componentInPorts and componentOutPorts for the next dataWire components.
 			 */
+			Hashtable<ArrayList<Port>, BDD> portsToDisjunctionBDD = new Hashtable<ArrayList<Port>, BDD>();
 			for (Port inPort: componentInPorts){
-				//TODO: fix
-//				for (Port outPort :componentOutPorts){
+				for (ArrayList<Port> outPorts :componentOutPorts){
 //					//TODO: Ports do not have component holder information, Change below 
-//					BiDirectionalPair inOutPortsPair = new BiDirectionalPair(inPort, outPort);
-//					if (!portsToDVarBDDMapping.containsKey(inOutPortsPair)){
-//						/*Create new variable in the BDD manager for the d-variables.
-//						 * Does it start from 0 or 1 ? 
-//						 * if from 0 increase later
-//						 */
-//						currentSystemBddSize++;
-//						BDD temp = engine.getBDDManager().ithVar(currentSystemBddSize);
-//						//TODO: Fix that
-//						temp = componentInBDDs.get(currentSystemBddSize-initialSystemBDDSize).and(componentOutBDDs.get(currentSystemBddSize));
-//						portsToDVarBDDMapping.put(inOutPortsPair, temp);
-//		//					dBddVariable.add(engine.getBDDManager().ithVar(currentSystemBddSize));
-//						/*
-//						 * Store the position of the d-variables in the BDD manager
-//						 */
-//						engine.getdVariablesToPosition().put(inOutPortsPair, currentSystemBddSize);
-//						if (portsToDVarBDDMapping.get(inOutPortsPair)== null || portsToDVarBDDMapping.get(inOutPortsPair).isZero()){
-//							try {
-//								logger.error("Single node BDD for d variable for ports "+ inPort.id+" and "+ outPort.id+ " is equal to null");
-//								throw new BIPEngineException("Single node BDD for d variable for ports "+ inPort.id+" and "+ outPort.id+ " is equal to null");
-//							} catch (BIPEngineException e) {
-//								e.printStackTrace();
-//								throw e;
-//							}
-//						}
-////					portsToDVarBDDMapping.put(inOutPortsPair, dBddVariable.get(currentSystemBddSize-initialSystemBDDSize));
-//					}
-//				}
+					BiDirectionalPair inOutPortsPair = new BiDirectionalPair(inPort, outPorts);
+					if (!portsToDVarBDDMapping.containsKey(inOutPortsPair)){
+						/* Create new variable in the BDD manager for the d-variables.
+						 * Does it start from 0 or 1 ? 
+						 * if from 0 increase later
+						 */
+						currentSystemBddSize++;
+						BDD node = engine.getBDDManager().ithVar(currentSystemBddSize);
+						BDD disjunctionPorts = engine.getBDDManager().zero();
+						if (!portsToDisjunctionBDD.contains(outPorts)){
+							ArrayList<BDD> outBDDs = componentOutBDDs.get(outPorts);
+							for (BDD portBDD: outBDDs){
+								BDD aux = disjunctionPorts.or(portBDD);
+								disjunctionPorts.free();
+								disjunctionPorts= aux;
+							}		
+							portsToDisjunctionBDD.put(outPorts, disjunctionPorts);
+						}
+						
+						node = componentInBDDs.get(inPort).and(portsToDisjunctionBDD.get(outPorts));
+						portsToDVarBDDMapping.put(inOutPortsPair, node);
+						/*
+						 * Store the position of the d-variables in the BDD manager
+						 */
+						engine.getdVariablesToPosition().put(inOutPortsPair, currentSystemBddSize);
+						if (portsToDVarBDDMapping.get(inOutPortsPair)== null || portsToDVarBDDMapping.get(inOutPortsPair).isZero()){
+							try {
+								logger.error("Single node BDD for d variable for ports "+ inPort.id+" and "+ outPorts.toString()+ " is equal to null");
+								throw new BIPEngineException("Single node BDD for d variable for ports "+ inPort.id+" and "+ outPorts.toString()+ " is equal to null");
+							} catch (BIPEngineException e) {
+								e.printStackTrace();
+								throw e;
+							}
+						}
+					}
+				}
 			}
 		}
 	}
