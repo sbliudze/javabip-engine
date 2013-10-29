@@ -148,7 +148,9 @@ public class DataEncoderImpl implements DataEncoder{
 		 * Store in the Arraylist below all the possible in ports.
 		 * Later to take their cross product.
 		 */
-		ArrayList<ArrayList<Port>> componentOutPorts = new ArrayList<ArrayList<Port>>();	
+		ArrayList<ArrayList<Port>> allOutPorts = new ArrayList<ArrayList<Port>>();	
+		ArrayList<Port> componentOutPorts = new ArrayList<Port>();
+		ArrayList<BDD> componentOutBDDs = new ArrayList<BDD>();
 
 		 /* 
 		 * Output data are not associated to transitions. Here, will take the conjunction of all possible
@@ -157,17 +159,19 @@ public class DataEncoderImpl implements DataEncoder{
 		String outComponentType = outData.specType;
 		Iterable<BIPComponent> outComponentInstances = dataCoordinator.getBIPComponentInstances(outComponentType);
 		for (BIPComponent component: outComponentInstances){
-			ArrayList<Port> allOutPorts = new ArrayList<Port>();
 			/*
 			 * Take the disjunction of all possible ports of this component
 			 */
-			HelperFunctions.addAll(allOutPorts, dataCoordinator.getBehaviourByComponent(component).getEnforceablePorts());
-			componentOutPorts.add(allOutPorts);
-//			for (Port port : dataOutPorts){
-//				componentOutBDDs.add(behaviourEncoder.getBDDOfAPort(component, port.id));
-//			}
+			HelperFunctions.addAll(componentOutPorts, dataCoordinator.getBehaviourByComponent(component).getEnforceablePorts());
+			allOutPorts.add(componentOutPorts);
+			for (Port port : componentOutPorts){
+				componentOutBDDs.add(behaviourEncoder.getBDDOfAPort(component, port.id));
+			}
+			this.componentOutBDDs.add(componentOutBDDs);
+			componentOutBDDs.clear();
+			componentOutPorts.clear();
 		}
-		return componentOutPorts;
+		return allOutPorts;
 	}
 
 	private void createDataBDDNodes() throws BIPEngineException {
