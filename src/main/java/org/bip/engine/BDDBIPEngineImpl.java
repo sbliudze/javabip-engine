@@ -5,6 +5,8 @@ import java.util.Collection;
 import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 import net.sf.javabdd.BDD;
@@ -182,6 +184,7 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		return totalDisabledCombinationBdd;	
 	}
 
+	@SuppressWarnings("rawtypes")
 	public final void runOneIteration() throws BIPEngineException {
 
 		byte[] chosenInteraction;
@@ -314,21 +317,33 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		cubeMaximals.clear();
 		logger.info("ChosenInteraction: ");
 		for (int k = 0; k < chosenInteraction.length; k++)
-			logger.debug("{}",chosenInteraction[k]);
+			logger.info("{}",chosenInteraction[k]);
 		
-		/*
-		 * NEW STUFF
-		 * 
-		 * TODO: HAVE TO CREATE THE MAP: BIPComponent, port
-		 */
-		ArrayList<Port> interactionPorts = new ArrayList<Port>();
+		ArrayList<Port> portsExecuted = new ArrayList<Port>();
+		Iterable<Map<BIPComponent, Iterable<Port>>> allInteractions = new ArrayList<Map<BIPComponent,Iterable<Port>>>() ;
+//		ArrayList<Hashtable<BIPComponent, ArrayList<Port>>> allInteractions = new ArrayList<Hashtable<BIPComponent, ArrayList<Port>>>();
 		Hashtable<BIPComponent, ArrayList<Port>> oneInteraction = new Hashtable<BIPComponent, ArrayList<Port>>();
 		for (Integer i: positionsOfDVariables){
-//			BiDirectionalPair pair = dVariablesToPosition.get(i);
-//			interactionPorts.add((Port) pair.getFirst());
-//			interactionPorts.addAll((Collection<? extends Port>) pair.getSecond());
+			if (chosenInteraction[i]==1){
+				BiDirectionalPair pair = dVariablesToPosition.get(i);
+				BiDirectionalPair firstPair = (BiDirectionalPair) pair.getFirst();
+				BiDirectionalPair secondPair = (BiDirectionalPair) pair.getSecond();
+				ArrayList<Port> componentPorts = new ArrayList<Port>();
+				componentPorts.add((Port) firstPair.getSecond());
+				portsExecuted.add((Port) firstPair.getSecond());
+				oneInteraction.put((BIPComponent) firstPair.getFirst(), (ArrayList<Port>) componentPorts);
+				logger.info("Chosen Component: {}", firstPair.getFirst());
+				logger.info("Chosen Port: {}", componentPorts.get(0).id);
+				componentPorts.clear();
+				componentPorts.add((Port) secondPair.getSecond());
+				portsExecuted.add((Port) secondPair.getSecond());
+				oneInteraction.put((BIPComponent) secondPair.getFirst(), (ArrayList<Port>) componentPorts);
+				logger.info("Chosen Component: {}", secondPair.getFirst());
+				logger.info("Chosen Port: {}", componentPorts.get(0).id);
+			}
+			((List) allInteractions).add(oneInteraction);
+			oneInteraction.clear();
 		}
-
 		for (Enumeration<BIPComponent> componentsEnum = behaviourBDDs.keys(); componentsEnum.hasMoreElements(); ){
 			BIPComponent component = componentsEnum.nextElement();
 			logger.debug("Component: "+component.getName());
@@ -340,7 +355,7 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 			ArrayList <Port> enabledPorts = new ArrayList<Port>();
 			//TODO: Change! to executeInteractions
 			for (Port componentPort : componentPorts){
-				if(chosenInteraction[portToPosition.get(componentPort)]==1){
+				if(!portsExecuted.contains(componentPort) && chosenInteraction[portToPosition.get(componentPort)]==1){
 					enabledPorts.add(componentPort);
 				}
 			}
@@ -353,7 +368,11 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		}
 		
 		logger.info("*************************************************************************");
-		wrapper.executeComponents(chosenComponents, chosenPorts);
+		((List) allInteractions).add(chosenPorts);
+		wrapper.executeInteractions(allInteractions);
+//		portsExecuted.clear();
+		System.exit(0);
+//		wrapper.executeComponents(chosenComponents, chosenPorts);
 
 
 		solns.free();

@@ -186,7 +186,7 @@ public class DataEncoderImpl implements DataEncoder{
 	//							}		
 	////							portsToDisjunctionBDD.put(outPorts, disjunctionPorts);
 	//						}
-							
+							//TODO: FIX THIS AND ALSO TAKE THEIR DISJUNCTION
 							node = componentInBDDs.get(inPort).and(componentOutBDDs.get(outPort));
 							portsToDVarBDDMapping.put(inOutPortsPair, node);
 							/*
