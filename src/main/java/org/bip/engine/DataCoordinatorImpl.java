@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Hashtable;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -18,6 +19,7 @@ import org.bip.exceptions.BIPEngineException;
 import org.bip.glue.Accepts;
 import org.bip.glue.BIPGlue;
 import org.bip.glue.DataWire;
+import org.bip.glue.Requires;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -68,6 +70,8 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 	private DataEncoder dataEncoder = new DataEncoderImpl();
 	private BIPCoordinator BIPCoordinator = new BIPCoordinatorImpl();
 
+	private ArrayList<Requires> requires;
+
 	public DataCoordinatorImpl() {
 		BIPCoordinator.setInteractionExecutor(this);
 		dataEncoder.setDataCoordinator(this);
@@ -80,7 +84,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 	public void specifyGlue(BIPGlue glue) {
 		BIPCoordinator.specifyGlue(glue);
 		this.dataWires = glue.dataWires;
-		//this.accepts = glue.acceptConstraints;
+		this.requires = glue.requiresConstraints;
 		if (dataWires.isEmpty() || dataWires == null) {
 			logger.error("Data wires information not specified in XML file, although DataCoordinator is set as the wrapper");
 			try {
@@ -559,17 +563,33 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 	/**
 	 * For this component, find out which ports of it provide this dataOut
 	 * Independent of the instance of component
-	 * @param component
+	 * @param disabledComponent
 	 * @param dataOut
 	 * @return
 	 */
-
-//	private ArrayList<Port> getDataOutPorts(BIPComponent component, String dataOut) {
-//		ArrayList<Port> dataOutPorts = new ArrayList<Port>();
-//		Behaviour behaviour = componentBehaviourMapping.get(component);
+	private ArrayList<Port> getDataOutPorts(BIPComponent disabledComponent, Port decidingPort) {
+		ArrayList<Port> dataOutPorts = new ArrayList<Port>();
+		Iterator<Requires> requires = this.requires.iterator();
+		boolean found =false;
+		while (requires.hasNext() && !found){
+			Requires oneRequireRule = requires.next();
+			found = true;
+			if (oneRequireRule.effect.equals(decidingPort)){
+				List<List<Port>> requireRuleCauses= oneRequireRule.causes;
+				for (List<Port> orPorts : requireRuleCauses){
+					for (Port port : orPorts){
+						if (port.specType.equals(disabledComponent)){
+							dataOutPorts.add(port);
+						}
+					}
+				}
+			}
+		}
+		
+//		Iterable<Port> componentPorts = componentBehaviourMapping.get(component).getEnforceablePorts();
 //		// for each port of this component:
 //		// find the ports of other components that this port accepts
-//		for (Port port : behaviour.getEnforceablePorts()) {
+//		for (Port port : componentPorts) {
 //			Collection<Port> causePorts = new ArrayList<Port>();
 //			for (Accepts accept : accepts) {
 //				if (accept.effect.equals(port)) {
@@ -579,7 +599,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 //			}
 //			//for each port of other components
 //			//get the ones that require this dataOut
-//			//but! it must be don with their behaviour, not this one.
+//			//but! it must be done with their behaviour, not this one.
 //			for (Port causePort : causePorts) {
 //				ArrayList<Port> portsRequiringData = (ArrayList<Port>) behaviour.portsNeedingData(dataOut);
 //				if (portsRequiringData.contains(causePort)) {
@@ -587,8 +607,8 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 //				}
 //			}
 //		}
-//		return dataOutPorts;
-//	}
+		return dataOutPorts;
+	}
 
 	/**
 	 * Helper function that returns the registered component instances that correspond to a component type.
