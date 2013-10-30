@@ -117,7 +117,17 @@ public class DataEncoderImpl implements DataEncoder{
 		while (dataGlueSpec.hasNext()){
 			DataWire dataWire = dataGlueSpec.next();
 			Iterable<Port> componentInPorts = inPorts(dataWire.to);
+			for (Port port : componentInPorts){
+				logger.info("Data WireIn Ports: "+port);
+			}
+			logger.info("DATA WIREIN PORTS FOUND");
 			ArrayList<Port> componentOutPorts = outPorts(dataWire.from, componentInPorts.iterator().next());
+			logger.info("Data WireOut Ports size: "+ componentOutPorts.size());
+			System.exit(0);
+			for (Port port : componentOutPorts){
+				logger.info("Data WireOut Ports: "+port);
+			}
+			logger.info("DATA WIREOUT PORTS FOUND");
 			/*
 			 * Here take the cross product of in and out variables to create the d-variables for one data-wire
 			 * Store this in a Map with the ports as the key and the d-variable as a value.
@@ -253,6 +263,9 @@ public class DataEncoderImpl implements DataEncoder{
 			/*
 			 * Take the disjunction of all possible ports of this component
 			 */
+			logger.info("Component instance: "+component.getName());
+			logger.info("Deciding port: "+decidingPort);
+			logger.info("Get Data Out Ports size: "+ (dataCoordinator.getDataOutPorts(component, decidingPort)));
 			HelperFunctions.addAll(componentOutPorts, dataCoordinator.getDataOutPorts(component, decidingPort));
 //			allOutPorts.add(componentOutPorts);
 			for (Port port : componentOutPorts){

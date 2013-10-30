@@ -49,5 +49,5 @@ public interface DataCoordinator extends BIPEngine, InteractionExecutor {
 	 */
 	int getNoStates();
 	
-	ArrayList<Port> getDataOutPorts(BIPComponent disabledComponent, Port decidingPort);
+	Iterable<Port> getDataOutPorts(BIPComponent disabledComponent, Port decidingPort);
 }

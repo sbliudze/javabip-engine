@@ -96,11 +96,11 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 				e.printStackTrace();
 			}
 		} else {
-//			try {
-//				dataEncoder.specifyDataGlue(dataWires);
-//			} catch (BIPEngineException e) {
-//				e.printStackTrace();
-//			}
+			try {
+				dataEncoder.specifyDataGlue(dataWires);
+			} catch (BIPEngineException e) {
+				e.printStackTrace();
+			}
 		}
 		registrationFinished = true;
 	}
@@ -203,12 +203,12 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 			return;
 		}
 		if (!disabledComponents.iterator().hasNext()){
-			try {
-				logger.error("No disabled components specified in informSpecific. Iterable of disabledComponents is empty.");
-				throw new BIPEngineException("No disabled components specified in informSpecific. Iterable of disabledComponents is empty.");
-			} catch (BIPEngineException e) {
-				e.printStackTrace();
-			}	
+//			try {
+			logger.warn("No disabled components specified in informSpecific. Iterable of disabledComponents is empty.");
+//				throw new BIPEngineException("No disabled components specified in informSpecific. Iterable of disabledComponents is empty.");
+//			} catch (BIPEngineException e) {
+//				e.printStackTrace();
+//			}	
 		}
 		else if(!registeredComponents.contains(decidingComponent)){
 			try {
@@ -640,18 +640,19 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 	 * @param dataOut
 	 * @return
 	 */
-	public ArrayList<Port> getDataOutPorts(BIPComponent disabledComponent, Port decidingPort) {
+	public Iterable<Port> getDataOutPorts(BIPComponent disabledComponent, Port decidingPort) {
 		ArrayList<Port> dataOutPorts = new ArrayList<Port>();
-		Iterator<Requires> requires = this.requires.iterator();
-		boolean found =false;
-		while (requires.hasNext() && !found){
-			Requires oneRequireRule = requires.next();
-			found = true;
-			if (oneRequireRule.effect.equals(decidingPort)){
+		ArrayList<Requires> requires = this.requires;
+//		boolean found =false;
+		logger.info("Requires size: "+requires.size());
+		for (Requires oneRequireRule: requires){
+//			found = true;
+			if (oneRequireRule.effect.id.equals(decidingPort.id) && oneRequireRule.effect.specType.equals(decidingPort.specType)){
+				logger.info("One Require rule found");
 				List<List<Port>> requireRuleCauses= oneRequireRule.causes;
 				for (List<Port> orPorts : requireRuleCauses){
 					for (Port port : orPorts){
-						if (port.specType.equals(disabledComponent)){
+						if (port.specType.equals(disabledComponent.getName())){
 							dataOutPorts.add(port);
 						}
 					}
