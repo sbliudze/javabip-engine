@@ -75,6 +75,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 		BIPCoordinator.setInteractionExecutor(this);
 		dataEncoder.setDataCoordinator(this);
 		dataEncoder.setBehaviourEncoder(BIPCoordinator.getBehaviourEncoderInstance());
+		dataEncoder.setEngine(BIPCoordinator.getBDDBIPEngineInstance());
 	}
 	
 	/**

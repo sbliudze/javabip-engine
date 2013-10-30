@@ -5,7 +5,6 @@ import java.util.Collection;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
 
 import net.sf.javabdd.BDD;
 
@@ -114,10 +113,11 @@ public class DataEncoderImpl implements DataEncoder{
 		 */
 		int initialSystemBDDSize = dataCoordinator.getNoPorts() + dataCoordinator.getNoStates();
 		int currentSystemBddSize = initialSystemBDDSize;
+		logger.info("CurrentSystemBDDSize: "+ currentSystemBddSize);
 		while (dataGlueSpec.hasNext()){
 			DataWire dataWire = dataGlueSpec.next();
 			Iterable<Port> componentInPorts = inPorts(dataWire.to);
-			ArrayList<ArrayList<Port>> componentOutPorts = outPorts(dataWire.from);
+			ArrayList<Port> componentOutPorts = outPorts(dataWire.from, componentInPorts.iterator().next());
 			/*
 			 * Here take the cross product of in and out variables to create the d-variables for one data-wire
 			 * Store this in a Map with the ports as the key and the d-variable as a value.
@@ -126,7 +126,7 @@ public class DataEncoderImpl implements DataEncoder{
 			 */
 			Hashtable<ArrayList<Port>, BDD> portsToDisjunctionBDD = new Hashtable<ArrayList<Port>, BDD>();
 			for (Port inPort: componentInPorts){
-				for (ArrayList<Port> outPorts :componentOutPorts){
+				for (Port outPorts :componentOutPorts){
 //					//TODO: Ports do not have component holder information, Change below 
 					BiDirectionalPair inOutPortsPair = new BiDirectionalPair(inPort, outPorts);
 					if (!portsToDVarBDDMapping.containsKey(inOutPortsPair)){
@@ -134,7 +134,9 @@ public class DataEncoderImpl implements DataEncoder{
 						 * Does it start from 0 or 1 ? 
 						 * if from 0 increase later
 						 */
-						currentSystemBddSize++;
+						if (engine.getBDDManager().varNum() < currentSystemBddSize+1){
+							engine.getBDDManager().setVarNum(currentSystemBddSize+1);
+						}
 						BDD node = engine.getBDDManager().ithVar(currentSystemBddSize);
 						BDD disjunctionPorts = engine.getBDDManager().zero();
 						if (!portsToDisjunctionBDD.contains(outPorts)){
@@ -144,7 +146,7 @@ public class DataEncoderImpl implements DataEncoder{
 								disjunctionPorts.free();
 								disjunctionPorts= aux;
 							}		
-							portsToDisjunctionBDD.put(outPorts, disjunctionPorts);
+//							portsToDisjunctionBDD.put(outPorts, disjunctionPorts);
 						}
 						
 						node = componentInBDDs.get(inPort).and(portsToDisjunctionBDD.get(outPorts));
@@ -164,6 +166,7 @@ public class DataEncoderImpl implements DataEncoder{
 							}
 						}
 					}
+					currentSystemBddSize++;
 				}
 			}
 		}
@@ -190,7 +193,6 @@ public class DataEncoderImpl implements DataEncoder{
 			Iterable<Port> dataInPorts = dataCoordinator.getBehaviourByComponent(component).portsNeedingData(inData.id);
 			componentInPorts.addAll((Collection<? extends Port>) dataInPorts);
 			for (Port port : dataInPorts){
-				String portId=port.id;
 				if (behaviourEncoder.getBDDOfAPort(component, port.id)==null){
 					logger.error("BDD for inPort in DataEncoder was not found. Possible reason: specifyDataGlue is called before registration of components has finished.");
 					throw new BIPEngineException("BDD for inPort in DataEncoder was not found. Possible reason: specifyDataGlue is called before registration of components has finished.");
@@ -203,12 +205,42 @@ public class DataEncoderImpl implements DataEncoder{
 		return componentInPorts;
 	}
 	
-	private ArrayList<ArrayList<Port>> outPorts (Port outData) throws BIPEngineException {
+//	private ArrayList<ArrayList<Port>> outPorts (Port outData) throws BIPEngineException {
+//		/*
+//		 * Store in the Arraylist below all the possible in ports.
+//		 * Later to take their cross product.
+//		 */
+//		ArrayList<ArrayList<Port>> allOutPorts = new ArrayList<ArrayList<Port>>();	
+//		ArrayList<Port> componentOutPorts = new ArrayList<Port>();
+//		ArrayList<BDD> componentOutBDDs = new ArrayList<BDD>();
+//		 /* 
+//		 * Output data are not associated to transitions. Here, will take the conjunction of all possible
+//		 * transitions of a component.
+//		 */
+//		String outComponentType = outData.specType;
+//		Iterable<BIPComponent> outComponentInstances = dataCoordinator.getBIPComponentInstances(outComponentType);
+//		for (BIPComponent component: outComponentInstances){
+//			/*
+//			 * Take the disjunction of all possible ports of this component
+//			 */
+//			HelperFunctions.addAll(componentOutPorts, dataCoordinator.getBehaviourByComponent(component).getEnforceablePorts());
+//			allOutPorts.add(componentOutPorts);
+//			for (Port port : componentOutPorts){
+//				componentOutBDDs.add(behaviourEncoder.getBDDOfAPort(component, port.id));
+//			}
+//			this.componentOutBDDs.put(componentOutPorts, componentOutBDDs);
+//			componentOutBDDs.clear();
+//			componentOutPorts.clear();
+//		}
+//		return allOutPorts;
+//	}
+//	
+	private ArrayList<Port> outPorts (Port outData, Port decidingPort) throws BIPEngineException {
 		/*
 		 * Store in the Arraylist below all the possible in ports.
 		 * Later to take their cross product.
 		 */
-		ArrayList<ArrayList<Port>> allOutPorts = new ArrayList<ArrayList<Port>>();	
+//		ArrayList<ArrayList<Port>> allOutPorts = new ArrayList<ArrayList<Port>>();	
 		ArrayList<Port> componentOutPorts = new ArrayList<Port>();
 		ArrayList<BDD> componentOutBDDs = new ArrayList<BDD>();
 		 /* 
@@ -221,16 +253,16 @@ public class DataEncoderImpl implements DataEncoder{
 			/*
 			 * Take the disjunction of all possible ports of this component
 			 */
-			HelperFunctions.addAll(componentOutPorts, dataCoordinator.getBehaviourByComponent(component).getEnforceablePorts());
-			allOutPorts.add(componentOutPorts);
+			HelperFunctions.addAll(componentOutPorts, dataCoordinator.getDataOutPorts(component, decidingPort));
+//			allOutPorts.add(componentOutPorts);
 			for (Port port : componentOutPorts){
 				componentOutBDDs.add(behaviourEncoder.getBDDOfAPort(component, port.id));
 			}
 			this.componentOutBDDs.put(componentOutPorts, componentOutBDDs);
 			componentOutBDDs.clear();
-			componentOutPorts.clear();
+//			componentOutPorts.clear();
 		}
-		return allOutPorts;
+		return componentOutPorts;
 	}
 
 

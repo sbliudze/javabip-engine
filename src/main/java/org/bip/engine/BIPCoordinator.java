@@ -88,5 +88,6 @@ public interface BIPCoordinator extends BIPEngine, InteractionExecutor {
     void informSpecific(BDD disabledCombination);
 	
     BehaviourEncoder getBehaviourEncoderInstance();
+    BDDBIPEngine getBDDBIPEngineInstance();
 	
 }

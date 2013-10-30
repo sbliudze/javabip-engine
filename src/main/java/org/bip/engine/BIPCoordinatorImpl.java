@@ -597,6 +597,10 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 		return behenc;
 	}
 	
+	public BDDBIPEngine getBDDBIPEngineInstance(){
+		return engine;
+	}
+	
 	public void setInteractionExecutor(InteractionExecutor interactionExecutor){
 		this.interactionExecutor = interactionExecutor;
 	}
