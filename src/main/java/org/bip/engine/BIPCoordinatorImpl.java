@@ -593,6 +593,10 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 		return componentBehaviourMapping.get(component);
 	}
 	
+	public BehaviourEncoder getBehaviourEncoderInstance(){
+		return behenc;
+	}
+	
 	public void setInteractionExecutor(InteractionExecutor interactionExecutor){
 		this.interactionExecutor = interactionExecutor;
 	}

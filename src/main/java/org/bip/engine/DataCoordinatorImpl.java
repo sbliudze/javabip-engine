@@ -76,6 +76,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 	public DataCoordinatorImpl() {
 		BIPCoordinator.setInteractionExecutor(this);
 		dataEncoder.setDataCoordinator(this);
+		dataEncoder.setBehaviourEncoder(BIPCoordinator.getBehaviourEncoderInstance());
 	}
 	
 	/**
@@ -113,10 +114,8 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 				throw new BIPEngineException("Registering component must not be null.");
 			}
 			if (registeredComponents.contains(component)) {
-
 				logger.error("Component " + component.getName() + " has already registered before.");
 				throw new BIPEngineException("Component " + component.getName() + " has already registered before.");
-
 			} else {
 				registeredComponents.add(component);
 				componentBehaviourMapping.put(component, behaviour);

@@ -190,7 +190,14 @@ public class DataEncoderImpl implements DataEncoder{
 			Iterable<Port> dataInPorts = dataCoordinator.getBehaviourByComponent(component).portsNeedingData(inData.id);
 			componentInPorts.addAll((Collection<? extends Port>) dataInPorts);
 			for (Port port : dataInPorts){
+				String portId=port.id;
+				if (behaviourEncoder.getBDDOfAPort(component, port.id)==null){
+					logger.error("BDD for inPort in DataEncoder was not found. Possible reason: specifyDataGlue is called before registration of components has finished.");
+					throw new BIPEngineException("BDD for inPort in DataEncoder was not found. Possible reason: specifyDataGlue is called before registration of components has finished.");
+				}
+				else{
 				componentInBDDs.put(port, behaviourEncoder.getBDDOfAPort(component, port.id));
+				}
 			}
 		}
 		return componentInPorts;
