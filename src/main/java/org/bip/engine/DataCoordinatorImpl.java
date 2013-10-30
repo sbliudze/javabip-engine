@@ -584,29 +584,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 					}
 				}
 			}
-		}
-		
-//		Iterable<Port> componentPorts = componentBehaviourMapping.get(component).getEnforceablePorts();
-//		// for each port of this component:
-//		// find the ports of other components that this port accepts
-//		for (Port port : componentPorts) {
-//			Collection<Port> causePorts = new ArrayList<Port>();
-//			for (Accepts accept : accepts) {
-//				if (accept.effect.equals(port)) {
-//					causePorts = accept.causes;
-//					break;
-//				}
-//			}
-//			//for each port of other components
-//			//get the ones that require this dataOut
-//			//but! it must be done with their behaviour, not this one.
-//			for (Port causePort : causePorts) {
-//				ArrayList<Port> portsRequiringData = (ArrayList<Port>) behaviour.portsNeedingData(dataOut);
-//				if (portsRequiringData.contains(causePort)) {
-//					dataOutPorts.add(port);
-//				}
-//			}
-//		}
+		}			
 		return dataOutPorts;
 	}
 
