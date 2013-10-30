@@ -6,6 +6,7 @@ import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.bip.api.BIPComponent;
 import org.bip.api.BIPEngine;
@@ -350,7 +351,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 
 	private void doInformSpecific(BIPComponent component) throws BIPEngineException {
 		// mapping port <-> data it needs for computing guards
-		Map<Port, Iterable<Data>> portToDataInForGuard = componentBehaviourMapping.get(component).portToDataInForGuard();
+		Map<Port, Set<Data>> portToDataInForGuard = componentBehaviourMapping.get(component).portToDataInForGuard();
 		// for each undecided port of each component :
 		for (Port port : componentUndecidedPorts.get(component)) {
 			// get list of DataIn needed for its guards
