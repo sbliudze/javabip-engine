@@ -143,7 +143,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 
 	public void inform(BIPComponent component, String currentState, ArrayList<Port> disabledPorts) {
 		// for each component store its undecided ports
-		componentUndecidedPorts.put(component, getUndecidedPorts(component, disabledPorts));
+		componentUndecidedPorts.put(component, getUndecidedPorts(component, currentState, disabledPorts));
 		// easy implementation: when all the components have informed
 		// TODO the data wiring process does not need all the components having
 		// informed
@@ -359,9 +359,16 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 		Map<Port, Set<Data>> portToDataInForGuard = componentBehaviourMapping.get(component).portToDataInForGuard();
 		// for each undecided port of each component :
 		for (Port port : componentUndecidedPorts.get(component)) {
+			System.out.println("For component "+ component.getName()+" and port "+ port.id);
 			// get list of DataIn needed for its guards
 			Iterable<Data> dataIn = portToDataInForGuard.get(port);
 			
+			if (!dataIn.iterator().hasNext())
+			{
+				//if the data is empty, then the port is enabled. just send it.
+				this.informSpecific(component, port, null);
+				continue;
+			}
 			// for each data its different evaluations
 			Hashtable<String, ArrayList<Object>> dataEvaluation = new Hashtable<String, ArrayList<Object>>();
 			//map dataName <-> mapping dataValue - components giving this value 
@@ -518,21 +525,25 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 		return result;
 	}
 
-	private ArrayList<Port> getUndecidedPorts(BIPComponent component, ArrayList<Port> disabledPorts) {
+	private ArrayList<Port> getUndecidedPorts(BIPComponent component, String currentState, ArrayList<Port> disabledPorts) {
+		System.out.println("UNDECIDED PORTS FOR  "+ component.getName());
 		ArrayList<Port> undecidedPorts = new ArrayList<Port>();
 		Behaviour behaviour = componentBehaviourMapping.get(component);
 		boolean portIsDisabled = false;
 		// for each port that we have
-		for (Port port : behaviour.getEnforceablePorts()) {
+		ArrayList<Port> currentPorts = (ArrayList<Port>) behaviour.getStateToPorts().get(currentState);
+		for (Port port : currentPorts) {
 			for (Port disabledPort : disabledPorts) {
+				System.out.println("For component "+ component.getName()+ " disabled port: "+ disabledPort);
 				// if it is equal to one of the disabled ports, we mark it as
 				// disabled and do not add to the collection of undecided
-				if (port.equals(disabledPort)) {
+				if (port.id.equals(disabledPort.id)) {
 					portIsDisabled = true;
 					break;
 				}
 			}
 			if (!portIsDisabled) {
+				System.out.println("For component "+ component.getName()+ " undecided port: "+ port);
 				undecidedPorts.add(port);
 			}
 			portIsDisabled = false;
