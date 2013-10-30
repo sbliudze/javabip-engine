@@ -70,6 +70,8 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 	private BIPCoordinator BIPCoordinator = new BIPCoordinatorImpl();
 
 	private ArrayList<Requires> requires;
+	
+	private boolean registrationFinished = false;
 
 	public DataCoordinatorImpl() {
 		BIPCoordinator.setInteractionExecutor(this);
@@ -98,6 +100,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 				e.printStackTrace();
 			}
 		}
+		registrationFinished = true;
 	}
 
 	public void register(BIPComponent component, Behaviour behaviour) {
@@ -145,8 +148,9 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 		// easy implementation: when all the components have informed
 		// TODO the data wiring process does not need all the components having
 		// informed
-
+		while (!registrationFinished){;}
 		try {
+			System.out.println("REGISTERED "+registrationFinished);
 			doInformSpecific(component);
 		} catch (BIPEngineException e) {
 			e.printStackTrace();
