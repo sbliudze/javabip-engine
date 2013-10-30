@@ -1,10 +1,10 @@
 package org.bip.engine;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 
 import net.sf.javabdd.BDD;
 
@@ -29,7 +29,7 @@ public class DataEncoderImpl implements DataEncoder{
 	Iterator<DataWire> dataGlueSpec;
 	Map <BiDirectionalPair, BDD> portsToDVarBDDMapping = new Hashtable<BiDirectionalPair, BDD>();
 	private Logger logger = LoggerFactory.getLogger(CurrentStateEncoderImpl.class);
-	Map<ArrayList<Port>,ArrayList<BDD>> componentOutBDDs = new Hashtable<ArrayList<Port>, ArrayList<BDD>>();
+	Map<Port,BDD> componentOutBDDs = new Hashtable<Port, BDD>();
 	Map<Port, BDD> componentInBDDs = new Hashtable<Port, BDD>();
 	
 	/*
@@ -63,9 +63,17 @@ public class DataEncoderImpl implements DataEncoder{
 		/*
 		 * Find corresponding d-variable
 		 */
+		BiDirectionalPair inComponentPortPair = new BiDirectionalPair(decidingComponent, decidingPort);
 		for (BIPComponent component : disabledComponents){
-			BiDirectionalPair portsPair = new BiDirectionalPair(decidingPort, dataCoordinator.getBehaviourByComponent(component).getEnforceablePorts());
-			result.orWith(portsToDVarBDDMapping.get(portsPair).not());
+			ArrayList<Port> componentPorts = (ArrayList<Port>) dataCoordinator.getBehaviourByComponent(component).getEnforceablePorts();
+			for (Port port: componentPorts){
+				BiDirectionalPair outComponentPortPair = new BiDirectionalPair(component, port);
+				BiDirectionalPair portsPair = new BiDirectionalPair(inComponentPortPair, outComponentPortPair);
+				if (portsToDVarBDDMapping.containsKey(portsPair)){
+					result.orWith(portsToDVarBDDMapping.get(portsPair).not());
+				}
+				
+			}
 		}
 		return result;
 	}
@@ -116,78 +124,101 @@ public class DataEncoderImpl implements DataEncoder{
 		logger.info("CurrentSystemBDDSize: "+ currentSystemBddSize);
 		while (dataGlueSpec.hasNext()){
 			DataWire dataWire = dataGlueSpec.next();
-			Iterable<Port> componentInPorts = inPorts(dataWire.to);
-			for (Port port : componentInPorts){
-				logger.info("Data WireIn Ports: "+port);
+//			Iterable<Port> componentInPorts = inPorts(dataWire.to);
+			Map<BIPComponent, Iterable<Port>> componentToInPorts =inPorts(dataWire.to);
+			Set<BIPComponent> components = componentToInPorts.keySet();
+			Map<Port, Map<BIPComponent, Iterable<Port>>> componentOutPorts = new Hashtable<Port, Map<BIPComponent, Iterable<Port>>> ();
+			for (BIPComponent component : components){
+				for (Port port : componentToInPorts.get(component)){
+					componentOutPorts.putAll(outPorts(dataWire.from, port));
+				}
+//				logger.info("Data WireIn Ports: "+componentToInPorts.get(component)+ "of component "+ component);
 			}
-			logger.info("DATA WIREIN PORTS FOUND");
-			ArrayList<Port> componentOutPorts = outPorts(dataWire.from, componentInPorts.iterator().next());
+//			Iterator<Port> inPorts= componentInPorts.iterator();
+
+//			while (inPorts.hasNext()){
+//				componentOutPorts.putAll(outPorts(dataWire.from, inPorts.next()));
+////				Map<Port, ArrayList<Port>> temporaryPorts= outPorts(dataWire.from, inPorts.next());
+////				if (!componentOutPorts)
+////				componentOutPorts.addAll(temporaryPorts);
+//			}		
 			logger.info("Data WireOut Ports size: "+ componentOutPorts.size());
-			System.exit(0);
-			for (Port port : componentOutPorts){
-				logger.info("Data WireOut Ports: "+port);
-			}
-			logger.info("DATA WIREOUT PORTS FOUND");
+//			for (Port port : componentOutPorts){
+//				logger.info("Data WireOut Ports: "+port);
+//			}
 			/*
 			 * Here take the cross product of in and out variables to create the d-variables for one data-wire
 			 * Store this in a Map with the ports as the key and the d-variable as a value.
 			 * 
 			 * Before creating the d-variable check for dublicates in the Map. If this does not exist then create it.
 			 */
-			Hashtable<ArrayList<Port>, BDD> portsToDisjunctionBDD = new Hashtable<ArrayList<Port>, BDD>();
-			for (Port inPort: componentInPorts){
-				for (Port outPorts :componentOutPorts){
-//					//TODO: Ports do not have component holder information, Change below 
-					BiDirectionalPair inOutPortsPair = new BiDirectionalPair(inPort, outPorts);
-					if (!portsToDVarBDDMapping.containsKey(inOutPortsPair)){
-						/* Create new variable in the BDD manager for the d-variables.
-						 * Does it start from 0 or 1 ? 
-						 * if from 0 increase later
-						 */
-						if (engine.getBDDManager().varNum() < currentSystemBddSize+1){
-							engine.getBDDManager().setVarNum(currentSystemBddSize+1);
-						}
-						BDD node = engine.getBDDManager().ithVar(currentSystemBddSize);
-						BDD disjunctionPorts = engine.getBDDManager().zero();
-						if (!portsToDisjunctionBDD.contains(outPorts)){
-							ArrayList<BDD> outBDDs = componentOutBDDs.get(outPorts);
-							for (BDD portBDD: outBDDs){
-								BDD aux = disjunctionPorts.or(portBDD);
-								disjunctionPorts.free();
-								disjunctionPorts= aux;
-							}		
-//							portsToDisjunctionBDD.put(outPorts, disjunctionPorts);
-						}
-						
-						node = componentInBDDs.get(inPort).and(portsToDisjunctionBDD.get(outPorts));
-						portsToDVarBDDMapping.put(inOutPortsPair, node);
-						/*
-						 * Store the position of the d-variables in the BDD manager
-						 */
-						engine.getdVariablesToPosition().put(currentSystemBddSize, inOutPortsPair);
-						engine.getPositionsOfDVariables().add(currentSystemBddSize);
-						if (portsToDVarBDDMapping.get(inOutPortsPair)== null || portsToDVarBDDMapping.get(inOutPortsPair).isZero()){
-							try {
-								logger.error("Single node BDD for d variable for ports "+ inPort.id+" and "+ outPorts.toString()+ " is equal to null");
-								throw new BIPEngineException("Single node BDD for d variable for ports "+ inPort.id+" and "+ outPorts.toString()+ " is equal to null");
-							} catch (BIPEngineException e) {
-								e.printStackTrace();
-								throw e;
+//			Hashtable<ArrayList<Port>, BDD> portsToDisjunctionBDD = new Hashtable<ArrayList<Port>, BDD>();
+			for (BIPComponent component : components){
+				for (Port inPort : componentToInPorts.get(component)){
+//					Port inPort= port;
+					Map<BIPComponent, Iterable<Port>> suitableOutPorts = componentOutPorts.get(inPort);
+					Set<BIPComponent> componentsOut = suitableOutPorts.keySet();
+					
+					for (BIPComponent componentOut: componentsOut){
+						for (Port outPort: suitableOutPorts.get(componentOut)){
+//						Port outPort = ;
+						BiDirectionalPair inComponentPortPair = new BiDirectionalPair(component, inPort);
+						BiDirectionalPair outComponentPortPair = new BiDirectionalPair(componentOut, outPort);
+						BiDirectionalPair inOutPortsPair = new BiDirectionalPair(inComponentPortPair, outComponentPortPair);
+						if (!portsToDVarBDDMapping.containsKey(inOutPortsPair)){
+							
+							/* Create new variable in the BDD manager for the d-variables.
+							 * Does it start from 0 or 1 ? 
+							 * if from 0 increase later
+							 */
+							if (engine.getBDDManager().varNum() < currentSystemBddSize+1){
+								engine.getBDDManager().setVarNum(currentSystemBddSize+1);
+							}
+							BDD node = engine.getBDDManager().ithVar(currentSystemBddSize);
+							logger.info("Create D-variable BDD node of Ports-pair: "+inPort+" "+outPort);
+	//						BDD disjunctionPorts = engine.getBDDManager().zero();
+	//						if (!portsToDisjunctionBDD.contains(outPort)){
+	//							ArrayList<BDD> outBDDs = componentOutBDDs.get(outPort);
+	//							for (BDD portBDD: outBDDs){
+	//								BDD aux = disjunctionPorts.or(portBDD);
+	//								disjunctionPorts.free();
+	//								disjunctionPorts= aux;
+	//							}		
+	////							portsToDisjunctionBDD.put(outPorts, disjunctionPorts);
+	//						}
+							
+							node = componentInBDDs.get(inPort).and(componentOutBDDs.get(outPort));
+							portsToDVarBDDMapping.put(inOutPortsPair, node);
+							/*
+							 * Store the position of the d-variables in the BDD manager
+							 */
+							engine.getdVariablesToPosition().put(currentSystemBddSize, inOutPortsPair);
+							engine.getPositionsOfDVariables().add(currentSystemBddSize);
+							if (portsToDVarBDDMapping.get(inOutPortsPair)== null || portsToDVarBDDMapping.get(inOutPortsPair).isZero()){
+								try {
+									logger.error("Single node BDD for d variable for ports "+ inPort.id+" and "+ outPort.toString()+ " is equal to null");
+									throw new BIPEngineException("Single node BDD for d variable for ports "+ inPort.id+" and "+ outPort.toString()+ " is equal to null");
+								} catch (BIPEngineException e) {
+									e.printStackTrace();
+									throw e;
+								}
 							}
 						}
-					}
 					currentSystemBddSize++;
+				}
+					}
 				}
 			}
 		}
 	}
 	
-	private Iterable<Port> inPorts(Port inData) throws BIPEngineException {
+	private Map<BIPComponent, Iterable<Port>> inPorts(Port inData) throws BIPEngineException {
 		/*
 		 * Store in the Arraylist below all the possible out ports.
 		 * Later to take their cross product.
 		 */
-		ArrayList<Port> componentInPorts = new ArrayList<Port>();
+		Map<BIPComponent, Iterable<Port>> componentInPortMapping = new Hashtable<BIPComponent, Iterable<Port>>();
+//		ArrayList<Port> componentInPorts = new ArrayList<Port>();
 		/*
 		 * IMPORTANT
 		 * These are not ports actually. In the specType the type of the component is stored.
@@ -201,8 +232,10 @@ public class DataEncoderImpl implements DataEncoder{
 		Iterable<BIPComponent> inComponentInstances = dataCoordinator.getBIPComponentInstances(inComponentType);
 		for (BIPComponent component: inComponentInstances){
 			Iterable<Port> dataInPorts = dataCoordinator.getBehaviourByComponent(component).portsNeedingData(inData.id);
-			componentInPorts.addAll((Collection<? extends Port>) dataInPorts);
+			componentInPortMapping.put(component, dataInPorts);
+//			componentInPorts.addAll((Collection<? extends Port>) dataInPorts);
 			for (Port port : dataInPorts){
+//				componentInPortMapping.put(component, port);
 				if (behaviourEncoder.getBDDOfAPort(component, port.id)==null){
 					logger.error("BDD for inPort in DataEncoder was not found. Possible reason: specifyDataGlue is called before registration of components has finished.");
 					throw new BIPEngineException("BDD for inPort in DataEncoder was not found. Possible reason: specifyDataGlue is called before registration of components has finished.");
@@ -212,7 +245,7 @@ public class DataEncoderImpl implements DataEncoder{
 				}
 			}
 		}
-		return componentInPorts;
+		return componentInPortMapping;
 	}
 	
 //	private ArrayList<ArrayList<Port>> outPorts (Port outData) throws BIPEngineException {
@@ -245,37 +278,46 @@ public class DataEncoderImpl implements DataEncoder{
 //		return allOutPorts;
 //	}
 //	
-	private ArrayList<Port> outPorts (Port outData, Port decidingPort) throws BIPEngineException {
+	//TODO: Add also decidingComponent (?)
+	private Map<Port, Map<BIPComponent, Iterable<Port>>> outPorts (Port outData, Port decidingPort) throws BIPEngineException {
 		/*
 		 * Store in the Arraylist below all the possible in ports.
 		 * Later to take their cross product.
 		 */
 //		ArrayList<ArrayList<Port>> allOutPorts = new ArrayList<ArrayList<Port>>();	
-		ArrayList<Port> componentOutPorts = new ArrayList<Port>();
-		ArrayList<BDD> componentOutBDDs = new ArrayList<BDD>();
+//		ArrayList<Port> componentOutPorts = new ArrayList<Port>();
+		Hashtable<Port, Map<BIPComponent, Iterable<Port>>> componentInToOutPorts = new Hashtable<Port, Map<BIPComponent, Iterable<Port>>>();
+//		ArrayList<BDD> componentOutBDDs = new ArrayList<BDD>();
 		 /* 
 		 * Output data are not associated to transitions. Here, will take the conjunction of all possible
 		 * transitions of a component.
 		 */
 		String outComponentType = outData.specType;
 		Iterable<BIPComponent> outComponentInstances = dataCoordinator.getBIPComponentInstances(outComponentType);
+		Map<BIPComponent, Iterable<Port>> componentToPort = new Hashtable<BIPComponent, Iterable<Port>>();
 		for (BIPComponent component: outComponentInstances){
 			/*
 			 * Take the disjunction of all possible ports of this component
 			 */
 			logger.info("Component instance: "+component.getName());
 			logger.info("Deciding port: "+decidingPort);
-			logger.info("Get Data Out Ports size: "+ (dataCoordinator.getDataOutPorts(component, decidingPort)));
-			HelperFunctions.addAll(componentOutPorts, dataCoordinator.getDataOutPorts(component, decidingPort));
+			
+			ArrayList<Port> componentOutPorts = (ArrayList<Port>) dataCoordinator.getDataOutPorts(component, decidingPort);
+			logger.info("Get Data Out Ports size: "+ (componentOutPorts.size()));
+			componentToPort.put(component, componentOutPorts);
 //			allOutPorts.add(componentOutPorts);
 			for (Port port : componentOutPorts){
-				componentOutBDDs.add(behaviourEncoder.getBDDOfAPort(component, port.id));
+//				componentToPort.put(component, port);
+				this.componentOutBDDs.put(port, behaviourEncoder.getBDDOfAPort(component, port.id));
+//				componentOutBDDs.add(behaviourEncoder.getBDDOfAPort(component, port.id));
 			}
-			this.componentOutBDDs.put(componentOutPorts, componentOutBDDs);
-			componentOutBDDs.clear();
+//			this.componentOutBDDs.put(componentOutPorts, componentOutBDDs);
+//			componentOutBDDs.clear();
 //			componentOutPorts.clear();
+			
 		}
-		return componentOutPorts;
+		componentInToOutPorts.put(decidingPort, componentToPort);
+		return componentInToOutPorts;
 	}
 
 
