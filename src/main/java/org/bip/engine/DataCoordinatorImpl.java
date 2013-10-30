@@ -70,6 +70,8 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 	private BIPCoordinator BIPCoordinator = new BIPCoordinatorImpl();
 
 	private ArrayList<Requires> requires;
+	
+	private boolean registrationFinished = false;
 
 	public DataCoordinatorImpl() {
 		BIPCoordinator.setInteractionExecutor(this);
@@ -94,12 +96,13 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 				e.printStackTrace();
 			}
 		} else {
-			try {
-				dataEncoder.specifyDataGlue(dataWires);
-			} catch (BIPEngineException e) {
-				e.printStackTrace();
-			}
+//			try {
+//				dataEncoder.specifyDataGlue(dataWires);
+//			} catch (BIPEngineException e) {
+//				e.printStackTrace();
+//			}
 		}
+		registrationFinished = true;
 	}
 
 	public void register(BIPComponent component, Behaviour behaviour) {
@@ -145,7 +148,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 		// easy implementation: when all the components have informed
 		// TODO the data wiring process does not need all the components having
 		// informed
-
+		while (!registrationFinished){;}
 		try {
 			doInformSpecific(component);
 		} catch (BIPEngineException e) {
@@ -464,6 +467,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 					if (wire.isIncoming(inDataItem.name(), componentBehaviourMapping.get(component).getComponentType())) {
 						//for each component of this type, call getData
 						for (BIPComponent aComponent : getBIPComponentInstances(wire.from.specType)) {
+							System.out.println("For component "+ aComponent.getName()+" and data "+ inDataItem.name());
 							Object inValue = aComponent.getData(wire.from.id, inDataItem.type());
 							dataValues.add(inValue);
 							
@@ -484,7 +488,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 			ArrayList<Map<String, Object>> dataTable = (ArrayList<Map<String, Object>>) getDataValueTable(dataEvaluation);
 			//the result provided must have the same order - put comment
 			ArrayList<Boolean> portActive = (ArrayList<Boolean>) component.checkEnabledness(port, dataTable);
-			
+			System.out.println(portActive);
 //			HashMap<BIPComponent, Iterable<Port>> disabledCombinations = new HashMap<BIPComponent, Iterable<Port>>();
 			for (int i = 0; i < portActive.size(); i++) {
 				ArrayList<BIPComponent> disabledComponents = new ArrayList<BIPComponent>();
@@ -505,6 +509,8 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 					}
 				}
 //				this.informSpecific(component, port, disabledCombinations);
+				System.out.println(disabledComponents);
+
 				this.informSpecific(component, port, disabledComponents);
 			}
 
@@ -611,7 +617,6 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 		ArrayList<Port> currentPorts = (ArrayList<Port>) behaviour.getStateToPorts().get(currentState);
 		for (Port port : currentPorts) {
 			for (Port disabledPort : disabledPorts) {
-				System.out.println("For component "+ component.getName()+ " disabled port: "+ disabledPort);
 				// if it is equal to one of the disabled ports, we mark it as
 				// disabled and do not add to the collection of undecided
 				if (port.id.equals(disabledPort.id)) {
