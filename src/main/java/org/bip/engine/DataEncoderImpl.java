@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 
 import net.sf.javabdd.BDD;
 
@@ -50,6 +51,7 @@ public class DataEncoderImpl implements DataEncoder{
 	 * 4. Here also is the questions whether the DataEncoder should save the BDDs or not at each execution cycle.
 	 * @see org.bip.engine.DataEncoder#inform(java.util.Map)
 	 */
+	
 	public BDD informSpecific(BIPComponent decidingComponent, Port decidingPort, Iterable<BIPComponent> disabledComponents) throws BIPEngineException {
 		/*
 		 * The disabledCombinations and disabledComponents are checked in the DataCoordinator,
@@ -69,6 +71,25 @@ public class DataEncoderImpl implements DataEncoder{
 		return result;
 	}
 	
+//	public BDD informSpecific(BIPComponent decidingComponent, Port decidingPort, Map<BIPComponent, Iterable<Port>> disabledCombinations) throws BIPEngineException {
+//		/*
+//		 * The disabledCombinations and disabledComponents are checked in the DataCoordinator,
+//		 * wherein exceptions are thrown. Here, we just use assertion.
+//		 */
+//		assert(disabledCombinations != null);
+//		//for Or-ing
+//		BDD result = engine.getBDDManager().one();
+//		/*
+//		 * Find corresponding d-variable
+//		 */
+//		Set<BIPComponent> disabledComponents = disabledCombinations.keySet();
+//		for (BIPComponent component : disabledComponents){
+//			BiDirectionalPair portsPair = new BiDirectionalPair(decidingPort, dataCoordinator.getBehaviourByComponent(component).getEnforceablePorts());
+//			result.orWith(portsToDVarBDDMapping.get(portsPair).not());
+//		}
+//		return result;
+//	}
+	
 	public void specifyDataGlue(Iterable<DataWire> dataGlue) throws BIPEngineException {
 		if (dataGlue == null || !dataGlue.iterator().hasNext()) {
 			try {
@@ -85,63 +106,6 @@ public class DataEncoderImpl implements DataEncoder{
 		createDataBDDNodes();
 	}
 	
-	private Iterable<Port> inPorts(Port inData) throws BIPEngineException {
-		/*
-		 * Store in the Arraylist below all the possible out ports.
-		 * Later to take their cross product.
-		 */
-		ArrayList<Port> componentInPorts = new ArrayList<Port>();
-		/*
-		 * IMPORTANT
-		 * These are not ports actually. In the specType the type of the component is stored.
-		 * In the id the name of the data variable is stored.
-		 * 
-		 * Input data are always assigned to transitions. Therefore, I need the list of ports of the component
-		 * that will re receiving the data.
-		 */
-		String inComponentType = inData.specType;
-
-		Iterable<BIPComponent> inComponentInstances = dataCoordinator.getBIPComponentInstances(inComponentType);
-		for (BIPComponent component: inComponentInstances){
-			Iterable<Port> dataInPorts = dataCoordinator.getBehaviourByComponent(component).portsNeedingData(inData.id);
-			componentInPorts.addAll((Collection<? extends Port>) dataInPorts);
-			for (Port port : dataInPorts){
-				componentInBDDs.put(port, behaviourEncoder.getBDDOfAPort(component, port.id));
-			}
-		}
-		return componentInPorts;
-	}
-	
-	private ArrayList<ArrayList<Port>> outPorts (Port outData) throws BIPEngineException {
-		/*
-		 * Store in the Arraylist below all the possible in ports.
-		 * Later to take their cross product.
-		 */
-		ArrayList<ArrayList<Port>> allOutPorts = new ArrayList<ArrayList<Port>>();	
-		ArrayList<Port> componentOutPorts = new ArrayList<Port>();
-		ArrayList<BDD> componentOutBDDs = new ArrayList<BDD>();
-		 /* 
-		 * Output data are not associated to transitions. Here, will take the conjunction of all possible
-		 * transitions of a component.
-		 */
-		String outComponentType = outData.specType;
-		Iterable<BIPComponent> outComponentInstances = dataCoordinator.getBIPComponentInstances(outComponentType);
-		for (BIPComponent component: outComponentInstances){
-			/*
-			 * Take the disjunction of all possible ports of this component
-			 */
-			HelperFunctions.addAll(componentOutPorts, dataCoordinator.getBehaviourByComponent(component).getEnforceablePorts());
-			allOutPorts.add(componentOutPorts);
-			for (Port port : componentOutPorts){
-				componentOutBDDs.add(behaviourEncoder.getBDDOfAPort(component, port.id));
-			}
-			this.componentOutBDDs.put(componentOutPorts, componentOutBDDs);
-			componentOutBDDs.clear();
-			componentOutPorts.clear();
-		}
-		return allOutPorts;
-	}
-
 	private void createDataBDDNodes() throws BIPEngineException {
 		/*
 		 * Get the number of BDD-nodes of the System. We base this on the assumption that all the components
@@ -204,6 +168,65 @@ public class DataEncoderImpl implements DataEncoder{
 			}
 		}
 	}
+	
+	private Iterable<Port> inPorts(Port inData) throws BIPEngineException {
+		/*
+		 * Store in the Arraylist below all the possible out ports.
+		 * Later to take their cross product.
+		 */
+		ArrayList<Port> componentInPorts = new ArrayList<Port>();
+		/*
+		 * IMPORTANT
+		 * These are not ports actually. In the specType the type of the component is stored.
+		 * In the id the name of the data variable is stored.
+		 * 
+		 * Input data are always assigned to transitions. Therefore, I need the list of ports of the component
+		 * that will re receiving the data.
+		 */
+		String inComponentType = inData.specType;
+
+		Iterable<BIPComponent> inComponentInstances = dataCoordinator.getBIPComponentInstances(inComponentType);
+		for (BIPComponent component: inComponentInstances){
+			Iterable<Port> dataInPorts = dataCoordinator.getBehaviourByComponent(component).portsNeedingData(inData.id);
+			componentInPorts.addAll((Collection<? extends Port>) dataInPorts);
+			for (Port port : dataInPorts){
+				componentInBDDs.put(port, behaviourEncoder.getBDDOfAPort(component, port.id));
+			}
+		}
+		return componentInPorts;
+	}
+	
+	private ArrayList<ArrayList<Port>> outPorts (Port outData) throws BIPEngineException {
+		/*
+		 * Store in the Arraylist below all the possible in ports.
+		 * Later to take their cross product.
+		 */
+		ArrayList<ArrayList<Port>> allOutPorts = new ArrayList<ArrayList<Port>>();	
+		ArrayList<Port> componentOutPorts = new ArrayList<Port>();
+		ArrayList<BDD> componentOutBDDs = new ArrayList<BDD>();
+		 /* 
+		 * Output data are not associated to transitions. Here, will take the conjunction of all possible
+		 * transitions of a component.
+		 */
+		String outComponentType = outData.specType;
+		Iterable<BIPComponent> outComponentInstances = dataCoordinator.getBIPComponentInstances(outComponentType);
+		for (BIPComponent component: outComponentInstances){
+			/*
+			 * Take the disjunction of all possible ports of this component
+			 */
+			HelperFunctions.addAll(componentOutPorts, dataCoordinator.getBehaviourByComponent(component).getEnforceablePorts());
+			allOutPorts.add(componentOutPorts);
+			for (Port port : componentOutPorts){
+				componentOutBDDs.add(behaviourEncoder.getBDDOfAPort(component, port.id));
+			}
+			this.componentOutBDDs.put(componentOutPorts, componentOutBDDs);
+			componentOutBDDs.clear();
+			componentOutPorts.clear();
+		}
+		return allOutPorts;
+	}
+
+
 
 	public void setEngine(BDDBIPEngine engine) {
 		this.engine=engine;
@@ -216,5 +239,7 @@ public class DataEncoderImpl implements DataEncoder{
 	public void setDataCoordinator(DataCoordinator dataCoordinator) {
 		this.dataCoordinator = dataCoordinator;
 	}
+
+
 	
 }
