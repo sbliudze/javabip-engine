@@ -195,6 +195,10 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 //	}
 	
 	public void informSpecific(BIPComponent decidingComponent, Port decidingPort, Iterable<BIPComponent> disabledComponents) throws BIPEngineException {
+		if (disabledComponents==null)
+		{
+			return;
+		}
 		if (!disabledComponents.iterator().hasNext()){
 			try {
 				logger.error("No disabled components specified in informSpecific. Iterable of disabledComponents is empty.");
@@ -620,7 +624,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 	 * @param dataOut
 	 * @return
 	 */
-	private ArrayList<Port> getDataOutPorts(BIPComponent disabledComponent, Port decidingPort) {
+	public ArrayList<Port> getDataOutPorts(BIPComponent disabledComponent, Port decidingPort) {
 		ArrayList<Port> dataOutPorts = new ArrayList<Port>();
 		Iterator<Requires> requires = this.requires.iterator();
 		boolean found =false;
