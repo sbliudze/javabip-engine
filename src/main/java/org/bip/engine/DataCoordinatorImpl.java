@@ -15,9 +15,7 @@ import org.bip.api.BIPEngine;
 import org.bip.api.Behaviour;
 import org.bip.behaviour.Data;
 import org.bip.behaviour.Port;
-import org.bip.behaviour.Transition;
 import org.bip.exceptions.BIPEngineException;
-import org.bip.glue.Accepts;
 import org.bip.glue.BIPGlue;
 import org.bip.glue.DataWire;
 import org.bip.glue.Requires;
@@ -157,7 +155,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 		BIPCoordinator.inform(component, currentState, disabledPorts);
 	}
 	
-//	public void informSpecific(BIPComponent decidingComponent, Port decidingPort, Map<BIPComponent, Port> disabledCombinations) throws BIPEngineException {
+//	public void informSpecific(BIPComponent decidingComponent, Port decidingPort, Map<BIPComponent, Iterable<Port>> disabledCombinations) throws BIPEngineException {
 //		if (disabledCombinations.isEmpty()){
 //			try {
 //				logger.error("No disabled combination specified in informSpecific. Map of disabledCombinations is empty.");
@@ -353,6 +351,80 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 	public void execute() {
 		BIPCoordinator.execute();
 	}
+	
+//	private void doInformSpecific(BIPComponent component) throws BIPEngineException {
+//		// mapping port <-> data it needs for computing guards
+//		Map<Port, Set<Data>> portToDataInForGuard = componentBehaviourMapping.get(component).portToDataInForGuard();
+//		// for each undecided port of each component :
+//		for (Port port : componentUndecidedPorts.get(component)) {
+//			// get list of DataIn needed for its guards
+//			Iterable<Data> dataIn = portToDataInForGuard.get(port);
+//			
+//			// for each data its different evaluations
+//			Hashtable<String, ArrayList<Object>> dataEvaluation = new Hashtable<String, ArrayList<Object>>();
+//			//map dataName <-> mapping dataValue - components giving this value 
+//			Hashtable<String, Hashtable<Object, ArrayList<BIPComponent>>> dataHelper = new Hashtable<String, Hashtable<Object, ArrayList<BIPComponent>>>();
+//
+//			// for each DataIn variable get info which components provide it
+//			// as their outData
+//			// mapping inData <-> outData, where
+//			// in outData we have a name and a list of components providing it.
+//			// for one inData there can be several outData variables
+//			for (Data inDataItem : dataIn) {
+//				// mapping dataValue - components giving this value 
+//				Hashtable<Object, ArrayList<BIPComponent>> map = new Hashtable<Object, ArrayList<BIPComponent>>();
+//				for (DataWire wire : this.dataWires) {
+//					// for this dataVariable: all the values that it can take
+//					ArrayList<Object> dataValues = new ArrayList<Object>();
+//					if (wire.isIncoming(inDataItem.name(), componentBehaviourMapping.get(component).getComponentType())) {
+//						//for each component of this type, call getData
+//						for (BIPComponent aComponent : getBIPComponentInstances(wire.from.specType)) {
+//							Object inValue = aComponent.getData(wire.from.id, inDataItem.type());
+//							dataValues.add(inValue);
+//							
+//							ArrayList<BIPComponent> componentList = new ArrayList<BIPComponent>();
+//							if (map.containsKey(inValue)) {
+//								componentList = map.get(inValue);
+//							} else {
+//								map.put(inValue, componentList);
+//							}
+//							componentList.add(aComponent);
+//						}
+//						dataHelper.put(inDataItem.name(),map);
+//					}
+//					dataEvaluation.put(inDataItem.name(), dataValues);
+//				}
+//			}
+//			
+//			ArrayList<Map<String, Object>> dataTable = (ArrayList<Map<String, Object>>) getDataValueTable(dataEvaluation);
+//			//the result provided must have the same order - put comment
+//			ArrayList<Boolean> portActive = (ArrayList<Boolean>) component.checkEnabledness(port, dataTable);
+//			
+//			HashMap<BIPComponent, Iterable<Port>> disabledCombinations = new HashMap<BIPComponent, Iterable<Port>>();
+//			for (int i = 0; i < portActive.size(); i++) {
+////				ArrayList<BIPComponent> disabledComponents = new ArrayList<BIPComponent>();
+//				if (!(portActive.get(i))) {
+//					Map<String, Object> theseDatas = dataTable.get(i);
+//					
+//					for (Entry<String, Object> entry : theseDatas.entrySet()) {
+//						
+//						Hashtable<Object, ArrayList<BIPComponent>> valueToComponents = dataHelper.get(entry.getKey());
+//					
+//						Iterable<BIPComponent> components = valueToComponents.get(entry.getValue());
+//						for (BIPComponent aComponent: components)
+//						{
+//							ArrayList<Port> ports = getDataOutPorts(aComponent, port);
+//							disabledCombinations.put(aComponent, ports);
+//						}
+//						//HelperFunctions.addAll(disabledComponents, components);
+//					}
+//				}
+//				this.informSpecific(component, port, disabledCombinations);
+////				this.informSpecific(component, port, disabledComponents);
+//			}
+//
+//		}
+//	}
 
 	private void doInformSpecific(BIPComponent component) throws BIPEngineException {
 		// mapping port <-> data it needs for computing guards
@@ -402,7 +474,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 			//the result provided must have the same order - put comment
 			ArrayList<Boolean> portActive = (ArrayList<Boolean>) component.checkEnabledness(port, dataTable);
 			
-			HashMap<BIPComponent, Iterable<Port>> disabledCombinations = new HashMap<BIPComponent, Iterable<Port>>();
+//			HashMap<BIPComponent, Iterable<Port>> disabledCombinations = new HashMap<BIPComponent, Iterable<Port>>();
 			for (int i = 0; i < portActive.size(); i++) {
 				ArrayList<BIPComponent> disabledComponents = new ArrayList<BIPComponent>();
 				if (!(portActive.get(i))) {
@@ -413,14 +485,15 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 						Hashtable<Object, ArrayList<BIPComponent>> valueToComponents = dataHelper.get(entry.getKey());
 					
 						Iterable<BIPComponent> components = valueToComponents.get(entry.getValue());
-						for (BIPComponent aComponent: components)
-						{
-							ArrayList<Port> ports = getDataOutPorts(aComponent, port);
-							disabledCombinations.put(aComponent, ports);
-						}
-						//HelperFunctions.addAll(disabledComponents, components);
+//						for (BIPComponent aComponent: components)
+//						{
+//							ArrayList<Port> ports = getDataOutPorts(aComponent, port);
+//							disabledCombinations.put(aComponent, ports);
+//						}
+						HelperFunctions.addAll(disabledComponents, components);
 					}
 				}
+//				this.informSpecific(component, port, disabledCombinations);
 				this.informSpecific(component, port, disabledComponents);
 			}
 
@@ -608,11 +681,5 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 	public int getNoStates() {
 		return nbStates;
 	}
-
-
-
-
-
-
 
 }
