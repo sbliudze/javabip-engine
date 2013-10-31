@@ -350,7 +350,6 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		for (Port port : portsExecuted){
 			logger.info("Port Executed: "+port.id);
 		}
-		System.exit(0);
 		for (Enumeration<BIPComponent> componentsEnum = behaviourBDDs.keys(); componentsEnum.hasMoreElements(); ){
 			BIPComponent component = componentsEnum.nextElement();
 			logger.debug("Component: "+component.getName());
@@ -362,7 +361,7 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 			ArrayList <Port> enabledPorts = new ArrayList<Port>();
 			//TODO: Change! to executeInteractions
 			for (Port componentPort : componentPorts){
-				if(!portsExecuted.contains(componentPort) && chosenInteraction[portToPosition.get(componentPort)]==1){
+				if(!portsExecuted.contains(componentPort.id) && chosenInteraction[portToPosition.get(componentPort)]==1){
 					enabledPorts.add(componentPort);
 				}
 			}
@@ -377,8 +376,7 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		logger.info("*************************************************************************");
 		((List) allInteractions).add(chosenPorts);
 		wrapper.executeInteractions(allInteractions);
-		portsExecuted.clear();
-		System.exit(0);
+//		portsExecuted.clear();
 //		wrapper.executeComponents(chosenComponents, chosenPorts);
 
 
