@@ -380,7 +380,17 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		
 		logger.info("*************************************************************************");
 		((List) allInteractions).add(chosenPorts);
+
+		for (Map<BIPComponent, Iterable<Port>> inter: allInteractions)
+		{
+			for (Map.Entry <BIPComponent, Iterable<Port>> e:inter.entrySet())
+			{
+				System.out.println("ENGINE ENTRY"+ e.getKey().getName() + " - "+ e.getValue());
+			}
+		}
+		
 		wrapper.execute(allInteractions);
+
 //		wrapper.executeInteractions(allInteractions);
 //		portsExecuted.clear();
 //		wrapper.executeComponents(chosenComponents, chosenPorts);
