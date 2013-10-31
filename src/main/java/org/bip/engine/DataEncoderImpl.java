@@ -175,6 +175,15 @@ public class DataEncoderImpl implements DataEncoder{
 								engine.getBDDManager().setVarNum(currentSystemBddSize+1);
 							}
 							BDD node = engine.getBDDManager().ithVar(currentSystemBddSize);
+							if(node == null){
+								try {
+									logger.error("Single node BDD for d-variable for port "+inPort.id+ " of component "+component+" and port "+outPort.id+" of component "+componentOut+ " is null");
+									throw new BIPEngineException("Single node BDD for d-variable for port "+inPort.id+ " of component "+component+" and port "+outPort.id+" of component "+componentOut+ " is null");
+								} catch (BIPEngineException e) {
+									e.printStackTrace();
+									throw e;
+								}
+							}
 							logger.info("Create D-variable BDD node of Ports-pair: "+inPort+" "+outPort);
 	//						BDD disjunctionPorts = engine.getBDDManager().zero();
 	//						if (!portsToDisjunctionBDD.contains(outPort)){
@@ -186,8 +195,8 @@ public class DataEncoderImpl implements DataEncoder{
 	//							}		
 	////							portsToDisjunctionBDD.put(outPorts, disjunctionPorts);
 	//						}
-							//TODO: FIX THIS AND ALSO TAKE THEIR DISJUNCTION
-							node = componentInBDDs.get(inPort).and(componentOutBDDs.get(outPort));
+							//TODO: FIX THIS (?)
+//							node = componentInBDDs.get(inPort).and(componentOutBDDs.get(outPort));
 							portsToDVarBDDMapping.put(inOutPortsPair, node);
 							/*
 							 * Store the position of the d-variables in the BDD manager
