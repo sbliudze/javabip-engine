@@ -347,6 +347,10 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 			((List) allInteractions).add(oneInteraction);
 //			oneInteraction.clear();
 		}
+		for (Port port : portsExecuted){
+			logger.info("Port Executed: "+port.id);
+		}
+		System.exit(0);
 		for (Enumeration<BIPComponent> componentsEnum = behaviourBDDs.keys(); componentsEnum.hasMoreElements(); ){
 			BIPComponent component = componentsEnum.nextElement();
 			logger.debug("Component: "+component.getName());

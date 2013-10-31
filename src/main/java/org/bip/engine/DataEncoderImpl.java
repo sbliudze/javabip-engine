@@ -71,7 +71,6 @@ public class DataEncoderImpl implements DataEncoder{
 		BiDirectionalPair inComponentPortPair = new BiDirectionalPair(decidingComponent, decidingPort);
 		for (BIPComponent component : disabledComponents){
 			logger.info("DISABLED component: "+component.getName()+" by decidingComponent: "+decidingComponent.getName());
-			System.exit(1);
 			ArrayList<Port> componentPorts = (ArrayList<Port>) dataCoordinator.getBehaviourByComponent(component).getEnforceablePorts();
 			for (Port port: componentPorts){
 				BiDirectionalPair outComponentPortPair = new BiDirectionalPair(component, port);
@@ -228,7 +227,6 @@ public class DataEncoderImpl implements DataEncoder{
 				}
 			}
 		}
-		System.exit(0);
 		return componentInPortMapping;
 	}
 	
