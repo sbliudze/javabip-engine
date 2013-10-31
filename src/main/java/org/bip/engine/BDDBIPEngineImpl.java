@@ -376,7 +376,8 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		
 		logger.info("*************************************************************************");
 		((List) allInteractions).add(chosenPorts);
-		wrapper.executeInteractions(allInteractions);
+		wrapper.execute(allInteractions);
+//		wrapper.executeInteractions(allInteractions);
 //		portsExecuted.clear();
 //		wrapper.executeComponents(chosenComponents, chosenPorts);
 

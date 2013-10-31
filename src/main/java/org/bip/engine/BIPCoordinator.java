@@ -2,6 +2,7 @@ package org.bip.engine;
 
 import java.util.ArrayList;
 import java.util.Hashtable;
+import java.util.Map;
 
 import net.sf.javabdd.BDD;
 
@@ -75,9 +76,10 @@ public interface BIPCoordinator extends BIPEngine, InteractionExecutor {
 	 * If yes, the ArrayList contains the port that should be fires. Otherwise, it contains null.
 	 * 
 	 * @param allComponents, all components
+	 * @throws BIPEngineException 
 	 */
-	void executeComponents(ArrayList<BIPComponent> allComponents, Hashtable<BIPComponent, ArrayList<Port>> portsToFire);
-	
+//	void executeComponents(ArrayList<BIPComponent> allComponents, Hashtable<BIPComponent, ArrayList<Port>> portsToFire);
+	void execute (Iterable<Map<BIPComponent, Iterable<Port>>> portsToFire) throws BIPEngineException;
 	/**
 	 * Set the interaction Execute instance either as DataCoordinator or as BIPCoordinator depending
 	 * on whether there are data transfer between the components or not respectively.

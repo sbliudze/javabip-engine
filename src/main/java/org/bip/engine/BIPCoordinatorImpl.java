@@ -309,6 +309,10 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 		}
 	}
 	
+	public void execute (Iterable<Map<BIPComponent, Iterable<Port>>> portsToFire) throws BIPEngineException{
+		interactionExecutor.executeInteractions(portsToFire);
+	}
+	
 	/**
 	 * BDDBIPEngine informs the BIPCoordinator for the components (and their associated ports) that are part of the same chosen interaction.
 	 * 
