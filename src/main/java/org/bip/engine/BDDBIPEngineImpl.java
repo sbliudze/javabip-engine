@@ -354,32 +354,36 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 //			oneInteraction.clear();
 		}
 
-//
-//		for (Enumeration<BIPComponent> componentsEnum = behaviourBDDs.keys(); componentsEnum.hasMoreElements(); ){
-//			BIPComponent component = componentsEnum.nextElement();
-//			logger.debug("Component: "+component.getName());
-//			
-//			Iterable <Port> componentPorts = wrapper.getBehaviourByComponent(component).getEnforceablePorts();
-//			if (componentPorts == null || !componentPorts.iterator().hasNext()){
-//				logger.warn("Component {} does not have any enforceable ports.", component.getName());		
-//			} 			
-//			ArrayList <Port> enabledPorts = new ArrayList<Port>();
-//			//TODO: Change! to executeInteractions
-//			for (Port componentPort : componentPorts){
-//				if(!portsExecuted.contains(componentPort.id) && chosenInteraction[portToPosition.get(componentPort)]==1){
-//					enabledPorts.add(componentPort);
-//				}
-//			}
-//			if (!enabledPorts.isEmpty()) {
-//				logger.info("Chosen Component: {}", component.getName());
-//				logger.info("Chosen Port: {}", enabledPorts.get(0).id);
-//			}
-//			chosenPorts.put(component, enabledPorts);
-//			chosenComponents.add(component);
-//		}
-//		
-//		logger.info("*************************************************************************");
-//		((List) allInteractions).add(chosenPorts);
+		for (Enumeration<BIPComponent> componentsEnum = behaviourBDDs.keys(); componentsEnum.hasMoreElements(); ){
+			BIPComponent component = componentsEnum.nextElement();
+			logger.debug("Component: "+component.getName());
+			
+			Iterable <Port> componentPorts = wrapper.getBehaviourByComponent(component).getEnforceablePorts();
+			if (componentPorts == null || !componentPorts.iterator().hasNext()){
+				logger.warn("Component {} does not have any enforceable ports.", component.getName());		
+			} 			
+			ArrayList <Port> enabledPorts = new ArrayList<Port>();
+			//TODO: Change! to executeInteractions
+			for (Port componentPort : componentPorts){
+				if(!portsExecuted.contains(componentPort.id) && chosenInteraction[portToPosition.get(componentPort)]==1){
+					enabledPorts.add(componentPort);
+				}
+			}
+			if (!enabledPorts.isEmpty()) {
+				logger.info("Chosen Component: {}", component.getName());
+				logger.info("Chosen Port: {}", enabledPorts.get(0).id);
+			}
+			if (enabledPorts.size()!=0){
+				chosenPorts.put(component, enabledPorts);
+				chosenComponents.add(component);
+			}
+		}
+		
+		logger.info("*************************************************************************");
+		if (chosenPorts.size()!=0){
+			((List) allInteractions).add(chosenPorts);
+		}
+
 
 		for (Map<BIPComponent, Iterable<Port>> inter: allInteractions)
 		{
@@ -390,6 +394,8 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		}
 		
 		wrapper.execute(allInteractions);
+		System.exit(0);
+		
 
 //		wrapper.executeInteractions(allInteractions);
 //		portsExecuted.clear();
