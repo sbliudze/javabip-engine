@@ -563,6 +563,11 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	public void informSpecific(BDD disabledCombination){
 		engine.informSpecific(disabledCombination);
 	}
+	
+	public void specifyDataGlue(BDD specifyDataGlue) {
+		engine.specifyDataGlue(specifyDataGlue);
+		
+	}
 
 	
 	/**
@@ -623,6 +628,8 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 		}
 		return instances; 
 	}
+
+
 
 
 

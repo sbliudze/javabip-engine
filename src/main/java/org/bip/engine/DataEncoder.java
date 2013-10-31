@@ -37,9 +37,10 @@ public interface DataEncoder {
     /**
      * Receives the information about the data glue of the system.
      * @param data glue
+     * @return 
      * @throws BIPEngineException 
      */
-    void specifyDataGlue(Iterable<DataWire> dataGlue) throws BIPEngineException;
+    BDD specifyDataGlue(Iterable<DataWire> dataGlue) throws BIPEngineException;
 	
 	/**
 	 * Setter for the BDDBIPEngine

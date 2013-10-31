@@ -50,6 +50,7 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 	ArrayList<Integer> positionsOfDVariables = new ArrayList<Integer>();
 
 	private BIPCoordinator wrapper;
+	private BDD dataGlueBDD;
 
 	/** 
 	 * Counts the number of enabled ports in the Maximal cube chosen 
@@ -322,8 +323,9 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		ArrayList<Port> portsExecuted = new ArrayList<Port>();
 		Iterable<Map<BIPComponent, Iterable<Port>>> allInteractions = new ArrayList<Map<BIPComponent,Iterable<Port>>>() ;
 //		ArrayList<Hashtable<BIPComponent, ArrayList<Port>>> allInteractions = new ArrayList<Hashtable<BIPComponent, ArrayList<Port>>>();
-		Hashtable<BIPComponent, ArrayList<Port>> oneInteraction = new Hashtable<BIPComponent, ArrayList<Port>>();
+		
 		for (Integer i: positionsOfDVariables){
+			Hashtable<BIPComponent, ArrayList<Port>> oneInteraction = new Hashtable<BIPComponent, ArrayList<Port>>();
 			if (chosenInteraction[i]==1){
 				BiDirectionalPair pair = dVariablesToPosition.get(i);
 				BiDirectionalPair firstPair = (BiDirectionalPair) pair.getFirst();
@@ -341,8 +343,9 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 				logger.info("Chosen Component: {}", secondPair.getFirst());
 				logger.info("Chosen Port: {}", componentPorts.get(0).id);
 			}
+			logger.info("OneInteraction size: "+ oneInteraction.size());
 			((List) allInteractions).add(oneInteraction);
-			oneInteraction.clear();
+//			oneInteraction.clear();
 		}
 		for (Enumeration<BIPComponent> componentsEnum = behaviourBDDs.keys(); componentsEnum.hasMoreElements(); ){
 			BIPComponent component = componentsEnum.nextElement();
@@ -370,7 +373,7 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		logger.info("*************************************************************************");
 		((List) allInteractions).add(chosenPorts);
 		wrapper.executeInteractions(allInteractions);
-//		portsExecuted.clear();
+		portsExecuted.clear();
 		System.exit(0);
 //		wrapper.executeComponents(chosenComponents, chosenPorts);
 
@@ -389,6 +392,24 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		disabledCombinationBDDs.add(informSpecific);
 	}
 	
+	public void specifyDataGlue(BDD specifyDataGlue) {
+		dataGlueBDD = specifyDataGlue;
+		if (totalBehaviourAndGlue!= null){
+			BDD tmp = totalBehaviourAndGlue.and(dataGlueBDD);
+			totalBehaviourAndGlue.free();
+			totalBehaviourAndGlue = tmp;
+		}
+		else if(this.totalGlue!=null){
+			BDD tmp = totalGlue.and(dataGlueBDD);
+			totalGlue.free();
+			totalGlue = tmp;
+		}
+		else{
+			return;
+		}
+		
+	}
+	
 	public synchronized void informBehaviour(BIPComponent component, BDD componentBDD) {
 		behaviourBDDs.put(component, componentBDD);
 	}
@@ -398,8 +419,8 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		this.totalGlue = totalGlue;
 		//TODO: Fix synchronized
 //		synchronized (totalBehaviourAndGlue) {
-			if (totalBehaviour!=null){
-				totalBehaviourAndGlue=totalBehaviour.and(this.totalGlue);	
+			if (totalBehaviour!=null && this.dataGlueBDD!=null){
+				totalBehaviourAndGlue=totalBehaviour.and(this.totalGlue).and(this.dataGlueBDD);	
 //				bdd_mgr.reorder(BDDFactory.REORDER_SIFTITE);
 //				logger.info("Reorder stats: "+bdd_mgr.getReorderStats());
 				if (totalBehaviourAndGlue == null ) {
@@ -460,6 +481,8 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 	public synchronized BDDFactory getBDDManager() {
 		return bdd_mgr;
 	}
+
+
 
 
 

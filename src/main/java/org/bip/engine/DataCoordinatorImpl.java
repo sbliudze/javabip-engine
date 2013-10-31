@@ -97,7 +97,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 			}
 		} else {
 			try {
-				dataEncoder.specifyDataGlue(dataWires);
+				BIPCoordinator.specifyDataGlue(dataEncoder.specifyDataGlue(dataWires));
 			} catch (BIPEngineException e) {
 				e.printStackTrace();
 			}

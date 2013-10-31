@@ -89,5 +89,7 @@ public interface BIPCoordinator extends BIPEngine, InteractionExecutor {
 	
     BehaviourEncoder getBehaviourEncoderInstance();
     BDDBIPEngine getBDDBIPEngineInstance();
+
+	void specifyDataGlue(BDD specifyDataGlue);
 	
 }

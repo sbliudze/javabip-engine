@@ -82,6 +82,8 @@ public interface BDDBIPEngine {
 	
 	void informSpecific(BDD informSpecific);
 
+	void specifyDataGlue(BDD specifyDataGlue);
+
 
 
 }
