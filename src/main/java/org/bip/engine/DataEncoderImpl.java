@@ -32,6 +32,7 @@ public class DataEncoderImpl implements DataEncoder{
 	Map<BiDirectionalPair,BDD> componentOutBDDs = new Hashtable<BiDirectionalPair, BDD>();
 	Map<BiDirectionalPair, BDD> componentInBDDs = new Hashtable<BiDirectionalPair, BDD>();
 	ArrayList<BDD> implicationsOfDs = new ArrayList<BDD>();
+	Map<BDD, ArrayList<BDD>> moreImplications = new Hashtable<BDD, ArrayList<BDD>>();
 	
 	/*
 	 * Possible implementation: Send each combination's BDD to the engine that takes the 
@@ -70,14 +71,42 @@ public class DataEncoderImpl implements DataEncoder{
 		 */
 		BiDirectionalPair inComponentPortPair = new BiDirectionalPair(decidingComponent, decidingPort);
 		for (BIPComponent component : disabledComponents){
-			logger.info("DISABLED component: "+component.getName()+" by decidingComponent: "+decidingComponent.getName());
+//			logger.info("DISABLED component: "+component.getName()+" by decidingComponent: "+decidingComponent.getName());
 			ArrayList<Port> componentPorts = (ArrayList<Port>) dataCoordinator.getBehaviourByComponent(component).getEnforceablePorts();
 			for (Port port: componentPorts){
+//				logger.info("Deciding Port: "+decidingPort);
+//				logger.info("Other Port:"+ port);
 				BiDirectionalPair outComponentPortPair = new BiDirectionalPair(component, port);
 				BiDirectionalPair portsPair = new BiDirectionalPair(inComponentPortPair, outComponentPortPair);
-				if (portsToDVarBDDMapping.containsKey(portsPair)){
-					result.orWith(portsToDVarBDDMapping.get(portsPair).not());
+//				logger.info("Size of portsToVarBDDMapping: "+portsToDVarBDDMapping.size());
+				Set<BiDirectionalPair> allpairsBiDirectionalPairs = portsToDVarBDDMapping.keySet();
+				for (BiDirectionalPair pair: allpairsBiDirectionalPairs){
+					BiDirectionalPair pairOne = (BiDirectionalPair) pair.getFirst();
+					BIPComponent pairOneComponent = (BIPComponent) pairOne.getFirst();
+					Port pairOnePort = (Port) pairOne.getSecond();
+//					logger.info("Pair One Port: "+pairOnePort);
+				
+					BiDirectionalPair pairTwo = (BiDirectionalPair) pair.getSecond();
+					BIPComponent pairTwoComponent = (BIPComponent) pairTwo.getFirst();
+					Port pairTwoPort = (Port) pairTwo.getSecond();
+//					logger.info("Pair Two Port: "+pairTwoPort);
+					
+					if (component.equals(pairOneComponent)||component.equals(pairTwoComponent)){
+						if ((pairOnePort.id.equals(decidingPort.id) || (pairTwoPort.id.equals(decidingPort.id))) && (pairTwoPort.id.equals(port.id) || pairOnePort.id.equals(port.id))){
+							logger.info("DISABLED PORT: "+port);
+	//						System.exit(0);
+							BDD tmp = result.and(portsToDVarBDDMapping.get(pair).not());
+							result.free();
+							result = tmp;
+//							result.orWith(portsToDVarBDDMapping.get(pair).not());
+						}
+					}
+					
 				}
+//				if (portsToDVarBDDMapping.containsValue(portsPair)){
+//					logger.info("DISABLED PORT: "+port);
+//					result.orWith(portsToDVarBDDMapping.get(portsPair).not());
+//				}
 				
 			}
 		}
@@ -106,7 +135,10 @@ public class DataEncoderImpl implements DataEncoder{
 	private BDD computeDvariablesBDDs () {
 		BDD result = engine.getBDDManager().one();
 		for (BDD eachD : this.implicationsOfDs){
-			result.andWith(eachD);
+			BDD tmp = result.and(eachD);
+			result.free();
+			result = tmp;
+//			result.andWith(eachD);
 		}
 		return result;
 	}
@@ -141,10 +173,12 @@ public class DataEncoderImpl implements DataEncoder{
 				for (Port inPort : componentToInPorts.get(component)){
 					Map<BIPComponent, Iterable<Port>> suitableOutPorts = componentOutPorts.get(inPort);
 					Set<BIPComponent> componentsOut = suitableOutPorts.keySet();
+					BiDirectionalPair inComponentPortPair = new BiDirectionalPair(component, inPort);
+					ArrayList<BDD> auxiliary = new ArrayList<BDD>();
 					
 					for (BIPComponent componentOut: componentsOut){
 						for (Port outPort: suitableOutPorts.get(componentOut)){
-						BiDirectionalPair inComponentPortPair = new BiDirectionalPair(component, inPort);
+						
 						BiDirectionalPair outComponentPortPair = new BiDirectionalPair(componentOut, outPort);
 						BiDirectionalPair inOutPortsPair = new BiDirectionalPair(inComponentPortPair, outComponentPortPair);
 						if (!portsToDVarBDDMapping.containsKey(inOutPortsPair)){
@@ -167,9 +201,13 @@ public class DataEncoderImpl implements DataEncoder{
 								}
 							}
 							logger.info("Create D-variable BDD node of Ports-pair: "+inPort+" "+outPort);
-							
-							this.implicationsOfDs.add(node.not().or(componentInBDDs.get(inComponentPortPair).and(componentOutBDDs.get(outComponentPortPair))));
+//							BDD temp = (componentInBDDs.get(inComponentPortPair)).and(componentOutBDDs.get(outComponentPortPair));
+//							this.implicationsOfDs.add(temp.or(node.not()));
+//							moreImplications
+							BDD temp = node.not().or(componentInBDDs.get(inComponentPortPair).and(componentOutBDDs.get(outComponentPortPair)));
+							this.implicationsOfDs.add(temp);
 							portsToDVarBDDMapping.put(inOutPortsPair, node);
+							auxiliary.add(node);
 							/*
 							 * Store the position of the d-variables in the BDD manager
 							 */
@@ -188,7 +226,24 @@ public class DataEncoderImpl implements DataEncoder{
 					currentSystemBddSize++;
 				}
 					}
+					logger.info("Auxiliary size"+ auxiliary.size() );
+					moreImplications.put(componentInBDDs.get(inComponentPortPair), auxiliary);
 				}
+//				System.exit(0);
+			}
+			Set<BDD> entries =moreImplications.keySet();
+//			logger.info("moreImplications size: "+entries.size());
+//			System.exit(0);
+			
+			for (BDD bdd: entries){
+				BDD result=engine.getBDDManager().zero();
+				for (BDD lala: moreImplications.get(bdd)){
+					BDD temp = result.or(lala);
+					result.free();
+					result=temp;
+				}
+				BDD temp2= bdd.not().or(result);
+				this.implicationsOfDs.add(temp2);
 			}
 		}
 	}
@@ -229,7 +284,6 @@ public class DataEncoderImpl implements DataEncoder{
 		}
 		return componentInPortMapping;
 	}
-	
 
 	//TODO: Add also decidingComponent (?)
 	private Map<Port, Map<BIPComponent, Iterable<Port>>> outPorts (Port outData, Port decidingPort) throws BIPEngineException {

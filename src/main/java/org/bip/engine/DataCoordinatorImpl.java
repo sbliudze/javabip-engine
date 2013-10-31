@@ -62,6 +62,8 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 
 	/** Number of states of components registered */
 	private int nbStates;
+	
+	private int number;
 
 	/**
 	 * Create instances of all the the Data Encoder and of the BIPCoordinator
@@ -198,6 +200,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 //	}
 	
 	public void informSpecific(BIPComponent decidingComponent, Port decidingPort, Iterable<BIPComponent> disabledComponents) throws BIPEngineException {
+		this.number++;
 		if (disabledComponents==null)
 		{
 			return;
@@ -236,6 +239,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 					throw new BIPEngineException("Component " + component.getName() + " specified in the disabledComponents of informSpecific was not registered.");
 				}
 			}
+			if(number%3==0)
 			BIPCoordinator.informSpecific(dataEncoder.informSpecific(decidingComponent, decidingPort, disabledComponents));
 		}
 		}

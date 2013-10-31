@@ -389,12 +389,12 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		{
 			for (Map.Entry <BIPComponent, Iterable<Port>> e:inter.entrySet())
 			{
-				System.out.println("ENGINE ENTRY"+ e.getKey().getName() + " - "+ e.getValue());
+				System.out.println("ENGINE ENTRY: "+ e.getKey().getName() + " - "+ e.getValue());
 			}
 		}
 		
 		wrapper.execute(allInteractions);
-		System.exit(0);
+//		System.exit(0);
 		
 
 //		wrapper.executeInteractions(allInteractions);
