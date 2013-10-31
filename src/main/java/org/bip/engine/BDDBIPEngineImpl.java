@@ -254,8 +254,8 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		/*
 		 * Re-ordering function and statistics printouts
 		 */
-		bdd_mgr.reorder(BDDFactory.REORDER_SIFTITE);
-		logger.info("Reorder stats: "+bdd_mgr.getReorderStats());
+//		bdd_mgr.reorder(BDDFactory.REORDER_SIFTITE);
+//		logger.info("Reorder stats: "+bdd_mgr.getReorderStats());
 
 		a.addAll(solns.allsat()); // TODO, can we find random maximal
 								  // interaction without getting all solutions
@@ -404,7 +404,7 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 
 		solns.free();
 //		currentStateBDDs.clear();
-//		disabledCombinationBDDs.clear();
+		disabledCombinationBDDs.clear();
 
 	}
 	

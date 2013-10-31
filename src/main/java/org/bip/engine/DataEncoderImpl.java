@@ -237,6 +237,7 @@ public class DataEncoderImpl implements DataEncoder{
 			
 			for (BDD bdd: entries){
 				BDD result=engine.getBDDManager().zero();
+//				logger.info("entry of moreImplications size: "+moreImplications.get(bdd).size());
 				for (BDD lala: moreImplications.get(bdd)){
 					BDD temp = result.or(lala);
 					result.free();
