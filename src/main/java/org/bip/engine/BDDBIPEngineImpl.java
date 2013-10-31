@@ -185,7 +185,6 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		return totalDisabledCombinationBdd;	
 	}
 
-	@SuppressWarnings("rawtypes")
 	public final void runOneIteration() throws BIPEngineException {
 
 		byte[] chosenInteraction;
@@ -320,7 +319,8 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		for (int k = 0; k < chosenInteraction.length; k++)
 			logger.info("{}",chosenInteraction[k]);
 		
-		ArrayList<Port> portsExecuted = new ArrayList<Port>();
+		//TODO: Fix String to Port
+		ArrayList<String> portsExecuted = new ArrayList<String>();
 		Iterable<Map<BIPComponent, Iterable<Port>>> allInteractions = new ArrayList<Map<BIPComponent,Iterable<Port>>>() ;
 //		ArrayList<Hashtable<BIPComponent, ArrayList<Port>>> allInteractions = new ArrayList<Hashtable<BIPComponent, ArrayList<Port>>>();
 		
@@ -332,13 +332,16 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 				BiDirectionalPair secondPair = (BiDirectionalPair) pair.getSecond();
 				ArrayList<Port> componentPorts = new ArrayList<Port>();
 				componentPorts.add((Port) firstPair.getSecond());
-				portsExecuted.add((Port) firstPair.getSecond());
+				Port port = (Port) firstPair.getSecond();
+				portsExecuted.add(port.id);
 				oneInteraction.put((BIPComponent) firstPair.getFirst(), (ArrayList<Port>) componentPorts);
 				logger.info("Chosen Component: {}", firstPair.getFirst());
 				logger.info("Chosen Port: {}", componentPorts.get(0).id);
 				componentPorts.clear();
 				componentPorts.add((Port) secondPair.getSecond());
-				portsExecuted.add((Port) secondPair.getSecond());
+				Port port2 = (Port) secondPair.getSecond();
+				
+				portsExecuted.add(port2.id);
 				oneInteraction.put((BIPComponent) secondPair.getFirst(), (ArrayList<Port>) componentPorts);
 				logger.info("Chosen Component: {}", secondPair.getFirst());
 				logger.info("Chosen Port: {}", componentPorts.get(0).id);
@@ -347,9 +350,7 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 			((List) allInteractions).add(oneInteraction);
 //			oneInteraction.clear();
 		}
-		for (Port port : portsExecuted){
-			logger.info("Port Executed: "+port.id);
-		}
+
 		for (Enumeration<BIPComponent> componentsEnum = behaviourBDDs.keys(); componentsEnum.hasMoreElements(); ){
 			BIPComponent component = componentsEnum.nextElement();
 			logger.debug("Component: "+component.getName());
