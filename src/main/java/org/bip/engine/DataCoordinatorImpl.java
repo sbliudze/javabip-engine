@@ -266,6 +266,8 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 				BIPComponent component = interactionComponents.next();
 				enabledComponents.add(component);
 				Iterator<Port> compPortsToFire = oneInteraction.get(component).iterator();
+
+				System.out.println("Ports for tomponent: "+component.getName()+ oneInteraction.get(component));
 				/*
 				 * If the Iterator<Port> is null or empty for a chosen
 				 * component, throw an exception. This should not happen.
@@ -282,6 +284,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 				} else {
 					while (compPortsToFire.hasNext()) {
 						Port port = compPortsToFire.next();
+						System.out.println("PORT to execute in "+ component.getName()+" and port "+ port.id);
 						/*
 						 * If the port is null or empty for a chosen component,
 						 * throw an exception. This should not happen.
@@ -296,11 +299,16 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 								throw e;
 							}
 						}
-						logger.debug("Component {} execute port {}", component.getName(), port.id);
-						// TODO: Find out which components are sending data to
+						logger.info("Component {} execute port {}", component.getName(), port.id);
+						// Find out which components are sending data to
 						// this component
 						Iterable<Data> portToDataInForTransition = componentBehaviourMapping.get(component).portToDataInForTransition(port);
 						Hashtable<String, Object> nameToValue  = new Hashtable<String, Object>();
+						if (portToDataInForTransition==null)
+						{
+							component.execute(port.id);
+							continue;
+						}
 						for (Data dataItem : portToDataInForTransition) {
 							for (BIPComponent aComponent : oneInteraction.keySet()) {
 								String dataOutName =dataIsProvided(aComponent, component, dataItem.name()); 
