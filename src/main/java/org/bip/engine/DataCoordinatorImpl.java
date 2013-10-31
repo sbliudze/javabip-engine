@@ -218,14 +218,17 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 				e.printStackTrace();
 			}	
 		}
-		else if(!componentBehaviourMapping.get(decidingComponent).getEnforceablePorts().iterator().equals(decidingPort)){
+		else{
+			ArrayList<Port> componentPorts = (ArrayList<Port>) componentBehaviourMapping.get(decidingComponent).getEnforceablePorts();
+			if(!componentPorts.contains(decidingPort)){
 			try {
-				logger.error("Deciding port in informSpecific is not specified in the behaviour of the deciding component.");
+				logger.error("Deciding port {} in informSpecific is not specified in the behaviour of the deciding component {}.",decidingPort, decidingComponent.getName());
 				throw new BIPEngineException("Deciding port in informSpecific is not specified in the behaviour of the deciding component.");
 			} catch (BIPEngineException e) {
 				e.printStackTrace();
 			}	
 		}
+		
 		else{
 			for  (BIPComponent component : disabledComponents){
 				if (!registeredComponents.contains(component)) {
@@ -234,6 +237,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 				}
 			}
 			BIPCoordinator.informSpecific(dataEncoder.informSpecific(decidingComponent, decidingPort, disabledComponents));
+		}
 		}
 	}
 	
@@ -267,7 +271,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 				enabledComponents.add(component);
 				Iterator<Port> compPortsToFire = oneInteraction.get(component).iterator();
 
-				System.out.println("Ports for tomponent: "+component.getName()+ oneInteraction.get(component));
+				logger.debug("For component {} the ports are {}. ", component.getName(), oneInteraction.get(component));
 				/*
 				 * If the Iterator<Port> is null or empty for a chosen
 				 * component, throw an exception. This should not happen.
@@ -284,7 +288,6 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 				} else {
 					while (compPortsToFire.hasNext()) {
 						Port port = compPortsToFire.next();
-						System.out.println("PORT to execute in "+ component.getName()+" and port "+ port.id);
 						/*
 						 * If the port is null or empty for a chosen component,
 						 * throw an exception. This should not happen.
@@ -299,25 +302,27 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 								throw e;
 							}
 						}
-						logger.info("Component {} execute port {}", component.getName(), port.id);
 						// Find out which components are sending data to
 						// this component
 						Iterable<Data> portToDataInForTransition = componentBehaviourMapping.get(component).portToDataInForTransition(port);
 						Hashtable<String, Object> nameToValue  = new Hashtable<String, Object>();
-						if (portToDataInForTransition==null)
+						if (portToDataInForTransition==null || !portToDataInForTransition.iterator().hasNext())
 						{
 							component.execute(port.id);
 							continue;
 						}
 						for (Data dataItem : portToDataInForTransition) {
+							logger.info("Component {} execute port with inData {}", component.getName(), dataItem.name());
 							for (BIPComponent aComponent : oneInteraction.keySet()) {
 								String dataOutName =dataIsProvided(aComponent, component, dataItem.name()); 
 								if (dataOutName!=null && !dataOutName.isEmpty()) {
 									Object dataValue = aComponent.getData(dataOutName, dataItem.type());
 									nameToValue.put(dataItem.name(), dataValue);
+									break;
 								}
 							}
 						}
+						logger.debug("Data<->value table: {}", nameToValue);
 						component.execute(port.id, nameToValue);
 					}
 				}
@@ -446,7 +451,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 		Map<Port, Set<Data>> portToDataInForGuard = componentBehaviourMapping.get(component).portToDataInForGuard();
 		// for each undecided port of each component :
 		for (Port port : componentUndecidedPorts.get(component)) {
-			System.out.println("For component "+ component.getName()+" and port "+ port.id);
+			System.out.println("SPECIFIC For component "+ component.getName()+" and port "+ port.id);
 			// get list of DataIn needed for its guards
 			Iterable<Data> dataIn = portToDataInForGuard.get(port);
 			
@@ -475,7 +480,6 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 					if (wire.isIncoming(inDataItem.name(), componentBehaviourMapping.get(component).getComponentType())) {
 						//for each component of this type, call getData
 						for (BIPComponent aComponent : getBIPComponentInstances(wire.from.specType)) {
-							System.out.println("For component "+ aComponent.getName()+" and data "+ inDataItem.name());
 							Object inValue = aComponent.getData(wire.from.id, inDataItem.type());
 							dataValues.add(inValue);
 							
@@ -617,7 +621,6 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 	}
 
 	private ArrayList<Port> getUndecidedPorts(BIPComponent component, String currentState, ArrayList<Port> disabledPorts) {
-		System.out.println("UNDECIDED PORTS FOR  "+ component.getName());
 		ArrayList<Port> undecidedPorts = new ArrayList<Port>();
 		Behaviour behaviour = componentBehaviourMapping.get(component);
 		boolean portIsDisabled = false;
@@ -633,11 +636,11 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 				}
 			}
 			if (!portIsDisabled) {
-				System.out.println("For component "+ component.getName()+ " undecided port: "+ port);
 				undecidedPorts.add(port);
 			}
 			portIsDisabled = false;
 		}
+		logger.debug("For component {} the undecided ports are {}. "+ component.getName(), undecidedPorts);
 		return undecidedPorts;
 	}
 
