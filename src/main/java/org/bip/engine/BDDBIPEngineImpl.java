@@ -330,27 +330,31 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 				BiDirectionalPair pair = dVariablesToPosition.get(i);
 				BiDirectionalPair firstPair = (BiDirectionalPair) pair.getFirst();
 				BiDirectionalPair secondPair = (BiDirectionalPair) pair.getSecond();
-				ArrayList<Port> componentPorts = new ArrayList<Port>();
-				componentPorts.add((Port) firstPair.getSecond());
+				ArrayList<Port> componentPorts = new ArrayList<Port>();	
 				Port port = (Port) firstPair.getSecond();
+				componentPorts.add(port);
 				portsExecuted.add(port.id);
 				oneInteraction.put((BIPComponent) firstPair.getFirst(), (ArrayList<Port>) componentPorts);
-				logger.info("Chosen Component: {}", firstPair.getFirst());
+				BIPComponent component = (BIPComponent) firstPair.getFirst();
+				logger.info("Chosen Component: {}", component.getName());
 				logger.info("Chosen Port: {}", componentPorts.get(0).id);
-				componentPorts.clear();
-				componentPorts.add((Port) secondPair.getSecond());
+				ArrayList<Port> componentPorts2 = new ArrayList<Port>();
 				Port port2 = (Port) secondPair.getSecond();
+				componentPorts2.add(port2);
+				logger.info("Component Port2 SIZE:"+componentPorts2.size());
 				
 				portsExecuted.add(port2.id);
-				oneInteraction.put((BIPComponent) secondPair.getFirst(), (ArrayList<Port>) componentPorts);
-				logger.info("Chosen Component: {}", secondPair.getFirst());
-				logger.info("Chosen Port: {}", componentPorts.get(0).id);
+				oneInteraction.put((BIPComponent) secondPair.getFirst(), (ArrayList<Port>) componentPorts2);
+				BIPComponent component2 = (BIPComponent) secondPair.getFirst();
+				logger.info("Chosen Component: {}", component2.getName());
+				logger.info("Chosen Port: {}", componentPorts2.get(0).id);
 			}
 			logger.info("OneInteraction size: "+ oneInteraction.size());
 			((List) allInteractions).add(oneInteraction);
 //			oneInteraction.clear();
 		}
 
+//
 		for (Enumeration<BIPComponent> componentsEnum = behaviourBDDs.keys(); componentsEnum.hasMoreElements(); ){
 			BIPComponent component = componentsEnum.nextElement();
 			logger.debug("Component: "+component.getName());
