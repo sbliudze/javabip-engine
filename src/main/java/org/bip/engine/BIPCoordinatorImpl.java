@@ -313,6 +313,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 		interactionExecutor.executeInteractions(portsToFire);
 	}
 	
+	
 	/**
 	 * BDDBIPEngine informs the BIPCoordinator for the components (and their associated ports) that are part of the same chosen interaction.
 	 * 
