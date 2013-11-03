@@ -69,36 +69,41 @@ public class DataEncoderImpl implements DataEncoder{
 		/*
 		 * Find corresponding d-variable
 		 */
-		BiDirectionalPair inComponentPortPair = new BiDirectionalPair(decidingComponent, decidingPort);
+//		BiDirectionalPair inComponentPortPair = new BiDirectionalPair(decidingComponent, decidingPort);
 		for (BIPComponent component : disabledComponents){
-//			logger.info("DISABLED component: "+component.getName()+" by decidingComponent: "+decidingComponent.getName());
+			logger.info("DISABLED component: "+component.getName()+" by decidingComponent: "+decidingComponent.getName());
 			ArrayList<Port> componentPorts = (ArrayList<Port>) dataCoordinator.getBehaviourByComponent(component).getEnforceablePorts();
 			for (Port port: componentPorts){
 //				logger.info("Deciding Port: "+decidingPort);
 //				logger.info("Other Port:"+ port);
-				BiDirectionalPair outComponentPortPair = new BiDirectionalPair(component, port);
-				BiDirectionalPair portsPair = new BiDirectionalPair(inComponentPortPair, outComponentPortPair);
+//				BiDirectionalPair outComponentPortPair = new BiDirectionalPair(component, port);
+//				BiDirectionalPair portsPair = new BiDirectionalPair(inComponentPortPair, outComponentPortPair);
 //				logger.info("Size of portsToVarBDDMapping: "+portsToDVarBDDMapping.size());
 				Set<BiDirectionalPair> allpairsBiDirectionalPairs = portsToDVarBDDMapping.keySet();
 				for (BiDirectionalPair pair: allpairsBiDirectionalPairs){
 					BiDirectionalPair pairOne = (BiDirectionalPair) pair.getFirst();
 					BIPComponent pairOneComponent = (BIPComponent) pairOne.getFirst();
 					Port pairOnePort = (Port) pairOne.getSecond();
-//					logger.info("Pair One Port: "+pairOnePort);
+					
 				
 					BiDirectionalPair pairTwo = (BiDirectionalPair) pair.getSecond();
 					BIPComponent pairTwoComponent = (BIPComponent) pairTwo.getFirst();
 					Port pairTwoPort = (Port) pairTwo.getSecond();
-//					logger.info("Pair Two Port: "+pairTwoPort);
+					
 					
 					if (component.equals(pairOneComponent)||component.equals(pairTwoComponent)){
 						if ((pairOnePort.id.equals(decidingPort.id) || (pairTwoPort.id.equals(decidingPort.id))) && (pairTwoPort.id.equals(port.id) || pairOnePort.id.equals(port.id))){
-							logger.info("DISABLED PORT: "+port);
+//							logger.info("DISABLED PORT: "+port);
+							logger.info("Pair One Port: "+pairOnePort);
+							logger.info("Pair Two Port: "+pairTwoPort);
 	//						System.exit(0);
-							BDD tmp = result.and(portsToDVarBDDMapping.get(pair).not());
-							result.free();
-							result = tmp;
-//							result.orWith(portsToDVarBDDMapping.get(pair).not());
+//							BDD tmp = result.and(portsToDVarBDDMapping.get(pair).not());
+//							result.free();
+//							result = tmp;
+							logger.info("I AM NEGATING..");
+							result.andWith(portsToDVarBDDMapping.get(pair).not());
+							
+							
 						}
 					}
 					
@@ -204,8 +209,8 @@ public class DataEncoderImpl implements DataEncoder{
 //							BDD temp = (componentInBDDs.get(inComponentPortPair)).and(componentOutBDDs.get(outComponentPortPair));
 //							this.implicationsOfDs.add(temp.or(node.not()));
 //							moreImplications
-							BDD temp = node.not().or(componentInBDDs.get(inComponentPortPair).and(componentOutBDDs.get(outComponentPortPair)));
-							this.implicationsOfDs.add(temp);
+//							BDD temp = node.not().or(componentInBDDs.get(inComponentPortPair).and(componentOutBDDs.get(outComponentPortPair)));
+							this.implicationsOfDs.add(node.not().or(componentInBDDs.get(inComponentPortPair).and(componentOutBDDs.get(outComponentPortPair))));
 							portsToDVarBDDMapping.put(inOutPortsPair, node);
 							auxiliary.add(node);
 							/*
