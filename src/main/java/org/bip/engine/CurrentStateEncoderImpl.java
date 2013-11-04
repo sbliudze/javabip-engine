@@ -48,7 +48,7 @@ public class CurrentStateEncoderImpl implements CurrentStateEncoder {
 	 * 
 	 * @return the current state BDD
 	 */
-	public BDD inform(BIPComponent component, String currentState, ArrayList<Port> disabledPorts) throws BIPEngineException {
+	public synchronized BDD inform(BIPComponent component, String currentState, ArrayList<Port> disabledPorts) throws BIPEngineException {
 		assert(component != null);
 		assert (currentState != null && !currentState.isEmpty());
 		
@@ -68,13 +68,13 @@ public class CurrentStateEncoderImpl implements CurrentStateEncoder {
 		
 		logger.debug("Current state BDD of component "+ component.getName() + statesToBDDs.get(currentState));
 		BDD result = engine.getBDDManager().one().and(statesToBDDs.get(currentState));
-
 		for (String componentState : componentStates){
+
 			if (!componentState.equals(currentState)){
-//				BDD tmp = result.and(statesToBDDs.get(componentState).not());
-//				result.free();
-//				result = tmp;
-				result.andWith(statesToBDDs.get(componentState).not());
+				BDD tmp = result.and(statesToBDDs.get(componentState).not());
+				result.free();
+				result = tmp;
+//				result.andWith(statesToBDDs.get(componentState).not());
 			}
 		}
 

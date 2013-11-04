@@ -419,7 +419,7 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		behaviourBDDs.put(component, componentBDD);
 	}
 	
-	public final void totalBehaviourBDD() throws BIPEngineException{
+	public synchronized final void totalBehaviourBDD() throws BIPEngineException{
 		
 		BDD totalBehaviourBdd = bdd_mgr.one();
 		BDD tmp;
@@ -448,15 +448,17 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 //		}
 	}
 
-	public void informGlue(BDD totalGlue) throws BIPEngineException {
+	public synchronized void informGlue(BDD totalGlue) throws BIPEngineException {
 
 		this.totalGlue = totalGlue;
 		//TODO: Fix synchronized
 //		synchronized (totalBehaviourAndGlue) {
-			if (this.totalBehaviourAndGlue==null && this.totalBehaviour!=null && this.dataGlueBDD!=null){
+			if (this.totalBehaviourAndGlue==null && this.totalBehaviour!=null){
 				totalBehaviourAndGlue=totalBehaviour.and(this.totalGlue);
 //						.and(this.dataGlueBDD);	//
-				totalBehaviourAndGlue.andWith(dataGlueBDD);
+				if (this.dataGlueBDD!=null){
+					totalBehaviourAndGlue.andWith(dataGlueBDD);
+				}
 //				bdd_mgr.reorder(BDDFactory.REORDER_SIFTITE);
 //				logger.info("Reorder stats: "+bdd_mgr.getReorderStats());
 				if (totalBehaviourAndGlue == null ) {

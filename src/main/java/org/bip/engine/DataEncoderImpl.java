@@ -27,7 +27,7 @@ public class DataEncoderImpl implements DataEncoder{
 	private BehaviourEncoder behaviourEncoder;
 	
 	Iterator<DataWire> dataGlueSpec;
-	Map <BiDirectionalPair, BDD> portsToDVarBDDMapping = new Hashtable<BiDirectionalPair, BDD>();
+	volatile Map <BiDirectionalPair, BDD> portsToDVarBDDMapping = new Hashtable<BiDirectionalPair, BDD>();
 	private Logger logger = LoggerFactory.getLogger(CurrentStateEncoderImpl.class);
 	Map<BiDirectionalPair,BDD> componentOutBDDs = new Hashtable<BiDirectionalPair, BDD>();
 	Map<BiDirectionalPair, BDD> componentInBDDs = new Hashtable<BiDirectionalPair, BDD>();
@@ -53,7 +53,7 @@ public class DataEncoderImpl implements DataEncoder{
 	 * @see org.bip.engine.DataEncoder#inform(java.util.Map)
 	 */
 	
-	public BDD informSpecific(BIPComponent decidingComponent, Port decidingPort, Iterable<BIPComponent> disabledComponents) throws BIPEngineException {
+	public synchronized BDD informSpecific(BIPComponent decidingComponent, Port decidingPort, Iterable<BIPComponent> disabledComponents) throws BIPEngineException {
 		/*
 		 * The disabledCombinations and disabledComponents are checked in the DataCoordinator,
 		 * wherein exceptions are thrown. Here, we just use assertion.
@@ -97,11 +97,13 @@ public class DataEncoderImpl implements DataEncoder{
 							logger.info("Pair One Port: "+pairOnePort);
 							logger.info("Pair Two Port: "+pairTwoPort);
 	//						System.exit(0);
-//							BDD tmp = result.and(portsToDVarBDDMapping.get(pair).not());
-//							result.free();
-//							result = tmp;
 							logger.info("I AM NEGATING..");
-							result.andWith(portsToDVarBDDMapping.get(pair).not());
+							BDD tmp = result.and(portsToDVarBDDMapping.get(pair).not());
+							logger.info("Inform Specific: PortsToDVarBDDMapping SIZE: "+portsToDVarBDDMapping.size());
+							result.free();
+							result = tmp;
+							
+//							result.andWith(portsToDVarBDDMapping.get(pair).not());
 							
 							
 						}
@@ -140,10 +142,10 @@ public class DataEncoderImpl implements DataEncoder{
 	private BDD computeDvariablesBDDs () {
 		BDD result = engine.getBDDManager().one();
 		for (BDD eachD : this.implicationsOfDs){
-			BDD tmp = result.and(eachD);
-			result.free();
-			result = tmp;
-//			result.andWith(eachD);
+//			BDD tmp = result.and(eachD);
+//			result.free();
+//			result = tmp;
+			result.andWith(eachD);
 		}
 		return result;
 	}
