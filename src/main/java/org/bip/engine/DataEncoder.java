@@ -32,6 +32,7 @@ public interface DataEncoder {
 	 * @throws BIPEngineException 
 	 */
 	BDD informSpecific(BIPComponent decidingComponent, Port decidingPort, Iterable<BIPComponent> disabledComponents) throws BIPEngineException;
+	
 //	BDD informSpecific(BIPComponent decidingComponent, Port decidingPort, Map<BIPComponent, Iterable<Port>> disabledCombinations) throws BIPEngineException;
 	
     /**

@@ -160,6 +160,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 		BIPCoordinator.inform(component, currentState, disabledPorts);
 	}
 	
+	//TODO: Replace the current inform specific with this one when alinas part is ready
 //	public void informSpecific(BIPComponent decidingComponent, Port decidingPort, Map<BIPComponent, Iterable<Port>> disabledCombinations) throws BIPEngineException {
 //		if (disabledCombinations.isEmpty()){
 //			try {

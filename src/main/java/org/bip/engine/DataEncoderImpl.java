@@ -53,6 +53,49 @@ public class DataEncoderImpl implements DataEncoder{
 	 * @see org.bip.engine.DataEncoder#inform(java.util.Map)
 	 */
 	
+	public synchronized BDD informSpecific(BIPComponent decidingComponent, Port decidingPort, Map<BIPComponent, Iterable<Port>> disabledCombinations) throws BIPEngineException {
+		/*
+		 * The disabledCombinations and disabledComponents are checked in the DataCoordinator,
+		 * wherein exceptions are thrown. Here, we just use assertion.
+		 */
+		BDD result;
+		assert(disabledCombinations != null);
+		if (disabledCombinations.isEmpty()){
+			result = engine.getBDDManager().zero();
+		}
+		else {
+		
+			result = engine.getBDDManager().one();
+			/*
+			 * Find corresponding d-variable
+			 */
+			Set<BIPComponent> disabledComponents = disabledCombinations.keySet();
+			for (BIPComponent component : disabledComponents){
+				Iterable<Port> componentPorts = disabledCombinations.get(component);
+				for (Port port: componentPorts){
+					Set<BiDirectionalPair> allpairsBiDirectionalPairs = portsToDVarBDDMapping.keySet();
+					for (BiDirectionalPair pair: allpairsBiDirectionalPairs){
+						BiDirectionalPair pairOne = (BiDirectionalPair) pair.getFirst();
+						BIPComponent pairOneComponent = (BIPComponent) pairOne.getFirst();
+						Port pairOnePort = (Port) pairOne.getSecond();
+						BiDirectionalPair pairTwo = (BiDirectionalPair) pair.getSecond();
+						BIPComponent pairTwoComponent = (BIPComponent) pairTwo.getFirst();
+						Port pairTwoPort = (Port) pairTwo.getSecond();
+						if (component.equals(pairOneComponent)||component.equals(pairTwoComponent)){
+							if ((pairOnePort.id.equals(decidingPort.id) || (pairTwoPort.id.equals(decidingPort.id))) && (pairTwoPort.id.equals(port.id) || pairOnePort.id.equals(port.id))){
+								BDD tmp = result.and(portsToDVarBDDMapping.get(pair).not());
+								logger.info("Inform Specific: PortsToDVarBDDMapping SIZE: "+portsToDVarBDDMapping.size());
+								result.free();
+								result = tmp;	
+							}
+						}
+					}
+				}
+			}
+		}
+		return result;
+	}
+	
 	public synchronized BDD informSpecific(BIPComponent decidingComponent, Port decidingPort, Iterable<BIPComponent> disabledComponents) throws BIPEngineException {
 		/*
 		 * The disabledCombinations and disabledComponents are checked in the DataCoordinator,
@@ -69,7 +112,6 @@ public class DataEncoderImpl implements DataEncoder{
 		/*
 		 * Find corresponding d-variable
 		 */
-//		BiDirectionalPair inComponentPortPair = new BiDirectionalPair(decidingComponent, decidingPort);
 		for (BIPComponent component : disabledComponents){
 			logger.info("DISABLED component: "+component.getName()+" by decidingComponent: "+decidingComponent.getName());
 			ArrayList<Port> componentPorts = (ArrayList<Port>) dataCoordinator.getBehaviourByComponent(component).getEnforceablePorts();
@@ -101,24 +143,15 @@ public class DataEncoderImpl implements DataEncoder{
 							BDD tmp = result.and(portsToDVarBDDMapping.get(pair).not());
 							logger.info("Inform Specific: PortsToDVarBDDMapping SIZE: "+portsToDVarBDDMapping.size());
 							result.free();
-							result = tmp;
-							
+							result = tmp;						
 //							result.andWith(portsToDVarBDDMapping.get(pair).not());
-							
-							
 						}
 					}
 					
-				}
-//				if (portsToDVarBDDMapping.containsValue(portsPair)){
-//					logger.info("DISABLED PORT: "+port);
-//					result.orWith(portsToDVarBDDMapping.get(portsPair).not());
-//				}
-				
+				}			
 			}
 		}
 	}
-
 		return result;
 	}
 	
