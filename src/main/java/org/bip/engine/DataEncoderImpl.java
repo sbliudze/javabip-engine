@@ -138,7 +138,6 @@ public class DataEncoderImpl implements DataEncoder{
 					BIPComponent pairTwoComponent = (BIPComponent) pairTwo.getFirst();
 					Port pairTwoPort = (Port) pairTwo.getSecond();
 					
-					
 					if (component.equals(pairOneComponent)||component.equals(pairTwoComponent)){
 						if ((pairOnePort.id.equals(decidingPort.id) || (pairTwoPort.id.equals(decidingPort.id))) && (pairTwoPort.id.equals(port.id) || pairOnePort.id.equals(port.id))){
 //							logger.info("DISABLED PORT: "+port);
@@ -180,7 +179,7 @@ public class DataEncoderImpl implements DataEncoder{
 	
 	//NEW
 	public BDD specifyDataGlue(BIPGlue glue) throws BIPEngineException {
-		if (glue == null || !glue.requiresConstraints.isEmpty()) {
+		if (glue == null || glue.requiresConstraints.isEmpty()) {
 			try {
 				logger.error("The glue parser has failed to compute the data glue.\n" +
 						"\tPossible reasons: No require constraints or corrupt/non-existant glue XML file.");
@@ -220,13 +219,14 @@ public class DataEncoderImpl implements DataEncoder{
 		for (Requires require: requiresConstraints){
 			BiDirectionalPair effectComponentPortPair;
 			BiDirectionalPair causeComponentPortPair;
-			ArrayList<BDD> auxiliary = new ArrayList<BDD>();
+			
 			Iterable<BIPComponent> requireEffectComponentInstances = dataCoordinator.getBIPComponentInstances(require.effect.specType);
 			ArrayList<Port> requireCausesPorts = new ArrayList<Port>();
 			for (List<Port> listOfPorts : require.causes){
 				requireCausesPorts.addAll(listOfPorts);
 			}
 			for (BIPComponent effectComponent: requireEffectComponentInstances){
+				ArrayList<BDD> auxiliary = new ArrayList<BDD>();
 				if (behaviourEncoder.getBDDOfAPort(effectComponent, require.effect.id)==null){
 					logger.error("BDD for port in DataEncoder was not found. Possible reason: specifyDataGlue is called before registration of components has finished.");
 					throw new BIPEngineException("BDD for port in DataEncoder was not found. Possible reason: specifyDataGlue is called before registration of components has finished.");
@@ -236,7 +236,7 @@ public class DataEncoderImpl implements DataEncoder{
 					if (!componentInBDDs.containsKey(effectComponentPortPair)){
 						componentInBDDs.put(effectComponentPortPair, behaviourEncoder.getBDDOfAPort(effectComponent, require.effect.id));
 					}
-//					logger.info("ComponentInBDDs size: "+ componentInBDDs.size());
+					logger.info("ComponentInBDDs size: "+ componentInBDDs.size());
 				}
 				for (Port causesPort: requireCausesPorts){
 					Iterable<BIPComponent> requireCauseComponentInstances = dataCoordinator.getBIPComponentInstances(causesPort.specType);
@@ -251,9 +251,32 @@ public class DataEncoderImpl implements DataEncoder{
 								componentOutBDDs.put(causeComponentPortPair, behaviourEncoder.getBDDOfAPort(causeComponent, causesPort.id));
 							}
 							logger.info("ComponentInBDDs size: "+ componentInBDDs.size());
-							}
+						}
 						BiDirectionalPair inOutPortsPair = new BiDirectionalPair(effectComponentPortPair, causeComponentPortPair);
-						if (!portsToDVarBDDMapping.containsKey(inOutPortsPair)){
+						Set<BiDirectionalPair> pairs= portsToDVarBDDMapping.keySet();
+
+						boolean exist= false;
+						for (BiDirectionalPair pair: pairs){
+							BiDirectionalPair pairOne = (BiDirectionalPair) pair.getFirst();
+							BIPComponent pairOneComponent = (BIPComponent) pairOne.getFirst();
+							Port pairOnePort = (Port) pairOne.getSecond();
+							
+						
+							BiDirectionalPair pairTwo = (BiDirectionalPair) pair.getSecond();
+							BIPComponent pairTwoComponent = (BIPComponent) pairTwo.getFirst();
+							Port pairTwoPort = (Port) pairTwo.getSecond();
+							
+							
+							if (effectComponent.equals(pairOneComponent)||effectComponent.equals(pairTwoComponent)){
+								if ((pairOnePort.id.equals(require.effect.id) || (pairTwoPort.id.equals(require.effect.id))) && (pairTwoPort.id.equals(causesPort.id) || pairOnePort.id.equals(causesPort.id))){
+//							if ((pair.getFirst().equals(effectComponentPortPair) || pair.getSecond().equals(effectComponentPortPair)) ){
+								exist =true;
+//								logger.info("Found it");
+								}
+								
+							}
+						}
+						if (!exist){
 							/* Create new variable in the BDD manager for the d-variables.
 							 * Does it start from 0 or 1 ? 
 							 * if from 0 increase later
@@ -275,6 +298,7 @@ public class DataEncoderImpl implements DataEncoder{
 						
 							this.implicationsOfDs.add(node.not().or(componentInBDDs.get(effectComponentPortPair).and(componentOutBDDs.get(causeComponentPortPair))));
 							portsToDVarBDDMapping.put(inOutPortsPair, node);
+//							logger.info("portToDVarBDDMapping size: "+portsToDVarBDDMapping.size());
 							auxiliary.add(node);
 							/*
 							 * Store the position of the d-variables in the BDD manager
@@ -290,20 +314,22 @@ public class DataEncoderImpl implements DataEncoder{
 									throw e;
 								}
 							}
+							currentSystemBddSize++;
 						}
-					currentSystemBddSize++;
+						
 					}
 				}
 					logger.info("Auxiliary size"+ auxiliary.size() );
-					moreImplications.put(componentInBDDs.get(effectComponentPortPair), auxiliary);
+					if (!auxiliary.isEmpty()){
+						moreImplications.put(componentInBDDs.get(effectComponentPortPair), auxiliary);
+					}
 			}
 			Set<BDD> entries =moreImplications.keySet();
-//			logger.info("moreImplications size: "+entries.size());
-//			System.exit(0);
+			logger.info("moreImplications size: "+entries.size());
+			logger.info("Ports to D Variables Mapping Size: "+portsToDVarBDDMapping.size());
 			
 			for (BDD bdd: entries){
 				BDD result=engine.getBDDManager().zero();
-//				logger.info("entry of moreImplications size: "+moreImplications.get(bdd).size());
 				for (BDD lala: moreImplications.get(bdd)){
 					BDD temp = result.or(lala);
 					result.free();
@@ -312,8 +338,7 @@ public class DataEncoderImpl implements DataEncoder{
 				BDD temp2= bdd.not().or(result);
 				this.implicationsOfDs.add(temp2);
 			}
-
-		}
+		}	
 
 	}
 	
