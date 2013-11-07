@@ -5,6 +5,7 @@ import net.sf.javabdd.BDD;
 import org.bip.api.BIPComponent;
 import org.bip.behaviour.Port;
 import org.bip.exceptions.BIPEngineException;
+import org.bip.glue.BIPGlue;
 import org.bip.glue.DataWire;
 
 /**
@@ -42,6 +43,9 @@ public interface DataEncoder {
      * @throws BIPEngineException 
      */
     BDD specifyDataGlue(Iterable<DataWire> dataGlue) throws BIPEngineException;
+    
+	//NEW
+	BDD specifyDataGlue(BIPGlue glue) throws BIPEngineException;
 	
 	/**
 	 * Setter for the BDDBIPEngine
@@ -56,4 +60,6 @@ public interface DataEncoder {
 	 * Setter for the Behaviour Encoder
 	 */
 	void setBehaviourEncoder(BehaviourEncoder behaviourEncoder);
+
+
 }

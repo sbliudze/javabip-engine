@@ -3,6 +3,7 @@ package org.bip.engine;
 import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -11,7 +12,9 @@ import net.sf.javabdd.BDD;
 import org.bip.api.BIPComponent;
 import org.bip.behaviour.Port;
 import org.bip.exceptions.BIPEngineException;
+import org.bip.glue.BIPGlue;
 import org.bip.glue.DataWire;
+import org.bip.glue.Requires;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,13 +29,16 @@ public class DataEncoderImpl implements DataEncoder{
 	private DataCoordinator dataCoordinator;
 	private BehaviourEncoder behaviourEncoder;
 	
-	Iterator<DataWire> dataGlueSpec;
+	private Iterator<DataWire> dataGlueSpec;
+//	private ArrayList<Requires> RequiresGlue;
+	
 	volatile Map <BiDirectionalPair, BDD> portsToDVarBDDMapping = new Hashtable<BiDirectionalPair, BDD>();
 	private Logger logger = LoggerFactory.getLogger(CurrentStateEncoderImpl.class);
 	Map<BiDirectionalPair,BDD> componentOutBDDs = new Hashtable<BiDirectionalPair, BDD>();
 	Map<BiDirectionalPair, BDD> componentInBDDs = new Hashtable<BiDirectionalPair, BDD>();
 	ArrayList<BDD> implicationsOfDs = new ArrayList<BDD>();
 	Map<BDD, ArrayList<BDD>> moreImplications = new Hashtable<BDD, ArrayList<BDD>>();
+
 	
 	/*
 	 * Possible implementation: Send each combination's BDD to the engine that takes the 
@@ -172,6 +178,24 @@ public class DataEncoderImpl implements DataEncoder{
 		return computeDvariablesBDDs();
 	}
 	
+	//NEW
+	public BDD specifyDataGlue(BIPGlue glue) throws BIPEngineException {
+		if (glue == null || !glue.requiresConstraints.isEmpty()) {
+			try {
+				logger.error("The glue parser has failed to compute the data glue.\n" +
+						"\tPossible reasons: No require constraints or corrupt/non-existant glue XML file.");
+				throw new BIPEngineException("The glue parser has failed to compute the data glue.\n" +
+						"\tPossible reasons: No require constraints or corrupt/non-existant glue XML file.");
+			} catch (BIPEngineException e) {
+				e.printStackTrace();
+				throw e;
+			}
+		}
+//		this.RequiresGlue=glue.requiresConstraints;
+		createDataBDDNodes(glue.requiresConstraints);
+		return computeDvariablesBDDs();
+	}
+
 	private BDD computeDvariablesBDDs () {
 		BDD result = engine.getBDDManager().one();
 		for (BDD eachD : this.implicationsOfDs){
@@ -181,6 +205,116 @@ public class DataEncoderImpl implements DataEncoder{
 			result.andWith(eachD);
 		}
 		return result;
+	}
+	
+	
+	private void createDataBDDNodes(ArrayList<Requires> requiresConstraints) throws BIPEngineException {
+		/*
+		 * Get the number of BDD-nodes of the System. We base this on the assumption that all the components
+		 * have registered before. Therefore, we know the size of the BDD nodes created for states and ports,
+		 * which is the current System BDD size.
+		 */
+		int initialSystemBDDSize = dataCoordinator.getNoPorts() + dataCoordinator.getNoStates();
+		int currentSystemBddSize = initialSystemBDDSize;
+		logger.info("CurrentSystemBDDSize: "+ currentSystemBddSize);
+		for (Requires require: requiresConstraints){
+			BiDirectionalPair effectComponentPortPair;
+			BiDirectionalPair causeComponentPortPair;
+			ArrayList<BDD> auxiliary = new ArrayList<BDD>();
+			Iterable<BIPComponent> requireEffectComponentInstances = dataCoordinator.getBIPComponentInstances(require.effect.specType);
+			ArrayList<Port> requireCausesPorts = new ArrayList<Port>();
+			for (List<Port> listOfPorts : require.causes){
+				requireCausesPorts.addAll(listOfPorts);
+			}
+			for (BIPComponent effectComponent: requireEffectComponentInstances){
+				if (behaviourEncoder.getBDDOfAPort(effectComponent, require.effect.id)==null){
+					logger.error("BDD for port in DataEncoder was not found. Possible reason: specifyDataGlue is called before registration of components has finished.");
+					throw new BIPEngineException("BDD for port in DataEncoder was not found. Possible reason: specifyDataGlue is called before registration of components has finished.");
+				}
+				else{
+					effectComponentPortPair = new BiDirectionalPair(effectComponent, require.effect);
+					if (!componentInBDDs.containsKey(effectComponentPortPair)){
+						componentInBDDs.put(effectComponentPortPair, behaviourEncoder.getBDDOfAPort(effectComponent, require.effect.id));
+					}
+//					logger.info("ComponentInBDDs size: "+ componentInBDDs.size());
+				}
+				for (Port causesPort: requireCausesPorts){
+					Iterable<BIPComponent> requireCauseComponentInstances = dataCoordinator.getBIPComponentInstances(causesPort.specType);
+					for (BIPComponent causeComponent: requireCauseComponentInstances){
+						if (behaviourEncoder.getBDDOfAPort(causeComponent, causesPort.id)==null){
+							logger.error("BDD for port in DataEncoder was not found. Possible reason: specifyDataGlue is called before registration of components has finished.");
+							throw new BIPEngineException("BDD for port in DataEncoder was not found. Possible reason: specifyDataGlue is called before registration of components has finished.");
+						}
+						else{
+							causeComponentPortPair = new BiDirectionalPair(causeComponent, causesPort);
+							if (!componentOutBDDs.containsKey(causeComponentPortPair)){
+								componentOutBDDs.put(causeComponentPortPair, behaviourEncoder.getBDDOfAPort(causeComponent, causesPort.id));
+							}
+							logger.info("ComponentInBDDs size: "+ componentInBDDs.size());
+							}
+						BiDirectionalPair inOutPortsPair = new BiDirectionalPair(effectComponentPortPair, causeComponentPortPair);
+						if (!portsToDVarBDDMapping.containsKey(inOutPortsPair)){
+							/* Create new variable in the BDD manager for the d-variables.
+							 * Does it start from 0 or 1 ? 
+							 * if from 0 increase later
+							 */
+							if (engine.getBDDManager().varNum() < currentSystemBddSize+1){
+								engine.getBDDManager().setVarNum(currentSystemBddSize+1);
+							}
+							BDD node = engine.getBDDManager().ithVar(currentSystemBddSize);
+							if(node == null){
+								try {
+									logger.error("Single node BDD for d-variable for port "+require.effect.id+ " of component "+effectComponent+" and port "+causesPort.id+" of component "+causeComponent+ " is null");
+									throw new BIPEngineException("Single node BDD for d-variable for port "+require.effect.id+ " of component "+effectComponent+" and port "+causesPort.id+" of component "+causeComponent+ " is null");
+								} catch (BIPEngineException e) {
+									e.printStackTrace();
+									throw e;
+								}
+							}
+							logger.info("Create D-variable BDD node of Ports-pair: "+require.effect+" "+causesPort);
+						
+							this.implicationsOfDs.add(node.not().or(componentInBDDs.get(effectComponentPortPair).and(componentOutBDDs.get(causeComponentPortPair))));
+							portsToDVarBDDMapping.put(inOutPortsPair, node);
+							auxiliary.add(node);
+							/*
+							 * Store the position of the d-variables in the BDD manager
+							 */
+							engine.getdVariablesToPosition().put(currentSystemBddSize, inOutPortsPair);
+							engine.getPositionsOfDVariables().add(currentSystemBddSize);
+							if (portsToDVarBDDMapping.get(inOutPortsPair)== null || portsToDVarBDDMapping.get(inOutPortsPair).isZero()){
+								try {
+									logger.error("Single node BDD for d variable for ports "+ require.effect.id+" and "+ causesPort.toString()+ " is equal to null");
+									throw new BIPEngineException("Single node BDD for d variable for ports "+ require.effect.id+" and "+ causesPort.toString()+ " is equal to null");
+								} catch (BIPEngineException e) {
+									e.printStackTrace();
+									throw e;
+								}
+							}
+						}
+					currentSystemBddSize++;
+					}
+				}
+					logger.info("Auxiliary size"+ auxiliary.size() );
+					moreImplications.put(componentInBDDs.get(effectComponentPortPair), auxiliary);
+			}
+			Set<BDD> entries =moreImplications.keySet();
+//			logger.info("moreImplications size: "+entries.size());
+//			System.exit(0);
+			
+			for (BDD bdd: entries){
+				BDD result=engine.getBDDManager().zero();
+//				logger.info("entry of moreImplications size: "+moreImplications.get(bdd).size());
+				for (BDD lala: moreImplications.get(bdd)){
+					BDD temp = result.or(lala);
+					result.free();
+					result=temp;
+				}
+				BDD temp2= bdd.not().or(result);
+				this.implicationsOfDs.add(temp2);
+			}
+
+		}
+
 	}
 	
 	private void createDataBDDNodes() throws BIPEngineException {
@@ -372,7 +506,5 @@ public class DataEncoderImpl implements DataEncoder{
 	public void setDataCoordinator(DataCoordinator dataCoordinator) {
 		this.dataCoordinator = dataCoordinator;
 	}
-
-
 	
 }

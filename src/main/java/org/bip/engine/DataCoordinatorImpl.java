@@ -10,6 +10,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import net.sf.javabdd.BDD;
+
 import org.bip.api.BIPComponent;
 import org.bip.api.BIPEngine;
 import org.bip.api.Behaviour;
@@ -99,7 +101,9 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 			}
 		} else {
 			try {
-				BIPCoordinator.specifyDataGlue(dataEncoder.specifyDataGlue(dataWires));
+//				BIPCoordinator.specifyDataGlue(dataEncoder.specifyDataGlue(dataWires));
+				//NEW
+				BIPCoordinator.specifyDataGlue(dataEncoder.specifyDataGlue(glue));
 			} catch (BIPEngineException e) {
 				e.printStackTrace();
 			}
