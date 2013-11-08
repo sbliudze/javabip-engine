@@ -469,7 +469,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 			Hashtable<String, ArrayList<Object>> dataEvaluation = new Hashtable<String, ArrayList<Object>>();
 			//map dataName <-> mapping dataValue - components giving this value 
 			Hashtable<String, Hashtable<Object, ArrayList<BIPComponent>>> dataHelper = new Hashtable<String, Hashtable<Object, ArrayList<BIPComponent>>>();
-
+			ArrayList<DataContainer> dataList = new ArrayList<DataContainer>();
 			// for each DataIn variable get info which components provide it
 			// as their outData
 			// mapping inData <-> outData, where
@@ -485,6 +485,10 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 						//for each component of this type, call getData
 						for (BIPComponent aComponent : getBIPComponentInstances(wire.from.specType)) {
 							Object inValue = aComponent.getData(wire.from.id, inDataItem.type());
+							// get data out variable in order to get the ports
+							Data dataOut = componentBehaviourMapping.get(component).getDataOut(wire.from.id);
+							//dataOut.ports - let it be enabled ports
+							dataList.add(new DataContainer(inDataItem, inValue, component, dataOut.ports()));
 							dataValues.add(inValue);
 							
 							ArrayList<BIPComponent> componentList = new ArrayList<BIPComponent>();
@@ -501,14 +505,22 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 				}
 			}
 			
-			ArrayList<Map<String, Object>> dataTable = (ArrayList<Map<String, Object>>) getDataValueTable(dataEvaluation);
+			ArrayList<ArrayList<DataContainer>> containerList = (ArrayList<ArrayList<DataContainer>>)getDataValueTable(dataList);
+			ArrayList<Map<String, Object>> dataTable = createDataTable(containerList);
+			//ArrayList<Map<String, Object>> dataTable = (ArrayList<Map<String, Object>>) getDataValueTable(dataEvaluation);
 			//the result provided must have the same order - put comment
+			//TODO change getEnabledness: if data null, return false
 			ArrayList<Boolean> portActive = (ArrayList<Boolean>) component.checkEnabledness(port, dataTable);
 			System.out.println(portActive);
-//			HashMap<BIPComponent, Iterable<Port>> disabledCombinations = new HashMap<BIPComponent, Iterable<Port>>();
+			HashMap<BIPComponent, Iterable<Port>> disabledCombinations = new HashMap<BIPComponent, Iterable<Port>>();
 			for (int i = 0; i < portActive.size(); i++) {
 				ArrayList<BIPComponent> disabledComponents = new ArrayList<BIPComponent>();
 				if (!(portActive.get(i))) {
+					ArrayList<DataContainer> dataContainer = containerList.get(i);
+					for (DataContainer dc: dataContainer)
+					{
+						disabledCombinations.put(dc.component(), dc.ports());
+					}
 					Map<String, Object> theseDatas = dataTable.get(i);
 					
 					for (Entry<String, Object> entry : theseDatas.entrySet()) {
@@ -531,6 +543,104 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 			}
 
 		}
+	}
+
+	private ArrayList<Map<String, Object>> createDataTable(ArrayList<ArrayList<DataContainer>> containerList) {
+		ArrayList<Map<String, Object>> dataTable = new ArrayList<Map<String, Object>>();
+		for (ArrayList<DataContainer> container : containerList) {
+			Map<String, Object> row = new Hashtable<String, Object>();
+			for (DataContainer dc : container) {
+				row.put(dc.name(), dc.value());
+			}
+			dataTable.add(row);
+		}
+		return dataTable;
+	}
+
+	private ArrayList<ArrayList<DataContainer>> getDataValueTable(ArrayList<DataContainer> dataList) {
+		ArrayList<ArrayList<DataContainer>> result = new ArrayList<ArrayList<DataContainer>>();
+		
+		if (dataList == null || dataList.isEmpty()) {
+			// throw exception
+			return null;
+		}
+		ArrayList<ArrayList<DataContainer>> sortedList = getListList(dataList);
+		
+		// for one bipData get iterator over its values
+		ArrayList<DataContainer> entry = sortedList.get(0);
+		Iterator<DataContainer> iterator = entry.iterator();
+
+		// for each value of this first bipData
+		while (iterator.hasNext()) {
+			// create one map, where
+			// all the different pairs name<->value will be stored
+			// put there the current value of the first bipData
+			ArrayList<DataContainer> dataRow = new ArrayList<DataContainer>();
+			dataRow.add(iterator.next());
+
+			// remove the current data from the initial data table
+			// so that it is not treated again further
+			// treat the other bipData variables
+			result.addAll(getNextTableRow(sortedList, dataRow));
+			// restore the current data
+			//dataEvaluation.put(keyCopy, valuesCopy);
+		}
+		return result;
+}
+	
+	private ArrayList<ArrayList<DataContainer>> getNextTableRow(ArrayList<ArrayList<DataContainer>> sortedList, ArrayList<DataContainer> dataRow) {
+		ArrayList<ArrayList<DataContainer>> result = new ArrayList<ArrayList<DataContainer>>();
+		// if there is no more data left, it means we have constructed one map
+		// of all the bipData variables
+		if (sortedList == null || sortedList.isEmpty()) {
+			result.add(dataRow);
+			return result;
+		}
+
+		// for one bipData get iterator over its values
+		ArrayList<DataContainer> entry = sortedList.iterator().next();
+		Iterator<DataContainer> iterator = entry.iterator();
+
+		// for each value of this bipData
+		while (iterator.hasNext()) {
+			// create a new map, where
+			// all the different pairs name<->value will be stored
+			// copy there all the previous values
+			// (this must be done to escape
+			// change of one variable that leads to change of all its copies
+			ArrayList<DataContainer> thisRow = new ArrayList<DataContainer>();
+			thisRow.addAll(dataRow);
+			// put there the current value of the bipData
+			thisRow.add(iterator.next());
+
+			// remove the current data from the initial data table
+			// so that it is not treated again further
+			//String keyCopy = entry.getKey();
+			//ArrayList<Object> valuesCopy = dataEvaluation.remove(keyCopy);
+			// treat the other bipData variables
+			result.addAll(getNextTableRow(sortedList, thisRow));
+			// restore the current data
+			//dataEvaluation.put(keyCopy, valuesCopy);
+		}
+		return result;
+	}
+
+	private ArrayList<ArrayList<DataContainer>> getListList(ArrayList<DataContainer> list) {
+		ArrayList<ArrayList<DataContainer>> result = new ArrayList<ArrayList<DataContainer>>();
+
+		while (!list.isEmpty()) {
+			ArrayList<DataContainer> oneDataList = new ArrayList<DataContainer>();
+			DataContainer data = list.get(0);
+			oneDataList.add(data);
+			list.remove(data);
+			for (DataContainer d : list) {
+				if (d.name().equals(data.name())) {
+					oneDataList.add(d);
+					list.remove(d);
+				}
+			}
+		}
+		return result;
 	}
 
 	/**
