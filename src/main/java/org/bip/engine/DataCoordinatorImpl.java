@@ -525,23 +525,23 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 					}
 					Map<String, Object> theseDatas = dataTable.get(i);
 					
-					for (Entry<String, Object> entry : theseDatas.entrySet()) {
-						
-						Hashtable<Object, ArrayList<BIPComponent>> valueToComponents = dataHelper.get(entry.getKey());
-					
-						Iterable<BIPComponent> components = valueToComponents.get(entry.getValue());
+//					for (Entry<String, Object> entry : theseDatas.entrySet()) {
+//						
+//						Hashtable<Object, ArrayList<BIPComponent>> valueToComponents = dataHelper.get(entry.getKey());
+//					
+//						Iterable<BIPComponent> components = valueToComponents.get(entry.getValue());
 //						for (BIPComponent aComponent: components)
 //						{
 //							ArrayList<Port> ports = getDataOutPorts(aComponent, port);
 //							disabledCombinations.put(aComponent, ports);
 //						}
-						HelperFunctions.addAll(disabledComponents, components);
-					}
+//						HelperFunctions.addAll(disabledComponents, components);
+//					}
 				}
-//				this.informSpecific(component, port, disabledCombinations);
-				System.out.println(disabledComponents);
-
-				this.informSpecific(component, port, disabledComponents);
+				this.informSpecific(component, port, disabledCombinations);
+//				System.out.println(disabledComponents);
+//
+//				this.informSpecific(component, port, disabledComponents);
 			}
 
 		}
