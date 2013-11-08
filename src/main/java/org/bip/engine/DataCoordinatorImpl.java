@@ -316,13 +316,15 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 						Hashtable<String, Object> nameToValue = new Hashtable<String, Object>();
 
 						if (portToDataInForTransition == null || !portToDataInForTransition.iterator().hasNext()) {
+							System.err.println("Execution without data");
 							component.execute(port.id);
 							continue;
 						}
 						for (Data dataItem : portToDataInForTransition) {
 							logger.info("Component {} execute port with inData {}", component.getName(), dataItem.name());
 							for (BIPComponent aComponent : oneInteraction.keySet()) {
-								String dataOutName = dataIsProvided(aComponent, component, dataItem.name());
+								String dataOutName = dataIsProvided(aComponent, component, dataItem.name(), oneInteraction.get(aComponent));
+								System.err.println("Outname: "+ dataOutName);
 								if (dataOutName != null && !dataOutName.isEmpty()) {
 									Object dataValue = aComponent.getData(dataOutName, dataItem.type());
 									nameToValue.put(dataItem.name(), dataValue);
@@ -348,11 +350,22 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 		}
 	}
 
-	private String dataIsProvided(BIPComponent providingComponent, BIPComponent requiringComponent, String dataName) {
+	private String dataIsProvided(BIPComponent providingComponent, BIPComponent requiringComponent, String dataName, Iterable<Port> port) {
+		//System.err.println("Find wire for ports " + port);
 		for (DataWire wire : this.dataWires) {
 			if (wire.isIncoming(dataName, componentBehaviourMapping.get(requiringComponent).getComponentType())
 					&& wire.from.specType.equals(componentBehaviourMapping.get(providingComponent).getComponentType())) {
-				return wire.from.id;
+				//System.err.println("Data providing: " + wire.from.id);
+				ArrayList<Port> portsProviding = (ArrayList<Port>) componentBehaviourMapping.get(providingComponent).getDataOut(wire.from.id).ports();
+				//System.err.println("Ports allowed: " + portsProviding);
+				//System.err.println("Ports providing: " + port);
+				for (Port p : port) {
+					for (Port inport : portsProviding) {
+						if (inport.id.equals(p.id) && inport.specType.equals(p.specType)) {
+							return wire.from.id;
+						}
+					}
+				}
 			}
 		}
 		return "";
