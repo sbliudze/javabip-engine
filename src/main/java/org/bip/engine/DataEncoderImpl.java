@@ -30,7 +30,6 @@ public class DataEncoderImpl implements DataEncoder{
 	private BehaviourEncoder behaviourEncoder;
 	
 	private Iterator<DataWire> dataGlueSpec;
-//	private ArrayList<Requires> RequiresGlue;
 	
 	volatile Map <BiDirectionalPair, BDD> portsToDVarBDDMapping = new Hashtable<BiDirectionalPair, BDD>();
 	private Logger logger = LoggerFactory.getLogger(CurrentStateEncoderImpl.class);
@@ -58,7 +57,6 @@ public class DataEncoderImpl implements DataEncoder{
 	 * 4. Here also is the questions whether the DataEncoder should save the BDDs or not at each execution cycle.
 	 * @see org.bip.engine.DataEncoder#inform(java.util.Map)
 	 */
-	
 	public synchronized BDD informSpecific(BIPComponent decidingComponent, Port decidingPort, Map<BIPComponent, Iterable<Port>> disabledCombinations) throws BIPEngineException {
 		/*
 		 * The disabledCombinations and disabledComponents are checked in the DataCoordinator,
@@ -70,7 +68,6 @@ public class DataEncoderImpl implements DataEncoder{
 			result = engine.getBDDManager().zero();
 		}
 		else {
-		
 			result = engine.getBDDManager().one();
 			/*
 			 * Find corresponding d-variable
@@ -89,6 +86,7 @@ public class DataEncoderImpl implements DataEncoder{
 						Port pairTwoPort = (Port) pairTwo.getSecond();
 						if (component.equals(pairOneComponent)||component.equals(pairTwoComponent)){
 							if ((pairOnePort.id.equals(decidingPort.id) || (pairTwoPort.id.equals(decidingPort.id))) && (pairTwoPort.id.equals(port.id) || pairOnePort.id.equals(port.id))){
+//								result.andWith(portsToDVarBDDMapping.get(pair).not());
 								BDD tmp = result.and(portsToDVarBDDMapping.get(pair).not());
 								logger.info("Inform Specific: PortsToDVarBDDMapping SIZE: "+portsToDVarBDDMapping.size());
 								result.free();
@@ -122,11 +120,6 @@ public class DataEncoderImpl implements DataEncoder{
 			logger.info("DISABLED component: "+component.getName()+" by decidingComponent: "+decidingComponent.getName());
 			ArrayList<Port> componentPorts = (ArrayList<Port>) dataCoordinator.getBehaviourByComponent(component).getEnforceablePorts();
 			for (Port port: componentPorts){
-//				logger.info("Deciding Port: "+decidingPort);
-//				logger.info("Other Port:"+ port);
-//				BiDirectionalPair outComponentPortPair = new BiDirectionalPair(component, port);
-//				BiDirectionalPair portsPair = new BiDirectionalPair(inComponentPortPair, outComponentPortPair);
-//				logger.info("Size of portsToVarBDDMapping: "+portsToDVarBDDMapping.size());
 				Set<BiDirectionalPair> allpairsBiDirectionalPairs = portsToDVarBDDMapping.keySet();
 				for (BiDirectionalPair pair: allpairsBiDirectionalPairs){
 					BiDirectionalPair pairOne = (BiDirectionalPair) pair.getFirst();
@@ -190,7 +183,6 @@ public class DataEncoderImpl implements DataEncoder{
 				throw e;
 			}
 		}
-//		this.RequiresGlue=glue.requiresConstraints;
 		createDataBDDNodes(glue.requiresConstraints);
 		return computeDvariablesBDDs();
 	}
@@ -198,9 +190,6 @@ public class DataEncoderImpl implements DataEncoder{
 	private BDD computeDvariablesBDDs () {
 		BDD result = engine.getBDDManager().one();
 		for (BDD eachD : this.implicationsOfDs){
-//			BDD tmp = result.and(eachD);
-//			result.free();
-//			result = tmp;
 			result.andWith(eachD);
 		}
 		return result;
