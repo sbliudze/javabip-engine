@@ -777,7 +777,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 		Behaviour behaviour = componentBehaviourMapping.get(component);
 		boolean portIsDisabled = false;
 		// for each port that we have
-		ArrayList<Port> currentPorts = (ArrayList<Port>) behaviour.getStateToPorts().get(currentState);
+		Set<Port> currentPorts = behaviour.getStateToPorts().get(currentState);
 		for (Port port : currentPorts) {
 			for (Port disabledPort : disabledPorts) {
 				// if it is equal to one of the disabled ports, we mark it as
