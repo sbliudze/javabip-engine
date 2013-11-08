@@ -10,6 +10,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import net.sf.javabdd.BDD;
+
 import org.bip.api.BIPComponent;
 import org.bip.api.BIPEngine;
 import org.bip.api.Behaviour;
@@ -99,7 +101,9 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 			}
 		} else {
 			try {
-				BIPCoordinator.specifyDataGlue(dataEncoder.specifyDataGlue(dataWires));
+//				BIPCoordinator.specifyDataGlue(dataEncoder.specifyDataGlue(dataWires));
+				//NEW
+				BIPCoordinator.specifyDataGlue(dataEncoder.specifyDataGlue(glue));
 			} catch (BIPEngineException e) {
 				e.printStackTrace();
 			}
@@ -160,14 +164,10 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 		BIPCoordinator.inform(component, currentState, disabledPorts);
 	}
 	
+	//TODO: Replace the current inform specific with this one when alinas part is ready
 //	public void informSpecific(BIPComponent decidingComponent, Port decidingPort, Map<BIPComponent, Iterable<Port>> disabledCombinations) throws BIPEngineException {
 //		if (disabledCombinations.isEmpty()){
-//			try {
-//				logger.error("No disabled combination specified in informSpecific. Map of disabledCombinations is empty.");
-//				throw new BIPEngineException("No disabled combination specified in informSpecific. Map of disabledCombinations is empty.");
-//			} catch (BIPEngineException e) {
-//				e.printStackTrace();
-//			}	
+//			logger.warn("No disabled combinations specified in informSpecific. Map of disabledCombinations is empty.");
 //		}
 //		else if(!registeredComponents.contains(decidingComponent)){
 //			try {
@@ -309,7 +309,9 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 						// Find out which components are sending data to
 						// this component
 						Iterable<Data> portToDataInForTransition = componentBehaviourMapping.get(component).portToDataInForTransition(port);
+						System.err.println(portToDataInForTransition+ " "+ port.id);
 						Hashtable<String, Object> nameToValue  = new Hashtable<String, Object>();
+						
 						if (portToDataInForTransition==null || !portToDataInForTransition.iterator().hasNext())
 						{
 							component.execute(port.id);
