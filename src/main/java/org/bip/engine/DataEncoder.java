@@ -1,5 +1,7 @@
 package org.bip.engine;
 
+import java.util.Map;
+
 import net.sf.javabdd.BDD;
 
 import org.bip.api.BIPComponent;
@@ -34,7 +36,7 @@ public interface DataEncoder {
 	 */
 	BDD informSpecific(BIPComponent decidingComponent, Port decidingPort, Iterable<BIPComponent> disabledComponents) throws BIPEngineException;
 	
-//	BDD informSpecific(BIPComponent decidingComponent, Port decidingPort, Map<BIPComponent, Iterable<Port>> disabledCombinations) throws BIPEngineException;
+	BDD informSpecific(BIPComponent decidingComponent, Port decidingPort, Map<BIPComponent, Iterable<Port>> disabledCombinations) throws BIPEngineException;
 	
     /**
      * Receives the information about the data glue of the system.

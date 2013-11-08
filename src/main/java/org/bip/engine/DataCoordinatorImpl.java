@@ -164,54 +164,9 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 		BIPCoordinator.inform(component, currentState, disabledPorts);
 	}
 	
-	//TODO: Replace the current inform specific with this one when alinas part is ready
-//	public void informSpecific(BIPComponent decidingComponent, Port decidingPort, Map<BIPComponent, Iterable<Port>> disabledCombinations) throws BIPEngineException {
-//		if (disabledCombinations.isEmpty()){
-//			logger.warn("No disabled combinations specified in informSpecific. Map of disabledCombinations is empty.");
-//		}
-//		else if(!registeredComponents.contains(decidingComponent)){
-//			try {
-//				logger.error("Deciding component specified in informSpecific is not in the list of registered components");
-//				throw new BIPEngineException("Deciding component specified in informSpecific is not in the list of registered components");
-//			} catch (BIPEngineException e) {
-//				e.printStackTrace();
-//			}	
-//		}
-//		else if(!componentBehaviourMapping.get(decidingComponent).getEnforceablePorts().iterator().equals(decidingPort)){
-//			try {
-//				logger.error("Deciding port in informSpecific is not specified in the behaviour of the deciding component.");
-//				throw new BIPEngineException("Deciding port in informSpecific is not specified in the behaviour of the deciding component.");
-//			} catch (BIPEngineException e) {
-//				e.printStackTrace();
-//			}	
-//		}
-//		else{
-//			Iterator <BIPComponent> disabledComponents = disabledCombinations.keySet().iterator();
-//			while (disabledComponents.hasNext()){
-//				BIPComponent component = disabledComponents.next();
-//				if (!registeredComponents.contains(component)) {
-//					logger.error("Component " + component.getName() + " specified in the disabledCombinations of informSpecific was not registered.");
-//					throw new BIPEngineException("Component " + component.getName() + " specified in the disabledCombinations of informSpecific was not registered.");
-//				}
-//			}
-//			BIPCoordinator.informSpecific(dataEncoder.informSpecific(decidingComponent, decidingPort, disabledCombinations));
-//
-//		}
-//	}
-	
-	public void informSpecific(BIPComponent decidingComponent, Port decidingPort, Iterable<BIPComponent> disabledComponents) throws BIPEngineException {
-		this.number++;
-		if (disabledComponents==null)
-		{
-			return;
-		}
-		if (!disabledComponents.iterator().hasNext()){
-//			try {
-			logger.warn("No disabled components specified in informSpecific. Iterable of disabledComponents is empty.");
-//				throw new BIPEngineException("No disabled components specified in informSpecific. Iterable of disabledComponents is empty.");
-//			} catch (BIPEngineException e) {
-//				e.printStackTrace();
-//			}	
+	public void informSpecific(BIPComponent decidingComponent, Port decidingPort, Map<BIPComponent, Iterable<Port>> disabledCombinations) throws BIPEngineException {
+		if (disabledCombinations.isEmpty()){
+			logger.warn("No disabled combinations specified in informSpecific. Map of disabledCombinations is empty.");
 		}
 		else if(!registeredComponents.contains(decidingComponent)){
 			try {
@@ -221,29 +176,74 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 				e.printStackTrace();
 			}	
 		}
-		else{
-			ArrayList<Port> componentPorts = (ArrayList<Port>) componentBehaviourMapping.get(decidingComponent).getEnforceablePorts();
-			if(!componentPorts.contains(decidingPort)){
+		else if(!componentBehaviourMapping.get(decidingComponent).getEnforceablePorts().iterator().equals(decidingPort)){
 			try {
-				logger.error("Deciding port {} in informSpecific is not specified in the behaviour of the deciding component {}.",decidingPort, decidingComponent.getName());
+				logger.error("Deciding port in informSpecific is not specified in the behaviour of the deciding component.");
 				throw new BIPEngineException("Deciding port in informSpecific is not specified in the behaviour of the deciding component.");
 			} catch (BIPEngineException e) {
 				e.printStackTrace();
 			}	
 		}
-		
 		else{
-			for  (BIPComponent component : disabledComponents){
+			Iterator <BIPComponent> disabledComponents = disabledCombinations.keySet().iterator();
+			while (disabledComponents.hasNext()){
+				BIPComponent component = disabledComponents.next();
 				if (!registeredComponents.contains(component)) {
-					logger.error("Component " + component.getName() + " specified in the disabledComponents of informSpecific was not registered.");
-					throw new BIPEngineException("Component " + component.getName() + " specified in the disabledComponents of informSpecific was not registered.");
+					logger.error("Component " + component.getName() + " specified in the disabledCombinations of informSpecific was not registered.");
+					throw new BIPEngineException("Component " + component.getName() + " specified in the disabledCombinations of informSpecific was not registered.");
 				}
 			}
-			if(number%3==0)
-			BIPCoordinator.informSpecific(dataEncoder.informSpecific(decidingComponent, decidingPort, disabledComponents));
-		}
+			BIPCoordinator.informSpecific(dataEncoder.informSpecific(decidingComponent, decidingPort, disabledCombinations));
+
 		}
 	}
+	
+	//TODO: delete this 
+//	public void informSpecific(BIPComponent decidingComponent, Port decidingPort, Iterable<BIPComponent> disabledComponents) throws BIPEngineException {
+//		this.number++;
+//		if (disabledComponents==null)
+//		{
+//			return;
+//		}
+//		if (!disabledComponents.iterator().hasNext()){
+////			try {
+//			logger.warn("No disabled components specified in informSpecific. Iterable of disabledComponents is empty.");
+////				throw new BIPEngineException("No disabled components specified in informSpecific. Iterable of disabledComponents is empty.");
+////			} catch (BIPEngineException e) {
+////				e.printStackTrace();
+////			}	
+//		}
+//		else if(!registeredComponents.contains(decidingComponent)){
+//			try {
+//				logger.error("Deciding component specified in informSpecific is not in the list of registered components");
+//				throw new BIPEngineException("Deciding component specified in informSpecific is not in the list of registered components");
+//			} catch (BIPEngineException e) {
+//				e.printStackTrace();
+//			}	
+//		}
+//		else{
+//			ArrayList<Port> componentPorts = (ArrayList<Port>) componentBehaviourMapping.get(decidingComponent).getEnforceablePorts();
+//			if(!componentPorts.contains(decidingPort)){
+//			try {
+//				logger.error("Deciding port {} in informSpecific is not specified in the behaviour of the deciding component {}.",decidingPort, decidingComponent.getName());
+//				throw new BIPEngineException("Deciding port in informSpecific is not specified in the behaviour of the deciding component.");
+//			} catch (BIPEngineException e) {
+//				e.printStackTrace();
+//			}	
+//		}
+//		
+//		else{
+//			for  (BIPComponent component : disabledComponents){
+//				if (!registeredComponents.contains(component)) {
+//					logger.error("Component " + component.getName() + " specified in the disabledComponents of informSpecific was not registered.");
+//					throw new BIPEngineException("Component " + component.getName() + " specified in the disabledComponents of informSpecific was not registered.");
+//				}
+//			}
+//			if(number%3==0)
+//			BIPCoordinator.informSpecific(dataEncoder.informSpecific(decidingComponent, decidingPort, disabledComponents));
+//		}
+//		}
+//	}
 	
 	/**
 	 * BDDBIPEngine informs the BIPCoordinator for the components (and their

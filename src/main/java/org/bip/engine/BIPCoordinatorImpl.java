@@ -557,9 +557,9 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	 * of the informSpecific directly to the DataEncoder. The BIPCoordinator should not participate in this.
 	 */
 
-//	public void informSpecific(BIPComponent decidingComponent, Port decidingPort, Map<BIPComponent, Iterable<Port>> disabledCombinations) throws BIPEngineException {
-//		logger.warn("InformSpecific of BIPCoordinator is called. That should never happen. All the information should be passed directly from the DataCoordinator to the DataEncoder.");
-//	}
+	public void informSpecific(BIPComponent decidingComponent, Port decidingPort, Map<BIPComponent, Iterable<Port>> disabledCombinations) throws BIPEngineException {
+		logger.warn("InformSpecific of BIPCoordinator is called. That should never happen. All the information should be passed directly from the DataCoordinator to the DataEncoder.");
+	}
 	
 	public void informSpecific(BIPComponent decidingComponent, Port decidingPort, Iterable<BIPComponent> disabledComponents) throws BIPEngineException {
 		logger.warn("InformSpecific of BIPCoordinator is called. That should never happen. All the information should be passed directly from the DataCoordinator to the DataEncoder.");
@@ -633,6 +633,8 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 		}
 		return instances; 
 	}
+
+
 
 
 
