@@ -488,7 +488,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 						for (BIPComponent aComponent : getBIPComponentInstances(wire.from.specType)) {
 							Object inValue = aComponent.getData(wire.from.id, inDataItem.type());
 							// get data out variable in order to get the ports
-							Data dataOut = componentBehaviourMapping.get(component).getDataOut(wire.from.id);
+							Data dataOut = componentBehaviourMapping.get(aComponent).getDataOut(wire.from.id);
 							//dataOut.ports - let it be enabled ports
 							dataList.add(new DataContainer(inDataItem, inValue, component, dataOut.ports()));
 							dataValues.add(inValue);
@@ -582,9 +582,11 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 
 			// remove the current data from the initial data table
 			// so that it is not treated again further
+			sortedList.remove(entry);
 			// treat the other bipData variables
 			result.addAll(getNextTableRow(sortedList, dataRow));
 			// restore the current data
+			sortedList.add(entry);
 			//dataEvaluation.put(keyCopy, valuesCopy);
 		}
 		return result;
@@ -618,10 +620,12 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 			// remove the current data from the initial data table
 			// so that it is not treated again further
 			//String keyCopy = entry.getKey();
+			sortedList.remove(entry);
 			//ArrayList<Object> valuesCopy = dataEvaluation.remove(keyCopy);
 			// treat the other bipData variables
 			result.addAll(getNextTableRow(sortedList, thisRow));
 			// restore the current data
+			sortedList.add(entry);
 			//dataEvaluation.put(keyCopy, valuesCopy);
 		}
 		return result;
@@ -638,9 +642,10 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 			for (DataContainer d : list) {
 				if (d.name().equals(data.name())) {
 					oneDataList.add(d);
-					list.remove(d);
 				}
 			}
+			list.removeAll(oneDataList);
+			result.add(oneDataList);
 		}
 		return result;
 	}
