@@ -523,9 +523,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 					if (wire.isIncoming(inDataItem.name(), componentBehaviourMapping.get(component).getComponentType())) {
 						// for each component of this type, call getData
 						for (BIPComponent aComponent : getBIPComponentInstances(wire.from.specType)) {
-							System.err.println("DECIDING " + component.getName() + " CURRENT " + aComponent.getName());
 							if (component.equals(aComponent)) {
-								System.err.println("COMPONENTS ARE EQUAL");
 								continue;
 							}
 							Object inValue = aComponent.getData(wire.from.id, inDataItem.type());
@@ -558,11 +556,10 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 			System.out.println(portActive);
 			HashMap<BIPComponent, Iterable<Port>> disabledCombinations = new HashMap<BIPComponent, Iterable<Port>>();
 			for (int i = 0; i < portActive.size(); i++) {
-				ArrayList<BIPComponent> disabledComponents = new ArrayList<BIPComponent>();
 				if (!(portActive.get(i))) {
 					ArrayList<DataContainer> dataContainer = containerList.get(i);
 					for (DataContainer dc : dataContainer) {
-						System.err.println("CONTAINER CHOSEN: "+ dc.name() + " " + dc.component().getName()+ " for component " + component.getName());// + dc.ports());
+						System.err.println("CONTAINER CHOSEN: For deciding"+ component.getName() + " disabled is " + dc.component().getName()+ " with ports " + dc.ports());
 						disabledCombinations.put(dc.component(), dc.ports());
 					}
 				}
