@@ -43,10 +43,10 @@ public interface DataEncoder {
      * @return 
      * @throws BIPEngineException 
      */
-//    BDD specifyDataGlue(Iterable<DataWire> dataGlue) throws BIPEngineException;
+    BDD specifyDataGlue(Iterable<DataWire> dataGlue) throws BIPEngineException;
     
 	//NEW
-	BDD specifyDataGlue(BIPGlue glue) throws BIPEngineException;
+//	BDD specifyDataGlue(BIPGlue glue) throws BIPEngineException;
 	
 	/**
 	 * Setter for the BDDBIPEngine

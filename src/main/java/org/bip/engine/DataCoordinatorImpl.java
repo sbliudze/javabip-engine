@@ -105,9 +105,9 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 			}
 		} else {
 			try {
-				// BIPCoordinator.specifyDataGlue(dataEncoder.specifyDataGlue(dataWires));
+				 BIPCoordinator.specifyDataGlue(dataEncoder.specifyDataGlue(dataWires));
 				// NEW
-				BIPCoordinator.specifyDataGlue(dataEncoder.specifyDataGlue(glue));
+//				BIPCoordinator.specifyDataGlue(dataEncoder.specifyDataGlue(glue));
 			} catch (BIPEngineException e) {
 				e.printStackTrace();
 			}
@@ -804,6 +804,9 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 		// boolean found =false;
 		logger.info("Requires size: " + requires.size());
 		for (Requires oneRequireRule : requires) {
+			logger.info("deciding Port: " + decidingPort.id);
+			logger.info("disabledComponent: "+disabledComponent.getName());
+
 			// found = true;
 			if (oneRequireRule.effect.id.equals(decidingPort.id) && oneRequireRule.effect.specType.equals(decidingPort.specType)) {
 				logger.info("One Require rule found");
