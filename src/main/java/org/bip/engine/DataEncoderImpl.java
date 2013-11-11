@@ -79,9 +79,9 @@ public class DataEncoderImpl implements DataEncoder{
 			for (BIPComponent component : disabledComponents){
 				if (component.getName().equals(decidingComponent.getName())) {
 					try {
-						logger.error("in inform Specific the disabled component equals the deciding component.\n" +
+						logger.error("in inform Specific the deciding component: "+ decidingComponent.getName() +"equals the disabled component: ."+ component.getName() +
 								"\t That should never happen .");
-						throw new BIPEngineException("in inform Specific the disabled component equals the deciding component.\n" +
+						throw new BIPEngineException("in inform Specific the deciding component: "+ decidingComponent.getName() +"equals the disabled component: ."+ component.getName() +
 								"\t That should never happen.");
 					} catch (BIPEngineException e) {
 						e.printStackTrace();
