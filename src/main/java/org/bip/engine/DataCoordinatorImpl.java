@@ -177,6 +177,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 			return;
 		} else if (disabledCombinations.isEmpty()) {
 			logger.warn("No disabled combinations specified in informSpecific. Map of disabledCombinations is empty.");
+			return;
 		} else if (!registeredComponents.contains(decidingComponent)) {
 			try {
 				logger.error("Deciding component specified in informSpecific is not in the list of registered components");
@@ -513,6 +514,10 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 					if (wire.isIncoming(inDataItem.name(), componentBehaviourMapping.get(component).getComponentType())) {
 						// for each component of this type, call getData
 						for (BIPComponent aComponent : getBIPComponentInstances(wire.from.specType)) {
+							if (component.equals(aComponent))
+							{
+								continue;
+							}
 							Object inValue = aComponent.getData(wire.from.id, inDataItem.type());
 							// get data out variable in order to get the ports
 							Data dataOut = componentBehaviourMapping.get(aComponent).getDataOut(wire.from.id);
@@ -536,8 +541,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 
 			ArrayList<ArrayList<DataContainer>> containerList = (ArrayList<ArrayList<DataContainer>>) getDataValueTable(dataList);
 			ArrayList<Map<String, Object>> dataTable = createDataTable(containerList);
-			// ArrayList<Map<String, Object>> dataTable = (ArrayList<Map<String,
-			// Object>>) getDataValueTable(dataEvaluation);
+
 			// the result provided must have the same order - put comment
 			// TODO change getEnabledness: if data null, return false
 			ArrayList<Boolean> portActive = (ArrayList<Boolean>) component.checkEnabledness(port, dataTable);
@@ -548,31 +552,11 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 				if (!(portActive.get(i))) {
 					ArrayList<DataContainer> dataContainer = containerList.get(i);
 					for (DataContainer dc : dataContainer) {
+						System.err.println(dc.name()+ " "+ dc.ports());
 						disabledCombinations.put(dc.component(), dc.ports());
 					}
-					Map<String, Object> theseDatas = dataTable.get(i);
-
-					// for (Entry<String, Object> entry : theseDatas.entrySet())
-					// {
-					//
-					// Hashtable<Object, ArrayList<BIPComponent>>
-					// valueToComponents = dataHelper.get(entry.getKey());
-					//
-					// Iterable<BIPComponent> components =
-					// valueToComponents.get(entry.getValue());
-					// for (BIPComponent aComponent: components)
-					// {
-					// ArrayList<Port> ports = getDataOutPorts(aComponent,
-					// port);
-					// disabledCombinations.put(aComponent, ports);
-					// }
-					// HelperFunctions.addAll(disabledComponents, components);
-					// }
 				}
 				this.informSpecific(component, port, disabledCombinations);
-				// System.out.println(disabledComponents);
-				//
-				// this.informSpecific(component, port, disabledComponents);
 			}
 
 		}
