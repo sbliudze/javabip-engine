@@ -63,19 +63,35 @@ public class DataEncoderImpl implements DataEncoder{
 		 * wherein exceptions are thrown. Here, we just use assertion.
 		 */
 		BDD result;
+		
 		assert(disabledCombinations != null);
 		if (disabledCombinations.isEmpty()){
 			result = engine.getBDDManager().zero();
 		}
 		else {
+//			logger.info("Inform Specific: decidingComponent is "+ decidingComponent.getName());
+//			logger.info("Inform Specific: decidingPort is "+ decidingPort.id);
 			result = engine.getBDDManager().one();
 			/*
 			 * Find corresponding d-variable
 			 */
 			Set<BIPComponent> disabledComponents = disabledCombinations.keySet();
 			for (BIPComponent component : disabledComponents){
+				if (component.getName().equals(decidingComponent.getName())) {
+					try {
+						logger.error("in inform Specific the disabled component equals the deciding component.\n" +
+								"\t That should never happen .");
+						throw new BIPEngineException("in inform Specific the disabled component equals the deciding component.\n" +
+								"\t That should never happen.");
+					} catch (BIPEngineException e) {
+						e.printStackTrace();
+						throw e;
+					}
+				}
+//				logger.info("Inform Specific: disabledComponent is "+ component.getName());
 				Iterable<Port> componentPorts = disabledCombinations.get(component);
 				for (Port port: componentPorts){
+//					logger.info("Inform Specific: disabledPort is "+ port.id);
 					Set<BiDirectionalPair> allpairsBiDirectionalPairs = portsToDVarBDDMapping.keySet();
 					for (BiDirectionalPair pair: allpairsBiDirectionalPairs){
 						BiDirectionalPair pairOne = (BiDirectionalPair) pair.getFirst();
@@ -87,8 +103,11 @@ public class DataEncoderImpl implements DataEncoder{
 						if (component.equals(pairOneComponent)||component.equals(pairTwoComponent)){
 							if ((pairOnePort.id.equals(decidingPort.id) || (pairTwoPort.id.equals(decidingPort.id))) && (pairTwoPort.id.equals(port.id) || pairOnePort.id.equals(port.id))){
 //								result.andWith(portsToDVarBDDMapping.get(pair).not());
+//								logger.info("Inform Specific: Pair One Port: "+pairOnePort);
+//								logger.info("Inform Specific: Pair Two Port: "+pairTwoPort);
+//								logger.info("I AM NEGATING..");
 								BDD tmp = result.and(portsToDVarBDDMapping.get(pair).not());
-								logger.info("Inform Specific: PortsToDVarBDDMapping SIZE: "+portsToDVarBDDMapping.size());
+//								logger.info("Inform Specific: PortsToDVarBDDMapping SIZE: "+portsToDVarBDDMapping.size());
 								result.free();
 								result = tmp;	
 							}
@@ -204,6 +223,7 @@ public class DataEncoderImpl implements DataEncoder{
 		 */
 		int initialSystemBDDSize = dataCoordinator.getNoPorts() + dataCoordinator.getNoStates();
 		int currentSystemBddSize = initialSystemBDDSize;
+
 		logger.info("CurrentSystemBDDSize: "+ currentSystemBddSize);
 		for (Requires require: requiresConstraints){
 			BiDirectionalPair effectComponentPortPair;
