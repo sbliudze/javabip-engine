@@ -374,7 +374,7 @@ public class DataEncoderImpl implements DataEncoder{
 				}
 			}	
 			logger.info("Data WireOut Ports size: "+ componentOutPorts.size());
-			System.exit(0);
+//			System.exit(0);
 			/*
 			 * Here take the cross product of in and out variables to create the d-variables for one data-wire
 			 * Store this in a Map with the ports as the key and the d-variable as a value.
