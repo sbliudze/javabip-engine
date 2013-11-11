@@ -13,27 +13,23 @@ public class DataContainer {
 	public DataContainer(Data inDataItem, Object value, BIPComponent component, Iterable<Port> ports) {
 		this.dataIn = inDataItem.name();
 		this.component = component;
-		this.value = value; 
+		this.value = value;
 		this.ports = ports;
 	}
-	
-	public String name()
-	{
+
+	public String name() {
 		return this.dataIn;
 	}
-	
-	public Iterable<Port> ports()
-	{
+
+	public Iterable<Port> ports() {
 		return this.ports;
 	}
-	
-	public Object value()
-	{
+
+	public Object value() {
 		return this.value;
 	}
-	
-	public BIPComponent component()
-	{
+
+	public BIPComponent component() {
 		return this.component;
 	}
 }

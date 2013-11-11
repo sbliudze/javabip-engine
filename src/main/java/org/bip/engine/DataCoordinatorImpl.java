@@ -177,6 +177,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 			return;
 		} else if (disabledCombinations.isEmpty()) {
 			logger.warn("No disabled combinations specified in informSpecific. Map of disabledCombinations is empty.");
+			return;
 		} else if (!registeredComponents.contains(decidingComponent)) {
 			try {
 				logger.error("Deciding component specified in informSpecific is not in the list of registered components");
@@ -193,8 +194,8 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 				} catch (BIPEngineException e) {
 					e.printStackTrace();
 				}
-			
-				} else {
+
+			} else {
 				Iterator<BIPComponent> disabledComponents = disabledCombinations.keySet().iterator();
 				while (disabledComponents.hasNext()) {
 					BIPComponent component = disabledComponents.next();
@@ -204,49 +205,58 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 					}
 				}
 				BIPCoordinator.informSpecific(dataEncoder.informSpecific(decidingComponent, decidingPort, disabledCombinations));
-	
+
 			}
 		}
 	}
 
 	// TODO: delete this
-//	public void informSpecific(BIPComponent decidingComponent, Port decidingPort, Iterable<BIPComponent> disabledComponents) throws BIPEngineException {
-//		this.number++;
-//		if (disabledComponents == null) {
-//			return;
-//		}
-//		if (!disabledComponents.iterator().hasNext()) {
-//			logger.warn("No disabled components specified in informSpecific. Iterable of disabledComponents is empty.");
-//		} else if (!registeredComponents.contains(decidingComponent)) {
-//			try {
-//				logger.error("Deciding component specified in informSpecific is not in the list of registered components");
-//				throw new BIPEngineException("Deciding component specified in informSpecific is not in the list of registered components");
-//			} catch (BIPEngineException e) {
-//				e.printStackTrace();
-//			}
-//		} else {
-//			ArrayList<Port> componentPorts = (ArrayList<Port>) componentBehaviourMapping.get(decidingComponent).getEnforceablePorts();
-//			if (!componentPorts.contains(decidingPort)) {
-//				try {
-//					logger.error("Deciding port {} in informSpecific is not specified in the behaviour of the deciding component {}.", decidingPort, decidingComponent.getName());
-//					throw new BIPEngineException("Deciding port in informSpecific is not specified in the behaviour of the deciding component.");
-//				} catch (BIPEngineException e) {
-//					e.printStackTrace();
-//				}
-//			}
-//
-//			else {
-//				for (BIPComponent component : disabledComponents) {
-//					if (!registeredComponents.contains(component)) {
-//						logger.error("Component " + component.getName() + " specified in the disabledComponents of informSpecific was not registered.");
-//						throw new BIPEngineException("Component " + component.getName() + " specified in the disabledComponents of informSpecific was not registered.");
-//					}
-//				}
-//				if (number % 3 == 0)
-//					BIPCoordinator.informSpecific(dataEncoder.informSpecific(decidingComponent, decidingPort, disabledComponents));
-//			}
-//		}
-//	}
+	// public void informSpecific(BIPComponent decidingComponent, Port
+	// decidingPort, Iterable<BIPComponent> disabledComponents) throws
+	// BIPEngineException {
+	// this.number++;
+	// if (disabledComponents == null) {
+	// return;
+	// }
+	// if (!disabledComponents.iterator().hasNext()) {
+	// logger.warn("No disabled components specified in informSpecific. Iterable of disabledComponents is empty.");
+	// } else if (!registeredComponents.contains(decidingComponent)) {
+	// try {
+	// logger.error("Deciding component specified in informSpecific is not in the list of registered components");
+	// throw new
+	// BIPEngineException("Deciding component specified in informSpecific is not in the list of registered components");
+	// } catch (BIPEngineException e) {
+	// e.printStackTrace();
+	// }
+	// } else {
+	// ArrayList<Port> componentPorts = (ArrayList<Port>)
+	// componentBehaviourMapping.get(decidingComponent).getEnforceablePorts();
+	// if (!componentPorts.contains(decidingPort)) {
+	// try {
+	// logger.error("Deciding port {} in informSpecific is not specified in the behaviour of the deciding component {}.",
+	// decidingPort, decidingComponent.getName());
+	// throw new
+	// BIPEngineException("Deciding port in informSpecific is not specified in the behaviour of the deciding component.");
+	// } catch (BIPEngineException e) {
+	// e.printStackTrace();
+	// }
+	// }
+	//
+	// else {
+	// for (BIPComponent component : disabledComponents) {
+	// if (!registeredComponents.contains(component)) {
+	// logger.error("Component " + component.getName() +
+	// " specified in the disabledComponents of informSpecific was not registered.");
+	// throw new BIPEngineException("Component " + component.getName() +
+	// " specified in the disabledComponents of informSpecific was not registered.");
+	// }
+	// }
+	// if (number % 3 == 0)
+	// BIPCoordinator.informSpecific(dataEncoder.informSpecific(decidingComponent,
+	// decidingPort, disabledComponents));
+	// }
+	// }
+	// }
 
 	/**
 	 * BDDBIPEngine informs the BIPCoordinator for the components (and their
@@ -324,7 +334,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 							logger.info("Component {} execute port with inData {}", component.getName(), dataItem.name());
 							for (BIPComponent aComponent : oneInteraction.keySet()) {
 								String dataOutName = dataIsProvided(aComponent, component, dataItem.name(), oneInteraction.get(aComponent));
-								System.err.println("Outname: "+ dataOutName);
+								System.err.println("Outname: " + dataOutName);
 								if (dataOutName != null && !dataOutName.isEmpty()) {
 									Object dataValue = aComponent.getData(dataOutName, dataItem.type());
 									nameToValue.put(dataItem.name(), dataValue);
@@ -351,14 +361,14 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 	}
 
 	private String dataIsProvided(BIPComponent providingComponent, BIPComponent requiringComponent, String dataName, Iterable<Port> port) {
-		//System.err.println("Find wire for ports " + port);
+		// System.err.println("Find wire for ports " + port);
 		for (DataWire wire : this.dataWires) {
 			if (wire.isIncoming(dataName, componentBehaviourMapping.get(requiringComponent).getComponentType())
 					&& wire.from.specType.equals(componentBehaviourMapping.get(providingComponent).getComponentType())) {
-				//System.err.println("Data providing: " + wire.from.id);
+				// System.err.println("Data providing: " + wire.from.id);
 				ArrayList<Port> portsProviding = (ArrayList<Port>) componentBehaviourMapping.get(providingComponent).getDataOut(wire.from.id).ports();
-				//System.err.println("Ports allowed: " + portsProviding);
-				//System.err.println("Ports providing: " + port);
+				// System.err.println("Ports allowed: " + portsProviding);
+				// System.err.println("Ports providing: " + port);
 				for (Port p : port) {
 					for (Port inport : portsProviding) {
 						if (inport.id.equals(p.id) && inport.specType.equals(p.specType)) {
@@ -513,11 +523,16 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 					if (wire.isIncoming(inDataItem.name(), componentBehaviourMapping.get(component).getComponentType())) {
 						// for each component of this type, call getData
 						for (BIPComponent aComponent : getBIPComponentInstances(wire.from.specType)) {
+							System.err.println("DECIDING " + component.getName() + " CURRENT " + aComponent.getName());
+							if (component.equals(aComponent)) {
+								System.err.println("COMPONENTS ARE EQUAL");
+								continue;
+							}
 							Object inValue = aComponent.getData(wire.from.id, inDataItem.type());
 							// get data out variable in order to get the ports
 							Data dataOut = componentBehaviourMapping.get(aComponent).getDataOut(wire.from.id);
-							// dataOut.ports - let it be enabled ports
-							dataList.add(new DataContainer(inDataItem, inValue, component, dataOut.ports()));
+							// dataOut.ports -t let it be enabled ports
+							dataList.add(new DataContainer(inDataItem, inValue, aComponent, dataOut.ports()));
 							dataValues.add(inValue);
 
 							ArrayList<BIPComponent> componentList = new ArrayList<BIPComponent>();
@@ -536,8 +551,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 
 			ArrayList<ArrayList<DataContainer>> containerList = (ArrayList<ArrayList<DataContainer>>) getDataValueTable(dataList);
 			ArrayList<Map<String, Object>> dataTable = createDataTable(containerList);
-			// ArrayList<Map<String, Object>> dataTable = (ArrayList<Map<String,
-			// Object>>) getDataValueTable(dataEvaluation);
+
 			// the result provided must have the same order - put comment
 			// TODO change getEnabledness: if data null, return false
 			ArrayList<Boolean> portActive = (ArrayList<Boolean>) component.checkEnabledness(port, dataTable);
@@ -548,31 +562,11 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 				if (!(portActive.get(i))) {
 					ArrayList<DataContainer> dataContainer = containerList.get(i);
 					for (DataContainer dc : dataContainer) {
+						System.err.println("CONTAINER CHOSEN: "+ dc.name() + " " + dc.component().getName()+ " for component " + component.getName());// + dc.ports());
 						disabledCombinations.put(dc.component(), dc.ports());
 					}
-					Map<String, Object> theseDatas = dataTable.get(i);
-
-					// for (Entry<String, Object> entry : theseDatas.entrySet())
-					// {
-					//
-					// Hashtable<Object, ArrayList<BIPComponent>>
-					// valueToComponents = dataHelper.get(entry.getKey());
-					//
-					// Iterable<BIPComponent> components =
-					// valueToComponents.get(entry.getValue());
-					// for (BIPComponent aComponent: components)
-					// {
-					// ArrayList<Port> ports = getDataOutPorts(aComponent,
-					// port);
-					// disabledCombinations.put(aComponent, ports);
-					// }
-					// HelperFunctions.addAll(disabledComponents, components);
-					// }
 				}
 				this.informSpecific(component, port, disabledCombinations);
-				// System.out.println(disabledComponents);
-				//
-				// this.informSpecific(component, port, disabledComponents);
 			}
 
 		}
