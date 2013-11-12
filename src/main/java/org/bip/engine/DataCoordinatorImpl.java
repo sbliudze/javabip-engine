@@ -105,9 +105,9 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 			}
 		} else {
 			try {
-				 BIPCoordinator.specifyDataGlue(dataEncoder.specifyDataGlue(dataWires));
+//				 BIPCoordinator.specifyDataGlue(dataEncoder.specifyDataGlue(dataWires));
 				// NEW
-//				BIPCoordinator.specifyDataGlue(dataEncoder.specifyDataGlue(glue));
+				BIPCoordinator.specifyDataGlue(dataEncoder.specifyDataGlue(componentBehaviourMapping, glue));
 			} catch (BIPEngineException e) {
 				e.printStackTrace();
 			}
@@ -556,6 +556,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 			System.out.println(portActive);
 			HashMap<BIPComponent, Iterable<Port>> disabledCombinations = new HashMap<BIPComponent, Iterable<Port>>();
 			for (int i = 0; i < portActive.size(); i++) {
+				disabledCombinations.clear();
 				if (!(portActive.get(i))) {
 					ArrayList<DataContainer> dataContainer = containerList.get(i);
 					for (DataContainer dc : dataContainer) {
@@ -563,6 +564,8 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 						disabledCombinations.put(dc.component(), dc.ports());
 					}
 				}
+//				if (component.getName().equals("org.bip.spec.hanoi.RightHanoiPeg"))
+//				{} else
 				this.informSpecific(component, port, disabledCombinations);
 			}
 
@@ -798,13 +801,10 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 	public Iterable<Port> getDataOutPorts(BIPComponent disabledComponent, Port decidingPort) {
 		ArrayList<Port> dataOutPorts = new ArrayList<Port>();
 		ArrayList<Requires> requires = this.requires;
-		// boolean found =false;
 		logger.info("Requires size: " + requires.size());
+		logger.info("deciding Port: " + decidingPort.id + "of deciding Component: "+decidingPort.specType);
+		logger.info("disabledComponent: "+disabledComponent.getName());
 		for (Requires oneRequireRule : requires) {
-			logger.info("deciding Port: " + decidingPort.id);
-			logger.info("disabledComponent: "+disabledComponent.getName());
-
-			// found = true;
 			if (oneRequireRule.effect.id.equals(decidingPort.id) && oneRequireRule.effect.specType.equals(decidingPort.specType)) {
 				logger.info("One Require rule found");
 				List<List<Port>> requireRuleCauses = oneRequireRule.causes;

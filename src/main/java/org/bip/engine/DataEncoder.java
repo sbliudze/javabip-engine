@@ -1,14 +1,18 @@
 package org.bip.engine;
 
+import java.util.ArrayList;
+import java.util.Hashtable;
 import java.util.Map;
 
 import net.sf.javabdd.BDD;
 
 import org.bip.api.BIPComponent;
+import org.bip.api.Behaviour;
 import org.bip.behaviour.Port;
 import org.bip.exceptions.BIPEngineException;
 import org.bip.glue.BIPGlue;
 import org.bip.glue.DataWire;
+import org.bip.glue.Requires;
 
 /**
  * Deals with the DataGlue.
@@ -43,10 +47,13 @@ public interface DataEncoder {
      * @return 
      * @throws BIPEngineException 
      */
-    BDD specifyDataGlue(Iterable<DataWire> dataGlue) throws BIPEngineException;
+//    BDD specifyDataGlue(Iterable<DataWire> dataGlue) throws BIPEngineException;
     
 	//NEW
-//	BDD specifyDataGlue(BIPGlue glue) throws BIPEngineException;
+	BDD specifyDataGlue (Hashtable<BIPComponent, Behaviour> componentBehaviourMapping, BIPGlue glue) throws BIPEngineException;
+	
+	//New2
+//	BDD specifyDataGlue(Hashtable<BIPComponent, Behaviour> componentBehaviourMapping) throws BIPEngineException;
 	
 	/**
 	 * Setter for the BDDBIPEngine
@@ -61,6 +68,8 @@ public interface DataEncoder {
 	 * Setter for the Behaviour Encoder
 	 */
 	void setBehaviourEncoder(BehaviourEncoder behaviourEncoder);
+
+
 
 
 }

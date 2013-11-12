@@ -293,7 +293,7 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		
 		//TODO: Fix String to Port
 		ArrayList<String> portsExecuted = new ArrayList<String>();
-		Iterable<Map<BIPComponent, Iterable<Port>>> allInteractions = new ArrayList<Map<BIPComponent,Iterable<Port>>>() ;
+		ArrayList <Map<BIPComponent, Iterable<Port>>> allInteractions = new ArrayList<Map<BIPComponent,Iterable<Port>>>() ;
 //		ArrayList<Hashtable<BIPComponent, ArrayList<Port>>> allInteractions = new ArrayList<Hashtable<BIPComponent, ArrayList<Port>>>();
 		
 		for (Integer i: positionsOfDVariables){
@@ -306,23 +306,70 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 				Port port = (Port) firstPair.getSecond();
 				componentPorts.add(port);
 				portsExecuted.add(port.id);
-				oneInteraction.put((BIPComponent) firstPair.getFirst(), (ArrayList<Port>) componentPorts);
+				
 				BIPComponent component = (BIPComponent) firstPair.getFirst();
 				logger.info("Chosen Component: {}", component.getName());
 				logger.info("Chosen Port: {}", componentPorts.get(0).id);
 				ArrayList<Port> componentPorts2 = new ArrayList<Port>();
 				Port port2 = (Port) secondPair.getSecond();
 				componentPorts2.add(port2);
-				logger.info("Component Port2 SIZE:"+componentPorts2.size());
-				
+//				logger.info("Component Port2 SIZE:"+componentPorts2.size());
 				portsExecuted.add(port2.id);
-				oneInteraction.put((BIPComponent) secondPair.getFirst(), (ArrayList<Port>) componentPorts2);
 				BIPComponent component2 = (BIPComponent) secondPair.getFirst();
 				logger.info("Chosen Component: {}", component2.getName());
 				logger.info("Chosen Port: {}", componentPorts2.get(0).id);
+							
+				boolean found = false;
+				Map <BIPComponent, Iterable<Port>> mergedInteractions = new Hashtable<BIPComponent, Iterable<Port>>();
+				ArrayList<Integer> indexOfInteractionsToBeDeleted = new ArrayList<Integer>();
+				for (Map<BIPComponent, Iterable<Port>> interaction: allInteractions)
+				{
+					if(found == false){
+						if (interaction.containsKey((BIPComponent) firstPair.getFirst()) && interaction.containsKey((BIPComponent) secondPair.getFirst())){
+							if (interaction.get((BIPComponent) firstPair.getFirst()).iterator().next().id.equals(port.id) && interaction.get((BIPComponent) secondPair.getFirst()).iterator().next().id.equals(port2.id)){
+								found = true;
+								logger.info("Double match");
+								logger.info("Merged ubteractions size: "+mergedInteractions.size());
+							}
+						}
+						else if (interaction.containsKey((BIPComponent) firstPair.getFirst()) && !interaction.containsKey((BIPComponent) secondPair.getFirst())){
+							if (interaction.get((BIPComponent) firstPair.getFirst()).iterator().next().id.equals(port.id)){
+								found = true;
+								indexOfInteractionsToBeDeleted.add(allInteractions.indexOf(interaction));
+								mergedInteractions.putAll(interaction);
+								mergedInteractions.put((BIPComponent) secondPair.getFirst(), (ArrayList<Port>) componentPorts2);
+							}
+						}
+						else if (interaction.containsKey((BIPComponent) secondPair.getFirst()) && !interaction.containsKey((BIPComponent) firstPair.getFirst())){
+							if (interaction.get((BIPComponent) secondPair.getFirst()).iterator().next().id.equals(port2.id)){
+								found = true;
+								indexOfInteractionsToBeDeleted.add(allInteractions.indexOf(interaction));
+								mergedInteractions.putAll(interaction);
+								mergedInteractions.put((BIPComponent) firstPair.getFirst(), (ArrayList<Port>) componentPorts);
+							}
+						}
+					}
+				}
+				if (found == false){
+					oneInteraction.put((BIPComponent) firstPair.getFirst(), (ArrayList<Port>) componentPorts);
+					oneInteraction.put((BIPComponent) secondPair.getFirst(), (ArrayList<Port>) componentPorts2);
+					((List) allInteractions).add(oneInteraction);
+				}
+				else{
+//					logger.info("indexOfInteractionsToBeDeleted size: "+ indexOfInteractionsToBeDeleted.size());
+					for (Integer index: indexOfInteractionsToBeDeleted){
+//						logger.info("allInteractions size before removing: "+ allInteractions.size());
+						allInteractions.remove(allInteractions.get(index));
+//						logger.info("allInteractions size after removing: "+ allInteractions.size());
+					}
+					if (mergedInteractions.size()!=0){
+						logger.info("mergedInteractions size: "+ mergedInteractions.size());
+						allInteractions.add(mergedInteractions);
+					}
+				}
 			}
-			logger.info("OneInteraction size: "+ oneInteraction.size());
-			((List) allInteractions).add(oneInteraction);
+			
+
 //			oneInteraction.clear();
 		}
 
@@ -352,6 +399,7 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		}
 		
 		logger.info("*************************************************************************");
+//		logger.info("chosenPorts size: "+chosenPorts.size());
 		if (chosenPorts.size()!=0){
 			((List) allInteractions).add(chosenPorts);
 		}
@@ -364,10 +412,8 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 				System.out.println("ENGINE ENTRY: "+ e.getKey().getName() + " - "+ e.getValue());
 			}
 		}
-		
 		wrapper.execute(allInteractions);
-//		System.exit(0);
-		
+
 
 //		wrapper.executeInteractions(allInteractions);
 		portsExecuted.clear();
