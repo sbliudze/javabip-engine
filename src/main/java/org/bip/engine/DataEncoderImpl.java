@@ -348,12 +348,12 @@ public class DataEncoderImpl implements DataEncoder {
 							currentSystemBddSize++;
 						}
 					}
-
+					ArrayList<BDD> auxiliary=createImplications(component, port);
+					logger.info("Auxiliary size " + auxiliary.size()+ " for port "+port.id+ " of component "+component.getName());
+					if (!auxiliary.isEmpty()) {
+						moreImplications.put(componentInBDDs.get(firstComponentPortPair), auxiliary);
 					}
-				ArrayList<BDD> auxiliary=createImplications(component, port);
-				logger.info("Auxiliary size" + auxiliary.size());
-				if (!auxiliary.isEmpty()) {
-					moreImplications.put(componentInBDDs.get(firstComponentPortPair), auxiliary);
+
 				}
 			
 			}
@@ -371,6 +371,8 @@ public class DataEncoderImpl implements DataEncoder {
 //			BDD temp2 = bdd.not().or(result);
 			this.implicationsOfDs.add(bdd.not().or(result));
 		}
+//		System.exit(0);
+
 	}
 	
 	private ArrayList<BDD> createImplications (BIPComponent component, Port port){
@@ -382,10 +384,10 @@ public class DataEncoderImpl implements DataEncoder {
 			BIPComponent firstComponent = (BIPComponent) firstPair.getFirst();
 			Port secondPort = (Port) secondPair.getSecond();
 			BIPComponent  secondComponent = (BIPComponent) secondPair.getFirst();
-			if (firstComponent.getName().equals(component) || secondComponent.equals(component)){
-				if (firstPort.id.equals(port.id) || secondPort.id.equals(port.id)){
+			if ((firstComponent.equals(component) && firstPort.id.equals(port.id)) || (secondComponent.equals(component) && secondPort.id.equals(port.id)) ){
+//				if (firstPort.id.equals(port.id) || secondPort.id.equals(port.id)){
 					auxiliary.add(pair.getValue());	
-				}
+//				}
 			}
 		}	
 		return auxiliary;
