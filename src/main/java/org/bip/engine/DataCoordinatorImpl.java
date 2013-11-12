@@ -322,11 +322,11 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 						// Find out which components are sending data to
 						// this component
 						Iterable<Data> portToDataInForTransition = componentBehaviourMapping.get(component).portToDataInForTransition(port);
-						System.err.println(portToDataInForTransition + " " + port.id);
+						System.err.println("Data on transition " + port.id + ": "+ portToDataInForTransition);
 						Hashtable<String, Object> nameToValue = new Hashtable<String, Object>();
 
 						if (portToDataInForTransition == null || !portToDataInForTransition.iterator().hasNext()) {
-							System.err.println("Execution without data");
+							//System.err.println("Execution without data");
 							component.execute(port.id);
 							continue;
 						}
@@ -334,7 +334,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 							logger.info("Component {} execute port with inData {}", component.getName(), dataItem.name());
 							for (BIPComponent aComponent : oneInteraction.keySet()) {
 								String dataOutName = dataIsProvided(aComponent, component, dataItem.name(), oneInteraction.get(aComponent));
-								System.err.println("Outname: " + dataOutName);
+								//System.err.println("Outname: " + dataOutName);
 								if (dataOutName != null && !dataOutName.isEmpty()) {
 									Object dataValue = aComponent.getData(dataOutName, dataItem.type());
 									nameToValue.put(dataItem.name(), dataValue);
