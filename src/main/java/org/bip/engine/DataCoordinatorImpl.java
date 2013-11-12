@@ -526,6 +526,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 							if (component.equals(aComponent)) {
 								continue;
 							}
+							//TODO check data is available
 							Object inValue = aComponent.getData(wire.from.id, inDataItem.type());
 							// get data out variable in order to get the ports
 							Data dataOut = componentBehaviourMapping.get(aComponent).getDataOut(wire.from.id);
@@ -559,7 +560,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 				if (!(portActive.get(i))) {
 					ArrayList<DataContainer> dataContainer = containerList.get(i);
 					for (DataContainer dc : dataContainer) {
-						System.err.println("CONTAINER CHOSEN: For deciding"+ component.getName() + " disabled is " + dc.component().getName()+ " with ports " + dc.ports());
+						System.err.println("CONTAINER CHOSEN: For deciding "+ component.getName() +" and " +port.id + " disabled is " + dc.component().getName()+ " with ports " + dc.ports());
 						disabledCombinations.put(dc.component(), dc.ports());
 					}
 				}
