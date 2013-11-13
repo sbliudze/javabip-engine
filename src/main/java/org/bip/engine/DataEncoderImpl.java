@@ -30,7 +30,7 @@ public class DataEncoderImpl implements DataEncoder {
 	private DataCoordinator dataCoordinator;
 	private BehaviourEncoder behaviourEncoder;
 
-	private Iterator<DataWire> dataGlueSpec;
+	private Iterable<DataWire> dataGlueSpec;
 
 	volatile Map<BiDirectionalPair, BDD> portsToDVarBDDMapping = new Hashtable<BiDirectionalPair, BDD>();
 	private Logger logger = LoggerFactory.getLogger(CurrentStateEncoderImpl.class);
@@ -207,7 +207,7 @@ public class DataEncoderImpl implements DataEncoder {
 				throw e;
 			}
 		}
-		this.dataGlueSpec = dataGlue.iterator();
+		this.dataGlueSpec = dataGlue;
 		createDataBDDNodes();
 		return computeDvariablesBDDs();
 	}
@@ -354,8 +354,6 @@ public class DataEncoderImpl implements DataEncoder {
 							currentSystemBddSize++;
 						}
 					}
-
-
 				}
 				ArrayList<BDD> auxiliary=createImplications(component, port);
 				logger.info("Auxiliary size " + auxiliary.size()+ " for port "+port.id+ " of component "+component.getName());
@@ -564,8 +562,9 @@ public class DataEncoderImpl implements DataEncoder {
 		int initialSystemBDDSize = dataCoordinator.getNoPorts() + dataCoordinator.getNoStates();
 		int currentSystemBddSize = initialSystemBDDSize;
 		logger.info("CurrentSystemBDDSize: " + currentSystemBddSize);
-		while (dataGlueSpec.hasNext()) {
-			DataWire dataWire = dataGlueSpec.next();
+		Iterator<DataWire> dataIterator =dataGlueSpec.iterator();
+		while (dataIterator.hasNext()) {
+			DataWire dataWire = dataIterator.next();
 			Map<BIPComponent, Iterable<Port>> componentToInPorts = inPorts(dataWire.to);
 			logger.info("Data WireIn Ports size: " + componentToInPorts.size());
 			Set<BIPComponent> components = componentToInPorts.keySet();
@@ -649,30 +648,43 @@ public class DataEncoderImpl implements DataEncoder {
 							currentSystemBddSize++;
 						}
 					}
-					ArrayList<BDD> auxiliary=createImplications(component, inPort);
-					logger.info("Auxiliary size " + auxiliary.size()+ " for port "+inPort.id+ " of component "+component.getName());
-					BiDirectionalPair pair = new BiDirectionalPair(component.getName(), inPort.id);
-					//Check whether there are triggers
-					if (!auxiliary.isEmpty()) {
-						moreImplications.put(componentInBDDs.get(inComponentPortPair), auxiliary);
-					}
+
 //					logger.info("Auxiliary size" + auxiliary.size());
 //					moreImplications.put(componentInBDDs.get(inComponentPortPair), auxiliary);
 				}
 			}
-			Set<BDD> entries = moreImplications.keySet();
-			// logger.info("moreImplications size: "+entries.size());
-			for (BDD bdd : entries) {
-				BDD result = engine.getBDDManager().zero();
-				// logger.info("entry of moreImplications size: "+moreImplications.get(bdd).size());
-				for (BDD lala : moreImplications.get(bdd)) {
-					BDD temp = result.or(lala);
-					result.free();
-					result = temp;
+		}
+		Iterator<DataWire> dataIterator2 =dataGlueSpec.iterator();
+		while (dataIterator2.hasNext()) {
+			DataWire dataWire = dataIterator2.next();
+			Map<BIPComponent, Iterable<Port>> componentToInPorts = inPorts(dataWire.to);
+			logger.info("Data WireIn Ports size: " + componentToInPorts.size());
+			Set<BIPComponent> components = componentToInPorts.keySet();
+		for (BIPComponent component : components) {
+			for (Port inPort : componentToInPorts.get(component)) {
+				BiDirectionalPair inComponentPortPair = new BiDirectionalPair(component, inPort);
+				ArrayList<BDD> auxiliary=createImplications(component, inPort);
+				logger.info("Auxiliary size " + auxiliary.size()+ " for port "+inPort.id+ " of component "+component.getName());
+				BiDirectionalPair pair = new BiDirectionalPair(component.getName(), inPort.id);
+				if (!auxiliary.isEmpty()) {
+					moreImplications.put(componentInBDDs.get(inComponentPortPair), auxiliary);
 				}
-				BDD temp2 = bdd.not().or(result);
-				this.implicationsOfDs.add(temp2);
 			}
+		}
+		Set<BDD> entries = moreImplications.keySet();
+		// logger.info("moreImplications size: "+entries.size());
+		for (BDD bdd : entries) {
+			BDD result = engine.getBDDManager().zero();
+			// logger.info("entry of moreImplications size: "+moreImplications.get(bdd).size());
+			for (BDD lala : moreImplications.get(bdd)) {
+				BDD temp = result.or(lala);
+				result.free();
+				result = temp;
+			}
+			BDD temp2 = bdd.not().or(result);
+			this.implicationsOfDs.add(temp2);
+		}
+
 		}
 	}
 
