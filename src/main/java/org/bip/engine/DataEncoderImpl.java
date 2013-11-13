@@ -109,10 +109,10 @@ public class DataEncoderImpl implements DataEncoder {
 						BIPComponent pairTwoComponent = (BIPComponent) pairTwo.getFirst();
 						Port pairTwoPort = (Port) pairTwo.getSecond();
 						
-						if ((component.equals(pairOneComponent) && decidingComponent.equals(pairTwoComponent))
-								|| (component.equals(pairTwoComponent) && decidingComponent.equals(pairOneComponent))) {
+						if ((component.equals(pairOneComponent) && decidingComponent.equals(pairTwoComponent) && pairTwoPort.id.equals(decidingPort.id) && pairOnePort.id.equals(port.id))
+								|| (component.equals(pairTwoComponent) && decidingComponent.equals(pairOneComponent) && pairOnePort.id.equals(decidingPort.id) && pairTwoPort.id.equals(port.id))) {
 								
-							if ((pairOnePort.id.equals(decidingPort.id) && pairTwoPort.id.equals(port.id)) || (pairTwoPort.id.equals(decidingPort.id) && pairOnePort.id.equals(port.id))) {
+//							if ((pairOnePort.id.equals(decidingPort.id) && pairTwoPort.id.equals(port.id)) || (pairTwoPort.id.equals(decidingPort.id) && pairOnePort.id.equals(port.id))) {
 								logger.info("Yes I found a pair: "+ pairOneComponent.getName() + " and "+ pairTwoComponent.getName());
 //								if (pairTwoPort.id.equals(decidingPort.id) && pairOnePort.id.equals(port.id)){
 									// result.andWith(portsToDVarBDDMapping.get(pair).not());
@@ -124,7 +124,7 @@ public class DataEncoderImpl implements DataEncoder {
 									result.free();
 									result = tmp;
 //								}
-							}
+//							}
 						}
 					}
 				}
