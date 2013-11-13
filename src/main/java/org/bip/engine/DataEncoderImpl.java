@@ -83,11 +83,11 @@ public class DataEncoderImpl implements DataEncoder {
 			Set<BIPComponent> disabledComponents = disabledCombinations.keySet();
 			logger.info("Disabled Components size: "+ disabledComponents.size());
 			for (BIPComponent component : disabledComponents) {
-				if (component.getName().equals(decidingComponent.getName())) {
+				if (component.equals(decidingComponent)) {
 					try {
-						logger.error("in inform Specific the deciding component: " + decidingComponent.getName() + "equals the disabled component: ." + component.getName()
+						logger.error("in inform Specific the deciding component: " + decidingComponent.getName() + " equals the disabled component: ." + component.getName()
 								+ "\t That should never happen .");
-						throw new BIPEngineException("in inform Specific the deciding component: " + decidingComponent.getName() + "equals the disabled component: ." + component.getName()
+						throw new BIPEngineException("in inform Specific the deciding component: " + decidingComponent.getName() + " equals the disabled component: ." + component.getName()
 								+ "\t That should never happen.");
 					} catch (BIPEngineException e) {
 						e.printStackTrace();
