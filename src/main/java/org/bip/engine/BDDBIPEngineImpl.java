@@ -287,9 +287,9 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		chosenInteraction = cubeMaximals.get(randomInt); 
 		
 		cubeMaximals.clear();
-		logger.info("ChosenInteraction: ");
-		for (int k = 0; k < chosenInteraction.length; k++)
-			logger.info("{}",chosenInteraction[k]);
+//		logger.info("ChosenInteraction: ");
+//		for (int k = 0; k < chosenInteraction.length; k++)
+//			logger.info("{}",chosenInteraction[k]);
 		
 		//TODO: Fix String to Port
 		ArrayList<String> portsExecuted = new ArrayList<String>();

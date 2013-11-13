@@ -113,12 +113,13 @@ public class DataEncoderImpl implements DataEncoder {
 								|| (component.equals(pairTwoComponent) && decidingComponent.equals(pairOneComponent) && pairOnePort.id.equals(decidingPort.id) && pairTwoPort.id.equals(port.id))) {
 								
 //							if ((pairOnePort.id.equals(decidingPort.id) && pairTwoPort.id.equals(port.id)) || (pairTwoPort.id.equals(decidingPort.id) && pairOnePort.id.equals(port.id))) {
-								logger.info("Yes I found a pair: "+ pairOneComponent.getName() + " and "+ pairTwoComponent.getName());
+//								logger.info("Yes I found a pair: "+ pairOneComponent.getName() + " and "+ pairTwoComponent.getName());
 //								if (pairTwoPort.id.equals(decidingPort.id) && pairOnePort.id.equals(port.id)){
 									// result.andWith(portsToDVarBDDMapping.get(pair).not());
 									logger.info("Inform Specific: Pair One Port: " + pairOnePort);
 									logger.info("Inform Specific: Pair Two Port: " + pairTwoPort);
 									logger.info("I AM NEGATING..");
+									//TODO: prin pou eixa 2 conditions den xtupouse: Check this out
 									BDD tmp = result.and(portsToDVarBDDMapping.get(pair).not());
 									// logger.info("Inform Specific: PortsToDVarBDDMapping SIZE: "+portsToDVarBDDMapping.size());
 									result.free();
@@ -196,20 +197,20 @@ public class DataEncoderImpl implements DataEncoder {
 	// return result;
 	// }
 
-//	public BDD specifyDataGlue(Iterable<DataWire> dataGlue) throws BIPEngineException {
-//		if (dataGlue == null || !dataGlue.iterator().hasNext()) {
-//			try {
-//				logger.error("The glue parser has failed to compute the data glue.\n" + "\tPossible reasons: No data transfer or corrupt/non-existant glue XML file.");
-//				throw new BIPEngineException("The glue parser has failed to compute the data glue.\n" + "\tPossible reasons: No data transfer or corrupt/non-existant glue XML file.");
-//			} catch (BIPEngineException e) {
-//				e.printStackTrace();
-//				throw e;
-//			}
-//		}
-//		this.dataGlueSpec = dataGlue.iterator();
-//		createDataBDDNodes();
-//		return computeDvariablesBDDs();
-//	}
+	public BDD specifyDataGlue(Iterable<DataWire> dataGlue) throws BIPEngineException {
+		if (dataGlue == null || !dataGlue.iterator().hasNext()) {
+			try {
+				logger.error("The glue parser has failed to compute the data glue.\n" + "\tPossible reasons: No data transfer or corrupt/non-existant glue XML file.");
+				throw new BIPEngineException("The glue parser has failed to compute the data glue.\n" + "\tPossible reasons: No data transfer or corrupt/non-existant glue XML file.");
+			} catch (BIPEngineException e) {
+				e.printStackTrace();
+				throw e;
+			}
+		}
+		this.dataGlueSpec = dataGlue.iterator();
+		createDataBDDNodes();
+		return computeDvariablesBDDs();
+	}
 
 	// NEW
 	public BDD specifyDataGlue(Hashtable<BIPComponent, Behaviour> componentBehaviourMapping, BIPGlue glue) throws BIPEngineException {
@@ -359,6 +360,7 @@ public class DataEncoderImpl implements DataEncoder {
 				ArrayList<BDD> auxiliary=createImplications(component, port);
 				logger.info("Auxiliary size " + auxiliary.size()+ " for port "+port.id+ " of component "+component.getName());
 				BiDirectionalPair pair = new BiDirectionalPair(component.getName(), port.id);
+				//Check whether there are triggers
 				if (!auxiliary.isEmpty() && portToTriggersMapping.get(pair).equals(true)) {
 					moreImplications.put(componentInBDDs.get(firstComponentPortPair), auxiliary);
 				}
@@ -589,7 +591,7 @@ public class DataEncoderImpl implements DataEncoder {
 					Map<BIPComponent, Iterable<Port>> suitableOutPorts = componentOutPorts.get(inPort);
 					Set<BIPComponent> componentsOut = suitableOutPorts.keySet();
 					BiDirectionalPair inComponentPortPair = new BiDirectionalPair(component, inPort);
-					ArrayList<BDD> auxiliary = new ArrayList<BDD>();
+//					ArrayList<BDD> auxiliary = new ArrayList<BDD>();
 
 					for (BIPComponent componentOut : componentsOut) {
 						for (Port outPort : suitableOutPorts.get(componentOut)) {
@@ -627,7 +629,7 @@ public class DataEncoderImpl implements DataEncoder {
 								// node.not().or(componentInBDDs.get(inComponentPortPair).and(componentOutBDDs.get(outComponentPortPair)));
 								this.implicationsOfDs.add(node.not().or(componentInBDDs.get(inComponentPortPair).and(componentOutBDDs.get(outComponentPortPair))));
 								portsToDVarBDDMapping.put(inOutPortsPair, node);
-								auxiliary.add(node);
+//								auxiliary.add(node);
 								/*
 								 * Store the position of the d-variables in the
 								 * BDD manager
@@ -647,8 +649,15 @@ public class DataEncoderImpl implements DataEncoder {
 							currentSystemBddSize++;
 						}
 					}
-					logger.info("Auxiliary size" + auxiliary.size());
-					moreImplications.put(componentInBDDs.get(inComponentPortPair), auxiliary);
+					ArrayList<BDD> auxiliary=createImplications(component, inPort);
+					logger.info("Auxiliary size " + auxiliary.size()+ " for port "+inPort.id+ " of component "+component.getName());
+					BiDirectionalPair pair = new BiDirectionalPair(component.getName(), inPort.id);
+					//Check whether there are triggers
+					if (!auxiliary.isEmpty()) {
+						moreImplications.put(componentInBDDs.get(inComponentPortPair), auxiliary);
+					}
+//					logger.info("Auxiliary size" + auxiliary.size());
+//					moreImplications.put(componentInBDDs.get(inComponentPortPair), auxiliary);
 				}
 			}
 			Set<BDD> entries = moreImplications.keySet();
@@ -726,7 +735,8 @@ public class DataEncoderImpl implements DataEncoder {
 			// logger.info("Component instance: "+component.getName());
 			// logger.info("Deciding port: "+decidingPort);
 
-			ArrayList<Port> componentOutPorts = (ArrayList<Port>) dataCoordinator.getDataOutPorts(component, decidingPort);
+			ArrayList<Port> componentOutPorts = (ArrayList<Port>) dataCoordinator.getBehaviourByComponent(component).getEnforceablePorts();
+//			ArrayList<Port> componentOutPorts = (ArrayList<Port>) dataCoordinator.getDataOutPorts(component, decidingPort);
 			logger.info("Get Data Out Ports size: " + (componentOutPorts.size()));
 			componentToPort.put(component, componentOutPorts);
 			for (Port port : componentOutPorts) {

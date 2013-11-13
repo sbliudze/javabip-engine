@@ -47,7 +47,7 @@ public interface DataEncoder {
      * @return 
      * @throws BIPEngineException 
      */
-//    BDD specifyDataGlue(Iterable<DataWire> dataGlue) throws BIPEngineException;
+    BDD specifyDataGlue(Iterable<DataWire> dataGlue) throws BIPEngineException;
     
 	//NEW
 	BDD specifyDataGlue (Hashtable<BIPComponent, Behaviour> componentBehaviourMapping, BIPGlue glue) throws BIPEngineException;
