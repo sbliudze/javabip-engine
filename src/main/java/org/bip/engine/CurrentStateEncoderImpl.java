@@ -80,10 +80,13 @@ public class CurrentStateEncoderImpl implements CurrentStateEncoder {
 
 		for (Port disabledPort : disabledPorts){
 			logger.debug("Conjunction of negated disabled ports: "+ disabledPort.id+ " of component "+ disabledPort.specType);
-//			BDD tmp = result.and(statesToBDDs.get(componentState).not());
-//			result.free();
-//			result = tmp;
-			result.andWith(portsToBDDs.get(disabledPort.id).not());
+			BDD tmp = result.and(portsToBDDs.get(disabledPort.id).not());
+			result.free();
+			result = tmp;
+//			result.andWith(
+//					portsToBDDs.get(
+//							disabledPort.id).
+//							not());
 			
 		}
 		

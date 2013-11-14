@@ -120,7 +120,8 @@ public class DataEncoderImpl implements DataEncoder {
 									logger.info("Inform Specific: Pair Two Port: " + pairTwoPort);
 									logger.info("I AM NEGATING..");
 									//TODO: prin pou eixa 2 conditions den xtupouse: Check this out
-									BDD tmp = result.and(portsToDVarBDDMapping.get(pair).not());
+									BDD tmp = result.and(
+											portsToDVarBDDMapping.get(pair).not());
 									// logger.info("Inform Specific: PortsToDVarBDDMapping SIZE: "+portsToDVarBDDMapping.size());
 									result.free();
 									result = tmp;
@@ -378,7 +379,7 @@ public class DataEncoderImpl implements DataEncoder {
 //
 //	}
 //	
-	private ArrayList<BDD> createImplications (BIPComponent component, Port port){
+	private synchronized ArrayList<BDD> createImplications (BIPComponent component, Port port){
 		ArrayList<BDD> auxiliary = new ArrayList<BDD>();
 		for (Map.Entry <BiDirectionalPair, BDD> pair: portsToDVarBDDMapping.entrySet()){
 			BiDirectionalPair firstPair = (BiDirectionalPair) pair.getKey().getFirst();
@@ -597,7 +598,6 @@ public class DataEncoderImpl implements DataEncoder {
 							BiDirectionalPair outComponentPortPair = new BiDirectionalPair(componentOut, outPort);
 							BiDirectionalPair inOutPortsPair = new BiDirectionalPair(inComponentPortPair, outComponentPortPair);
 							if (!portsToDVarBDDMapping.containsKey(inOutPortsPair) && !(component.equals(componentOut) && inPort.id.equals(outPort.id))) {
-
 								/*
 								 * Create new variable in the BDD manager for
 								 * the d-variables. Does it start from 0 or 1 ?
@@ -688,7 +688,7 @@ public class DataEncoderImpl implements DataEncoder {
 		}
 	}
 
-	private Map<BIPComponent, Iterable<Port>> inPorts(Port inData) throws BIPEngineException {
+	private synchronized Map<BIPComponent, Iterable<Port>> inPorts(Port inData) throws BIPEngineException {
 		/*
 		 * Store in the Arraylist below all the possible out ports. Later to
 		 * take their cross product.
@@ -727,7 +727,7 @@ public class DataEncoderImpl implements DataEncoder {
 		return componentInPortMapping;
 	}
 
-	private Map<Port, Map<BIPComponent, Iterable<Port>>> outPorts(Port outData, Port decidingPort) throws BIPEngineException {
+	private synchronized Map<Port, Map<BIPComponent, Iterable<Port>>> outPorts(Port outData, Port decidingPort) throws BIPEngineException {
 		/*
 		 * Store in the Arraylist below all the possible in ports. Later to take
 		 * their cross product.

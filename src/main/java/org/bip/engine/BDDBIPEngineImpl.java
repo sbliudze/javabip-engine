@@ -287,9 +287,9 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		chosenInteraction = cubeMaximals.get(randomInt); 
 		
 		cubeMaximals.clear();
-		logger.info("ChosenInteraction: ");
+		logger.debug("ChosenInteraction: ");
 		for (int k = 0; k < chosenInteraction.length; k++)
-			logger.info("{}",chosenInteraction[k]);
+			logger.debug("{}",chosenInteraction[k]);
 		
 		//TODO: Fix String to Port
 		ArrayList<String> portsExecuted = new ArrayList<String>();
@@ -326,13 +326,9 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 				boolean found = false;
 				Map <BIPComponent, Iterable<Port>> mergedInteractions = new Hashtable<BIPComponent, Iterable<Port>>();
 				ArrayList<Integer> indexOfInteractionsToBeDeleted = new ArrayList<Integer>();
-				if (component.equals(component2) && port2.id.equals(port.id)){
-					found =true;
-				}
-				else{
-					portsExecuted.add(port.id);
-					portsExecuted.add(port2.id);
-				}
+				portsExecuted.add(port.id);
+				portsExecuted.add(port2.id);
+
 				for (Map<BIPComponent, Iterable<Port>> interaction: allInteractions)
 				{
 					if(found == false){

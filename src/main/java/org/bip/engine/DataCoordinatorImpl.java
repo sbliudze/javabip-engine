@@ -65,7 +65,9 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 	/** Number of states of components registered */
 	private int nbStates;
 
-	private int number;
+	private int count;
+	
+	
 
 	/**
 	 * Create instances of all the the Data Encoder and of the BIPCoordinator
@@ -87,7 +89,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 	/**
 	 * Sends interactions-glue to the BIP Coordinator Sends data-glue to the Data Encoder.
 	 */
-	public void specifyGlue(BIPGlue glue) {
+	public synchronized void specifyGlue(BIPGlue glue) {
 		BIPCoordinator.specifyGlue(glue);
 		this.dataWires = glue.dataWires;
 		this.requires = glue.requiresConstraints;
@@ -146,7 +148,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 		}
 	}
 
-	public void inform(BIPComponent component, String currentState, ArrayList<Port> disabledPorts) {
+	public synchronized void inform(BIPComponent component, String currentState, ArrayList<Port> disabledPorts) {
 		// for each component store its undecided ports
 		componentUndecidedPorts.put(component, getUndecidedPorts(component, currentState, disabledPorts));
 		// easy implementation: when all the components have informed
@@ -165,7 +167,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 		BIPCoordinator.inform(component, currentState, disabledPorts);
 	}
 
-	public void informSpecific(BIPComponent decidingComponent, Port decidingPort, Map<BIPComponent, Iterable<Port>> disabledCombinations) throws BIPEngineException {
+	public synchronized void informSpecific(BIPComponent decidingComponent, Port decidingPort, Map<BIPComponent, Iterable<Port>> disabledCombinations) throws BIPEngineException {
 		if (disabledCombinations == null) {
 			return;
 		} else if (disabledCombinations.isEmpty()) {
@@ -259,8 +261,8 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 	 * 
 	 * @throws BIPEngineException
 	 */
-	// TODO: test this
 	public void executeInteractions(Iterable<Map<BIPComponent, Iterable<Port>>> portsToFire) throws BIPEngineException {
+		this.count++;
 		Iterator<Map<BIPComponent, Iterable<Port>>> enabledCombinations = portsToFire.iterator();
 		Hashtable<Entry<BIPComponent, Port>, Hashtable<String, Object>> requiredDataMapping = new Hashtable<Entry<BIPComponent, Port>, Hashtable<String, Object>>();
 
@@ -577,7 +579,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 				if (!(portActive.get(i))) {
 					ArrayList<DataContainer> dataContainer = containerList.get(i);
 					for (DataContainer dc : dataContainer) {
-						System.err.println("CONTAINER CHOSEN: For deciding " + component.hashCode() + " and " + port.id + " disabled is " + dc.component().hashCode() + " with ports " + dc.ports());
+						System.err.println(this.count+" CONTAINER CHOSEN: For deciding " + component.hashCode() + " and " + port.id + " disabled is " + dc.component().hashCode() + " with ports " + dc.ports());
 						disabledCombinations.put(dc.component(), dc.ports());
 					}
 				}
@@ -594,7 +596,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 		for (ArrayList<DataContainer> dataList : containerList) {
 			// System.err.println("Next container of " + component.getName());
 			for (DataContainer container : dataList) {
-				System.err.println("Deciding " + component.getName() + ", Providing " + container.component().getName() + " the value " + container.value());
+				System.err.println(this.count+" Deciding " + component.hashCode() + ", Providing " + container.component().hashCode() + " the value " + container.value());
 			}
 		}
 
