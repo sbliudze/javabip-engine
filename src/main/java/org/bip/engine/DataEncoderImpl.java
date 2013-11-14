@@ -566,17 +566,18 @@ public class DataEncoderImpl implements DataEncoder {
 		while (dataIterator.hasNext()) {
 			DataWire dataWire = dataIterator.next();
 			Map<BIPComponent, Iterable<Port>> componentToInPorts = inPorts(dataWire.to);
-			logger.info("Data WireIn Ports size: " + componentToInPorts.size());
+			logger.info("Data WireIn Components size: " + componentToInPorts.size());
 			Set<BIPComponent> components = componentToInPorts.keySet();
 			Map<Port, Map<BIPComponent, Iterable<Port>>> componentOutPorts = new Hashtable<Port, Map<BIPComponent, Iterable<Port>>>();
 			for (BIPComponent component : components) {
 				logger.info("Component: " + component);
+				logger.info("Data WireIn component's ports: "+ componentToInPorts.get(component));
 				for (Port port : componentToInPorts.get(component)) {
 					logger.info("Port: " + port);
 					componentOutPorts.putAll(outPorts(dataWire.from, port));
 				}
 			}
-			logger.info("Data WireOut Ports size: " + componentOutPorts.size());
+			logger.info("Data WireOut components size: " + componentOutPorts.size());
 			/*
 			 * Here take the cross product of in and out variables to create the
 			 * d-variables for one data-wire Store this in a Map with the ports
@@ -594,7 +595,7 @@ public class DataEncoderImpl implements DataEncoder {
 
 					for (BIPComponent componentOut : componentsOut) {
 						for (Port outPort : suitableOutPorts.get(componentOut)) {
-
+							logger.info("Data WireOut component's ports: "+ componentOutPorts.get(inPort).size());
 							BiDirectionalPair outComponentPortPair = new BiDirectionalPair(componentOut, outPort);
 							BiDirectionalPair inOutPortsPair = new BiDirectionalPair(inComponentPortPair, outComponentPortPair);
 							if (!portsToDVarBDDMapping.containsKey(inOutPortsPair)) {
@@ -644,8 +645,10 @@ public class DataEncoderImpl implements DataEncoder {
 										throw e;
 									}
 								}
+								currentSystemBddSize++;
+								logger.info("CurrentSystemBDDSize: " + currentSystemBddSize);
 							}
-							currentSystemBddSize++;
+
 						}
 					}
 
@@ -665,17 +668,17 @@ public class DataEncoderImpl implements DataEncoder {
 				BiDirectionalPair inComponentPortPair = new BiDirectionalPair(component, inPort);
 				ArrayList<BDD> auxiliary=createImplications(component, inPort);
 				logger.info("Auxiliary size " + auxiliary.size()+ " for port "+inPort.id+ " of component "+component.getName());
-				BiDirectionalPair pair = new BiDirectionalPair(component.getName(), inPort.id);
+//				BiDirectionalPair pair = new BiDirectionalPair(component.getName(), inPort.id);
 				if (!auxiliary.isEmpty()) {
 					moreImplications.put(componentInBDDs.get(inComponentPortPair), auxiliary);
 				}
 			}
 		}
 		Set<BDD> entries = moreImplications.keySet();
-		// logger.info("moreImplications size: "+entries.size());
+		 logger.info("moreImplications size: "+entries.size());
 		for (BDD bdd : entries) {
 			BDD result = engine.getBDDManager().zero();
-			// logger.info("entry of moreImplications size: "+moreImplications.get(bdd).size());
+			 logger.info("entry of moreImplications size: "+moreImplications.get(bdd).size());
 			for (BDD lala : moreImplications.get(bdd)) {
 				BDD temp = result.or(lala);
 				result.free();

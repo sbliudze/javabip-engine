@@ -71,10 +71,10 @@ public class CurrentStateEncoderImpl implements CurrentStateEncoder {
 		for (String componentState : componentStates){
 
 			if (!componentState.equals(currentState)){
-				BDD tmp = result.and(statesToBDDs.get(componentState).not());
-				result.free();
-				result = tmp;
-//				result.andWith(statesToBDDs.get(componentState).not());
+//				BDD tmp = result.and(statesToBDDs.get(componentState).not());
+//				result.free();
+//				result = tmp;
+				result.andWith(statesToBDDs.get(componentState).not());
 			}
 		}
 

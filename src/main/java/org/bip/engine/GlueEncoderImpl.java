@@ -322,9 +322,6 @@ public class GlueEncoderImpl implements GlueEncoder {
 			logger.debug("allDisjunctiveCausesBDD: "+ allDisjunctiveCauses);
 		}
 		allDisjunctiveCauses.orWith(requirePortHolder.not());
-		
-
-
 		return allDisjunctiveCauses;			
 	}
 	

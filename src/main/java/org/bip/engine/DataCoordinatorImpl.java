@@ -577,7 +577,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 				if (!(portActive.get(i))) {
 					ArrayList<DataContainer> dataContainer = containerList.get(i);
 					for (DataContainer dc : dataContainer) {
-						System.err.println("CONTAINER CHOSEN: For deciding " + component.getName() + " and " + port.id + " disabled is " + dc.component().getName() + " with ports " + dc.ports());
+						System.err.println("CONTAINER CHOSEN: For deciding " + component.hashCode() + " and " + port.id + " disabled is " + dc.component().hashCode() + " with ports " + dc.ports());
 						disabledCombinations.put(dc.component(), dc.ports());
 					}
 				}
