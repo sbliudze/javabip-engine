@@ -3,6 +3,7 @@ package org.bip.engine;
 import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.Map;
+import java.util.Set;
 
 import net.sf.javabdd.BDD;
 
@@ -39,7 +40,8 @@ public interface DataEncoder {
 	 * @throws BIPEngineException 
 	 */
 //	BDD informSpecific(BIPComponent decidingComponent, Port decidingPort, Iterable<BIPComponent> disabledComponents) throws BIPEngineException;
-	BDD informSpecific(BIPComponent decidingComponent, Port decidingPort, Map<BIPComponent, Iterable<Port>> disabledCombinations) throws BIPEngineException;
+//	BDD informSpecific(BIPComponent decidingComponent, Port decidingPort, Map<BIPComponent, Iterable<Port>> disabledCombinations) throws BIPEngineException;
+	BDD informSpecific(BIPComponent decidingComponent, Port decidingPort, Map<BIPComponent, Set<Port>> disabledCombinations) throws BIPEngineException;
 	
     /**
      * Receives the information about the data glue of the system.

@@ -165,7 +165,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 		BIPCoordinator.inform(component, currentState, disabledPorts);
 	}
 
-	public synchronized void informSpecific(BIPComponent decidingComponent, Port decidingPort, Map<BIPComponent, Iterable<Port>> disabledCombinations) throws BIPEngineException {
+	public synchronized void informSpecific(BIPComponent decidingComponent, Port decidingPort, Map<BIPComponent, Set<Port>> disabledCombinations) throws BIPEngineException {
 		if (disabledCombinations == null) {
 			return;
 		} else if (disabledCombinations.isEmpty()) {
@@ -325,7 +325,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 		for (DataWire wire : this.dataWires) {
 			if (wire.isIncoming(dataName, componentBehaviourMapping.get(requiringComponent).getComponentType())
 					&& wire.from.specType.equals(componentBehaviourMapping.get(providingComponent).getComponentType())) {
-				ArrayList<Port> portsProviding = (ArrayList<Port>) componentBehaviourMapping.get(providingComponent).getDataOut(wire.from.id).allowedPorts();
+				Set<Port> portsProviding =  componentBehaviourMapping.get(providingComponent).getDataOut(wire.from.id).allowedPorts();
 				for (Port p : port) {
 					for (Port inport : portsProviding) {
 						if (inport.id.equals(p.id) && inport.specType.equals(p.specType)) {
@@ -402,9 +402,9 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 							// get data out variable in order to get the ports
 							Data dataOut = componentBehaviourMapping.get(aComponent).getDataOut(wire.from.id);
 							// if the allowed ports of the given data out do not contain our port, do not add this data
-							if (!((ArrayList<Port>) dataOut.allowedPorts()).contains(port)) {
-								continue;
-							}
+//							if (!(dataOut.allowedPorts().contains(port))) {
+//								continue;
+//							}
 							dataList.add(new DataContainer(inDataItem, inValue, aComponent, dataOut.allowedPorts()));
 							dataValues.add(inValue);
 
@@ -422,7 +422,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 				}
 			}
 
-			ArrayList<ArrayList<DataContainer>> containerList = (ArrayList<ArrayList<DataContainer>>) getDataValueTable(dataList);
+			ArrayList<ArrayList<DataContainer>> containerList = getDataValueTable(dataList);
 			print(containerList, component);
 			ArrayList<Map<String, Object>> dataTable = createDataTable(containerList);
 
@@ -430,7 +430,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 			// TODO change getEnabledness: if data null, return false
 			ArrayList<Boolean> portActive = (ArrayList<Boolean>) component.checkEnabledness(port, dataTable);
 			logger.debug("The result of checkEndabledness for component {}: {}.", component.getName(), portActive);
-			HashMap<BIPComponent, Iterable<Port>> disabledCombinations = new HashMap<BIPComponent, Iterable<Port>>();
+			HashMap<BIPComponent, Set<Port>> disabledCombinations = new HashMap<BIPComponent, Set<Port>>();
 			for (int i = 0; i < portActive.size(); i++) {
 				disabledCombinations.clear();
 				if (!(portActive.get(i))) {

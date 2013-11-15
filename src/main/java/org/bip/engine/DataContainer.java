@@ -1,16 +1,18 @@
 package org.bip.engine;
 
+import java.util.Set;
+
 import org.bip.api.BIPComponent;
 import org.bip.behaviour.Data;
 import org.bip.behaviour.Port;
 
-public class DataContainer {
+class DataContainer {
 	private String dataIn;
 	private Object value;
 	private BIPComponent component;
-	private Iterable<Port> ports;
+	private Set<Port> ports;
 
-	public DataContainer(Data inDataItem, Object value, BIPComponent component, Iterable<Port> ports) {
+	public DataContainer(Data inDataItem, Object value, BIPComponent component, Set<Port> ports) {
 		this.dataIn = inDataItem.name();
 		this.component = component;
 		this.value = value;
@@ -21,7 +23,7 @@ public class DataContainer {
 		return this.dataIn;
 	}
 
-	public Iterable<Port> ports() {
+	public Set<Port> ports() {
 		return this.ports;
 	}
 

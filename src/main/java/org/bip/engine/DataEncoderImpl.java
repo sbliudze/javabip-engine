@@ -62,7 +62,7 @@ public class DataEncoderImpl implements DataEncoder {
 	 * 
 	 * @see org.bip.engine.DataEncoder#inform(java.util.Map)
 	 */
-	public synchronized BDD informSpecific(BIPComponent decidingComponent, Port decidingPort, Map<BIPComponent, Iterable<Port>> disabledCombinations) throws BIPEngineException {
+	public synchronized BDD informSpecific(BIPComponent decidingComponent, Port decidingPort, Map<BIPComponent, Set<Port>> disabledCombinations) throws BIPEngineException {
 		/*
 		 * The disabledCombinations and disabledComponents are checked in the
 		 * DataCoordinator, wherein exceptions are thrown. Here, we just use
@@ -96,7 +96,7 @@ public class DataEncoderImpl implements DataEncoder {
 				}
 				logger.info("Inform Specific: disabledComponent is " + component.getName());
 				
-				ArrayList<Port> componentPorts = (ArrayList<Port>) disabledCombinations.get(component);
+				Set<Port> componentPorts =  disabledCombinations.get(component);
 				logger.info("Inform Specific: disabled Component ports size: "+componentPorts.size());
 				for (Port port : componentPorts) {
 					logger.info("Inform Specific: disabledPort is " + port.id);

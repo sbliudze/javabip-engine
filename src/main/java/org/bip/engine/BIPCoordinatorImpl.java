@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Semaphore;
 
 import net.sf.javabdd.BDD;
@@ -557,7 +558,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	 * of the informSpecific directly to the DataEncoder. The BIPCoordinator should not participate in this.
 	 */
 
-	public void informSpecific(BIPComponent decidingComponent, Port decidingPort, Map<BIPComponent, Iterable<Port>> disabledCombinations) throws BIPEngineException {
+	public void informSpecific(BIPComponent decidingComponent, Port decidingPort, Map<BIPComponent, Set<Port>> disabledCombinations) throws BIPEngineException {
 		logger.warn("InformSpecific of BIPCoordinator is called. That should never happen. All the information should be passed directly from the DataCoordinator to the DataEncoder.");
 	}
 	
