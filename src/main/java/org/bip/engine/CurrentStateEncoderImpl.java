@@ -2,6 +2,7 @@ package org.bip.engine;
 
 import java.util.ArrayList;
 import java.util.Hashtable;
+import java.util.Set;
 
 import net.sf.javabdd.BDD;
 
@@ -48,7 +49,7 @@ public class CurrentStateEncoderImpl implements CurrentStateEncoder {
 	 * 
 	 * @return the current state BDD
 	 */
-	public synchronized BDD inform(BIPComponent component, String currentState, ArrayList<Port> disabledPorts) throws BIPEngineException {
+	public synchronized BDD inform(BIPComponent component, String currentState, Set<Port> disabledPorts) throws BIPEngineException {
 		assert(component != null);
 		assert (currentState != null && !currentState.isEmpty());
 		

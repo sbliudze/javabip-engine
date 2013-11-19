@@ -205,7 +205,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	 * If the guards of a transition do not have information valuable for data transfer then only this inform is called for a particular component.
 	 * Otherwise, also the other inform function is called.
 	 */
-	public synchronized void inform(BIPComponent component, String currentState, ArrayList<Port> disabledPorts) {
+	public synchronized void inform(BIPComponent component, String currentState, Set<Port> disabledPorts) {
 		if (componentsHaveInformed.contains(component)) {
 			try {
 				logger.info("************************ Already Have Informed *******************************");
