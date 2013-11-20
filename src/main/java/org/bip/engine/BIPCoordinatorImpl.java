@@ -288,35 +288,12 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 			}
 		}
 	}
-
-
-	/**
-	 * BDDBIPEngine informs the BIPCoordinator for the components (and their associated ports) that are part of the chosen interactionS.
-	 */
-	//TODO: after finishing with the changes in the BDDBIPEngine this function should not be called any more. Delete it.
-//	public synchronized void executeComponents(ArrayList<BIPComponent> allComponents, Hashtable<BIPComponent, ArrayList<Port>> portsToFire) {
-//		Port port = null;
-//		int size = allComponents.size();
-//		
-//		for (int i = 0; i < size; i++) {
-//			BIPComponent component = allComponents.get(i);
-//			ArrayList<Port> compPortsToFire = portsToFire.get(component);
-//			
-//			if ((compPortsToFire != null) && (!compPortsToFire.isEmpty())) {
-//				port = compPortsToFire.get(0);
-//				assert(port != null);
-//				logger.debug("Component {} execute port {}", component.getName(), port.id);
-//				component.execute(port.id);
-//			}
-//			else{
-//				logger.debug("BIPCoordinator sends null to BIPComponent: "+component.getName());
-//				component.execute(null);
-//			}
-//		}
-//	}
 	
 	/**
-	 * The BDDBIPEngine 
+	 * The BDDBIPEngine is not aware whether it should send the ports to be executed to the DataCoordinator or to the
+	 *  BIPCoordinator. This is decided what the interactionExecutor is set to at the tests.
+	 *  
+	 *  @throws BIPEngineException
 	 */
 	public void execute (Iterable<Map<BIPComponent, Iterable<Port>>> portsToFire) throws BIPEngineException{
 		interactionExecutor.executeInteractions(portsToFire);
@@ -329,6 +306,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	 * Through this function all the components need to be notified.
  	 * If they are participating in an interaction then their port to be fired is sent to them through the execute function of the BIPExecutor.
 	 * If they are not participating in an interaction then null is sent to them.
+	 * 
 	 * @throws BIPEngineException 
 	 */
 	public void executeInteractions(Iterable<Map<BIPComponent, Iterable<Port>>> portsToFire) throws BIPEngineException {
@@ -399,6 +377,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	/**
 	 * Initialization phase. Orders the Behaviour and Current State Encoders to compute their total BDDs 
 	 * and send these to the BDDBIPEngine. 
+	 * 
 	 * @throws BIPEngineException 
 	 * @throws InterruptedException 
 	 */
@@ -509,19 +488,23 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 		//for (BIPComponent component : identityMapping.values()) {
 		//	component.deregister();
 		//}
+		
 		componentBehaviourMapping.clear();
 		componentsHaveInformed.clear();
 		return;
 	}
 	
 	/**
-	 * Create a thread for the BIPCoordinator and start the thread
+	 * Create a thread for the Engine and start it.
 	 */
 	public void start() {
 		engineThread = new Thread(this, "BIPEngine");
 		engineThread.start();
 	}
 
+	/**
+	 * Interrupt the Engine thread.
+	 */
 	public void stop() {
 		isEngineExecuting = false;
 		engineThread.interrupt();
@@ -572,7 +555,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	 * Give the engine a BDD for a disabledCombination.
 	 * Data Encoder calls this function.
 	 * 
-	 * ND: DataCoordinator does not have any connection to the BDDBIPEngine.
+	 * NB: DataCoordinator does not have any connection to the BDDBIPEngine.
 	 */
 	public void informSpecific(BDD disabledCombination){
 		engine.informSpecific(disabledCombination);
@@ -582,7 +565,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	 * Give to the engine the BDD corresponding to the Data variables and their implications BDD.\
 	 * Data Encoder calls this function.
 	 *
-	 * ND: DataCoordinator does not have any connection to the BDDBIPEngine.
+	 * NB: DataCoordinator does not have any connection to the BDDBIPEngine.
 	 */
 	public void specifyDataGlue(BDD specifyDataGlue) {
 		engine.specifyDataGlue(specifyDataGlue);
@@ -624,9 +607,13 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 		return engine;
 	}
 	
+	/**
+	 * Set Interaction Executor to BIPCoordinator in the case there are no data transfer
+	 */
 	public void setInteractionExecutor(InteractionExecutor interactionExecutor){
 		this.interactionExecutor = interactionExecutor;
 	}
+	
 	/**
 	 * Helper function that returns the registered component instances that correspond to a component type.
 	 * @throws BIPEngineException 
@@ -646,12 +633,6 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 		}
 		return instances; 
 	}
-
-
-
-
-
-
 
 	
 }
