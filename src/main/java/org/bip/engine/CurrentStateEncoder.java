@@ -1,5 +1,6 @@
 package org.bip.engine;
 import java.util.ArrayList;
+import java.util.Set;
 
 import net.sf.javabdd.BDD;
 
@@ -33,7 +34,7 @@ public interface CurrentStateEncoder {
 	 * @param disabledPorts
 	 * @throws BIPEngineException 
 	 */
-	BDD inform(BIPComponent component, String currentState, ArrayList<Port> disabledPorts) throws BIPEngineException;
+	BDD inform(BIPComponent component, String currentState, Set<Port> disabledPorts) throws BIPEngineException;
 	
 	/**
 	 * Setter for the BIPCoordinator
