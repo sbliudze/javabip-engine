@@ -569,14 +569,14 @@ public class DataEncoderImpl implements DataEncoder {
 			Set<BIPComponent> components = componentToInPorts.keySet();
 			Map<Port, Map<BIPComponent, Iterable<Port>>> componentOutPorts = new Hashtable<Port, Map<BIPComponent, Iterable<Port>>>();
 			for (BIPComponent component : components) {
-				logger.info("Component: " + component);
+				logger.info("Component: " + component.hashCode());
 				logger.info("Data WireIn component's ports: "+ componentToInPorts.get(component));
 				for (Port port : componentToInPorts.get(component)) {
 					logger.info("Port: " + port);
 					componentOutPorts.putAll(outPorts(dataWire.from, port));
 				}
 			}
-			logger.info("Data WireOut components size: " + componentOutPorts.size());
+//			logger.info("Data WireOut components size: " + componentOutPorts.size());
 			/*
 			 * Here take the cross product of in and out variables to create the
 			 * d-variables for one data-wire Store this in a Map with the ports

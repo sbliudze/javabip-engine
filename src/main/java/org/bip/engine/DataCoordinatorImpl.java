@@ -99,13 +99,11 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 				throw new BIPEngineException("Data wires information not specified in XML file, although DataCoordinator is set as the wrapper");
 			} catch (BIPEngineException e) {
 				e.printStackTrace();
+				//TODO: re-throw the Exception
 			}
 		} else {
 			try {
 				 BIPCoordinator.specifyDataGlue(dataEncoder.specifyDataGlue(dataWires));
-
-				// NEW
-//				BIPCoordinator.specifyDataGlue(dataEncoder.specifyDataGlue(componentBehaviourMapping, glue));
 			} catch (BIPEngineException e) {
 				e.printStackTrace();
 			}
@@ -128,7 +126,6 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 				registeredComponents.add(component);
 				componentBehaviourMapping.put(component, behaviour);
 				nbPorts += ((ArrayList<Port>) behaviour.getEnforceablePorts()).size();
-				;
 				nbStates += ((ArrayList<String>) behaviour.getStates()).size();
 				BIPCoordinator.register(component, behaviour);
 			}
@@ -162,8 +159,10 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 		} catch (BIPEngineException e) {
 			e.printStackTrace();
 		}
-		// TODO: Inform the BIPCoordinator only after all the informSpecifics
-		// for the particular component have finished
+		/*
+		 * Inform the BIPCoordinator only after all the informSpecifics
+		 * for the particular component have finished
+		 */
 		BIPCoordinator.inform(component, currentState, disabledPorts);
 	}
 
@@ -171,7 +170,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 		if (disabledCombinations == null) {
 			return;
 		} else if (disabledCombinations.isEmpty()) {
-			logger.warn("No disabled combinations specified in informSpecific. Map of disabledCombinations is empty.");
+			logger.warn("No disabled combinations specified in informSpecific for deciding component."+ decidingComponent.getName() +" for deciding port "+decidingPort.id + " Map of disabledCombinations is empty.");
 			return;
 		} else if (!registeredComponents.contains(decidingComponent)) {
 			try {

@@ -76,6 +76,7 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		boolean cube2_big = false;
 		
 		for (int i = 0; i < portBDDsPosition.size(); i++) {
+			logger.debug("portBDDsPosition: "+portBDDsPosition.get(i));
 			if ((cube1[portBDDsPosition.get(i)] != 0) && (cube2[portBDDsPosition.get(i)] == 0)) {
 				cube1_big = true;
 			} else if ((cube2[portBDDsPosition.get(i)] != 0) && (cube1[portBDDsPosition.get(i)] == 0)) {
@@ -98,6 +99,7 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 
 	/** Copy maximal cube */
 	private void addCube(ArrayList<byte[]> cubeMaximals, byte[] cube, int position) {
+		logger.debug("Cube length: "+cube.length);
 		for (int i = 0; i < cube.length; i++)
 			if (cube[i] == -1)
 				cube[i] = 1;
@@ -106,6 +108,7 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 
 	private void findMaximals(ArrayList<byte[]> cubeMaximals, byte[] c_cube, ArrayList<Integer> portBDDsPosition) {
 		int size = cubeMaximals.size();
+		logger.debug("findMaximals size: "+size);
 		for (int i = 0; i < size; i++) {
 			int comparison = compareCube(c_cube, cubeMaximals.get(i), portBDDsPosition);
 			if (comparison == 1 || comparison == 0) {
@@ -143,7 +146,7 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		BDD totalDisabledCombinationBdd = bdd_mgr.one();
 //		BDD tmp;
 
-		logger.info("TOTAL BDD: DISABLED COMBINATIONS BDD SIZE:  "+ disabledCombinationBDDs.size());
+		logger.debug("TOTAL BDD: DISABLED COMBINATIONS BDD SIZE:  "+ disabledCombinationBDDs.size());
 		for (BDD disabledCombinationBDD : disabledCombinationBDDs ){
 			if (disabledCombinationBDD==null){
 				logger.error("Disabled Combination BDD is null");
@@ -163,12 +166,12 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		ArrayList<byte[]> cubeMaximals = new ArrayList<byte[]>();
 		Hashtable<BIPComponent, ArrayList<Port>> chosenPorts = new Hashtable<BIPComponent, ArrayList<Port>>();
 		ArrayList<BIPComponent> chosenComponents = new ArrayList<BIPComponent>();
-		byte[] cubeMaximal = new byte[wrapper.getNoPorts() + wrapper.getNoStates()];
+		byte[] cubeMaximal = new byte[wrapper.getNoPorts() + wrapper.getNoStates()+ positionsOfDVariables.size()];
 
 		cubeMaximals.add(0, cubeMaximal);
 
 		BDD totalCurrentStateAndDisabledCombinations;
-		logger.info("RUN ONE INTERACTION: DISABLED COMBINATIONS BDD SIZE:  "+ disabledCombinationBDDs.size());
+		logger.debug("RUN ONE INTERACTION: DISABLED COMBINATIONS BDD SIZE:  "+ disabledCombinationBDDs.size());
 		if (!disabledCombinationBDDs.isEmpty() || disabledCombinationBDDs != null){
 //			BDD totalDisabledCombination = totalDisabledCombinationsBdd(disabledCombinationBDDs);
 //			if (totalDisabledCombination==null) {
@@ -245,12 +248,17 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 			for (byte b : value) {
 				sb.append(String.format("%02X ", b));
 			}
-			logger.info(sb.toString());
+			logger.debug(sb.toString());
 		}
-
+		ArrayList<Integer> positions = new ArrayList<Integer>();
+		positions.addAll(positionsOfPorts);
+		positions.addAll(positionsOfDVariables);
+		logger.debug("a size: "+a.size());
 		for (int i = 0; i < a.size(); i++){
 			// TODO: Sort this function out
-			findMaximals(cubeMaximals, a.get(i), positionsOfPorts);
+
+			logger.info("Positions of D Variables size:"+ positionsOfDVariables.size());
+			findMaximals(cubeMaximals, a.get(i), positions);
 		}
 
 		/* deadlock detection */
@@ -264,7 +272,7 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 				throw e;
 			} 
 		} else if (size == 1) { //TODO: Once findMaximals is fixed, we do not need to add a dummy cube at initialisation. Hence this check becomes irrelevant.
-			if (countPortEnable(cubeMaximals.get(0), positionsOfPorts) == 0) {
+			if (countPortEnable(cubeMaximals.get(0), positions) == 0) {
 				try {
 					throw new BIPEngineException("Deadlock. No enabled ports.");
 				} catch (BIPEngineException e) {
@@ -275,7 +283,7 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 			}
 		}
 
-		logger.debug("Number of maximal interactions: " + cubeMaximals.size());
+		logger.info("Number of maximal interactions: " + cubeMaximals.size());
 		Random rand = new Random();
 		/*
 		 * Pick a random maximal interaction
@@ -292,7 +300,7 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 			logger.debug("{}",chosenInteraction[k]);
 		
 		//TODO: Fix String to Port
-		ArrayList<String> portsExecuted = new ArrayList<String>();
+		ArrayList<Port> portsExecuted = new ArrayList<Port>();
 		ArrayList <Map<BIPComponent, Iterable<Port>>> allInteractions = new ArrayList<Map<BIPComponent,Iterable<Port>>>() ;
 //		ArrayList<Hashtable<BIPComponent, ArrayList<Port>>> allInteractions = new ArrayList<Hashtable<BIPComponent, ArrayList<Port>>>();
 		
@@ -312,7 +320,7 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 				
 				
 				BIPComponent component = (BIPComponent) firstPair.getFirst();
-				logger.info("Chosen Component: {}", component.hashCode());
+				logger.info("Chosen Component: {}", component.getName());
 				logger.info("Chosen Port: {}", componentPorts.get(0).id);
 				ArrayList<Port> componentPorts2 = new ArrayList<Port>();
 				Port port2 = (Port) secondPair.getSecond();
@@ -320,14 +328,14 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 //				logger.info("Component Port2 SIZE:"+componentPorts2.size());
 				
 				BIPComponent component2 = (BIPComponent) secondPair.getFirst();
-				logger.info("Chosen Component: {}", component2.hashCode());
+				logger.info("Chosen Component: {}", component2.getName());
 				logger.info("Chosen Port: {}", componentPorts2.get(0).id);
 							
 				boolean found = false;
 				Map <BIPComponent, Iterable<Port>> mergedInteractions = new Hashtable<BIPComponent, Iterable<Port>>();
 				ArrayList<Integer> indexOfInteractionsToBeDeleted = new ArrayList<Integer>();
-				portsExecuted.add(port.id);
-				portsExecuted.add(port2.id);
+				portsExecuted.add(port);
+				portsExecuted.add(port2);
 
 				for (Map<BIPComponent, Iterable<Port>> interaction: allInteractions)
 				{
@@ -363,7 +371,7 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 					((List) allInteractions).add(oneInteraction);
 				}
 				else{
-//					logger.info("indexOfInteractionsToBeDeleted size: "+ indexOfInteractionsToBeDeleted.size());
+					logger.info("indexOfInteractionsToBeDeleted size: "+ indexOfInteractionsToBeDeleted.size());
 					for (Integer index: indexOfInteractionsToBeDeleted){
 						logger.info("allInteractions size before removing: "+ allInteractions.size());
 						allInteractions.remove(allInteractions.get(index));
@@ -390,7 +398,7 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 			ArrayList <Port> enabledPorts = new ArrayList<Port>();
 
 			for (Port componentPort : componentPorts){
-				if(!portsExecuted.contains(componentPort.id) && chosenInteraction[portToPosition.get(componentPort)]==1){
+				if(!portsExecuted.contains(componentPort) && chosenInteraction[portToPosition.get(componentPort)]==1){
 					enabledPorts.add(componentPort);
 				}
 			}
@@ -405,7 +413,7 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		}
 		
 		logger.info("*************************************************************************");
-//		logger.info("chosenPorts size: "+chosenPorts.size());
+		logger.info("chosenPorts size: "+chosenPorts.size());
 		if (chosenPorts.size()!=0){
 			((List) allInteractions).add(chosenPorts);
 		}
@@ -440,7 +448,6 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 	}
 	
 	public synchronized void informSpecific(final BDD informSpecific) {
-		
 		disabledCombinationBDDs.add(informSpecific);
 		logger.info("INFORM SPECIFIC CALL: Disabled Combinations size "+ disabledCombinationBDDs.size());
 	}
@@ -524,7 +531,6 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 				}	
 				this.totalBehaviour.free();
 				this.totalGlue.free();
-//				this.dataGlueBDD.free();
 			}
 //		}
 	}
