@@ -323,7 +323,6 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	 * If they are not participating in an interaction then null is sent to them.
 	 * @throws BIPEngineException 
 	 */
-	//TODO: when changes in Engine are finished TEST it
 	public void executeInteractions(Iterable<Map<BIPComponent, Iterable<Port>>> portsToFire) throws BIPEngineException {
 		Iterator <Map<BIPComponent, Iterable<Port>>> enabledCombinations = portsToFire.iterator();
 		/*
@@ -427,8 +426,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 		 * that it is initialized  here with the number of registered components in the system. Note that, if components
 		 * can be registered and unregistered on the fly the semaphore has to be updated with the new number of components
 		 * in the system.
-		 */
-		/*
+		 *
 		 * Acquire permits for the number of registered components, which have not informed about their current state yet.
 		 * NB: Components may have inform the BIPCoordinator before the execute() is called
 		 */
