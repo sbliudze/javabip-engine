@@ -107,7 +107,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 		engine.setOSGiBIPEngine(this);
 	}
 
-	public void specifyGlue(BIPGlue glue) {
+	public synchronized void specifyGlue(BIPGlue glue) {
 		try {
 			glueenc.specifyGlue(glue);
 		} catch (BIPEngineException e) {
@@ -120,7 +120,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	 * 
 	 * @throws BIPEngineException 
 	 */
-	private void computeTotalGlueAndInformEngine() throws BIPEngineException{
+	private synchronized void computeTotalGlueAndInformEngine() throws BIPEngineException{
 		engine.informGlue(glueenc.totalGlue());
 	}
 	
@@ -134,11 +134,11 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	 * 
 	 * @throws BIPEngineException 
 	 */
-	private void computeTotalBehaviour() throws BIPEngineException {
+	private synchronized void computeTotalBehaviour() throws BIPEngineException {
 		engine.totalBehaviourBDD();
 	}
 
-	public void register(BIPComponent component, Behaviour behaviour) {
+	public synchronized void register(BIPComponent component, Behaviour behaviour) {
 		/*
 		 *  The condition below checks whether the component has already been registered.
 		 */

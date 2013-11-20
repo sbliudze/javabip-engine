@@ -11,7 +11,6 @@ import org.bip.behaviour.Port;
 import org.bip.exceptions.BIPEngineException;
 import org.bip.glue.DataWire;
 
-
 /**
  * Deals with the DataGlue.
  * Encodes the informSpecific information.
@@ -55,6 +54,7 @@ public interface DataEncoder {
 	 * Setter for the DataCoordinator
 	 */
 	void setDataCoordinator(DataCoordinator dataCoordinator);
+	
 	/**
 	 * Setter for the Behaviour Encoder
 	 */

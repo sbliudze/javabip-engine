@@ -1,7 +1,5 @@
 package org.bip.engine;
 
-import java.util.ArrayList;
-
 import org.bip.api.BIPComponent;
 import org.bip.api.BIPEngine;
 import org.bip.api.Behaviour;
@@ -11,6 +9,8 @@ import org.bip.exceptions.BIPEngineException;
 /**
  * @author mavridou
  */
+
+//TODO: If the function getDataOutPorts is not needed any more delete and maybe have the DataEncoder asking for this info from the BIPCoordinator.
 public interface DataCoordinator extends BIPEngine, InteractionExecutor {
 
 	/**
@@ -48,6 +48,6 @@ public interface DataCoordinator extends BIPEngine, InteractionExecutor {
 	 * @return number of states of registered components
 	 */
 	int getNoStates();
-	
+
 	Iterable<Port> getDataOutPorts(BIPComponent disabledComponent, Port decidingPort);
 }
