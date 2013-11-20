@@ -115,16 +115,16 @@ public class DataEncoderImpl implements DataEncoder {
 //							if ((pairOnePort.id.equals(decidingPort.id) && pairTwoPort.id.equals(port.id)) || (pairTwoPort.id.equals(decidingPort.id) && pairOnePort.id.equals(port.id))) {
 //								logger.info("Yes I found a pair: "+ pairOneComponent.getName() + " and "+ pairTwoComponent.getName());
 //								if (pairTwoPort.id.equals(decidingPort.id) && pairOnePort.id.equals(port.id)){
-									// result.andWith(portsToDVarBDDMapping.get(pair).not());
+									 result.andWith(portsToDVarBDDMapping.get(pair).not());
 									logger.debug("Inform Specific: Pair One Port: " + pairOnePort);
 									logger.debug("Inform Specific: Pair Two Port: " + pairTwoPort);
 									logger.info("I AM NEGATING..");
 									//TODO: prin pou eixa 2 conditions den xtupouse: Check this out
-									BDD tmp = result.and(
-											portsToDVarBDDMapping.get(pair).not());
+//									BDD tmp = result.and(
+//											portsToDVarBDDMapping.get(pair).not());
 									// logger.info("Inform Specific: PortsToDVarBDDMapping SIZE: "+portsToDVarBDDMapping.size());
-									result.free();
-									result = tmp;
+//									result.free();
+//									result = tmp;
 //								}
 //							}
 						}

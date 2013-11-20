@@ -88,7 +88,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 	/**
 	 * Sends interactions-glue to the BIP Coordinator Sends data-glue to the Data Encoder.
 	 */
-	public synchronized void specifyGlue(BIPGlue glue) {
+	public void specifyGlue(BIPGlue glue) {
 		BIPCoordinator.specifyGlue(glue);
 		this.dataWires = glue.dataWires;
 		this.requires = glue.requiresConstraints;

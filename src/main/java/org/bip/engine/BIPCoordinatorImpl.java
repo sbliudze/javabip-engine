@@ -107,7 +107,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 		engine.setOSGiBIPEngine(this);
 	}
 
-	public synchronized void specifyGlue(BIPGlue glue) {
+	public void specifyGlue(BIPGlue glue) {
 		try {
 			glueenc.specifyGlue(glue);
 		} catch (BIPEngineException e) {
@@ -115,7 +115,12 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 		}
 	}
 	
-	private synchronized void orderGlueEncoderToComputeTotalGlueAndInformEngine() throws BIPEngineException{
+	/**
+	 * Order the Glue Encode to compute the total Glue and inform the core Engine.
+	 * 
+	 * @throws BIPEngineException 
+	 */
+	private void computeTotalGlueAndInformEngine() throws BIPEngineException{
 		engine.informGlue(glueenc.totalGlue());
 	}
 	
@@ -126,14 +131,14 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	 * the engine should be re-ordered to compute the total Behaviour BDD. Not that, in case of insertion of
 	 * components this function need not be called, since we can just take the conjunction of the previous total 
 	 * Behaviour BDD and the Behaviour BDD representing the new component to compute the new total Behaviour BDD.
+	 * 
 	 * @throws BIPEngineException 
 	 */
-	private synchronized void orderEngineToComputeTotalBehaviour() throws BIPEngineException {
+	private void computeTotalBehaviour() throws BIPEngineException {
 		engine.totalBehaviourBDD();
 	}
 
-	public synchronized void register(BIPComponent component, Behaviour behaviour) {
-		
+	public void register(BIPComponent component, Behaviour behaviour) {
 		/*
 		 *  The condition below checks whether the component has already been registered.
 		 */
@@ -288,28 +293,31 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	/**
 	 * BDDBIPEngine informs the BIPCoordinator for the components (and their associated ports) that are part of the chosen interactionS.
 	 */
-	//TODO: after finishing with the changes in the BDDBIPEngine this function should not be called any more.
-	public synchronized void executeComponents(ArrayList<BIPComponent> allComponents, Hashtable<BIPComponent, ArrayList<Port>> portsToFire) {
-		Port port = null;
-		int size = allComponents.size();
-		
-		for (int i = 0; i < size; i++) {
-			BIPComponent component = allComponents.get(i);
-			ArrayList<Port> compPortsToFire = portsToFire.get(component);
-			
-			if ((compPortsToFire != null) && (!compPortsToFire.isEmpty())) {
-				port = compPortsToFire.get(0);
-				assert(port != null);
-				logger.debug("Component {} execute port {}", component.getName(), port.id);
-				component.execute(port.id);
-			}
-			else{
-				logger.debug("BIPCoordinator sends null to BIPComponent: "+component.getName());
-				component.execute(null);
-			}
-		}
-	}
+	//TODO: after finishing with the changes in the BDDBIPEngine this function should not be called any more. Delete it.
+//	public synchronized void executeComponents(ArrayList<BIPComponent> allComponents, Hashtable<BIPComponent, ArrayList<Port>> portsToFire) {
+//		Port port = null;
+//		int size = allComponents.size();
+//		
+//		for (int i = 0; i < size; i++) {
+//			BIPComponent component = allComponents.get(i);
+//			ArrayList<Port> compPortsToFire = portsToFire.get(component);
+//			
+//			if ((compPortsToFire != null) && (!compPortsToFire.isEmpty())) {
+//				port = compPortsToFire.get(0);
+//				assert(port != null);
+//				logger.debug("Component {} execute port {}", component.getName(), port.id);
+//				component.execute(port.id);
+//			}
+//			else{
+//				logger.debug("BIPCoordinator sends null to BIPComponent: "+component.getName());
+//				component.execute(null);
+//			}
+//		}
+//	}
 	
+	/**
+	 * The BDDBIPEngine 
+	 */
 	public void execute (Iterable<Map<BIPComponent, Iterable<Port>>> portsToFire) throws BIPEngineException{
 		interactionExecutor.executeInteractions(portsToFire);
 	}
@@ -456,8 +464,8 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 		 * Compute behaviour and glue BDDs with the components that have registered before the call to execute(). 
 		 * If components were to register after the call to execute() these BDDs must be recomputed accordingly.
 		 */
-		orderEngineToComputeTotalBehaviour();
-		orderGlueEncoderToComputeTotalGlueAndInformEngine();
+		computeTotalBehaviour();
+		computeTotalGlueAndInformEngine();
 	}
 	
 	public void run(){
