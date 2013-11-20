@@ -1,19 +1,16 @@
 package org.bip.engine;
 
-import java.util.ArrayList;
-import java.util.Hashtable;
 import java.util.Map;
 import java.util.Set;
 
 import net.sf.javabdd.BDD;
 
 import org.bip.api.BIPComponent;
-import org.bip.api.Behaviour;
+
 import org.bip.behaviour.Port;
 import org.bip.exceptions.BIPEngineException;
-import org.bip.glue.BIPGlue;
 import org.bip.glue.DataWire;
-import org.bip.glue.Requires;
+
 
 /**
  * Deals with the DataGlue.
@@ -39,8 +36,6 @@ public interface DataEncoder {
 	 * @param A map that gives information about a disabled interaction of ports of component instances according to data transfer information
 	 * @throws BIPEngineException 
 	 */
-//	BDD informSpecific(BIPComponent decidingComponent, Port decidingPort, Iterable<BIPComponent> disabledComponents) throws BIPEngineException;
-//	BDD informSpecific(BIPComponent decidingComponent, Port decidingPort, Map<BIPComponent, Iterable<Port>> disabledCombinations) throws BIPEngineException;
 	BDD informSpecific(BIPComponent decidingComponent, Port decidingPort, Map<BIPComponent, Set<Port>> disabledCombinations) throws BIPEngineException;
 	
     /**
@@ -51,12 +46,6 @@ public interface DataEncoder {
      */
     BDD specifyDataGlue(Iterable<DataWire> dataGlue) throws BIPEngineException;
     
-	//NEW
-//	BDD specifyDataGlue (Hashtable<BIPComponent, Behaviour> componentBehaviourMapping, BIPGlue glue) throws BIPEngineException;
-	
-	//New2
-//	BDD specifyDataGlue(Hashtable<BIPComponent, Behaviour> componentBehaviourMapping) throws BIPEngineException;
-	
 	/**
 	 * Setter for the BDDBIPEngine
 	 */

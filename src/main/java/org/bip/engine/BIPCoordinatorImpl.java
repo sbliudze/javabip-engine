@@ -560,19 +560,25 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 		logger.warn("InformSpecific of BIPCoordinator is called. That should never happen. All the information should be passed directly from the DataCoordinator to the DataEncoder.");
 	}
 	
-//	public void informSpecific(BIPComponent decidingComponent, Port decidingPort, Iterable<BIPComponent> disabledComponents) throws BIPEngineException {
-//		logger.warn("InformSpecific of BIPCoordinator is called. That should never happen. All the information should be passed directly from the DataCoordinator to the DataEncoder.");
-//	}
-	
+	/**
+	 * Give the engine a BDD for a disabledCombination.
+	 * Data Encoder calls this function.
+	 * 
+	 * ND: DataCoordinator does not have any connection to the BDDBIPEngine.
+	 */
 	public void informSpecific(BDD disabledCombination){
 		engine.informSpecific(disabledCombination);
 	}
 	
+	/**
+	 * Give to the engine the BDD corresponding to the Data variables and their implications BDD.\
+	 * Data Encoder calls this function.
+	 *
+	 * ND: DataCoordinator does not have any connection to the BDDBIPEngine.
+	 */
 	public void specifyDataGlue(BDD specifyDataGlue) {
 		engine.specifyDataGlue(specifyDataGlue);
-		
 	}
-
 	
 	/**
 	 * Helper function that returns the total number of ports of the registered components.

@@ -116,8 +116,8 @@ public class DataEncoderImpl implements DataEncoder {
 //								logger.info("Yes I found a pair: "+ pairOneComponent.getName() + " and "+ pairTwoComponent.getName());
 //								if (pairTwoPort.id.equals(decidingPort.id) && pairOnePort.id.equals(port.id)){
 									// result.andWith(portsToDVarBDDMapping.get(pair).not());
-									logger.info("Inform Specific: Pair One Port: " + pairOnePort);
-									logger.info("Inform Specific: Pair Two Port: " + pairTwoPort);
+									logger.debug("Inform Specific: Pair One Port: " + pairOnePort);
+									logger.debug("Inform Specific: Pair Two Port: " + pairTwoPort);
 									logger.info("I AM NEGATING..");
 									//TODO: prin pou eixa 2 conditions den xtupouse: Check this out
 									BDD tmp = result.and(
