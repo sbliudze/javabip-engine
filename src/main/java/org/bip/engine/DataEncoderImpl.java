@@ -354,7 +354,7 @@ public class DataEncoderImpl implements DataEncoder {
 			/*
 			 * Take the disjunction of all possible ports of this component
 			 */
-			ArrayList<Port> componentOutPorts = (ArrayList<Port>) dataCoordinator.getBehaviourByComponent(component).getEnforceablePorts();
+			Set<Port> componentOutPorts = dataCoordinator.getBehaviourByComponent(component).getDataProvidingPorts(outData.id);
 			logger.debug("Get Data Out Ports size: " + (componentOutPorts.size()));
 			componentToPort.put(component, componentOutPorts);
 			for (Port port : componentOutPorts) {
