@@ -109,13 +109,6 @@ public class DataEncoderImpl implements DataEncoder {
 									 result.andWith(portsToDVarBDDMapping.get(pair).not());
 									logger.debug("Inform Specific: Pair One Port: " + pairOnePort);
 									logger.debug("Inform Specific: Pair Two Port: " + pairTwoPort);
-//									BDD tmp = result.and(
-//											portsToDVarBDDMapping.get(pair).not());
-									// logger.info("Inform Specific: PortsToDVarBDDMapping SIZE: "+portsToDVarBDDMapping.size());
-//									result.free();
-//									result = tmp;
-//								}
-//							}
 						}
 					}
 				}
@@ -208,7 +201,7 @@ public class DataEncoderImpl implements DataEncoder {
 
 					for (BIPComponent componentOut : componentsOut) {
 						for (Port outPort : suitableOutPorts.get(componentOut)) {
-							logger.info("Data WireOut component's ports: "+ componentOutPorts.get(inPort).size());
+							logger.debug("Data WireOut component's ports: "+ componentOutPorts.get(inPort).size());
 							BiDirectionalPair outComponentPortPair = new BiDirectionalPair(componentOut, outPort);
 							BiDirectionalPair inOutPortsPair = new BiDirectionalPair(inComponentPortPair, outComponentPortPair);
 							if (!portsToDVarBDDMapping.containsKey(inOutPortsPair) && !(component.equals(componentOut) && inPort.id.equals(outPort.id))) {
@@ -281,8 +274,8 @@ public class DataEncoderImpl implements DataEncoder {
 			for (BDD bdd : entries) {
 				BDD result = engine.getBDDManager().zero();
 				 logger.debug("entry of moreImplications size: "+moreImplications.get(bdd).size());
-				for (BDD lala : moreImplications.get(bdd)) {
-					BDD temp = result.or(lala);
+				for (BDD oneImplication : moreImplications.get(bdd)) {
+					BDD temp = result.or(oneImplication);
 					result.free();
 					result = temp;
 				}
@@ -298,7 +291,6 @@ public class DataEncoderImpl implements DataEncoder {
 		 * take their cross product.
 		 */
 		Map<BIPComponent, Iterable<Port>> componentInPortMapping = new Hashtable<BIPComponent, Iterable<Port>>();
-		// ArrayList<Port> componentInPorts = new ArrayList<Port>();
 		/*
 		 * DB: These are not ports actually. In the specType the type of
 		 * the component is stored. In the id the name of the data variable is
@@ -324,7 +316,6 @@ public class DataEncoderImpl implements DataEncoder {
 					BiDirectionalPair inComponentPortPair = new BiDirectionalPair(component, port);
 					componentInBDDs.put(inComponentPortPair, behaviourEncoder.getBDDOfAPort(component, port.id));
 					logger.info("ComponentInBDDs size: " + componentInBDDs.size());
-
 				}
 			}
 		}
@@ -346,10 +337,10 @@ public class DataEncoderImpl implements DataEncoder {
 		Iterable<BIPComponent> outComponentInstances = dataCoordinator.getBIPComponentInstances(outComponentType);
 		Map<BIPComponent, Iterable<Port>> componentToPort = new Hashtable<BIPComponent, Iterable<Port>>();
 		for (BIPComponent component : outComponentInstances) {
+			
 			/*
 			 * Take the disjunction of all possible ports of this component
 			 */
-
 			ArrayList<Port> componentOutPorts = (ArrayList<Port>) dataCoordinator.getBehaviourByComponent(component).getEnforceablePorts();
 			logger.info("Get Data Out Ports size: " + (componentOutPorts.size()));
 			componentToPort.put(component, componentOutPorts);

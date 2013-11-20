@@ -191,7 +191,6 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 			}
 
 			for (int i = 0; i < nbComponentPorts; i++) {
-				//TODO: use one of the two in the BDDEngine
 				engine.getPositionsOfPorts().add(nbPorts + nbStates + nbComponentStates + i);
 				engine.getPortToPosition().put(((ArrayList<Port>)behaviour.getEnforceablePorts()).get(i), nbPorts + nbStates + nbComponentStates + i);
 			}
