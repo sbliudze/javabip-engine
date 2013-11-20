@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Hashtable;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -120,7 +121,7 @@ public class DataCoordinatorTests implements BIPComponent {
 	}
 
 	@Override
-	public Iterable<Boolean> checkEnabledness(Port port, Iterable<Map<String, Object>> data) {
+	public List<Boolean> checkEnabledness(Port port, List<Map<String, Object>> data) {
 		return null;
 	}
 

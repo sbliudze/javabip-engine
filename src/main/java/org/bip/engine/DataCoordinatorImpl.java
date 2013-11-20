@@ -354,7 +354,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 		for (DataWire wire : this.dataWires) {
 			if (wire.isIncoming(dataName, componentBehaviourMapping.get(requiringComponent).getComponentType())
 					&& wire.from.specType.equals(componentBehaviourMapping.get(providingComponent).getComponentType())) {
-				Set<Port> portsProviding = componentBehaviourMapping.get(providingComponent).getDataOut(wire.from.id).allowedPorts();
+				Set<Port> portsProviding = componentBehaviourMapping.get(providingComponent).getDataProvidingPorts(wire.from.id);
 				for (Port p : port) {
 					for (Port inport : portsProviding) {
 						if (inport.id.equals(p.id) && inport.specType.equals(p.specType)) {
@@ -422,12 +422,12 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 							// TODO check data is available
 							Object inValue = aComponent.getData(wire.from.id, inDataItem.type());
 							// get data out variable in order to get the ports
-							Data dataOut = componentBehaviourMapping.get(aComponent).getDataOut(wire.from.id);
+							Set<Port> providingPorts = componentBehaviourMapping.get(aComponent).getDataProvidingPorts(wire.from.id);
 							// if the allowed ports of the given data out do not contain our port, do not add this data
-							// if (!(dataOut.allowedPorts().contains(port))) {
+							// if (!(providingPorts.contains(port))) {
 							// continue;
 							// }
-							dataList.add(new DataContainer(inDataItem, inValue, aComponent, dataOut.allowedPorts()));
+							dataList.add(new DataContainer(inDataItem, inValue, aComponent, providingPorts));
 							dataValues.add(inValue);
 
 						}
@@ -443,7 +443,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Runn
 			// the result provided must have the same order - put comment
 			// containerList and portActive are dependant on each other
 			// TODO change getEnabledness: if data null, return false
-			ArrayList<Boolean> portActive = (ArrayList<Boolean>) component.checkEnabledness(port, dataTable);
+			List<Boolean> portActive = component.checkEnabledness(port, dataTable);
 			logger.debug("The result of checkEndabledness for component {}: {}.", component.getName(), portActive);
 			HashMap<BIPComponent, Set<Port>> disabledCombinations = new HashMap<BIPComponent, Set<Port>>();
 			for (int i = 0; i < portActive.size(); i++) {
