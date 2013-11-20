@@ -249,7 +249,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 		
 					logger.debug("Number of components that have informed {}", componentsHaveInformed.size());
 					logger.info("********************************* Inform *************************************");
-					logger.info("Component: {}", component.hashCode());
+					logger.info("Component: {}", component.getName());
 					logger.info("informs that is at state: {}", currentState);
 					for (Port disabledPort : disabledPorts){
 						logger.info("with disabled port: "+disabledPort.id);
