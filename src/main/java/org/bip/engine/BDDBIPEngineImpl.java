@@ -24,7 +24,7 @@ import org.slf4j.LoggerFactory;
  * maximal interactions and picks one non-deterministically. Notifies the
  * BIPCoordinator about the outcome.
  * 
- * @author mavridou
+ * @author Anastasia Mavridou
  */
 public class BDDBIPEngineImpl implements BDDBIPEngine {
 
@@ -46,9 +46,9 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 	/* Use JavaBDD Bdd Manager */
 	private BDDFactory bdd_mgr = BDDFactory.init("java", noNodes, cacheSize);
 	private ArrayList<Integer> positionsOfPorts = new ArrayList<Integer>();
-	Hashtable<Port, Integer> portToPosition = new Hashtable<Port, Integer>();
-	Hashtable<Integer, BiDirectionalPair> dVariablesToPosition = new Hashtable<Integer, BiDirectionalPair>();
-	ArrayList<Integer> positionsOfDVariables = new ArrayList<Integer>();
+	Map<Port, Integer> portToPosition = new Hashtable<Port, Integer>();
+	Map<Integer, BiDirectionalPair> dVariablesToPosition = new Hashtable<Integer, BiDirectionalPair>();
+	List<Integer> positionsOfDVariables = new ArrayList<Integer>();
 
 	private BIPCoordinator wrapper;
 	private BDD dataGlueBDD;
@@ -207,9 +207,7 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		// bdd_mgr.reorder(BDDFactory.REORDER_SIFTITE);
 		// logger.info("Reorder stats: "+bdd_mgr.getReorderStats());
 
-		a.addAll(solns.allsat()); // TODO, can we find random maximal
-									// interaction without getting all solutions
-									// at once?
+		a.addAll(solns.allsat()); 
 
 		logger.info("******************************* Engine **********************************");
 		logger.info("Number of possible interactions is: {} ", a.size());
@@ -312,21 +310,21 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 								found = true;
 								indexOfInteractionsToBeDeleted.add(allInteractions.indexOf(interaction));
 								mergedInteractions.putAll(interaction);
-								mergedInteractions.put((BIPComponent) secondPair.getFirst(), (ArrayList<Port>) componentPorts2);
+								mergedInteractions.put((BIPComponent) secondPair.getFirst(), componentPorts2);
 							}
 						} else if (interaction.containsKey((BIPComponent) secondPair.getFirst()) && !interaction.containsKey((BIPComponent) firstPair.getFirst())) {
 							if (interaction.get((BIPComponent) secondPair.getFirst()).iterator().next().id.equals(port2.id)) {
 								found = true;
 								indexOfInteractionsToBeDeleted.add(allInteractions.indexOf(interaction));
 								mergedInteractions.putAll(interaction);
-								mergedInteractions.put((BIPComponent) firstPair.getFirst(), (ArrayList<Port>) componentPorts);
+								mergedInteractions.put((BIPComponent) firstPair.getFirst(), componentPorts);
 							}
 						}
 					}
 				}
 				if (found == false) {
-					oneInteraction.put((BIPComponent) firstPair.getFirst(), (ArrayList<Port>) componentPorts);
-					oneInteraction.put((BIPComponent) secondPair.getFirst(), (ArrayList<Port>) componentPorts2);
+					oneInteraction.put((BIPComponent) firstPair.getFirst(),  componentPorts);
+					oneInteraction.put((BIPComponent) secondPair.getFirst(), componentPorts2);
 					((List) allInteractions).add(oneInteraction);
 				} else {
 					logger.debug("indexOfInteractionsToBeDeleted size: " + indexOfInteractionsToBeDeleted.size());
@@ -473,18 +471,18 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		// }
 	}
 
-	public ArrayList<Integer> getPositionsOfPorts() {
+	public List<Integer> getPositionsOfPorts() {
 		return positionsOfPorts;
 	}
 
-	public Hashtable<Port, Integer> getPortToPosition() {
+	public Map<Port, Integer> getPortToPosition() {
 		return portToPosition;
 	}
 
 	/**
 	 * @return the dVariablesToPosition
 	 */
-	public Hashtable<Integer, BiDirectionalPair> getdVariablesToPosition() {
+	public Map<Integer, BiDirectionalPair> getdVariablesToPosition() {
 		return dVariablesToPosition;
 	}
 
@@ -492,14 +490,14 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 	 * @param dVariablesToPosition
 	 *            the dVariablesToPosition to set
 	 */
-	public void setdVariablesToPosition(Hashtable<Integer, BiDirectionalPair> dVariablesToPosition) {
+	public void setdVariablesToPosition(Map<Integer, BiDirectionalPair> dVariablesToPosition) {
 		this.dVariablesToPosition = dVariablesToPosition;
 	}
 
 	/**
 	 * @return the positionsOfDVariables
 	 */
-	public ArrayList<Integer> getPositionsOfDVariables() {
+	public List<Integer> getPositionsOfDVariables() {
 		return positionsOfDVariables;
 	}
 
@@ -507,8 +505,8 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 	 * @param positionsOfDVariables
 	 *            the positionsOfDVariables to set
 	 */
-	public void setPositionsOfDVariables(ArrayList<Integer> positionsOfDVariables) {
-		this.positionsOfDVariables = positionsOfDVariables;
+	public void setPositionsOfDVariables(List<Integer> positionsOfDVariables) {
+		this.positionsOfDVariables =  positionsOfDVariables;
 	}
 
 	public void setOSGiBIPEngine(BIPCoordinator wrapper) {

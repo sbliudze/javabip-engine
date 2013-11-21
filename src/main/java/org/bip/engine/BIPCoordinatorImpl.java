@@ -176,11 +176,11 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 			logger.info("Component : {}", component.getName());
 			
 			componentBehaviourMapping.put(component, behaviour);
-			int nbComponentPorts = ((ArrayList<Port>)behaviour.getEnforceablePorts()).size();
-			int nbComponentStates = ((ArrayList<String>)behaviour.getStates()).size();
+			int nbComponentPorts = (behaviour.getEnforceablePorts()).size();
+			int nbComponentStates = (behaviour.getStates()).size();
 	
 			try {
-				behenc.createBDDNodes(component, ((ArrayList<Port>)behaviour.getEnforceablePorts()), ((ArrayList<String>)behaviour.getStates()));
+				behenc.createBDDNodes(component, (behaviour.getEnforceablePorts()), (behaviour.getStates()));
 			} catch (BIPEngineException e) {
 				e.printStackTrace();
 			}

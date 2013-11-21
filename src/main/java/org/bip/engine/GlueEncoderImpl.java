@@ -3,6 +3,7 @@ package org.bip.engine;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.Map;
 
 import java.util.Hashtable;
 
@@ -100,7 +101,6 @@ public class GlueEncoderImpl implements GlueEncoder {
 				portToComponents.put(causePort, portBDDs);
 			}
 		}
-		//System.out.println("Port to Components size: "+portToComponents.size());
 		return portToComponents;
 	}
 	
@@ -342,10 +342,11 @@ public class GlueEncoderImpl implements GlueEncoder {
 		
 		/* Get all port BDDs registered in the Behaviour Encoder and 
 		 * add them in the totalPortBDDs ArrayList. */
-		Hashtable<BIPComponent, BDD[]> componentToBDDs = behenc.getPortBDDs();
+		Map<BIPComponent, BDD[]> componentToBDDs = behenc.getPortBDDs();
 
-		for (Enumeration<BIPComponent> componentsEnum = componentToBDDs.keys(); componentsEnum.hasMoreElements(); ){
-			BIPComponent component = componentsEnum.nextElement();
+		for (BIPComponent component: componentToBDDs.keySet()){
+//		for (Set<BIPComponent> componentsEnum = componentToBDDs.keySet(); componentsEnum.hasMoreElements(); ){
+//			BIPComponent component = componentsEnum.nextElement();
 			BDD [] portBDD = componentToBDDs.get(component);
 			for (int p=0; p<portBDD.length;p++){
 				totalPortBDDs.add(portBDD[p]);

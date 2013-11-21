@@ -1,7 +1,8 @@
 package org.bip.engine;
 
-import java.util.ArrayList;
 import java.util.Hashtable;
+import java.util.List;
+import java.util.Map;
 
 import net.sf.javabdd.BDD;
 import net.sf.javabdd.BDDFactory;
@@ -57,28 +58,28 @@ public interface BDDBIPEngine {
 	/**
 	 * @return the position of port BDDs in the BDD Manager
 	 */
-	ArrayList<Integer> getPositionsOfPorts();
+	List<Integer> getPositionsOfPorts();
 	
-	Hashtable<Port, Integer> getPortToPosition();
+	Map<Port, Integer> getPortToPosition();
 
 	/**
 	 * @return the dVariablesToPosition
 	 */
-	Hashtable<Integer, BiDirectionalPair> getdVariablesToPosition() ;
+	Map<Integer, BiDirectionalPair> getdVariablesToPosition() ;
 	/**
 	 * @param dVariablesToPosition the dVariablesToPosition to set
 	 */
-	void setdVariablesToPosition(Hashtable<Integer, BiDirectionalPair> dVariablesToPosition);
+	void setdVariablesToPosition(Map<Integer, BiDirectionalPair> dVariablesToPosition);
 	
 	/**
 	 * @param positionsOfDVariables the positionsOfDVariables to set
 	 */
-	void setPositionsOfDVariables(ArrayList<Integer> positionsOfDVariables);
+	void setPositionsOfDVariables(List<Integer> positionsOfDVariables);
 	
 	/**
 	 * @return the positionsOfDVariables
 	 */
-	public ArrayList<Integer> getPositionsOfDVariables();
+	public List<Integer> getPositionsOfDVariables();
 	
 	void informSpecific(BDD informSpecific);
 

@@ -31,7 +31,7 @@ public interface DataEncoder {
 	 * component.
 	 * 
 	 * Returns to the core engine the BDD corresponding to the disabled combination of ports of component instances.
-	 * 
+	 *  
 	 * @param A map that gives information about a disabled interaction of ports of component instances according to data transfer information
 	 * @throws BIPEngineException 
 	 */

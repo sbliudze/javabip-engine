@@ -2,6 +2,8 @@ package org.bip.engine;
 
 import java.util.ArrayList;
 import java.util.Hashtable;
+import java.util.List;
+import java.util.Map;
 
 import org.bip.api.BIPComponent;
 import org.bip.behaviour.Port;
@@ -21,10 +23,10 @@ public interface BehaviourEncoder {
 	 * 
 	 * @param componentID
 	 * @param componentPorts
-	 * @param componentStates
+	 * @param iterable
 	 * @throws BIPEngineException 
 	 */
-	void createBDDNodes(BIPComponent component, ArrayList<Port> componentPorts, ArrayList<String> componentStates) throws BIPEngineException;
+	void createBDDNodes(BIPComponent component, List<Port> componentPorts, List<String> iterable) throws BIPEngineException;
 	
 	/**
 	 * Computes and returns the BDD corresponding to the behaviour of a particular component.
@@ -49,12 +51,12 @@ public interface BehaviourEncoder {
 	/**
 	 * @return the BDDs that correspond to the states of each component
 	 */
-    Hashtable<BIPComponent, BDD[]> getStateBDDs();
+    Map<BIPComponent, BDD[]> getStateBDDs();
 
 	/**
 	 * @return the BDDs that correspond to the ports of each component
 	 */
-    Hashtable<BIPComponent, BDD[]> getPortBDDs();
+    Map<BIPComponent, BDD[]> getPortBDDs();
     
     /**
      * @param component
@@ -78,13 +80,13 @@ public interface BehaviourEncoder {
      * @param component 
      * @return hashtable with the states as keys and the state BDDs as values
      */
-    Hashtable<String, BDD> getStateToBDDOfAComponent (BIPComponent component);
+    Map<String, BDD> getStateToBDDOfAComponent (BIPComponent component);
     
     /**
      * @param component 
      * @return hashtable with the ports as keys and the port BDDs as values
      */
-    Hashtable<String, BDD> getPortToBDDOfAComponent (BIPComponent component);
+    Map<String, BDD> getPortToBDDOfAComponent (BIPComponent component);
 	
 }
 

@@ -2,6 +2,7 @@ package org.bip.engine;
 
 import java.util.Hashtable;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 import net.sf.javabdd.BDD;
@@ -43,7 +44,7 @@ public class BehaviourEncoderImpl implements BehaviourEncoder {
 	 * 
 	 * @throws BIPEngineExc	eption
 	 */
-	public synchronized void createBDDNodes(BIPComponent component, ArrayList<Port> componentPorts, ArrayList<String> componentStates) throws BIPEngineException {
+	public synchronized void createBDDNodes(BIPComponent component, List<Port> componentPorts, List<String> componentStates) throws BIPEngineException {
 
 		int nbComponentPorts = componentPorts.size();
 		int nbComponentStates = componentStates.size();
@@ -111,7 +112,6 @@ public class BehaviourEncoderImpl implements BehaviourEncoder {
 				}
 			}	
 		}
-		
 		componentToPortToBDD.put(component, portToBDD);
 		portBDDs.put(component, singleNodeBDDsForPorts);
 		auxSum = auxSum + nbComponentPorts + nbComponentStates;
@@ -241,8 +241,6 @@ public class BehaviourEncoderImpl implements BehaviourEncoder {
 	public synchronized Hashtable<String, BDD> getPortToBDDOfAComponent (BIPComponent component){
 		return componentToPortToBDD.get(component);
 	}
-
-	
 	
 
 }
