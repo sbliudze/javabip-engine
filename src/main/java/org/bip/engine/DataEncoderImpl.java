@@ -188,9 +188,7 @@ public class DataEncoderImpl implements DataEncoder {
 					Set<BIPComponent> componentsOut = componentToOutPorts.keySet();
 					for (BIPComponent componentOut : componentsOut) {
 						for (Port outPort : componentToOutPorts.get(componentOut)) {
-							// TODO: Get rid of the bidirectional pair, 
 							BiDirectionalPair outComponentPortPair = new BiDirectionalPair(componentOut, outPort);
-//							Set<BiDirectionalPair> dVariableSet = new 
 							BiDirectionalPair inOutPortsPair = new BiDirectionalPair(inComponentPortPair, outComponentPortPair);
 
 							if (!portsToDVarBDDMapping.containsKey(inOutPortsPair)) {
@@ -233,6 +231,7 @@ public class DataEncoderImpl implements DataEncoder {
 		}
 
 		// TODO: Consider moving this into the previous cycle
+		//TODO: Do it only after discussing having a component instance associated to a port instance.
 		
 		// Build BDDs for the data-transfer constraints 
 		Iterator<DataWire> dataIterator2 = dataWires.iterator();
