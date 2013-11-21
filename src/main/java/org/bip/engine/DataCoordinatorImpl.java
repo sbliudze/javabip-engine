@@ -390,23 +390,17 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 
 	private void doInformSpecific(BIPComponent component) throws BIPEngineException {
 		// mapping port <-> data it needs for computing guards
-		Map<Port, Set<Data>> portToDataInNeededByGuards = componentBehaviourMapping.get(component).portToDataInForGuard();
 		Behaviour decidingBehaviour = componentBehaviourMapping.get(component);
 		// for each undecided port of each component :
 		for (Port port : componentUndecidedPorts.get(component)) {
 			// get list of DataIn needed for its guards
-			// Set<Data> dataIn = decidingBehaviour.portToDataInForGuard(port);
-			Iterable<Data> dataIn = portToDataInNeededByGuards.get(port);
+			Set<Data> dataIn = decidingBehaviour.portToDataInForGuard(port);
 
-			if (!dataIn.iterator().hasNext()) {
-
-				// if (!dataIn.isEmpty()) {
-				//System.err.println("EMPTY " + decidingBehaviour.getComponentType());
+			if (dataIn.isEmpty()) {
 				// if the data is empty, then the port is enabled. just send it.
 				this.informSpecific(component, port, new HashMap<BIPComponent, Set<Port>>());
 				continue;
 			}
-			//System.err.println("NOT EMPTY " + decidingBehaviour.getComponentType());
 			// for each data its different evaluations
 			Hashtable<String, ArrayList<Object>> dataEvaluation = new Hashtable<String, ArrayList<Object>>();
 			// list of data structures build upon receiving the data value
@@ -415,7 +409,6 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 			// their outData
 			for (Data inDataItem : dataIn) {
 				// for each wire that is incoming for this data of this component (as precomputed)
-				//System.err.println("AAAAAAAAAAA" + this.componentDataWires);
 				for (DataWire wire : this.componentDataWires.get(decidingBehaviour.getComponentType()).get(inDataItem.name())) {
 
 					// for this dataVariable: all the values that it can take
