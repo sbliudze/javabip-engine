@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Semaphore;
@@ -176,11 +177,11 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 			logger.info("Component : {}", component.getName());
 			
 			componentBehaviourMapping.put(component, behaviour);
-			int nbComponentPorts = ((ArrayList<Port>)behaviour.getEnforceablePorts()).size();
-			int nbComponentStates = ((ArrayList<String>)behaviour.getStates()).size();
+			int nbComponentPorts = (behaviour.getEnforceablePorts()).size();
+			int nbComponentStates = (behaviour.getStates()).size();
 	
 			try {
-				behenc.createBDDNodes(component, ((ArrayList<Port>)behaviour.getEnforceablePorts()), ((ArrayList<String>)behaviour.getStates()));
+				behenc.createBDDNodes(component, (behaviour.getEnforceablePorts()), (behaviour.getStates()));
 			} catch (BIPEngineException e) {
 				e.printStackTrace();
 			}
@@ -192,7 +193,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 
 			for (int i = 0; i < nbComponentPorts; i++) {
 				engine.getPositionsOfPorts().add(nbPorts + nbStates + nbComponentStates + i);
-				engine.getPortToPosition().put(((ArrayList<Port>)behaviour.getEnforceablePorts()).get(i), nbPorts + nbStates + nbComponentStates + i);
+				engine.getPortToPosition().put((behaviour.getEnforceablePorts()).get(i), nbPorts + nbStates + nbComponentStates + i);
 			}
 			nbPorts += nbComponentPorts;
 			nbStates += nbComponentStates;
@@ -617,8 +618,8 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	 * Helper function that returns the registered component instances that correspond to a component type.
 	 * @throws BIPEngineException 
 	 */
-	public Iterable<BIPComponent> getBIPComponentInstances(String type) throws BIPEngineException{
-		ArrayList<BIPComponent> instances = typeInstancesMapping.get(type);
+	public List<BIPComponent> getBIPComponentInstances(String type) throws BIPEngineException{
+		List<BIPComponent> instances = typeInstancesMapping.get(type);
 		if (instances == null){
 			try {
 				logger.error("No registered component instances for the: {} ",type +

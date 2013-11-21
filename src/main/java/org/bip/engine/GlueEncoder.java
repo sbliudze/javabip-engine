@@ -7,7 +7,7 @@ import org.bip.glue.BIPGlue;
 
 /**
  * Receives information about the glue and computes the glue BDD.
- * @author mavridou
+ * @author Anastasia Mavridou
  */
 
 public interface GlueEncoder {

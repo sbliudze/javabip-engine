@@ -1,7 +1,7 @@
 package org.bip.engine;
 
 import java.util.Hashtable;
-import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 import net.sf.javabdd.BDD;
@@ -43,7 +43,7 @@ public class BehaviourEncoderImpl implements BehaviourEncoder {
 	 * 
 	 * @throws BIPEngineExc	eption
 	 */
-	public synchronized void createBDDNodes(BIPComponent component, ArrayList<Port> componentPorts, ArrayList<String> componentStates) throws BIPEngineException {
+	public synchronized void createBDDNodes(BIPComponent component, List<Port> componentPorts, List<String> componentStates) throws BIPEngineException {
 
 		int nbComponentPorts = componentPorts.size();
 		int nbComponentStates = componentStates.size();
@@ -111,7 +111,6 @@ public class BehaviourEncoderImpl implements BehaviourEncoder {
 				}
 			}	
 		}
-		
 		componentToPortToBDD.put(component, portToBDD);
 		portBDDs.put(component, singleNodeBDDsForPorts);
 		auxSum = auxSum + nbComponentPorts + nbComponentStates;
@@ -134,8 +133,8 @@ public class BehaviourEncoderImpl implements BehaviourEncoder {
 				throw e;
 			}
 		}	
-		ArrayList<Port> componentPorts = (ArrayList<Port>) behaviour.getEnforceablePorts();
-		ArrayList<String> componentStates = (ArrayList<String>) behaviour.getStates();
+		List<Port> componentPorts = behaviour.getEnforceablePorts();
+		List<String> componentStates = behaviour.getStates();
 		Hashtable<String, BDD> portToBDD = componentToPortToBDD.get(component); 
 		Hashtable<String, BDD> stateToBDD = componentToStateToBDD.get(component); 
 		
@@ -162,7 +161,6 @@ public class BehaviourEncoderImpl implements BehaviourEncoder {
 					ports.free();
 					ports = tmp;
 					for (Port otherPort: componentPorts){
-//						if (port.id.contentEquals(otherPort.id)){
 						if (!port.id.equals(otherPort.id)){
 							logger.debug("Negated ports: "+otherPort);
 							ports.andWith(portToBDD.get(otherPort.id).not());
@@ -241,8 +239,6 @@ public class BehaviourEncoderImpl implements BehaviourEncoder {
 	public synchronized Hashtable<String, BDD> getPortToBDDOfAComponent (BIPComponent component){
 		return componentToPortToBDD.get(component);
 	}
-
-	
 	
 
 }

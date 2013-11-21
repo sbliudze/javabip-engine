@@ -27,7 +27,6 @@ public class DataEncoderImpl implements DataEncoder {
 	private DataCoordinator dataCoordinator;
 	private BehaviourEncoder behaviourEncoder;
 
-	// private Iterable<DataWire> dataGlueSpec;
 
 	volatile Map<BiDirectionalPair, BDD> portsToDVarBDDMapping = new Hashtable<BiDirectionalPair, BDD>();
 	private Logger logger = LoggerFactory.getLogger(CurrentStateEncoderImpl.class);
@@ -68,21 +67,12 @@ public class DataEncoderImpl implements DataEncoder {
 		BDD result;
 
 		assert (disabledCombinations != null);
-		if (disabledCombinations.isEmpty()) {
-			result = engine.getBDDManager().zero();
-		} else {
 			result = engine.getBDDManager().one();
 			/*
 			 * Find corresponding d-variable
 			 */
 			Set<BIPComponent> disabledComponents = disabledCombinations.keySet();
 			for (BIPComponent component : disabledComponents) {
-				if (component.equals(decidingComponent)) {
-					logger.error("in inform Specific the deciding component: " + decidingComponent.getName() + " equals the disabled component: ." + component.getName()
-							+ "\t That should never happen .");
-					throw new BIPEngineException("in inform Specific the deciding component: " + decidingComponent.getName() + " equals the disabled component: ." + component.getName()
-							+ "\t That should never happen.");
-				}
 				logger.debug("Inform Specific: disabledComponent is " + component.getName());
 
 				Set<Port> componentPorts = disabledCombinations.get(component);
@@ -90,25 +80,15 @@ public class DataEncoderImpl implements DataEncoder {
 				for (Port port : componentPorts) {
 					logger.debug("Inform Specific: disabledPort is " + port.id);
 					Set<BiDirectionalPair> allpairsBiDirectionalPairs = portsToDVarBDDMapping.keySet();
-					for (BiDirectionalPair pair : allpairsBiDirectionalPairs) {
-						BiDirectionalPair pairOne = (BiDirectionalPair) pair.getFirst();
-						BIPComponent pairOneComponent = (BIPComponent) pairOne.getFirst();
-						Port pairOnePort = (Port) pairOne.getSecond();
-						BiDirectionalPair pairTwo = (BiDirectionalPair) pair.getSecond();
-						BIPComponent pairTwoComponent = (BIPComponent) pairTwo.getFirst();
-						Port pairTwoPort = (Port) pairTwo.getSecond();
-
-						if ((component.equals(pairOneComponent) && decidingComponent.equals(pairTwoComponent) && pairTwoPort.id.equals(decidingPort.id) && pairOnePort.id.equals(port.id))
-								|| (component.equals(pairTwoComponent) && decidingComponent.equals(pairOneComponent) && pairOnePort.id.equals(decidingPort.id) && pairTwoPort.id.equals(port.id))) {
-
-							result.andWith(portsToDVarBDDMapping.get(pair).not());
-							logger.debug("Inform Specific: Pair One Port: " + pairOnePort);
-							logger.debug("Inform Specific: Pair Two Port: " + pairTwoPort);
-						}
+					
+					BiDirectionalPair firstPairToNegate = new BiDirectionalPair(component, port);
+					BiDirectionalPair secondPairToNegate = new BiDirectionalPair(decidingComponent, decidingPort);
+					BiDirectionalPair pairToNegate = new BiDirectionalPair(firstPairToNegate, secondPairToNegate);
+					if (allpairsBiDirectionalPairs.contains(pairToNegate)){
+						result.andWith(portsToDVarBDDMapping.get(pairToNegate).not());
 					}
 				}
 			}
-		}
 
 		return result;
 
@@ -150,10 +130,10 @@ public class DataEncoderImpl implements DataEncoder {
 	 * @return ArrayList<BDD> of d-variables that correspond to the port given
 	 *         as an argument.
 	 */
+	//TODO: after merging the createDataBDDNodes function delete this one
 	private synchronized ArrayList<BDD> createImplications(BIPComponent component, Port port) {
 		ArrayList<BDD> auxiliary = new ArrayList<BDD>();
 		for (Map.Entry<BiDirectionalPair, BDD> pair : portsToDVarBDDMapping.entrySet()) {
-			// TODO: Get rid of the bidirectional pair
 			BiDirectionalPair firstPair = (BiDirectionalPair) pair.getKey().getFirst();
 			BiDirectionalPair secondPair = (BiDirectionalPair) pair.getKey().getSecond();
 			Port firstPort = (Port) firstPair.getSecond();
@@ -208,12 +188,12 @@ public class DataEncoderImpl implements DataEncoder {
 					Set<BIPComponent> componentsOut = componentToOutPorts.keySet();
 					for (BIPComponent componentOut : componentsOut) {
 						for (Port outPort : componentToOutPorts.get(componentOut)) {
-							// TODO: Get rid of the bidirectional part
+							// TODO: Get rid of the bidirectional pair, 
 							BiDirectionalPair outComponentPortPair = new BiDirectionalPair(componentOut, outPort);
+//							Set<BiDirectionalPair> dVariableSet = new 
 							BiDirectionalPair inOutPortsPair = new BiDirectionalPair(inComponentPortPair, outComponentPortPair);
 
-							// TODO: Get rid of the second part of this check 
-							if (!portsToDVarBDDMapping.containsKey(inOutPortsPair) && !(componentIn.equals(componentOut) && inPort.id.equals(outPort.id))) {
+							if (!portsToDVarBDDMapping.containsKey(inOutPortsPair)) {
 								/*
 								 * Create new variable in the BDD manager for
 								 * the d-variables.
@@ -272,7 +252,7 @@ public class DataEncoderImpl implements DataEncoder {
 				}
 			}
 			Set<BDD> entries = moreImplications.keySet();
-			logger.info("moreImplications size: " + entries.size());
+			logger.debug("moreImplications size: " + entries.size());
 			for (BDD bdd : entries) {
 				BDD result = engine.getBDDManager().zero();
 				logger.debug("entry of moreImplications size: " + moreImplications.get(bdd).size());
@@ -314,8 +294,6 @@ public class DataEncoderImpl implements DataEncoder {
 					logger.error("BDD for inPort in DataEncoder was not found. Possible reason: specifyDataGlue is called before registration of components has finished.");
 					throw new BIPEngineException("BDD for inPort in DataEncoder was not found. Possible reason: specifyDataGlue is called before registration of components has finished.");
 				} else {
-					// TODO: Check whether the bidirectional pair structure is
-					// still necessary
 					BiDirectionalPair inComponentPortPair = new BiDirectionalPair(component, port);
 					this.componentInBDDs.put(inComponentPortPair, behaviourEncoder.getBDDOfAPort(component, port.id));
 					logger.debug("ComponentInBDDs size: " + componentInBDDs.size());
@@ -341,8 +319,6 @@ public class DataEncoderImpl implements DataEncoder {
 			logger.debug("Get Data Out Ports size: " + (componentOutPorts.size()));
 			componentToPort.put(component, componentOutPorts);
 			for (Port port : componentOutPorts) {
-				// TODO: Check whether the bidirectional pair structure is still
-				// necessary
 				BiDirectionalPair outComponentPortPair = new BiDirectionalPair(component, port);
 				this.componentOutBDDs.put(outComponentPortPair, behaviourEncoder.getBDDOfAPort(component, port.id));
 			}

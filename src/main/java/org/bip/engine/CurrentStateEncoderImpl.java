@@ -1,7 +1,7 @@
 package org.bip.engine;
 
 import java.util.ArrayList;
-import java.util.Hashtable;
+import java.util.Map;
 import java.util.Set;
 
 import net.sf.javabdd.BDD;
@@ -54,8 +54,8 @@ public class CurrentStateEncoderImpl implements CurrentStateEncoder {
 		assert (currentState != null && !currentState.isEmpty());
 		
 		ArrayList<String> componentStates = (ArrayList<String>) wrapper.getBehaviourByComponent(component).getStates();
-		Hashtable<String, BDD> statesToBDDs = behaviourEncoder.getStateToBDDOfAComponent(component);
-		Hashtable<String, BDD> portsToBDDs = behaviourEncoder.getPortToBDDOfAComponent(component);
+		Map<String, BDD> statesToBDDs = behaviourEncoder.getStateToBDDOfAComponent(component);
+		Map<String, BDD> portsToBDDs = behaviourEncoder.getPortToBDDOfAComponent(component);
 	
 		if (currentState == null || currentState.isEmpty()) {
 	        try {
@@ -72,9 +72,6 @@ public class CurrentStateEncoderImpl implements CurrentStateEncoder {
 		for (String componentState : componentStates){
 
 			if (!componentState.equals(currentState)){
-//				BDD tmp = result.and(statesToBDDs.get(componentState).not());
-//				result.free();
-//				result = tmp;
 				result.andWith(statesToBDDs.get(componentState).not());
 			}
 		}
@@ -83,12 +80,7 @@ public class CurrentStateEncoderImpl implements CurrentStateEncoder {
 			logger.debug("Conjunction of negated disabled ports: "+ disabledPort.id+ " of component "+ disabledPort.specType);
 			BDD tmp = result.and(portsToBDDs.get(disabledPort.id).not());
 			result.free();
-			result = tmp;
-//			result.andWith(
-//					portsToBDDs.get(
-//							disabledPort.id).
-//							not());
-			
+			result = tmp;		
 		}
 		
 		return result;
