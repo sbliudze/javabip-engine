@@ -255,9 +255,9 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 	 * 
 	 * @throws BIPEngineException
 	 */
-	public void executeInteractions(Iterable<Map<BIPComponent, Iterable<Port>>> portsToFire) throws BIPEngineException {
+	public void executeInteractions(Iterable<Map<BIPComponent, Iterable<Port>>> portGroupsToExecute) throws BIPEngineException {
 		this.count++;
-		Iterator<Map<BIPComponent, Iterable<Port>>> interactionsToFire = portsToFire.iterator();
+		Iterator<Map<BIPComponent, Iterable<Port>>> oneGroupToExecuteIterator = portGroupsToExecute.iterator();
 		Hashtable<Entry<BIPComponent, Port>, Hashtable<String, Object>> requiredDataMapping = new Hashtable<Entry<BIPComponent, Port>, Hashtable<String, Object>>();
 		/**
 		 * This is a list of components participating in the chosen-by-the-engine interactions. This keeps track of the chosen components in order to
@@ -265,8 +265,8 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 		 * or the port to be fired.
 		 */
 		ArrayList<BIPComponent> enabledComponents = new ArrayList<BIPComponent>();
-		while (interactionsToFire.hasNext()) {
-			Map<BIPComponent, Iterable<Port>> oneInteraction = interactionsToFire.next();
+		while (oneGroupToExecuteIterator.hasNext()) {
+			Map<BIPComponent, Iterable<Port>> oneInteraction = oneGroupToExecuteIterator.next();
 			Iterator<BIPComponent> interactionComponents = oneInteraction.keySet().iterator();
 			while (interactionComponents.hasNext()) {
 
@@ -288,54 +288,15 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 				// This loop will be executed at least once
 				while (compPortsToFire.hasNext()) {
 					Port port = compPortsToFire.next();
-					/*
-					 * If the port is null or empty for a chosen component, throw an exception. This should not happen.
-					 */
-					if (port == null || port.id.isEmpty()) {
-						logger.error("In a chosen by the engine interaction, associated to component " + component.getName() + " the port to be fired is null or empty.");
-						throw new BIPEngineException("Exception in thread: " + Thread.currentThread().getName() + " In a chosen by the engine interaction, associated to component "
-								+ component.getName() + " the port to be fired is null or empty.");
-					}
-					assert (port != null && !port.id.isEmpty());
-
-					/*
-					 * Find out which components are sending data to this component
-					 */
-					Iterable<Data> portToDataInForTransition = componentBehaviourMapping.get(component).portToDataInForTransition(port);
-					Hashtable<String, Object> nameToValue = new Hashtable<String, Object>();
-					Entry<BIPComponent, Port> key = new AbstractMap.SimpleEntry<BIPComponent, Port>(component, port);
-					/*
-					 * if there is no data required, put empty values and continue
-					 */
-					if (portToDataInForTransition == null || !portToDataInForTransition.iterator().hasNext()) {
-						requiredDataMapping.put(key, nameToValue);
-						continue;
-					}
-					for (Data dataItem : portToDataInForTransition) {
-						logger.info("Component {} execute port with inData {}", component.getName(), dataItem.name());
-						for (BIPComponent aComponent : oneInteraction.keySet()) {
-							if (component.equals(aComponent)) {
-								continue;
-							}
-							String dataOutName = dataIsProvided(aComponent, component, dataItem.name(), oneInteraction.get(aComponent));
-							if (dataOutName != null && !dataOutName.isEmpty()) {
-								Object dataValue = aComponent.getData(dataOutName, dataItem.type());
-								logger.info("GETTING DATA: from component " + aComponent.getName() + " the value " + dataValue);
-								nameToValue.put(dataItem.name(), dataValue);
-								break;
-							}
-						}
-					}
-					logger.debug("Data<->value table: {}", nameToValue);
-					requiredDataMapping.put(key, nameToValue);
+					getDataForOnePort(requiredDataMapping, oneInteraction, component, port);
 				}
 			}
 		}
-		// TODO merge this loop with the one above
-		for (Map<BIPComponent, Iterable<Port>> combination : portsToFire) {
-			for (Entry<BIPComponent, Iterable<Port>> combinationEntry : combination.entrySet()) {
-				BIPComponent component = combinationEntry.getKey();
-				for (Port port : combinationEntry.getValue()) {
+
+		// this loop is separated from the previous one, because we should first get all the data and execute only afterwards
+		for (Map<BIPComponent, Iterable<Port>> combination : portGroupsToExecute) {
+			for (BIPComponent component : combination.keySet()) {
+				for (Port port : combination.get(component)) {
 					component.execute(port.id, getData(requiredDataMapping, component, port));
 				}
 			}
@@ -350,6 +311,51 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 		}
 	}
 
+	private Hashtable<Entry<BIPComponent, Port>, Hashtable<String, Object>> getDataForOnePort(Hashtable<Entry<BIPComponent, Port>, Hashtable<String, Object>> requiredDataMapping,
+			Map<BIPComponent, Iterable<Port>> oneInteraction, BIPComponent component, Port port) throws BIPEngineException {
+		/*
+		 * If the port is null or empty for a chosen component, throw an exception. This should not happen.
+		 */
+		if (port == null || port.id.isEmpty()) {
+			logger.error("In a chosen by the engine interaction, associated to component " + component.getName() + " the port to be fired is null or empty.");
+			throw new BIPEngineException("Exception in thread: " + Thread.currentThread().getName() + " In a chosen by the engine interaction, associated to component " + component.getName()
+					+ " the port to be fired is null or empty.");
+		}
+		assert (port != null && !port.id.isEmpty());
+
+		/*
+		 * Find out which components are sending data to this component
+		 */
+		Iterable<Data> portToDataInForTransition = componentBehaviourMapping.get(component).portToDataInForTransition(port);
+		Hashtable<String, Object> nameToValue = new Hashtable<String, Object>();
+		Entry<BIPComponent, Port> key = new AbstractMap.SimpleEntry<BIPComponent, Port>(component, port);
+		/*
+		 * if there is no data required, put empty values and continue
+		 */
+		if (portToDataInForTransition == null || !portToDataInForTransition.iterator().hasNext()) {
+			requiredDataMapping.put(key, nameToValue);
+			return requiredDataMapping;
+		}
+		for (Data dataItem : portToDataInForTransition) {
+			logger.info("Component {} execute port with inData {}", component.getName(), dataItem.name());
+			for (BIPComponent aComponent : oneInteraction.keySet()) {
+				if (component.equals(aComponent)) {
+					continue;
+				}
+				String dataOutName = dataIsProvided(aComponent, componentBehaviourMapping.get(component).getComponentType(), dataItem.name(), oneInteraction.get(aComponent));
+				if (dataOutName != null && !dataOutName.isEmpty()) {
+					Object dataValue = aComponent.getData(dataOutName, dataItem.type());
+					logger.info("GETTING DATA: from component " + aComponent.getName() + " the value " + dataValue);
+					nameToValue.put(dataItem.name(), dataValue);
+					break;
+				}
+			}
+		}
+		logger.debug("Data<->value table: {}", nameToValue);
+		requiredDataMapping.put(key, nameToValue);
+		return requiredDataMapping;
+	}
+
 	private Map<String, ?> getData(Hashtable<Entry<BIPComponent, Port>, Hashtable<String, Object>> requiredDataMapping, BIPComponent component, Port port) {
 		for (Entry<BIPComponent, Port> entry : requiredDataMapping.keySet()) {
 			if (component.equals(entry.getKey()) && port.equals(entry.getValue())) {
@@ -359,10 +365,9 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 		return null;
 	}
 
-	private String dataIsProvided(BIPComponent providingComponent, BIPComponent requiringComponent, String dataName, Iterable<Port> port) {
-		for (DataWire wire : this.dataWires) {
-			if (wire.isIncoming(dataName, componentBehaviourMapping.get(requiringComponent).getComponentType())
-					&& wire.from.specType.equals(componentBehaviourMapping.get(providingComponent).getComponentType())) {
+	private String dataIsProvided(BIPComponent providingComponent, String requiringComponentType, String dataName, Iterable<Port> port) {
+		for (DataWire wire : this.componentDataWires.get(requiringComponentType).get(dataName)) {
+			if (wire.from.specType.equals(componentBehaviourMapping.get(providingComponent).getComponentType())) {
 				Set<Port> portsProviding = componentBehaviourMapping.get(providingComponent).getDataProvidingPorts(wire.from.id);
 				for (Port p : port) {
 					for (Port inport : portsProviding) {
