@@ -1,7 +1,6 @@
 package org.bip.engine;
 
 import java.util.Hashtable;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -134,8 +133,8 @@ public class BehaviourEncoderImpl implements BehaviourEncoder {
 				throw e;
 			}
 		}	
-		ArrayList<Port> componentPorts = (ArrayList<Port>) behaviour.getEnforceablePorts();
-		ArrayList<String> componentStates = (ArrayList<String>) behaviour.getStates();
+		List<Port> componentPorts = behaviour.getEnforceablePorts();
+		List<String> componentStates = behaviour.getStates();
 		Hashtable<String, BDD> portToBDD = componentToPortToBDD.get(component); 
 		Hashtable<String, BDD> stateToBDD = componentToStateToBDD.get(component); 
 		
@@ -162,7 +161,6 @@ public class BehaviourEncoderImpl implements BehaviourEncoder {
 					ports.free();
 					ports = tmp;
 					for (Port otherPort: componentPorts){
-//						if (port.id.contentEquals(otherPort.id)){
 						if (!port.id.equals(otherPort.id)){
 							logger.debug("Negated ports: "+otherPort);
 							ports.andWith(portToBDD.get(otherPort.id).not());

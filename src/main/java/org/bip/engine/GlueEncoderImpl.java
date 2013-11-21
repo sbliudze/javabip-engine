@@ -24,7 +24,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  *  Computes the BDD of the glue
- *  @author mavridou
+ *  @author Anastasia Mavridou
  *   */
 public class GlueEncoderImpl implements GlueEncoder {
 	private Logger logger = LoggerFactory.getLogger(GlueEncoderImpl.class);
@@ -80,7 +80,7 @@ public class GlueEncoderImpl implements GlueEncoder {
 			} else  if (causePort.id == null || causePort.id.isEmpty()) {
 				logger.warn("Port name not specified or empty in a macro cause. Skipping the port.");
 			} else {
-				ArrayList<BIPComponent> components = (ArrayList<BIPComponent>) wrapper.getBIPComponentInstances(causePort.specType);
+				Iterable<BIPComponent> components =  wrapper.getBIPComponentInstances(causePort.specType);
 				ArrayList<BDD> portBDDs = new ArrayList<BDD>();
 				for (BIPComponent component: components){
 					logger.debug("Component: {} ",component.getName());
@@ -115,12 +115,12 @@ public class GlueEncoderImpl implements GlueEncoder {
 	 * @throws BIPEngineException 
 	 * @throws InterruptedException 
 	 */
-	ArrayList<BIPComponent> findEffectComponents (Port effectPort) throws BIPEngineException{
+	List<BIPComponent> findEffectComponents (Port effectPort) throws BIPEngineException{
 		
 		assert(effectPort.id != null && !effectPort.id.isEmpty());
 		assert (effectPort.specType != null && !effectPort.specType.isEmpty());
 		
-		ArrayList<BIPComponent> requireEffectComponents = (ArrayList<BIPComponent>) wrapper.getBIPComponentInstances(effectPort.specType);
+		List<BIPComponent> requireEffectComponents =  wrapper.getBIPComponentInstances(effectPort.specType);
 		if (requireEffectComponents.isEmpty()) {
 			try {
 				logger.error("Spec type in effect for component {} was defined incorrectly. It does not match any registered component types", effectPort.specType);
@@ -177,7 +177,7 @@ public class GlueEncoderImpl implements GlueEncoder {
 			}
 		}
 		/* Find all effect component instances */
-		ArrayList<BIPComponent> requireEffectComponents =findEffectComponents(requires.effect);
+		List<BIPComponent> requireEffectComponents =findEffectComponents(requires.effect);
 		
 		if (requires.causes == null) {
 			try {
@@ -248,7 +248,7 @@ public class GlueEncoderImpl implements GlueEncoder {
 			}
 		}
 		/* Find all effect component instances */
-		ArrayList<BIPComponent> acceptEffectComponents = findEffectComponents(accept.effect);
+		List<BIPComponent> acceptEffectComponents = findEffectComponents(accept.effect);
 		
 		if (accept.causes == null) {
 			try {
@@ -345,8 +345,6 @@ public class GlueEncoderImpl implements GlueEncoder {
 		Map<BIPComponent, BDD[]> componentToBDDs = behenc.getPortBDDs();
 
 		for (BIPComponent component: componentToBDDs.keySet()){
-//		for (Set<BIPComponent> componentsEnum = componentToBDDs.keySet(); componentsEnum.hasMoreElements(); ){
-//			BIPComponent component = componentsEnum.nextElement();
 			BDD [] portBDD = componentToBDDs.get(component);
 			for (int p=0; p<portBDD.length;p++){
 				totalPortBDDs.add(portBDD[p]);

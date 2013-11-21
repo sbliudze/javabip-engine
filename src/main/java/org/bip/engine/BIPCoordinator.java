@@ -1,5 +1,6 @@
 package org.bip.engine;
 
+import java.util.List;
 import java.util.Map;
 
 import net.sf.javabdd.BDD;
@@ -43,7 +44,7 @@ public interface BIPCoordinator extends BIPEngine, InteractionExecutor {
 	 * @throws BIPEngineException 
 	 * @throws InterruptedException 
 	 */
-	Iterable <BIPComponent> getBIPComponentInstances(String type) throws BIPEngineException;
+	List <BIPComponent> getBIPComponentInstances(String type) throws BIPEngineException;
 
 	/**
 	 * Returns the number of registered component instances in the system.
