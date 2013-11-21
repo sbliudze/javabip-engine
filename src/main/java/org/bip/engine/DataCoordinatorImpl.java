@@ -3,6 +3,7 @@ package org.bip.engine;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
@@ -22,11 +23,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * There is no need for DataCoordinator interface, just DataCoordinatorImpl will
- * implement BIP engine interface. DataCoordinatorImpl needs BIP coordinator (
- * BIP Engine again ) that actual does all the computation of BIP engine.
- * DataCoordinatorImpl takes care of only of data querying and passing to BIP
- * executors.
+ * There is no need for DataCoordinator interface, just DataCoordinatorImpl will implement BIP engine interface. DataCoordinatorImpl needs BIP
+ * coordinator ( BIP Engine again ) that actual does all the computation of BIP engine. DataCoordinatorImpl takes care of only of data querying and
+ * passing to BIP executors.
  * 
  * DataCoordinator intercepts call register and inform from BIPExecutor.
  * 
@@ -40,20 +39,17 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 	private ArrayList<BIPComponent> registeredComponents = new ArrayList<BIPComponent>();
 
 	/**
-	 * Helper hashtable with integers representing the local identities of
-	 * registered components as the keys and the Behaviours of these components
-	 * as the values.
+	 * Helper hashtable with integers representing the local identities of registered components as the keys and the Behaviours of these components as
+	 * the values.
 	 */
 	private Hashtable<BIPComponent, Behaviour> componentBehaviourMapping = new Hashtable<BIPComponent, Behaviour>();
 	/**
-	 * Helper hashset of the components that have informed in an execution
-	 * cycle.
+	 * Helper hashset of the components that have informed in an execution cycle.
 	 */
 	private Hashtable<BIPComponent, ArrayList<Port>> componentUndecidedPorts = new Hashtable<BIPComponent, ArrayList<Port>>();
 
 	/**
-	 * Helper hashtable with strings as keys representing the component type of
-	 * the registered components and ArrayList of BIPComponent instances that
+	 * Helper hashtable with strings as keys representing the component type of the registered components and ArrayList of BIPComponent instances that
 	 * correspond to the component type specified in the key.
 	 */
 	private Hashtable<String, ArrayList<BIPComponent>> typeInstancesMapping = new Hashtable<String, ArrayList<BIPComponent>>();
@@ -78,6 +74,8 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 
 	private boolean registrationFinished = false;
 
+	private Map<BIPComponent, Map<Data, Set<DataWire>>> componentDataWires;
+
 	public DataCoordinatorImpl() {
 		BIPCoordinator.setInteractionExecutor(this);
 		dataEncoder.setDataCoordinator(this);
@@ -86,32 +84,44 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 	}
 
 	/**
-	 * Sends interactions-glue to the BIP Coordinator Sends data-glue to the
-	 * Data Encoder.
+	 * Sends interactions-glue to the BIP Coordinator Sends data-glue to the Data Encoder.
 	 */
 	public void specifyGlue(BIPGlue glue) {
 		BIPCoordinator.specifyGlue(glue);
 		this.dataWires = glue.dataWires;
 		try {
 			/*
-			 * Send the information about the dataWires to the DataEncoder to
-			 * create the d-variables BDD nodes.
+			 * Send the information about the dataWires to the DataEncoder to create the d-variables BDD nodes.
 			 * 
-			 * specifyDataGlue checks the validity of wires and throws an
-			 * exception if necessary.
-			 * 
+			 * specifyDataGlue checks the validity of wires and throws an exception if necessary.
 			 */
 			BIPCoordinator.specifyDataGlue(dataEncoder.specifyDataGlue(dataWires));
 		} catch (BIPEngineException e) {
 			e.printStackTrace();
+		}
+
+		for (BIPComponent component : registeredComponents) {
+			Behaviour behaviour = componentBehaviourMapping.get(component);
+			Map<Data, Set<DataWire>> dataWire = new Hashtable<Data, Set<DataWire>>();
+			for (Port port : behaviour.getEnforceablePorts()) {
+				for (Data data : behaviour.portToDataInForGuard(port)) {
+					Set<DataWire> wireSet = new HashSet<DataWire>();
+					for (DataWire wire : this.dataWires) {
+						if (wire.isIncoming(data.name(), behaviour.getComponentType())) {
+							wireSet.add(wire);
+						}
+					}
+					dataWire.put(data, wireSet);
+				}
+			}
+			componentDataWires.put(component, dataWire);
 		}
 		registrationFinished = true;
 	}
 
 	public void register(BIPComponent component, Behaviour behaviour) {
 		/*
-		 * The condition below checks whether the component has already been
-		 * registered.
+		 * The condition below checks whether the component has already been registered.
 		 */
 		try {
 			if (component == null) {
@@ -130,9 +140,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 			ArrayList<BIPComponent> componentInstances = new ArrayList<BIPComponent>();
 
 			/*
-			 * If this component type already exists in the hashtable, update
-			 * the ArrayList of BIPComponents that corresponds to this component
-			 * type.
+			 * If this component type already exists in the hashtable, update the ArrayList of BIPComponents that corresponds to this component type.
 			 */
 			if (typeInstancesMapping.containsKey(component.getName())) {
 				componentInstances.addAll(typeInstancesMapping.get(component.getName()));
@@ -152,9 +160,8 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 		componentUndecidedPorts.put(component, getUndecidedPorts(component, currentState, disabledPorts));
 
 		/*
-		 * If all components have not finished registering the informSpecific
-		 * cannot be done: In the informSpecific information is required from
-		 * all the registered components.
+		 * If all components have not finished registering the informSpecific cannot be done: In the informSpecific information is required from all
+		 * the registered components.
 		 */
 		// TODO: replace the loop by a semaphore (if the flag is not set, take
 		// the semaphore, otherwise proceed directly)
@@ -167,30 +174,25 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 			e.printStackTrace();
 		}
 		/*
-		 * Inform the BIPCoordinator only after all the informSpecifics for the
-		 * particular component have finished
+		 * Inform the BIPCoordinator only after all the informSpecifics for the particular component have finished
 		 */
 		BIPCoordinator.inform(component, currentState, disabledPorts);
 	}
 
 	/**
-	 * Send each disabled combination of each deciding Component directly to the
-	 * Data Encoder.
+	 * Send each disabled combination of each deciding Component directly to the Data Encoder.
 	 * 
-	 * Exceptions are thrown if: 1. DecidingComponent are not in the list of
-	 * registered components. 2. Deciding Port of the deciding component (holder
-	 * component) is not specified in the Behaviour of the holder. 3.
-	 * DisabledComponents in the disabledCombinations are not in the list of
-	 * registered components. 4. Disabled Ports in the disabledCombinations are
-	 * not specified in the Behaviour of the holder component.
+	 * Exceptions are thrown if: 1. DecidingComponent are not in the list of registered components. 2. Deciding Port of the deciding component (holder
+	 * component) is not specified in the Behaviour of the holder. 3. DisabledComponents in the disabledCombinations are not in the list of registered
+	 * components. 4. Disabled Ports in the disabledCombinations are not specified in the Behaviour of the holder component.
 	 */
 	public synchronized void informSpecific(BIPComponent decidingComponent, Port decidingPort, Map<BIPComponent, Set<Port>> disabledCombinations) throws BIPEngineException {
 		if (disabledCombinations == null || disabledCombinations.isEmpty()) {
 			logger.warn("No disabled combinations specified in informSpecific for deciding component." + decidingComponent.getName() + " for deciding port " + decidingPort.id
 					+ " Map of disabledCombinations is empty.");
-			/* This is not a bad situation, since that only means that all
-			* combinations are acceptable. Hence nothing to do.
-			* */
+			/*
+			 * This is not a bad situation, since that only means that all combinations are acceptable. Hence nothing to do.
+			 */
 			return;
 		}
 		assert (disabledCombinations != null && !disabledCombinations.isEmpty());
@@ -228,24 +230,19 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 		}
 
 		/*
-		 * At this point we know that all the involved components are registered
-		 * and the specified ports belong to corresponding behaviours.
+		 * At this point we know that all the involved components are registered and the specified ports belong to corresponding behaviours.
 		 * 
-		 * Send each disabled combination of each deciding Component directly to
-		 * the Data Encoder.
+		 * Send each disabled combination of each deciding Component directly to the Data Encoder.
 		 */
 		BIPCoordinator.informSpecific(dataEncoder.encodeDisabledCombinations(decidingComponent, decidingPort, disabledCombinations));
 
 	}
 
 	/**
-	 * BDDBIPEngine informs the BIPCoordinator for the components (and their
-	 * associated ports) that are part of the same chosen interaction.
+	 * BDDBIPEngine informs the BIPCoordinator for the components (and their associated ports) that are part of the same chosen interaction.
 	 * 
-	 * Through this function all the components need to be notified. If they are
-	 * participating in an interaction then their port to be fired is sent to
-	 * them through the execute function of the BIPExecutor. If they are not
-	 * participating in an interaction then null is sent to them.
+	 * Through this function all the components need to be notified. If they are participating in an interaction then their port to be fired is sent
+	 * to them through the execute function of the BIPExecutor. If they are not participating in an interaction then null is sent to them.
 	 * 
 	 * @throws BIPEngineException
 	 */
@@ -254,11 +251,9 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 		Iterator<Map<BIPComponent, Iterable<Port>>> interactionsToFire = portsToFire.iterator();
 		Hashtable<Entry<BIPComponent, Port>, Hashtable<String, Object>> requiredDataMapping = new Hashtable<Entry<BIPComponent, Port>, Hashtable<String, Object>>();
 		/**
-		 * This is a list of components participating in the
-		 * chosen-by-the-engine interactions. This keeps track of the chosen
-		 * components in order to differentiate them from the non chosen ones.
-		 * Through this function all the components need to be notified. Either
-		 * by sending null to them or the port to be fired.
+		 * This is a list of components participating in the chosen-by-the-engine interactions. This keeps track of the chosen components in order to
+		 * differentiate them from the non chosen ones. Through this function all the components need to be notified. Either by sending null to them
+		 * or the port to be fired.
 		 */
 		ArrayList<BIPComponent> enabledComponents = new ArrayList<BIPComponent>();
 		while (interactionsToFire.hasNext()) {
@@ -272,8 +267,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 
 				logger.debug("For component {} the ports are {}. ", component.getName(), oneInteraction.get(component));
 				/*
-				 * If the Iterator<Port> is null or empty for a chosen
-				 * component, throw an exception. This should not happen.
+				 * If the Iterator<Port> is null or empty for a chosen component, throw an exception. This should not happen.
 				 */
 				if (compPortsToFire == null || !compPortsToFire.hasNext()) {
 					logger.error("In a chosen by the engine interaction, associated to component " + component.getName() + " is a null or empty list of ports to be fired.");
@@ -286,8 +280,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 				while (compPortsToFire.hasNext()) {
 					Port port = compPortsToFire.next();
 					/*
-					 * If the port is null or empty for a chosen component,
-					 * throw an exception. This should not happen.
+					 * If the port is null or empty for a chosen component, throw an exception. This should not happen.
 					 */
 					if (port == null || port.id.isEmpty()) {
 						logger.error("In a chosen by the engine interaction, associated to component " + component.getName() + " the port to be fired is null or empty.");
@@ -297,15 +290,13 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 					assert (port != null && !port.id.isEmpty());
 
 					/*
-					 * Find out which components are sending data to this
-					 * component
+					 * Find out which components are sending data to this component
 					 */
 					Iterable<Data> portToDataInForTransition = componentBehaviourMapping.get(component).portToDataInForTransition(port);
 					Hashtable<String, Object> nameToValue = new Hashtable<String, Object>();
 					Entry<BIPComponent, Port> key = new AbstractMap.SimpleEntry<BIPComponent, Port>(component, port);
 					/*
-					 * if there is no data required, put empty values and
-					 * continue
+					 * if there is no data required, put empty values and continue
 					 */
 					if (portToDataInForTransition == null || !portToDataInForTransition.iterator().hasNext()) {
 						requiredDataMapping.put(key, nameToValue);
@@ -341,8 +332,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 			}
 		}
 		/*
-		 * Send null to the components that are not part of the overall
-		 * interaction
+		 * Send null to the components that are not part of the overall interaction
 		 */
 		for (BIPComponent component : registeredComponents) {
 			if (!enabledComponents.contains(component)) {
@@ -391,13 +381,14 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 
 	private void doInformSpecific(BIPComponent component) throws BIPEngineException {
 		// mapping port <-> data it needs for computing guards
-		Map<Port, Set<Data>> portToDataInNeededByGuards = componentBehaviourMapping.get(component).portToDataInForGuard();
+		// Map<Port, Set<Data>> portToDataInNeededByGuards = componentBehaviourMapping.get(component).portToDataInForGuard();
+		Behaviour decidingBehaviour = componentBehaviourMapping.get(component);
 		// for each undecided port of each component :
 		for (Port port : componentUndecidedPorts.get(component)) {
 			// get list of DataIn needed for its guards
-			Iterable<Data> dataIn = portToDataInNeededByGuards.get(port);
+			Set<Data> dataIn = decidingBehaviour.portToDataInForGuard(port);
 
-			if (!dataIn.iterator().hasNext()) {
+			if (!dataIn.isEmpty()) {
 				// if the data is empty, then the port is enabled. just send it.
 				this.informSpecific(component, port, new HashMap<BIPComponent, Set<Port>>());
 				continue;
@@ -413,7 +404,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 				for (DataWire wire : this.dataWires) {
 					// for this dataVariable: all the values that it can take
 					ArrayList<Object> dataValues = new ArrayList<Object>();
-					if (wire.isIncoming(inDataItem.name(), componentBehaviourMapping.get(component).getComponentType())) {
+					if (wire.isIncoming(inDataItem.name(), decidingBehaviour.getComponentType())) {
 						// for each component of this type, call getData
 						for (BIPComponent aComponent : getBIPComponentInstances(wire.from.specType)) {
 							// TODO check data is available
@@ -588,8 +579,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 	}
 
 	/**
-	 * Helper function that returns the registered component instances that
-	 * correspond to a component type.
+	 * Helper function that returns the registered component instances that correspond to a component type.
 	 * 
 	 * @throws BIPEngineException
 	 */
@@ -610,24 +600,21 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 	}
 
 	/**
-	 * Helper function that given a component returns the corresponding
-	 * behaviour as a Behaviour Object.
+	 * Helper function that given a component returns the corresponding behaviour as a Behaviour Object.
 	 */
 	public Behaviour getBehaviourByComponent(BIPComponent component) {
 		return componentBehaviourMapping.get(component);
 	}
 
 	/**
-	 * Helper function that returns the total number of ports of the registered
-	 * components.
+	 * Helper function that returns the total number of ports of the registered components.
 	 */
 	public int getNoPorts() {
 		return nbPorts;
 	}
 
 	/**
-	 * Helper function that returns the total number of states of the registered
-	 * components.
+	 * Helper function that returns the total number of states of the registered components.
 	 */
 	public int getNoStates() {
 		return nbStates;
