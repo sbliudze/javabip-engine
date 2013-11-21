@@ -73,12 +73,6 @@ public class DataEncoderImpl implements DataEncoder {
 			 */
 			Set<BIPComponent> disabledComponents = disabledCombinations.keySet();
 			for (BIPComponent component : disabledComponents) {
-				if (component.equals(decidingComponent)) {
-					logger.error("in inform Specific the deciding component: " + decidingComponent.getName() + " equals the disabled component: ." + component.getName()
-							+ "\t That should never happen .");
-					throw new BIPEngineException("in inform Specific the deciding component: " + decidingComponent.getName() + " equals the disabled component: ." + component.getName()
-							+ "\t That should never happen.");
-				}
 				logger.debug("Inform Specific: disabledComponent is " + component.getName());
 
 				Set<Port> componentPorts = disabledCombinations.get(component);
@@ -196,10 +190,10 @@ public class DataEncoderImpl implements DataEncoder {
 						for (Port outPort : componentToOutPorts.get(componentOut)) {
 							// TODO: Get rid of the bidirectional pair, 
 							BiDirectionalPair outComponentPortPair = new BiDirectionalPair(componentOut, outPort);
+//							Set<BiDirectionalPair> dVariableSet = new 
 							BiDirectionalPair inOutPortsPair = new BiDirectionalPair(inComponentPortPair, outComponentPortPair);
 
-							// TODO: Get rid of the second part of this check 
-							if (!portsToDVarBDDMapping.containsKey(inOutPortsPair) && !(componentIn.equals(componentOut) && inPort.id.equals(outPort.id))) {
+							if (!portsToDVarBDDMapping.containsKey(inOutPortsPair)) {
 								/*
 								 * Create new variable in the BDD manager for
 								 * the d-variables.

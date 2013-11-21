@@ -416,22 +416,10 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 					if (wire.isIncoming(inDataItem.name(), componentBehaviourMapping.get(component).getComponentType())) {
 						// for each component of this type, call getData
 						for (BIPComponent aComponent : getBIPComponentInstances(wire.from.specType)) {
-							// for now, it is not allowed to have data from
-							// itself
-							// without this condition there are some
-							// disturbances in the engine
-							if (component.equals(aComponent)) {
-								continue;
-							}
 							// TODO check data is available
 							Object inValue = aComponent.getData(wire.from.id, inDataItem.type());
 							// get data out variable in order to get the ports
 							Set<Port> providingPorts = componentBehaviourMapping.get(aComponent).getDataProvidingPorts(wire.from.id);
-							// if the allowed ports of the given data out do not
-							// contain our port, do not add this data
-							// if (!(providingPorts.contains(port))) {
-							// continue;
-							// }
 							dataList.add(new DataContainer(inDataItem, inValue, aComponent, providingPorts));
 							dataValues.add(inValue);
 

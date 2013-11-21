@@ -164,7 +164,6 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		cubeMaximals.add(0, cubeMaximal);
 
 		BDD totalCurrentStateAndDisabledCombinations;
-		logger.debug("RUN ONE INTERACTION: DISABLED COMBINATIONS BDD SIZE:  " + disabledCombinationBDDs.size());
 		if (!disabledCombinationBDDs.isEmpty() || disabledCombinationBDDs != null) {
 			totalCurrentStateAndDisabledCombinations = totalCurrentStateBdd(currentStateBDDs).and(totalDisabledCombinationsBdd(disabledCombinationBDDs));
 			if (totalCurrentStateAndDisabledCombinations == null) {
