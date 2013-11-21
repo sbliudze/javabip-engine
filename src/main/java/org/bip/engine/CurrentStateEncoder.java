@@ -1,5 +1,4 @@
 package org.bip.engine;
-import java.util.ArrayList;
 import java.util.Set;
 
 import net.sf.javabdd.BDD;
