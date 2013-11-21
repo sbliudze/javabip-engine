@@ -74,13 +74,14 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 
 	private boolean registrationFinished = false;
 
-	private Map<BIPComponent, Map<Data, Set<DataWire>>> componentDataWires;
+	private Map<String, Map<String, Set<DataWire>>> componentDataWires;
 
 	public DataCoordinatorImpl() {
 		BIPCoordinator.setInteractionExecutor(this);
 		dataEncoder.setDataCoordinator(this);
 		dataEncoder.setBehaviourEncoder(BIPCoordinator.getBehaviourEncoderInstance());
 		dataEncoder.setEngine(BIPCoordinator.getBDDBIPEngineInstance());
+		componentDataWires = new HashMap<String, Map<String, Set<DataWire>>>();
 	}
 
 	/**
@@ -100,21 +101,29 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 			e.printStackTrace();
 		}
 
-		for (BIPComponent component : registeredComponents) {
-			Behaviour behaviour = componentBehaviourMapping.get(component);
-			Map<Data, Set<DataWire>> dataWire = new Hashtable<Data, Set<DataWire>>();
+		for (String componentType : typeInstancesMapping.keySet()) {
+			// here we just get the behaviour of some component of this type
+			// for all other components the Data and the Wires will be exactly the same
+			Behaviour behaviour = componentBehaviourMapping.get(typeInstancesMapping.get(componentType).get(0));
+			Map<String, Set<DataWire>> dataWire = new Hashtable<String, Set<DataWire>>();
 			for (Port port : behaviour.getEnforceablePorts()) {
 				for (Data data : behaviour.portToDataInForGuard(port)) {
+					// if this data has already been treated for another port
+					if (dataWire.containsKey(data)) {
+						continue;
+					}
 					Set<DataWire> wireSet = new HashSet<DataWire>();
 					for (DataWire wire : this.dataWires) {
 						if (wire.isIncoming(data.name(), behaviour.getComponentType())) {
 							wireSet.add(wire);
+							logger.debug("Added wire " + wire.from + " to data " + data.name() + " of comp " + componentType);
 						}
 					}
-					dataWire.put(data, wireSet);
+					dataWire.put(data.name(), wireSet);
 				}
 			}
-			componentDataWires.put(component, dataWire);
+
+			componentDataWires.put(componentType, dataWire);
 		}
 		registrationFinished = true;
 	}
@@ -381,18 +390,23 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 
 	private void doInformSpecific(BIPComponent component) throws BIPEngineException {
 		// mapping port <-> data it needs for computing guards
-		// Map<Port, Set<Data>> portToDataInNeededByGuards = componentBehaviourMapping.get(component).portToDataInForGuard();
+		Map<Port, Set<Data>> portToDataInNeededByGuards = componentBehaviourMapping.get(component).portToDataInForGuard();
 		Behaviour decidingBehaviour = componentBehaviourMapping.get(component);
 		// for each undecided port of each component :
 		for (Port port : componentUndecidedPorts.get(component)) {
 			// get list of DataIn needed for its guards
-			Set<Data> dataIn = decidingBehaviour.portToDataInForGuard(port);
+			// Set<Data> dataIn = decidingBehaviour.portToDataInForGuard(port);
+			Iterable<Data> dataIn = portToDataInNeededByGuards.get(port);
 
-			if (!dataIn.isEmpty()) {
+			if (!dataIn.iterator().hasNext()) {
+
+				// if (!dataIn.isEmpty()) {
+				//System.err.println("EMPTY " + decidingBehaviour.getComponentType());
 				// if the data is empty, then the port is enabled. just send it.
 				this.informSpecific(component, port, new HashMap<BIPComponent, Set<Port>>());
 				continue;
 			}
+			//System.err.println("NOT EMPTY " + decidingBehaviour.getComponentType());
 			// for each data its different evaluations
 			Hashtable<String, ArrayList<Object>> dataEvaluation = new Hashtable<String, ArrayList<Object>>();
 			// list of data structures build upon receiving the data value
@@ -400,21 +414,21 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 			// for each DataIn variable get info which components provide it as
 			// their outData
 			for (Data inDataItem : dataIn) {
-				// mapping dataValue - components giving this value
-				for (DataWire wire : this.dataWires) {
+				// for each wire that is incoming for this data of this component (as precomputed)
+				//System.err.println("AAAAAAAAAAA" + this.componentDataWires);
+				for (DataWire wire : this.componentDataWires.get(decidingBehaviour.getComponentType()).get(inDataItem.name())) {
+
 					// for this dataVariable: all the values that it can take
 					ArrayList<Object> dataValues = new ArrayList<Object>();
-					if (wire.isIncoming(inDataItem.name(), decidingBehaviour.getComponentType())) {
-						// for each component of this type, call getData
-						for (BIPComponent aComponent : getBIPComponentInstances(wire.from.specType)) {
-							// TODO check data is available
-							Object inValue = aComponent.getData(wire.from.id, inDataItem.type());
-							// get data out variable in order to get the ports
-							Set<Port> providingPorts = componentBehaviourMapping.get(aComponent).getDataProvidingPorts(wire.from.id);
-							dataList.add(new DataContainer(inDataItem, inValue, aComponent, providingPorts));
-							dataValues.add(inValue);
+					// for each component of this type, call getData
+					for (BIPComponent aComponent : getBIPComponentInstances(wire.from.specType)) {
+						// TODO check data is available
+						Object inValue = aComponent.getData(wire.from.id, inDataItem.type());
+						// get data out variable in order to get the ports
+						Set<Port> providingPorts = componentBehaviourMapping.get(aComponent).getDataProvidingPorts(wire.from.id);
+						dataList.add(new DataContainer(inDataItem, inValue, aComponent, providingPorts));
+						dataValues.add(inValue);
 
-						}
 					}
 					dataEvaluation.put(inDataItem.name(), dataValues);
 				}
