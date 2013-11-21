@@ -35,10 +35,10 @@ public interface DataEncoder {
 	 * @param A map that gives information about a disabled interaction of ports of component instances according to data transfer information
 	 * @throws BIPEngineException 
 	 */
-	BDD informSpecific(BIPComponent decidingComponent, Port decidingPort, Map<BIPComponent, Set<Port>> disabledCombinations) throws BIPEngineException;
+	BDD encodeDisabledCombinations(BIPComponent decidingComponent, Port decidingPort, Map<BIPComponent, Set<Port>> disabledCombinations) throws BIPEngineException;
 	
     /**
-     * Receives the information about the data glue of the system.
+     * Receives the information about the data wires of the system.
      * @param data glue
      * @return 
      * @throws BIPEngineException 

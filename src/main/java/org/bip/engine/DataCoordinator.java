@@ -3,7 +3,6 @@ package org.bip.engine;
 import org.bip.api.BIPComponent;
 import org.bip.api.BIPEngine;
 import org.bip.api.Behaviour;
-import org.bip.behaviour.Port;
 import org.bip.exceptions.BIPEngineException;
 
 /**
@@ -49,5 +48,4 @@ public interface DataCoordinator extends BIPEngine, InteractionExecutor {
 	 */
 	int getNoStates();
 
-	Iterable<Port> getDataOutPorts(BIPComponent disabledComponent, Port decidingPort);
 }

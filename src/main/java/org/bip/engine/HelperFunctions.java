@@ -3,8 +3,6 @@ package org.bip.engine;
 import java.util.ArrayList;
 import java.util.Collection;
 
-import org.bip.behaviour.Port;
-
 public class HelperFunctions {
 	
 	public static void addAll(ArrayList<Object> list, Iterable<Object> iterable) {
