@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.Semaphore;
 
 import org.bip.api.BIPComponent;
 import org.bip.api.BIPEngine;
@@ -76,12 +77,15 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 
 	private Map<String, Map<String, Set<DataWire>>> componentDataWires;
 
+	private Semaphore registrationSemaphore;
+
 	public DataCoordinatorImpl() {
 		BIPCoordinator.setInteractionExecutor(this);
 		dataEncoder.setDataCoordinator(this);
 		dataEncoder.setBehaviourEncoder(BIPCoordinator.getBehaviourEncoderInstance());
 		dataEncoder.setEngine(BIPCoordinator.getBDDBIPEngineInstance());
 		componentDataWires = new HashMap<String, Map<String, Set<DataWire>>>();
+		registrationSemaphore = new Semaphore(1);
 	}
 
 	/**
@@ -126,6 +130,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 			componentDataWires.put(componentType, dataWire);
 		}
 		registrationFinished = true;
+		registrationSemaphore.release();
 	}
 
 	public void register(BIPComponent component, Behaviour behaviour) {
@@ -172,9 +177,12 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 		 * If all components have not finished registering the informSpecific cannot be done: In the informSpecific information is required from all
 		 * the registered components.
 		 */
-		// TODO: replace the loop by a semaphore (if the flag is not set, take
-		// the semaphore, otherwise proceed directly)
-		while (!registrationFinished) {
+		if (!registrationFinished) {
+			try {
+				registrationSemaphore.acquire();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
 		}
 
 		try {
