@@ -279,15 +279,15 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 				componentPorts.add(port);
 
 				BIPComponent component = (BIPComponent) firstPair.getFirst();
-				logger.debug("Chosen Component: {}", component.getName());
-				logger.debug("Chosen Port: {}", componentPorts.get(0).id);
+				logger.info("Chosen Component: {}", component.getName());
+				logger.info("Chosen Port: {}", componentPorts.get(0).id);
 				ArrayList<Port> componentPorts2 = new ArrayList<Port>();
 				Port port2 = (Port) secondPair.getSecond();
 				componentPorts2.add(port2);
 
 				BIPComponent component2 = (BIPComponent) secondPair.getFirst();
-				logger.debug("Chosen Component: {}", component2.getName());
-				logger.debug("Chosen Port: {}", componentPorts2.get(0).id);
+				logger.info("Chosen Component: {}", component2.getName());
+				logger.info("Chosen Port: {}", componentPorts2.get(0).id);
 
 				boolean found = false;
 				Map<BIPComponent, Iterable<Port>> mergedInteractions = new Hashtable<BIPComponent, Iterable<Port>>();
@@ -376,6 +376,7 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 				logger.info("ENGINE ENTRY: " + e.getKey().hashCode() + " - " + e.getValue());
 			}
 		}
+		logger.info("Interactions: "+allInteractions.size());
 		wrapper.execute(allInteractions);
 
 		portsExecuted.clear();
