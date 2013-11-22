@@ -8,7 +8,7 @@ import net.sf.javabdd.BDD;
 import net.sf.javabdd.BDDFactory;
 
 import org.bip.api.BIPComponent;
-import org.bip.behaviour.Port;
+import org.bip.api.Port;
 import org.bip.exceptions.BIPEngineException;
 
 /**

@@ -12,7 +12,7 @@ import java.util.concurrent.Semaphore;
 import net.sf.javabdd.BDD;
 
 import org.bip.api.*;
-import org.bip.behaviour.Port;
+import org.bip.api.Port;
 import org.bip.exceptions.BIPEngineException;
 import org.bip.glue.BIPGlue;
 import org.slf4j.Logger;

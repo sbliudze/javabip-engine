@@ -7,7 +7,7 @@ import java.util.Set;
 import net.sf.javabdd.BDD;
 
 import org.bip.api.BIPComponent;
-import org.bip.behaviour.Port;
+import org.bip.api.Port;
 import org.bip.exceptions.BIPEngineException;
 
 import org.slf4j.Logger;

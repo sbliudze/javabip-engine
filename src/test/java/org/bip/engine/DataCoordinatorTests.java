@@ -11,11 +11,11 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import org.bip.api.BIPComponent;
-import org.bip.api.ExecutableBehaviour;
+import org.bip.behaviour.ExecutableBehaviour;
 import org.bip.behaviour.BehaviourBuilder;
 import org.bip.behaviour.ExecutorTransition;
 import org.bip.behaviour.Guard;
-import org.bip.behaviour.Port;
+import org.bip.api.Port;
 import org.bip.exceptions.BIPException;
 import org.junit.Ignore;
 import org.junit.Test;

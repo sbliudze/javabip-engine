@@ -3,8 +3,8 @@ package org.bip.engine;
 import java.util.Set;
 
 import org.bip.api.BIPComponent;
-import org.bip.behaviour.Data;
-import org.bip.behaviour.Port;
+import org.bip.api.Data;
+import org.bip.api.Port;
 
 class DataContainer {
 	private String dataIn;
