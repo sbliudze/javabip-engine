@@ -171,6 +171,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 
 	public synchronized void inform(BIPComponent component, String currentState, Set<Port> disabledPorts) {
 		// for each component store its undecided ports
+		// TODO create undecided port with the help of set.removeAll
 		componentUndecidedPorts.put(component, getUndecidedPorts(component, currentState, disabledPorts));
 
 		/*
@@ -237,12 +238,13 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 
 			Set<Port> disabledPortsOfOneComponent = disabledCombinations.get(component);
 			for (Port port : disabledPortsOfOneComponent) {
-				List<Port> disabledComponentPorts = componentBehaviourMapping.get(component).getEnforceablePorts();
-				if (!disabledComponentPorts.contains(port)) {
+				List<Port> componentEnforceablePorts = componentBehaviourMapping.get(component).getEnforceablePorts();
+				if (!componentEnforceablePorts.contains(port)) {
 					logger.error("Disabled port " + port + " in informSpecific is not specified in the behaviour of the disabled component: " + component.getName());
 					throw new BIPEngineException("Disabled port " + port + " in informSpecific is not specified in the behaviour of the disabled component: " + component.getName());
+					
 				}
-				assert (disabledComponentPorts.contains(port));
+				assert (componentEnforceablePorts.contains(port));
 			}
 		}
 
