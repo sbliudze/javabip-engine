@@ -1,11 +1,20 @@
 package org.bip.engine;
 
+import org.bip.api.Port;
+
+/*
+ * Only for Port Objects.
+ * 
+ * Non-ordered pair. In Java I can only find Set as non-ordered. 
+ * To retrieve elements from a set, an iterator has to be created each time.
+ */
+
 public final class BiDirectionalPair {
 
-		  private final Object a;
-		  private final Object b;
+		  private final Port a;
+		  private final Port b;
 
-		public BiDirectionalPair(Object a, Object b) {
+		public BiDirectionalPair(Port a, Port b) {
 		    this.a = a; 
 		    this.b = b;
 		  }
@@ -25,11 +34,11 @@ public final class BiDirectionalPair {
 		    return a.hashCode() ^ b.hashCode();
 		  }	
 		  
-		  public Object getFirst(){
+		  public Port getFirst(){
 			return a;
 		  }
 		  
-		  public Object getSecond(){
+		  public Port getSecond(){
 			return b;
 		  }
 	
