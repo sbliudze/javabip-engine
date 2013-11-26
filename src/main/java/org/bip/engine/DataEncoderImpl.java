@@ -168,8 +168,7 @@ public class DataEncoderImpl implements DataEncoder {
 			Map<BIPComponent, Iterable<Port>> componentToInPorts = inPorts(dataWire.to);
 			logger.debug("Data WireIn Components size: " + componentToInPorts.size());
 			// Out-end of the wire
-			Map<BIPComponent, Iterable<Port>> componentToOutPorts = new Hashtable<BIPComponent, Iterable<Port>>();
-			componentToOutPorts.putAll(outPorts(dataWire.from));
+			Map<BIPComponent, Iterable<Port>> componentToOutPorts = outPorts(dataWire.from);
 
 			/*
 			 * Here take the cross product of in and out variables to create the

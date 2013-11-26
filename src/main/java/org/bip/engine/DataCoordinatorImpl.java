@@ -71,8 +71,6 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 	private DataEncoder dataEncoder = new DataEncoderImpl();
 	private BIPCoordinator BIPCoordinator = new BIPCoordinatorImpl();
 
-	// private ArrayList<Requires> requires;
-
 	private boolean registrationFinished = false;
 
 	private Map<String, Map<String, Set<DataWire>>> componentDataWires;
