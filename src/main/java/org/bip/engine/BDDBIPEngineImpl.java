@@ -319,6 +319,10 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 
 	}
 	
+	/*
+	 * Merging the "subinteractions". Some port can in more than one of the enabled d-variables. 
+	 * This port should not be sent to the Executors twice
+	 */
 	private List<Map<BIPComponent, Iterable<Port>>> mergingSubInteractions(byte[] chosenInteraction){
 		List<Map<BIPComponent, Iterable<Port>>> bigInteraction = new ArrayList<Map<BIPComponent, Iterable<Port>>>();
 		for (Integer i : positionsOfDVariables) {
@@ -349,13 +353,19 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 
 				for (Map<BIPComponent, Iterable<Port>> subInteraction : bigInteraction) {
 					if (found == false) {
-						if (subInteraction.containsKey( firstPair.component()) && subInteraction.containsKey(secondPair.component())) {
+						/*
+						 * If both of the ports of the d-variable are already in a subinteraction, dont add the again.
+						 */
+						if (subInteraction.containsKey(firstPair.component()) && subInteraction.containsKey(secondPair.component())) {
 							if (subInteraction.get(firstPair.component()).iterator().next().id.equals(firstPair.id)
 									&& subInteraction.get(secondPair.component()).iterator().next().id.equals(secondPair.id)) {
 								found = true;
 								logger.debug("Double match");
 								logger.debug("Merged interactions size: " + mergedInteractions.size());
 							}
+							/*
+							 * If one of the ports (the first port) of the d-variable are already in a subinteraction. Add only the second port.
+							 */
 						} else if (subInteraction.containsKey( firstPair.component()) && !subInteraction.containsKey(secondPair.component())) {
 							if (subInteraction.get( firstPair.component()).iterator().next().id.equals(firstPair.id)) {
 								found = true;
@@ -363,6 +373,9 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 								mergedInteractions.putAll(subInteraction);
 								mergedInteractions.put(secondPair.component(), secondComponentPorts);
 							}
+							/*
+							 * If one of the ports (the second port) of the d-variable are already in a subinteraction. Add only the first port.
+							 */
 						} else if (subInteraction.containsKey(secondPair.component()) && !subInteraction.containsKey( firstPair.component())) {
 							if (subInteraction.get(secondPair.component()).iterator().next().id.equals(secondPair.id)) {
 								found = true;
@@ -373,17 +386,24 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 						}
 					}
 				}
+				/*
+				 * If no merging necessary add both ports
+				 */
 				if (found == false) {
 					oneInteraction.put(firstPair.component(),  componentPorts);
 					oneInteraction.put(secondPair.component(), secondComponentPorts);
 					(bigInteraction).add(oneInteraction);
 				} else {
 					logger.debug("indexOfInteractionsToBeDeleted size: " + indexOfInteractionsToBeDeleted.size());
+					
 					for (Integer index : indexOfInteractionsToBeDeleted) {
 						logger.debug("allInteractions size before removing: " + bigInteraction.size());
 						bigInteraction.remove(bigInteraction.get(index));
 						logger.debug("allInteractions size after removing: " + bigInteraction.size());
 					}
+					/*
+					 * Add the newly created subsets of chosen ports
+					 */
 					if (mergedInteractions.size() != 0) {
 						logger.debug("mergedInteractions size: " + mergedInteractions.size());
 						bigInteraction.add(mergedInteractions);
