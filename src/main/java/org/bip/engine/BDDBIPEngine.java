@@ -1,6 +1,5 @@
 package org.bip.engine;
 
-import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 
