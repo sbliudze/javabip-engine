@@ -71,8 +71,6 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 	private DataEncoder dataEncoder = new DataEncoderImpl();
 	private BIPCoordinator BIPCoordinator = new BIPCoordinatorImpl();
 
-	// private ArrayList<Requires> requires;
-
 	private boolean registrationFinished = false;
 
 	private Map<String, Map<String, Set<DataWire>>> componentDataWires;
@@ -347,7 +345,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 			return requiredDataMapping;
 		}
 		for (Data dataItem : portToDataInForTransition) {
-			logger.info("Component {} execute port with inData {}", component.getName(), dataItem.name());
+			logger.debug("Component {} execute port with inData {}", component.getName(), dataItem.name());
 			for (BIPComponent aComponent : oneInteraction.keySet()) {
 				if (component.equals(aComponent)) {
 					continue;
@@ -355,7 +353,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 				String dataOutName = dataIsProvided(aComponent, componentBehaviourMapping.get(component).getComponentType(), dataItem.name(), oneInteraction.get(aComponent));
 				if (dataOutName != null && !dataOutName.isEmpty()) {
 					Object dataValue = aComponent.getData(dataOutName, dataItem.type());
-					logger.info("GETTING DATA: from component " + aComponent.getName() + " the value " + dataValue);
+					logger.debug("GETTING DATA: from component " + aComponent.getName() + " the value " + dataValue);
 					nameToValue.put(dataItem.name(), dataValue);
 					break;
 				}
@@ -457,7 +455,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 				if (!(portActive.get(i))) {
 					ArrayList<DataContainer> dataContainer = containerList.get(i);
 					for (DataContainer dc : dataContainer) {
-						logger.info(this.count + " CONTAINER CHOSEN: For deciding " + component.hashCode() + " and " + port.id + " disabled is " + dc.component().hashCode() + " with ports "
+						logger.debug(this.count + " CONTAINER CHOSEN: For deciding " + component.hashCode() + " and " + port.id + " disabled is " + dc.component().hashCode() + " with ports "
 								+ dc.ports());
 						disabledCombinations.put(dc.component(), dc.ports());
 					}
@@ -470,7 +468,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 	private void print(ArrayList<ArrayList<DataContainer>> containerList, BIPComponent component) {
 		for (ArrayList<DataContainer> dataList : containerList) {
 			for (DataContainer container : dataList) {
-				logger.info(this.count + " Deciding " + component.hashCode() + ", Providing " + container.component().hashCode() + " the value " + container.value());
+				logger.debug(this.count + " Deciding " + component.hashCode() + ", Providing " + container.component().hashCode() + " the value " + container.value());
 			}
 		}
 

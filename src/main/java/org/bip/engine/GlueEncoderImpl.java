@@ -334,7 +334,7 @@ public class GlueEncoderImpl implements GlueEncoder {
 	 * 
 	 *  @return the BDD that corresponds to an Accept macro.
 	 */
-	//TODO: change the arguments to reflect the cardinality 
+
 	BDD acceptBDD(BDD acceptPortHolder, Hashtable<Port, ArrayList<BDD>> acceptedPorts) { 
 		BDD tmp;
 		
@@ -353,7 +353,6 @@ public class GlueEncoderImpl implements GlueEncoder {
 		logger.debug("totalPortBDDs size: "+totalPortBDDs.size());
 		BDD allCausesBDD = engine.getBDDManager().one();
 		
-		//TODO: Improve the  below
 		if (acceptedPorts.size()>1){
 			for (BDD portBDD : totalPortBDDs){
 				boolean exist = false;
@@ -378,10 +377,7 @@ public class GlueEncoderImpl implements GlueEncoder {
 					}
 				}
 				if (!exist) {
-					//allCausesBDD.andWith(portBDD.not());
-					tmp = portBDD.not().and(allCausesBDD);
-					allCausesBDD.free();
-					allCausesBDD = tmp;
+					allCausesBDD.andWith(portBDD.not());
 				}
 			}
 		}

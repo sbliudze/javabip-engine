@@ -32,6 +32,8 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 	private Hashtable<BIPComponent, BDD> currentStateBDDs = new Hashtable<BIPComponent, BDD>();
 	private ArrayList<BDD> disabledCombinationBDDs = new ArrayList<BDD>();
 	private Hashtable<BIPComponent, BDD> behaviourBDDs = new Hashtable<BIPComponent, BDD>();
+	
+	private ArrayList<Port> portsExecuted = new ArrayList<Port>();
 	/* BDD for ΛFi */
 	private BDD totalBehaviour;
 	/* BDD for Glue */
@@ -123,7 +125,7 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		addCube(cubeMaximals, c_cube, cubeMaximals.size());
 	}
 
-	public final BDD totalCurrentStateBdd(Hashtable<BIPComponent, BDD> currentStateBDDs) {
+	public final BDD totalCurrentStateBdd(Hashtable<BIPComponent, BDD> currentStateBDDs) throws BIPEngineException {
 		BDD totalCurrentStateBdd = bdd_mgr.one();
 		BDD tmp;
 
@@ -131,7 +133,7 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 			BIPComponent component = componentsEnum.nextElement();
 			if (currentStateBDDs.get(component) == null) {
 				logger.error("Current state BDD is null of component {}", component);
-				// TODO: Add exception
+				throw new BIPEngineException("Current state BDD is null of component "+ component);
 			}
 			tmp = totalCurrentStateBdd.and(currentStateBDDs.get(component));
 			totalCurrentStateBdd.free();
@@ -140,13 +142,13 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		return totalCurrentStateBdd;
 	}
 
-	public final BDD totalDisabledCombinationsBdd(ArrayList<BDD> disabledCombinationBDDs) {
+	public final BDD totalDisabledCombinationsBdd(ArrayList<BDD> disabledCombinationBDDs) throws BIPEngineException {
 		BDD totalDisabledCombinationBdd = bdd_mgr.one();
 
 		for (BDD disabledCombinationBDD : disabledCombinationBDDs) {
 			if (disabledCombinationBDD == null) {
 				logger.error("Disabled Combination BDD is null");
-				// TODO: Add exception
+				throw new BIPEngineException("Disabled Combination BDD is null");
 			}
 			totalDisabledCombinationBdd.andWith(disabledCombinationBDD);
 		}
@@ -157,7 +159,7 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 
 		byte[] chosenInteraction;
 		ArrayList<byte[]> cubeMaximals = new ArrayList<byte[]>();
-		Hashtable<BIPComponent, ArrayList<Port>> chosenPorts = new Hashtable<BIPComponent, ArrayList<Port>>();
+		Map<BIPComponent, Iterable<Port>> chosenPorts = new Hashtable<BIPComponent, Iterable<Port>>();
 		ArrayList<BIPComponent> chosenComponents = new ArrayList<BIPComponent>();
 		byte[] cubeMaximal = new byte[wrapper.getNoPorts() + wrapper.getNoStates() + positionsOfDVariables.size()];
 
@@ -220,7 +222,7 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 			for (byte b : value) {
 				sb.append(String.format("%02X ", b));
 			}
-			logger.info(sb.toString());
+			logger.debug(sb.toString());
 		}
 		ArrayList<Integer> positions = new ArrayList<Integer>();
 		positions.addAll(positionsOfPorts);
@@ -228,7 +230,7 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		logger.debug("a size: " + a.size());
 		for (int i = 0; i < a.size(); i++) {
 
-			logger.info("Positions of D Variables size:" + positionsOfDVariables.size());
+			logger.debug("Positions of D Variables size:" + positionsOfDVariables.size());
 			findMaximals(cubeMaximals, a.get(i), positions);
 		}
 
@@ -244,7 +246,7 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 			}
 		}
 
-		logger.info("Number of maximal interactions: " + cubeMaximals.size());
+		logger.debug("Number of maximal interactions: " + cubeMaximals.size());
 		Random rand = new Random();
 		/*
 		 * Pick a random maximal interaction
@@ -260,85 +262,13 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		for (int k = 0; k < chosenInteraction.length; k++)
 			logger.debug("{}", chosenInteraction[k]);
 
-		// TODO: Fix String to Port
-		ArrayList<Port> portsExecuted = new ArrayList<Port>();
-		ArrayList<Map<BIPComponent, Iterable<Port>>> allInteractions = new ArrayList<Map<BIPComponent, Iterable<Port>>>();
 
-		logger.info("positionsOfDVariables size: " + positionsOfDVariables.size());
-		logger.info("PositionsOfPorts size: " + positionsOfPorts.size());
-		for (Integer i : positionsOfDVariables) {
-			Hashtable<BIPComponent, ArrayList<Port>> oneInteraction = new Hashtable<BIPComponent, ArrayList<Port>>();
+		List<Map<BIPComponent, Iterable<Port>>> bigInteraction = new ArrayList<Map<BIPComponent, Iterable<Port>>>();
 
-			if (chosenInteraction[i] == 1) {
-				logger.debug("chosenInteraction length " + chosenInteraction.length);
-				BiDirectionalPair pair = dVariablesToPosition.get(i);
-				BiDirectionalPair firstPair = (BiDirectionalPair) pair.getFirst();
-				BiDirectionalPair secondPair = (BiDirectionalPair) pair.getSecond();
-				ArrayList<Port> componentPorts = new ArrayList<Port>();
-				Port port = (Port) firstPair.getSecond();
-				componentPorts.add(port);
+		logger.debug("positionsOfDVariables size: " + positionsOfDVariables.size());
+		logger.debug("PositionsOfPorts size: " + positionsOfPorts.size());
 
-				BIPComponent component = (BIPComponent) firstPair.getFirst();
-				logger.info("Chosen Component: {}", component.getName());
-				logger.info("Chosen Port: {}", componentPorts.get(0).id);
-				ArrayList<Port> componentPorts2 = new ArrayList<Port>();
-				Port port2 = (Port) secondPair.getSecond();
-				componentPorts2.add(port2);
-
-				BIPComponent component2 = (BIPComponent) secondPair.getFirst();
-				logger.info("Chosen Component: {}", component2.getName());
-				logger.info("Chosen Port: {}", componentPorts2.get(0).id);
-
-				boolean found = false;
-				Map<BIPComponent, Iterable<Port>> mergedInteractions = new Hashtable<BIPComponent, Iterable<Port>>();
-				ArrayList<Integer> indexOfInteractionsToBeDeleted = new ArrayList<Integer>();
-				portsExecuted.add(port);
-				portsExecuted.add(port2);
-
-				for (Map<BIPComponent, Iterable<Port>> interaction : allInteractions) {
-					if (found == false) {
-						if (interaction.containsKey((BIPComponent) firstPair.getFirst()) && interaction.containsKey((BIPComponent) secondPair.getFirst())) {
-							if (interaction.get((BIPComponent) firstPair.getFirst()).iterator().next().id.equals(port.id)
-									&& interaction.get((BIPComponent) secondPair.getFirst()).iterator().next().id.equals(port2.id)) {
-								found = true;
-								logger.debug("Double match");
-								logger.debug("Merged interactions size: " + mergedInteractions.size());
-							}
-						} else if (interaction.containsKey((BIPComponent) firstPair.getFirst()) && !interaction.containsKey((BIPComponent) secondPair.getFirst())) {
-							if (interaction.get((BIPComponent) firstPair.getFirst()).iterator().next().id.equals(port.id)) {
-								found = true;
-								indexOfInteractionsToBeDeleted.add(allInteractions.indexOf(interaction));
-								mergedInteractions.putAll(interaction);
-								mergedInteractions.put((BIPComponent) secondPair.getFirst(), componentPorts2);
-							}
-						} else if (interaction.containsKey((BIPComponent) secondPair.getFirst()) && !interaction.containsKey((BIPComponent) firstPair.getFirst())) {
-							if (interaction.get((BIPComponent) secondPair.getFirst()).iterator().next().id.equals(port2.id)) {
-								found = true;
-								indexOfInteractionsToBeDeleted.add(allInteractions.indexOf(interaction));
-								mergedInteractions.putAll(interaction);
-								mergedInteractions.put((BIPComponent) firstPair.getFirst(), componentPorts);
-							}
-						}
-					}
-				}
-				if (found == false) {
-					oneInteraction.put((BIPComponent) firstPair.getFirst(),  componentPorts);
-					oneInteraction.put((BIPComponent) secondPair.getFirst(), componentPorts2);
-					((List) allInteractions).add(oneInteraction);
-				} else {
-					logger.debug("indexOfInteractionsToBeDeleted size: " + indexOfInteractionsToBeDeleted.size());
-					for (Integer index : indexOfInteractionsToBeDeleted) {
-						logger.debug("allInteractions size before removing: " + allInteractions.size());
-						allInteractions.remove(allInteractions.get(index));
-						logger.debug("allInteractions size after removing: " + allInteractions.size());
-					}
-					if (mergedInteractions.size() != 0) {
-						logger.debug("mergedInteractions size: " + mergedInteractions.size());
-						allInteractions.add(mergedInteractions);
-					}
-				}
-			}
-		}
+		bigInteraction=mergingSubInteractions(chosenInteraction);
 
 		for (Enumeration<BIPComponent> componentsEnum = behaviourBDDs.keys(); componentsEnum.hasMoreElements();) {
 			BIPComponent component = componentsEnum.nextElement();
@@ -368,16 +298,16 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		logger.info("*************************************************************************");
 		logger.info("chosenPorts size: " + chosenPorts.size());
 		if (chosenPorts.size() != 0) {
-			((List) allInteractions).add(chosenPorts);
+			(bigInteraction).add(chosenPorts);
 		}
 
-		for (Map<BIPComponent, Iterable<Port>> inter : allInteractions) {
+		for (Map<BIPComponent, Iterable<Port>> inter : bigInteraction) {
 			for (Map.Entry<BIPComponent, Iterable<Port>> e : inter.entrySet()) {
-				logger.info("ENGINE ENTRY: " + e.getKey().hashCode() + " - " + e.getValue());
+				logger.debug("ENGINE ENTRY: " + e.getKey().hashCode() + " - " + e.getValue());
 			}
 		}
-		logger.info("Interactions: "+allInteractions.size());
-		wrapper.execute(allInteractions);
+		logger.debug("Interactions: "+bigInteraction.size());
+		wrapper.execute(bigInteraction);
 
 		portsExecuted.clear();
 
@@ -387,6 +317,101 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		// disabledCombination.free();
 		// }
 
+	}
+	
+	/*
+	 * Merging the "subinteractions". Some port can in more than one of the enabled d-variables. 
+	 * This port should not be sent to the Executors twice
+	 */
+	private List<Map<BIPComponent, Iterable<Port>>> mergingSubInteractions(byte[] chosenInteraction){
+		List<Map<BIPComponent, Iterable<Port>>> bigInteraction = new ArrayList<Map<BIPComponent, Iterable<Port>>>();
+		for (Integer i : positionsOfDVariables) {
+			Map<BIPComponent, Iterable<Port>> oneInteraction = new Hashtable<BIPComponent, Iterable<Port>>();
+
+
+			if (chosenInteraction[i] == 1) {
+				logger.debug("chosenInteraction length " + chosenInteraction.length);
+				BiDirectionalPair pair = dVariablesToPosition.get(i);
+				Port firstPair =  pair.getFirst();
+				Port secondPair =  pair.getSecond();
+				ArrayList<Port> componentPorts = new ArrayList<Port>();
+				componentPorts.add(firstPair);
+
+				logger.info("Chosen Component: {}", firstPair.component().getName());
+				logger.info("Chosen Port: {}", componentPorts.get(0).id);
+				ArrayList<Port> secondComponentPorts = new ArrayList<Port>();
+				secondComponentPorts.add(secondPair);
+
+				logger.info("Chosen Component: {}", secondPair.component().getName());
+				logger.info("Chosen Port: {}", secondComponentPorts.get(0).id);
+
+				boolean found = false;
+				Map<BIPComponent, Iterable<Port>> mergedInteractions = new Hashtable<BIPComponent, Iterable<Port>>();
+				ArrayList<Integer> indexOfInteractionsToBeDeleted = new ArrayList<Integer>();
+				portsExecuted.add(firstPair);
+				portsExecuted.add(secondPair);
+
+				for (Map<BIPComponent, Iterable<Port>> subInteraction : bigInteraction) {
+					if (found == false) {
+						/*
+						 * If both of the ports of the d-variable are already in a subinteraction, dont add the again.
+						 */
+						if (subInteraction.containsKey(firstPair.component()) && subInteraction.containsKey(secondPair.component())) {
+							if (subInteraction.get(firstPair.component()).iterator().next().id.equals(firstPair.id)
+									&& subInteraction.get(secondPair.component()).iterator().next().id.equals(secondPair.id)) {
+								found = true;
+								logger.debug("Double match");
+								logger.debug("Merged interactions size: " + mergedInteractions.size());
+							}
+							/*
+							 * If one of the ports (the first port) of the d-variable are already in a subinteraction. Add only the second port.
+							 */
+						} else if (subInteraction.containsKey( firstPair.component()) && !subInteraction.containsKey(secondPair.component())) {
+							if (subInteraction.get( firstPair.component()).iterator().next().id.equals(firstPair.id)) {
+								found = true;
+								indexOfInteractionsToBeDeleted.add(bigInteraction.indexOf(subInteraction));
+								mergedInteractions.putAll(subInteraction);
+								mergedInteractions.put(secondPair.component(), secondComponentPorts);
+							}
+							/*
+							 * If one of the ports (the second port) of the d-variable are already in a subinteraction. Add only the first port.
+							 */
+						} else if (subInteraction.containsKey(secondPair.component()) && !subInteraction.containsKey( firstPair.component())) {
+							if (subInteraction.get(secondPair.component()).iterator().next().id.equals(secondPair.id)) {
+								found = true;
+								indexOfInteractionsToBeDeleted.add(bigInteraction.indexOf(subInteraction));
+								mergedInteractions.putAll(subInteraction);
+								mergedInteractions.put( firstPair.component(), componentPorts);
+							}
+						}
+					}
+				}
+				/*
+				 * If no merging necessary add both ports
+				 */
+				if (found == false) {
+					oneInteraction.put(firstPair.component(),  componentPorts);
+					oneInteraction.put(secondPair.component(), secondComponentPorts);
+					(bigInteraction).add(oneInteraction);
+				} else {
+					logger.debug("indexOfInteractionsToBeDeleted size: " + indexOfInteractionsToBeDeleted.size());
+					
+					for (Integer index : indexOfInteractionsToBeDeleted) {
+						logger.debug("allInteractions size before removing: " + bigInteraction.size());
+						bigInteraction.remove(bigInteraction.get(index));
+						logger.debug("allInteractions size after removing: " + bigInteraction.size());
+					}
+					/*
+					 * Add the newly created subsets of chosen ports
+					 */
+					if (mergedInteractions.size() != 0) {
+						logger.debug("mergedInteractions size: " + mergedInteractions.size());
+						bigInteraction.add(mergedInteractions);
+					}
+				}
+			}
+		}
+		return bigInteraction;
 	}
 
 	public synchronized void informCurrentState(BIPComponent component, BDD componentBDD) {
@@ -425,7 +450,6 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 			totalBehaviourBdd = tmp;
 		}
 		this.totalBehaviour = totalBehaviourBdd;
-		// synchronized (totalBehaviourAndGlue) {
 		if (totalGlue != null) {
 			totalBehaviourAndGlue = this.totalBehaviour.and(totalGlue);
 			if (totalBehaviourAndGlue == null) {
@@ -440,17 +464,14 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 			this.totalBehaviour.free();
 			totalGlue.free();
 		}
-		// }
 	}
 
 	public synchronized void informGlue(BDD totalGlue) throws BIPEngineException {
 
 		this.totalGlue = totalGlue;
-		// TODO: Fix synchronized
-		// synchronized (totalBehaviourAndGlue) {
+
 		if (this.totalBehaviourAndGlue == null && this.totalBehaviour != null) {
 			totalBehaviourAndGlue = totalBehaviour.and(this.totalGlue);
-			// .and(this.dataGlueBDD); //
 			if (this.dataGlueBDD != null) {
 				totalBehaviourAndGlue.andWith(dataGlueBDD);
 			}
@@ -468,7 +489,6 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 			this.totalBehaviour.free();
 			this.totalGlue.free();
 		}
-		// }
 	}
 
 	public List<Integer> getPositionsOfPorts() {
