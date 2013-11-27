@@ -235,4 +235,10 @@ public class DataCoordinatorTests implements BIPComponent {
 		ArrayList<ArrayList<String>> list = getDataValueTable(dataList);
 		assertEquals(6, list.size());
 	}
+
+	@Override
+	public void setData(Map<String, ?> data) {
+		// TODO Auto-generated method stub
+		
+	}
 }
