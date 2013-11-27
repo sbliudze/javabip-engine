@@ -1,51 +1,35 @@
 package org.bip.engine;
 
-import org.bip.api.BIPComponent;
+import java.util.List;
+import java.util.Map;
+
 import org.bip.api.BIPEngine;
-import org.bip.api.Behaviour;
-import org.bip.exceptions.BIPEngineException;
 
 /**
  * @author mavridou
  */
 
-//TODO: If the function getDataOutPorts is not needed any more delete and maybe have the DataEncoder asking for this info from the BIPCoordinator.
-public interface DataCoordinator extends BIPEngine, InteractionExecutor {
-
-	/**
-	 * Returns the Behaviour of the BIP component.
-	 * 
-	 * @param a component instance
-	 * @return behaviour of the BIP component
-	 */
-	Behaviour getBehaviourByComponent(BIPComponent component);
+public interface DataCoordinator extends BIPEngine, BIPCoordinator, InteractionExecutor {
+	DataEncoder getDataEncoder();
 	
 	/**
-	 * Returns the BIP component instances registered in the system that correspond
-	 * to the component type provided as a parameter.
-	 * 
-	 * 
-	 * @param BIP component type
-	 * @return arrayList of component instances that correspond to this component type.
-	 * @throws BIPEngineException 
-	 * @throws InterruptedException 
+	 * @param dVariablesToPosition the dVariablesToPosition to set
 	 */
-	Iterable <BIPComponent> getBIPComponentInstances(String type) throws BIPEngineException;
+	void setdVariablesToPosition(Map<Integer, BiDirectionalPair> dVariablesToPosition);
 	
 	/**
-	 * Returns the total number of ports of registered component 
-	 * instances in the system.
-	 * 
-	 * @return number of ports of registered components
+	 * @param positionsOfDVariables the positionsOfDVariables to set
 	 */
-	int getNoPorts();
-
+	void setPositionsOfDVariables(List<Integer> positionsOfDVariables);
+	
 	/**
-	 * Returns the total number of states of registered component 
-	 * instances in the system.
-	 * 
-	 * @return number of states of registered components
+	 * @return the dVariablesToPosition
 	 */
-	int getNoStates();
+	Map<Integer, BiDirectionalPair> getdVariablesToPosition() ;
 
+	
+	/**
+	 * @return the positionsOfDVariables
+	 */
+	public List<Integer> getPositionsOfDVariables();
 }

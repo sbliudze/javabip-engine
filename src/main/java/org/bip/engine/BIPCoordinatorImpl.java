@@ -10,9 +10,9 @@ import java.util.Set;
 import java.util.concurrent.Semaphore;
 
 import net.sf.javabdd.BDD;
+import net.sf.javabdd.BDDFactory;
 
 import org.bip.api.*;
-import org.bip.api.Port;
 import org.bip.exceptions.BIPEngineException;
 import org.bip.glue.BIPGlue;
 import org.slf4j.Logger;
@@ -192,8 +192,8 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 			}
 
 			for (int i = 0; i < nbComponentPorts; i++) {
-				engine.getPositionsOfPorts().add(nbPorts + nbStates + nbComponentStates + i);
-				engine.getPortToPosition().put((behaviour.getEnforceablePorts()).get(i), nbPorts + nbStates + nbComponentStates + i);
+				behenc.getPositionsOfPorts().add(nbPorts + nbStates + nbComponentStates + i);
+				behenc.getPortToPosition().put((behaviour.getEnforceablePorts()).get(i), nbPorts + nbStates + nbComponentStates + i);
 			}
 			nbPorts += nbComponentPorts;
 			nbStates += nbComponentStates;
@@ -295,11 +295,75 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	 *  
 	 *  @throws BIPEngineException
 	 */
-	public void execute (Iterable<Map<BIPComponent, Iterable<Port>>> portsToFire) throws BIPEngineException{
-		interactionExecutor.executeInteractions(portsToFire);
+	public void execute (byte[] valuation) throws BIPEngineException{
+		if (interactionExecutor != this) {
+			interactionExecutor.execute(valuation);
+		}
+		else {
+			executeInteractions(preparePorts(valuation));
+		}
 	}
 	
-	
+	private Iterable<Map<BIPComponent, Iterable<Port>>> preparePorts(byte[] valuation) {
+		/*
+		 * Grouping the interaction into smaller ones (with respect to data transfer)
+		 */
+		List<Map<BIPComponent, Iterable<Port>>> bigInteraction = new ArrayList<Map<BIPComponent, Iterable<Port>>>();
+		Map<BIPComponent, Iterable<Port>> chosenPorts = new Hashtable<BIPComponent, Iterable<Port>>();
+		ArrayList<BIPComponent> chosenComponents = new ArrayList<BIPComponent>();
+
+		ArrayList<Port> portsExecuted = new ArrayList<Port>();
+
+		/*
+		 * Find ports that participate in the interaction but not in data transfer
+		 * and add them as a separate group
+		 */
+		Map<Port, Integer> portToPosition = getBehaviourEncoderInstance().getPortToPosition();
+		ArrayList <BIPComponent> componentsEnum =  registeredComponents; 
+		for (BIPComponent component: componentsEnum) {
+			logger.debug("Component: " + component.getName());
+
+			Iterable<Port> componentPorts = getBehaviourByComponent(component).getEnforceablePorts();
+			if (componentPorts == null || !componentPorts.iterator().hasNext()) {
+				logger.warn("Component {} does not have any enforceable ports.", component.getName());
+			}
+			ArrayList<Port> enabledPorts = new ArrayList<Port>();
+
+			for (Port componentPort : componentPorts) {
+				if (!portsExecuted.contains(componentPort) && valuation[portToPosition.get(componentPort)] == 1) {
+					enabledPorts.add(componentPort);
+				}
+			}
+			if (!enabledPorts.isEmpty()) {
+				logger.info("Chosen Component: {}", component.getName());
+				logger.info("Chosen Port: {}", enabledPorts.get(0).id);
+			}
+			if (enabledPorts.size() != 0) {
+				chosenPorts.put(component, enabledPorts);
+				chosenComponents.add(component);
+			}
+		}
+
+		logger.info("*************************************************************************");
+		logger.info("chosenPorts size: " + chosenPorts.size());
+		if (chosenPorts.size() != 0) {
+			(bigInteraction).add(chosenPorts);
+		}
+
+		/*
+		 * Here the ports mentioned above have been added
+		 */
+		
+		for (Map<BIPComponent, Iterable<Port>> inter : bigInteraction) {
+			for (Map.Entry<BIPComponent, Iterable<Port>> e : inter.entrySet()) {
+				logger.debug("ENGINE ENTRY: " + e.getKey().hashCode() + " - " + e.getValue());
+			}
+		}
+		logger.debug("Interactions: "+bigInteraction.size());
+
+		return bigInteraction;
+	}
+
 	/**
 	 * BDDBIPEngine informs the BIPCoordinator for the components (and their associated ports) that are part of the same chosen interaction.
 	 * 
@@ -309,7 +373,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	 * 
 	 * @throws BIPEngineException 
 	 */
-	public void executeInteractions(Iterable<Map<BIPComponent, Iterable<Port>>> portsToFire) throws BIPEngineException {
+	public void executeInteractions(Iterable <Map<BIPComponent, Iterable<Port>>> portsToFire) throws BIPEngineException {
 		Iterator <Map<BIPComponent, Iterable<Port>>> enabledCombinations = portsToFire.iterator();
 		/*
 		 * This is a list of components participating in the chosen-by-the-engine interactions. 
@@ -557,7 +621,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	 * 
 	 * NB: DataCoordinator does not have any connection to the BDDBIPEngine.
 	 */
-	public void informSpecific(BDD disabledCombination){
+	public void specifyTemporaryConstraints(BDD disabledCombination){
 		engine.informSpecific(disabledCombination);
 	}
 	
@@ -567,8 +631,8 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	 *
 	 * NB: DataCoordinator does not have any connection to the BDDBIPEngine.
 	 */
-	public void specifyDataGlue(BDD specifyDataGlue) {
-		engine.specifyDataGlue(specifyDataGlue);
+	public void specifyPermanentConstraints(BDD constraints) {
+		engine.specifyAdditionalConstraints(constraints);
 	}
 	
 	/**
@@ -603,8 +667,8 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 		return behenc;
 	}
 	
-	public BDDBIPEngine getBDDBIPEngineInstance(){
-		return engine;
+	public BDDFactory getBDDManager(){
+		return engine.getBDDManager();
 	}
 	
 	/**

@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Set;
 
 import net.sf.javabdd.BDD;
+import net.sf.javabdd.BDDFactory;
 
 import org.bip.api.BIPComponent;
 import org.bip.api.Port;
@@ -24,7 +25,7 @@ import org.slf4j.LoggerFactory;
  */
 public class DataEncoderImpl implements DataEncoder {
 
-	private BDDBIPEngine engine;
+	private BDDFactory BDDmanager;
 	private DataCoordinator dataCoordinator;
 	private BehaviourEncoder behaviourEncoder;
 
@@ -67,7 +68,7 @@ public class DataEncoderImpl implements DataEncoder {
 		BDD result;
 
 		assert (disabledCombinations != null);
-		result = engine.getBDDManager().one();
+		result = BDDmanager.one();
 		/*
 		 * Find corresponding d-variable
 		 */
@@ -112,7 +113,7 @@ public class DataEncoderImpl implements DataEncoder {
 	 * @return
 	 */
 	private BDD computeDvariablesBDDs() {
-		BDD result = engine.getBDDManager().one();
+		BDD result = BDDmanager.one();
 		for (BDD eachD : this.implicationsOfDs) {
 			result.andWith(eachD);
 		}
@@ -191,10 +192,10 @@ public class DataEncoderImpl implements DataEncoder {
 						 * Create new variable in the BDD manager for the
 						 * d-variables.
 						 */
-						if (engine.getBDDManager().varNum() < currentSystemBddSize + 1) {
-							engine.getBDDManager().setVarNum(currentSystemBddSize + 1);
+						if (BDDmanager.varNum() < currentSystemBddSize + 1) {
+							BDDmanager.setVarNum(currentSystemBddSize + 1);
 						}
-						BDD node = engine.getBDDManager().ithVar(currentSystemBddSize);
+						BDD node = BDDmanager.ithVar(currentSystemBddSize);
 						if (node == null) {
 							logger.error("Single node BDD for d-variable for port " + inPort.id + " of component " + inPort.component() + " and port " + outPort.id + " of component "
 									+ outPort.component() + " is null");
@@ -202,14 +203,16 @@ public class DataEncoderImpl implements DataEncoder {
 									+ outPort.component() + " is null");
 						}
 						logger.debug("Create D-variable BDD node of Ports-pair: " + inPort + " " + outPort);
+						
+						
 						this.implicationsOfDs.add(node.not().or(componentInBDDs.get(inPort).and(componentOutBDDs.get(outPort))));
 						portsToDVarBDDMapping.put(inOutPortsPair, node);
 						/*
 						 * Store the position of the d-variables in the BDD
 						 * manager, for further use in the BDDBIPEngine.
 						 */
-						engine.getdVariablesToPosition().put(currentSystemBddSize, inOutPortsPair);
-						engine.getPositionsOfDVariables().add(currentSystemBddSize);
+						dataCoordinator.getdVariablesToPosition().put(currentSystemBddSize, inOutPortsPair);
+						dataCoordinator.getPositionsOfDVariables().add(currentSystemBddSize);
 						if (portsToDVarBDDMapping.get(inOutPortsPair) == null || portsToDVarBDDMapping.get(inOutPortsPair).isZero()) {
 							logger.error("Single node BDD for d variable for ports " + inPort.id + " and " + outPort.toString() + " is equal to null");
 							throw new BIPEngineException("Single node BDD for d variable for ports " + inPort.id + " and " + outPort.toString() + " is equal to null");
@@ -250,7 +253,7 @@ public class DataEncoderImpl implements DataEncoder {
 		Set<BDD> entries = moreImplications.keySet();
 		logger.debug("moreImplications size: " + entries.size());
 		for (BDD bdd : entries) {
-			BDD result = engine.getBDDManager().zero();
+			BDD result = BDDmanager.zero();
 			logger.debug("entry of moreImplications size: " + moreImplications.get(bdd).size());
 			for (BDD oneImplication : moreImplications.get(bdd)) {
 				BDD temp = result.or(oneImplication);
@@ -326,8 +329,8 @@ public class DataEncoderImpl implements DataEncoder {
 		return dataOutPorts;
 	}
 
-	public void setEngine(BDDBIPEngine engine) {
-		this.engine = engine;
+	public void setBDDManager(BDDFactory manager) {
+		this.BDDmanager = manager;
 	}
 
 	public void setBehaviourEncoder(BehaviourEncoder behaviourEncoder) {
@@ -337,5 +340,6 @@ public class DataEncoderImpl implements DataEncoder {
 	public void setDataCoordinator(DataCoordinator dataCoordinator) {
 		this.dataCoordinator = dataCoordinator;
 	}
+
 
 }

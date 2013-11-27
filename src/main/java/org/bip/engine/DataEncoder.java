@@ -4,6 +4,7 @@ import java.util.Map;
 import java.util.Set;
 
 import net.sf.javabdd.BDD;
+import net.sf.javabdd.BDDFactory;
 
 import org.bip.api.BIPComponent;
 
@@ -48,7 +49,7 @@ public interface DataEncoder {
 	/**
 	 * Setter for the BDDBIPEngine
 	 */
-	void setEngine(BDDBIPEngine engine);
+	void setBDDManager(BDDFactory manager);
 	
 	/**
 	 * Setter for the DataCoordinator

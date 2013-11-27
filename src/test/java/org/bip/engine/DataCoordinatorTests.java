@@ -53,7 +53,7 @@ public class DataCoordinatorTests implements BIPComponent {
     @Ignore
 	public void testUndecidedPorts() throws BIPException, NoSuchMethodException, SecurityException {
 		//ExecutableBehaviour behaviour = createBehaviour().buildWithoutData();
-		DataCoordinatorImpl coordinator = new DataCoordinatorImpl();
+		DataCoordinatorImpl coordinator = new DataCoordinatorImpl(null);
 		// final OSGiExecutor executor1 = new OSGiExecutor(this, false);
 		//coordinator.register(this, behaviour);
 		//assertEquals(1,coordinator.getUndecidedPorts(this, new ArrayList<Port>(Arrays.asList(firstPort, thirdPort))).size());
@@ -71,7 +71,7 @@ public class DataCoordinatorTests implements BIPComponent {
 		dataEvaluation.put("town", array1);
 		dataEvaluation.put("count", array2);
 		dataEvaluation.put("isGood", array3);
-		DataCoordinatorImpl coordinator = new DataCoordinatorImpl();
+		DataCoordinatorImpl coordinator = new DataCoordinatorImpl(null);
 		ArrayList<Map<String, Object>> result = new ArrayList<Map<String,Object>>();
 		//result = (ArrayList<Map<String, Object>>) coordinator.getDataValueTable(dataEvaluation);
 		

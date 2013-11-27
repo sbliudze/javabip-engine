@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 import net.sf.javabdd.BDD;
+import net.sf.javabdd.BDDFactory;
 
 import org.bip.api.BIPComponent;
 import org.bip.api.BIPEngine;
@@ -71,25 +72,15 @@ public interface BIPCoordinator extends BIPEngine, InteractionExecutor {
 	int getNoStates();
 	
 	/**
-	 * Notifies all the components whether they need to perform a transition.
-	 * If yes, the ArrayList contains the port that should be fires. Otherwise, it contains null.
-	 * 
-	 * @param allComponents, all components
-	 * @throws BIPEngineException 
-	 */
-	void execute (Iterable<Map<BIPComponent, Iterable<Port>>> portsToFire) throws BIPEngineException;
-	/**
 	 * Set the interaction Execute instance either as DataCoordinator or as BIPCoordinator depending
 	 * on whether there are data transfer between the components or not respectively.
 	 */
-	
 	void setInteractionExecutor(InteractionExecutor interactionExecutor);
 	
-    void informSpecific(BDD disabledCombination);
-	
     BehaviourEncoder getBehaviourEncoderInstance();
-    BDDBIPEngine getBDDBIPEngineInstance();
+    BDDFactory getBDDManager();
 
-	void specifyDataGlue(BDD specifyDataGlue);
+    void specifyTemporaryConstraints(BDD constraints);
+	void specifyPermanentConstraints(BDD constraints);
 	
 }

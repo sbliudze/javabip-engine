@@ -1,9 +1,12 @@
 package org.bip.engine;
 
+import java.util.ArrayList;
+import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 
 import org.bip.api.BIPComponent;
+import org.bip.api.Behaviour;
 import org.bip.api.Port;
 import org.bip.exceptions.BIPEngineException;
 
@@ -85,6 +88,10 @@ public interface BehaviourEncoder {
      * @return hashtable with the ports as keys and the port BDDs as values
      */
     Map<String, BDD> getPortToBDDOfAComponent (BIPComponent component);
+
+	List<Integer> getPositionsOfPorts();
+
+	Map<Port, Integer> getPortToPosition();
 	
 }
 

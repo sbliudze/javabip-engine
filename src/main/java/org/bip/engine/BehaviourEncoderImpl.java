@@ -1,7 +1,9 @@
 package org.bip.engine;
 
+import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import net.sf.javabdd.BDD;
@@ -33,6 +35,9 @@ public class BehaviourEncoderImpl implements BehaviourEncoder {
 	private int auxSum;
 	private BDDBIPEngine engine;
 	private BIPCoordinator wrapper;
+	private ArrayList<Integer> positionsOfPorts = new ArrayList<Integer>();
+	Map<Port, Integer> portToPosition = new Hashtable<Port, Integer>();
+
 	
 	/**
 	 * Creates one-node BDDs for the states and the ports of all components.
@@ -238,6 +243,14 @@ public class BehaviourEncoderImpl implements BehaviourEncoder {
 
 	public synchronized Hashtable<String, BDD> getPortToBDDOfAComponent (BIPComponent component){
 		return componentToPortToBDD.get(component);
+	}
+
+	public List<Integer> getPositionsOfPorts() {
+		return positionsOfPorts;
+	}
+
+	public Map<Port, Integer> getPortToPosition() {
+		return portToPosition;
 	}
 	
 

@@ -54,35 +54,18 @@ public interface BDDBIPEngine {
 	 */
 	BDDFactory getBDDManager(); 
 	
-	/**
-	 * @return the position of port BDDs in the BDD Manager
-	 */
-	List<Integer> getPositionsOfPorts();
-	
-	Map<Port, Integer> getPortToPosition();
+//	/**
+//	 * @return the position of port BDDs in the BDD Manager
+//	 */
+//	List<Integer> getPositionsOfPorts();
+//	
+//	Map<Port, Integer> getPortToPosition();
 
-	/**
-	 * @return the dVariablesToPosition
-	 */
-	Map<Integer, BiDirectionalPair> getdVariablesToPosition() ;
-	/**
-	 * @param dVariablesToPosition the dVariablesToPosition to set
-	 */
-	void setdVariablesToPosition(Map<Integer, BiDirectionalPair> dVariablesToPosition);
-	
-	/**
-	 * @param positionsOfDVariables the positionsOfDVariables to set
-	 */
-	void setPositionsOfDVariables(List<Integer> positionsOfDVariables);
-	
-	/**
-	 * @return the positionsOfDVariables
-	 */
-	public List<Integer> getPositionsOfDVariables();
+
 	
 	void informSpecific(BDD informSpecific);
 
-	void specifyDataGlue(BDD specifyDataGlue);
+	void specifyAdditionalConstraints(BDD specifyDataGlue);
 
 
 

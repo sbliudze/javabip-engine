@@ -2,6 +2,7 @@ package org.bip.engine;
 
 import java.util.AbstractMap;
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Hashtable;
@@ -11,6 +12,9 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.Semaphore;
+
+import net.sf.javabdd.BDD;
+import net.sf.javabdd.BDDFactory;
 
 import org.bip.api.BIPComponent;
 import org.bip.api.BIPEngine;
@@ -69,7 +73,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 	 * Create instances of all the the Data Encoder and of the BIPCoordinator
 	 */
 	private DataEncoder dataEncoder = new DataEncoderImpl();
-	private BIPCoordinator BIPCoordinator = new BIPCoordinatorImpl();
+	private BIPCoordinator bipCoordinator = null;
 
 	private boolean registrationFinished = false;
 
@@ -77,11 +81,23 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 
 	private Semaphore registrationSemaphore;
 
-	public DataCoordinatorImpl() {
-		BIPCoordinator.setInteractionExecutor(this);
+	private InteractionExecutor interactionExecutor;
+
+	private Map<Integer, BiDirectionalPair> dVariablesToPosition = new Hashtable<Integer, BiDirectionalPair>();
+
+	private List<Integer> positionsOfDVariables = new ArrayList<Integer>();
+
+	public DataCoordinatorImpl(BIPCoordinator bipCoordinator) {
+		if (bipCoordinator == null)
+			this.bipCoordinator = new BIPCoordinatorImpl();
+		else
+			this.bipCoordinator = bipCoordinator;
+		
+		this.bipCoordinator.setInteractionExecutor(this);
 		dataEncoder.setDataCoordinator(this);
-		dataEncoder.setBehaviourEncoder(BIPCoordinator.getBehaviourEncoderInstance());
-		dataEncoder.setEngine(BIPCoordinator.getBDDBIPEngineInstance());
+		dataEncoder.setBehaviourEncoder(this.bipCoordinator.getBehaviourEncoderInstance());
+		dataEncoder.setBDDManager(this.bipCoordinator.getBDDManager());
+//		dataEncoder.setEngine(this.bipCoordinator.getBDDManager());
 		componentDataWires = new HashMap<String, Map<String, Set<DataWire>>>();
 		registrationSemaphore = new Semaphore(1);
 	}
@@ -90,7 +106,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 	 * Sends interactions-glue to the BIP Coordinator Sends data-glue to the Data Encoder.
 	 */
 	public void specifyGlue(BIPGlue glue) {
-		BIPCoordinator.specifyGlue(glue);
+		bipCoordinator.specifyGlue(glue);
 		this.dataWires = glue.dataWires;
 		try {
 			/*
@@ -98,7 +114,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 			 * 
 			 * specifyDataGlue checks the validity of wires and throws an exception if necessary.
 			 */
-			BIPCoordinator.specifyDataGlue(dataEncoder.specifyDataGlue(dataWires));
+			bipCoordinator.specifyPermanentConstraints(dataEncoder.specifyDataGlue(dataWires));
 		} catch (BIPEngineException e) {
 			e.printStackTrace();
 		}
@@ -147,7 +163,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 				componentBehaviourMapping.put(component, behaviour);
 				nbPorts += ((ArrayList<Port>) behaviour.getEnforceablePorts()).size();
 				nbStates += ((ArrayList<String>) behaviour.getStates()).size();
-				BIPCoordinator.register(component, behaviour);
+				bipCoordinator.register(component, behaviour);
 			}
 			ArrayList<BIPComponent> componentInstances = new ArrayList<BIPComponent>();
 
@@ -192,7 +208,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 		/*
 		 * Inform the BIPCoordinator only after all the informSpecifics for the particular component have finished
 		 */
-		BIPCoordinator.inform(component, currentState, disabledPorts);
+		bipCoordinator.inform(component, currentState, disabledPorts);
 	}
 
 	/**
@@ -251,8 +267,103 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 		 * 
 		 * Send each disabled combination of each deciding Component directly to the Data Encoder.
 		 */
-		BIPCoordinator.informSpecific(dataEncoder.encodeDisabledCombinations(decidingComponent, decidingPort, disabledCombinations));
+		bipCoordinator.specifyTemporaryConstraints(dataEncoder.encodeDisabledCombinations(decidingComponent, decidingPort, disabledCombinations));
 
+	}
+	
+	/*
+	 * Merging the "subinteractions". Some port can in more than one of the enabled d-variables. 
+	 * This port should not be sent to the Executors twice
+	 */
+	private List<Map<BIPComponent, Iterable<Port>>> mergingSubInteractions(byte[] chosenInteraction, ArrayList<Port> portsExecuted){
+		List<Map<BIPComponent, Iterable<Port>>> bigInteraction = new ArrayList<Map<BIPComponent, Iterable<Port>>>();
+		for (Integer i : positionsOfDVariables) {
+			Map<BIPComponent, Iterable<Port>> oneInteraction = new Hashtable<BIPComponent, Iterable<Port>>();
+
+
+			if (chosenInteraction[i] == 1) {
+				logger.debug("chosenInteraction length " + chosenInteraction.length);
+				BiDirectionalPair pair = dVariablesToPosition.get(i);
+				Port firstPair =  pair.getFirst();
+				Port secondPair =  pair.getSecond();
+				ArrayList<Port> componentPorts = new ArrayList<Port>();
+				componentPorts.add(firstPair);
+
+				logger.info("Chosen Component: {}", firstPair.component().getName());
+				logger.info("Chosen Port: {}", componentPorts.get(0).id);
+				ArrayList<Port> secondComponentPorts = new ArrayList<Port>();
+				secondComponentPorts.add(secondPair);
+
+				logger.info("Chosen Component: {}", secondPair.component().getName());
+				logger.info("Chosen Port: {}", secondComponentPorts.get(0).id);
+
+				boolean found = false;
+				Map<BIPComponent, Iterable<Port>> mergedInteractions = new Hashtable<BIPComponent, Iterable<Port>>();
+				ArrayList<Integer> indexOfInteractionsToBeDeleted = new ArrayList<Integer>();
+				portsExecuted.add(firstPair);
+				portsExecuted.add(secondPair);
+
+				for (Map<BIPComponent, Iterable<Port>> subInteraction : bigInteraction) {
+					if (found == false) {
+						/*
+						 * If both of the ports of the d-variable are already in a subinteraction, dont add the again.
+						 */
+						if (subInteraction.containsKey(firstPair.component()) && subInteraction.containsKey(secondPair.component())) {
+							if (subInteraction.get(firstPair.component()).iterator().next().id.equals(firstPair.id)
+									&& subInteraction.get(secondPair.component()).iterator().next().id.equals(secondPair.id)) {
+								found = true;
+								logger.debug("Double match");
+								logger.debug("Merged interactions size: " + mergedInteractions.size());
+							}
+							/*
+							 * If one of the ports (the first port) of the d-variable are already in a subinteraction. Add only the second port.
+							 */
+						} else if (subInteraction.containsKey( firstPair.component()) && !subInteraction.containsKey(secondPair.component())) {
+							if (subInteraction.get( firstPair.component()).iterator().next().id.equals(firstPair.id)) {
+								found = true;
+								indexOfInteractionsToBeDeleted.add(bigInteraction.indexOf(subInteraction));
+								mergedInteractions.putAll(subInteraction);
+								mergedInteractions.put(secondPair.component(), secondComponentPorts);
+							}
+							/*
+							 * If one of the ports (the second port) of the d-variable are already in a subinteraction. Add only the first port.
+							 */
+						} else if (subInteraction.containsKey(secondPair.component()) && !subInteraction.containsKey( firstPair.component())) {
+							if (subInteraction.get(secondPair.component()).iterator().next().id.equals(secondPair.id)) {
+								found = true;
+								indexOfInteractionsToBeDeleted.add(bigInteraction.indexOf(subInteraction));
+								mergedInteractions.putAll(subInteraction);
+								mergedInteractions.put( firstPair.component(), componentPorts);
+							}
+						}
+					}
+				}
+				/*
+				 * If no merging necessary add both ports
+				 */
+				if (found == false) {
+					oneInteraction.put(firstPair.component(),  componentPorts);
+					oneInteraction.put(secondPair.component(), secondComponentPorts);
+					(bigInteraction).add(oneInteraction);
+				} else {
+					logger.debug("indexOfInteractionsToBeDeleted size: " + indexOfInteractionsToBeDeleted.size());
+					
+					for (Integer index : indexOfInteractionsToBeDeleted) {
+						logger.debug("allInteractions size before removing: " + bigInteraction.size());
+						bigInteraction.remove(bigInteraction.get(index));
+						logger.debug("allInteractions size after removing: " + bigInteraction.size());
+					}
+					/*
+					 * Add the newly created subsets of chosen ports
+					 */
+					if (mergedInteractions.size() != 0) {
+						logger.debug("mergedInteractions size: " + mergedInteractions.size());
+						bigInteraction.add(mergedInteractions);
+					}
+				}
+			}
+		}
+		return bigInteraction;
 	}
 
 	/**
@@ -263,7 +374,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 	 * 
 	 * @throws BIPEngineException
 	 */
-	public void executeInteractions(Iterable<Map<BIPComponent, Iterable<Port>>> portGroupsToExecute) throws BIPEngineException {
+	public void executeInteractions(Iterable<Map<BIPComponent, Iterable<Port>>> portGroupsToExecute) throws BIPEngineException {	
 		this.count++;
 		Iterator<Map<BIPComponent, Iterable<Port>>> oneGroupToExecuteIterator = portGroupsToExecute.iterator();
 		Hashtable<Entry<BIPComponent, Port>, Hashtable<String, Object>> requiredDataMapping = new Hashtable<Entry<BIPComponent, Port>, Hashtable<String, Object>>();
@@ -390,15 +501,18 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 	}
 
 	public void start() {
-		BIPCoordinator.start();
+		bipCoordinator.start();
 	}
 
 	public void stop() {
-		BIPCoordinator.stop();
+		bipCoordinator.stop();
 	}
 
 	public void execute() {
-		BIPCoordinator.execute();
+		if (this.interactionExecutor == null){
+			setInteractionExecutor(this);
+		}
+		bipCoordinator.execute();
 	}
 
 	private void doInformSpecific(BIPComponent component) throws BIPEngineException {
@@ -603,7 +717,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 	 * 
 	 * @throws BIPEngineException
 	 */
-	public Iterable<BIPComponent> getBIPComponentInstances(String type) throws BIPEngineException {
+	public List<BIPComponent> getBIPComponentInstances(String type) throws BIPEngineException {
 		ArrayList<BIPComponent> instances = typeInstancesMapping.get(type);
 		if (instances == null) {
 			try {
@@ -638,6 +752,141 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 	 */
 	public int getNoStates() {
 		return nbStates;
+	}
+
+	public int getNoComponents() {
+		return bipCoordinator.getNoComponents();
+	}
+
+	public void execute(byte[] valuation) throws BIPEngineException {
+		if (interactionExecutor != this) {
+			interactionExecutor.execute(valuation);
+		}
+		else {
+			executeInteractions(preparePorts(valuation));		
+		}
+	}
+
+	private Iterable<Map<BIPComponent, Iterable<Port>>> preparePorts(byte[] valuation) {
+		/*
+		 * Grouping the interaction into smaller ones (with respect to data transfer)
+		 */
+		List<Map<BIPComponent, Iterable<Port>>> bigInteraction = new ArrayList<Map<BIPComponent, Iterable<Port>>>();
+		Map<BIPComponent, Iterable<Port>> chosenPorts = new Hashtable<BIPComponent, Iterable<Port>>();
+		ArrayList<BIPComponent> chosenComponents = new ArrayList<BIPComponent>();
+
+		logger.debug("positionsOfDVariables size: " + positionsOfDVariables.size());
+
+		ArrayList<Port> portsExecuted = new ArrayList<Port>();
+		bigInteraction=mergingSubInteractions(valuation, portsExecuted);
+
+		/*
+		 * Find ports that participate in the interaction but not in data transfer
+		 * and add them as a separate group
+		 */
+		Map<Port, Integer> portToPosition = bipCoordinator.getBehaviourEncoderInstance().getPortToPosition();
+		ArrayList <BIPComponent> componentsEnum =  registeredComponents; 
+		for (BIPComponent component: componentsEnum) {
+			logger.debug("Component: " + component.getName());
+
+			Iterable<Port> componentPorts = getBehaviourByComponent(component).getEnforceablePorts();
+			if (componentPorts == null || !componentPorts.iterator().hasNext()) {
+				logger.warn("Component {} does not have any enforceable ports.", component.getName());
+			}
+			ArrayList<Port> enabledPorts = new ArrayList<Port>();
+
+			for (Port componentPort : componentPorts) {
+				if (!portsExecuted.contains(componentPort) && valuation[portToPosition.get(componentPort)] == 1) {
+					enabledPorts.add(componentPort);
+				}
+			}
+			if (!enabledPorts.isEmpty()) {
+				logger.info("Chosen Component: {}", component.getName());
+				logger.info("Chosen Port: {}", enabledPorts.get(0).id);
+			}
+			if (enabledPorts.size() != 0) {
+				chosenPorts.put(component, enabledPorts);
+				chosenComponents.add(component);
+			}
+		}
+
+		logger.info("*************************************************************************");
+		logger.info("chosenPorts size: " + chosenPorts.size());
+		if (chosenPorts.size() != 0) {
+			(bigInteraction).add(chosenPorts);
+		}
+
+		/*
+		 * Here the ports mentioned above have been added
+		 */
+		
+		for (Map<BIPComponent, Iterable<Port>> inter : bigInteraction) {
+			for (Map.Entry<BIPComponent, Iterable<Port>> e : inter.entrySet()) {
+				logger.debug("ENGINE ENTRY: " + e.getKey().hashCode() + " - " + e.getValue());
+			}
+		}
+		logger.debug("Interactions: "+bigInteraction.size());
+
+		return bigInteraction;
+	}
+
+	public void setInteractionExecutor(InteractionExecutor interactionExecutor) {
+		this.interactionExecutor = interactionExecutor;
+		
+	}
+
+	public void specifyTemporaryConstraints(BDD constraints) {
+		bipCoordinator.specifyTemporaryConstraints(constraints);
+		
+	}
+
+	public BehaviourEncoder getBehaviourEncoderInstance() {
+		return bipCoordinator.getBehaviourEncoderInstance();
+	}
+
+	
+	public BDDFactory getBDDManager() {
+		return bipCoordinator.getBDDManager();
+	}
+
+	public void specifyPermanentConstraints(BDD constraints) {
+		bipCoordinator.specifyPermanentConstraints(constraints);
+	}
+
+	public DataEncoder getDataEncoder() {
+		return dataEncoder;
+	}
+	
+	/**
+	 * @return the dVariablesToPosition
+	 */
+	public Map<Integer, BiDirectionalPair> getdVariablesToPosition() {
+		return dVariablesToPosition;
+	}
+	
+
+	/**
+	 * @return the positionsOfDVariables
+	 */
+	public List<Integer> getPositionsOfDVariables() {
+		return positionsOfDVariables;
+	}
+	
+	/**
+	 * @param dVariablesToPosition
+	 *            the dVariablesToPosition to set
+	 */
+	public void setdVariablesToPosition(Map<Integer, BiDirectionalPair> dVariablesToPosition) {
+		this.dVariablesToPosition = dVariablesToPosition;
+	}
+
+
+	/**
+	 * @param positionsOfDVariables
+	 *            the positionsOfDVariables to set
+	 */
+	public void setPositionsOfDVariables(List<Integer> positionsOfDVariables) {
+		this.positionsOfDVariables =  positionsOfDVariables;
 	}
 
 }
