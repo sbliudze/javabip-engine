@@ -1,16 +1,14 @@
 package org.bip.engine;
 
-import java.util.AbstractMap;
 import java.util.ArrayList;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
+import java.util.Map.Entry;
 import java.util.concurrent.Semaphore;
 
 import net.sf.javabdd.BDD;
@@ -28,9 +26,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * There is no need for DataCoordinator interface, just DataCoordinatorImpl will implement BIP engine interface. DataCoordinatorImpl needs BIP
- * coordinator ( BIP Engine again ) that actual does all the computation of BIP engine. DataCoordinatorImpl takes care of only of data querying and
- * passing to BIP executors.
+ * There is no need for DataCoordinator interface, just DataCoordinatorImpl will
+ * implement BIP engine interface. DataCoordinatorImpl needs BIP coordinator (
+ * BIP Engine again ) that actual does all the computation of BIP engine.
+ * DataCoordinatorImpl takes care of only of data querying and passing to BIP
+ * executors.
  * 
  * DataCoordinator intercepts call register and inform from BIPExecutor.
  * 
@@ -44,17 +44,20 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 	private ArrayList<BIPComponent> registeredComponents = new ArrayList<BIPComponent>();
 
 	/**
-	 * Helper hashtable with integers representing the local identities of registered components as the keys and the Behaviours of these components as
-	 * the values.
+	 * Helper hashtable with integers representing the local identities of
+	 * registered components as the keys and the Behaviours of these components
+	 * as the values.
 	 */
 	private Hashtable<BIPComponent, Behaviour> componentBehaviourMapping = new Hashtable<BIPComponent, Behaviour>();
 	/**
-	 * Helper hashset of the components that have informed in an execution cycle.
+	 * Helper hashset of the components that have informed in an execution
+	 * cycle.
 	 */
 	private Hashtable<BIPComponent, ArrayList<Port>> componentUndecidedPorts = new Hashtable<BIPComponent, ArrayList<Port>>();
 
 	/**
-	 * Helper hashtable with strings as keys representing the component type of the registered components and ArrayList of BIPComponent instances that
+	 * Helper hashtable with strings as keys representing the component type of
+	 * the registered components and ArrayList of BIPComponent instances that
 	 * correspond to the component type specified in the key.
 	 */
 	private Hashtable<String, ArrayList<BIPComponent>> typeInstancesMapping = new Hashtable<String, ArrayList<BIPComponent>>();
@@ -83,7 +86,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 
 	private InteractionExecutor interactionExecutor;
 
-	private Map<Integer, BiDirectionalPair> dVariablesToPosition = new Hashtable<Integer, BiDirectionalPair>();
+	private Map<Integer, Entry<Port, Port>> dVarPositionsToWires = new Hashtable<Integer, Entry<Port, Port>>();
 
 	private List<Integer> positionsOfDVariables = new ArrayList<Integer>();
 
@@ -92,36 +95,42 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 			this.bipCoordinator = new BIPCoordinatorImpl();
 		else
 			this.bipCoordinator = bipCoordinator;
-		
+
 		this.bipCoordinator.setInteractionExecutor(this);
 		dataEncoder.setDataCoordinator(this);
 		dataEncoder.setBehaviourEncoder(this.bipCoordinator.getBehaviourEncoderInstance());
 		dataEncoder.setBDDManager(this.bipCoordinator.getBDDManager());
-//		dataEncoder.setEngine(this.bipCoordinator.getBDDManager());
+		// dataEncoder.setEngine(this.bipCoordinator.getBDDManager());
 		componentDataWires = new HashMap<String, Map<String, Set<DataWire>>>();
 		registrationSemaphore = new Semaphore(1);
 	}
 
 	/**
-	 * Sends interactions-glue to the BIP Coordinator Sends data-glue to the Data Encoder.
+	 * Sends interactions-glue to the BIP Coordinator Sends data-glue to the
+	 * Data Encoder.
 	 */
 	public void specifyGlue(BIPGlue glue) {
 		bipCoordinator.specifyGlue(glue);
 		this.dataWires = glue.dataWires;
 		try {
 			/*
-			 * Send the information about the dataWires to the DataEncoder to create the d-variables BDD nodes.
+			 * Send the information about the dataWires to the DataEncoder to
+			 * create the d-variables BDD nodes.
 			 * 
-			 * specifyDataGlue checks the validity of wires and throws an exception if necessary.
+			 * specifyDataGlue checks the validity of wires and throws an
+			 * exception if necessary.
 			 */
-			bipCoordinator.specifyPermanentConstraints(dataEncoder.specifyDataGlue(dataWires));
+			BDD dataConstraints = dataEncoder.specifyDataGlue(dataWires);
+			logger.debug("Data constraints from the encoder not null: " + (dataConstraints != null));
+			bipCoordinator.specifyPermanentConstraints(dataConstraints);
 		} catch (BIPEngineException e) {
 			e.printStackTrace();
 		}
 
 		for (String componentType : typeInstancesMapping.keySet()) {
 			// here we just get the behaviour of some component of this type
-			// for all other components the Data and the Wires will be exactly the same
+			// for all other components the Data and the Wires will be exactly
+			// the same
 			Behaviour behaviour = componentBehaviourMapping.get(typeInstancesMapping.get(componentType).get(0));
 			Map<String, Set<DataWire>> dataWire = new Hashtable<String, Set<DataWire>>();
 			for (Port port : behaviour.getEnforceablePorts()) {
@@ -149,7 +158,8 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 
 	public void register(BIPComponent component, Behaviour behaviour) {
 		/*
-		 * The condition below checks whether the component has already been registered.
+		 * The condition below checks whether the component has already been
+		 * registered.
 		 */
 		try {
 			if (component == null) {
@@ -168,7 +178,9 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 			ArrayList<BIPComponent> componentInstances = new ArrayList<BIPComponent>();
 
 			/*
-			 * If this component type already exists in the hashtable, update the ArrayList of BIPComponents that corresponds to this component type.
+			 * If this component type already exists in the hashtable, update
+			 * the ArrayList of BIPComponents that corresponds to this component
+			 * type.
 			 */
 			if (typeInstancesMapping.containsKey(component.getName())) {
 				componentInstances.addAll(typeInstancesMapping.get(component.getName()));
@@ -189,8 +201,9 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 		componentUndecidedPorts.put(component, getUndecidedPorts(component, currentState, disabledPorts));
 
 		/*
-		 * If all components have not finished registering the informSpecific cannot be done: In the informSpecific information is required from all
-		 * the registered components.
+		 * If all components have not finished registering the informSpecific
+		 * cannot be done: In the informSpecific information is required from
+		 * all the registered components.
 		 */
 		if (!registrationFinished) {
 			try {
@@ -206,24 +219,30 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 			e.printStackTrace();
 		}
 		/*
-		 * Inform the BIPCoordinator only after all the informSpecifics for the particular component have finished
+		 * Inform the BIPCoordinator only after all the informSpecifics for the
+		 * particular component have finished
 		 */
 		bipCoordinator.inform(component, currentState, disabledPorts);
 	}
 
 	/**
-	 * Send each disabled combination of each deciding Component directly to the Data Encoder.
+	 * Send each disabled combination of each deciding Component directly to the
+	 * Data Encoder.
 	 * 
-	 * Exceptions are thrown if: 1. DecidingComponent are not in the list of registered components. 2. Deciding Port of the deciding component (holder
-	 * component) is not specified in the Behaviour of the holder. 3. DisabledComponents in the disabledCombinations are not in the list of registered
-	 * components. 4. Disabled Ports in the disabledCombinations are not specified in the Behaviour of the holder component.
+	 * Exceptions are thrown if: 1. DecidingComponent are not in the list of
+	 * registered components. 2. Deciding Port of the deciding component (holder
+	 * component) is not specified in the Behaviour of the holder. 3.
+	 * DisabledComponents in the disabledCombinations are not in the list of
+	 * registered components. 4. Disabled Ports in the disabledCombinations are
+	 * not specified in the Behaviour of the holder component.
 	 */
 	public synchronized void informSpecific(BIPComponent decidingComponent, Port decidingPort, Map<BIPComponent, Set<Port>> disabledCombinations) throws BIPEngineException {
 		if (disabledCombinations == null || disabledCombinations.isEmpty()) {
 			logger.warn("No disabled combinations specified in informSpecific for deciding component." + decidingComponent.getName() + " for deciding port " + decidingPort.id
 					+ " Map of disabledCombinations is empty.");
 			/*
-			 * This is not a bad situation, since that only means that all combinations are acceptable. Hence nothing to do.
+			 * This is not a bad situation, since that only means that all
+			 * combinations are acceptable. Hence nothing to do.
 			 */
 			return;
 		}
@@ -256,243 +275,93 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 				if (!componentEnforceablePorts.contains(port)) {
 					logger.error("Disabled port " + port + " in informSpecific is not specified in the behaviour of the disabled component: " + component.getName());
 					throw new BIPEngineException("Disabled port " + port + " in informSpecific is not specified in the behaviour of the disabled component: " + component.getName());
-					
+
 				}
 				assert (componentEnforceablePorts.contains(port));
 			}
 		}
 
 		/*
-		 * At this point we know that all the involved components are registered and the specified ports belong to corresponding behaviours.
+		 * At this point we know that all the involved components are registered
+		 * and the specified ports belong to corresponding behaviours.
 		 * 
-		 * Send each disabled combination of each deciding Component directly to the Data Encoder.
+		 * Send each disabled combination of each deciding Component directly to
+		 * the Data Encoder.
 		 */
 		bipCoordinator.specifyTemporaryConstraints(dataEncoder.encodeDisabledCombinations(decidingComponent, decidingPort, disabledCombinations));
 
 	}
-	
+
 	/*
-	 * Merging the "subinteractions". Some port can in more than one of the enabled d-variables. 
-	 * This port should not be sent to the Executors twice
+	 * Merging the "subinteractions". Some port can in more than one of the
+	 * enabled d-variables. This port should not be sent to the Executors twice
 	 */
-	private List<Map<BIPComponent, Iterable<Port>>> mergingSubInteractions(byte[] chosenInteraction, ArrayList<Port> portsExecuted){
-		List<Map<BIPComponent, Iterable<Port>>> bigInteraction = new ArrayList<Map<BIPComponent, Iterable<Port>>>();
+	private List<List<Port>> mergingSubInteractions(byte[] chosenInteraction, ArrayList<Port> portsExecuted) {
 		for (Integer i : positionsOfDVariables) {
-			Map<BIPComponent, Iterable<Port>> oneInteraction = new Hashtable<BIPComponent, Iterable<Port>>();
-
-
 			if (chosenInteraction[i] == 1) {
-				logger.debug("chosenInteraction length " + chosenInteraction.length);
-				BiDirectionalPair pair = dVariablesToPosition.get(i);
-				Port firstPair =  pair.getFirst();
-				Port secondPair =  pair.getSecond();
-				ArrayList<Port> componentPorts = new ArrayList<Port>();
-				componentPorts.add(firstPair);
+				Entry<Port, Port> pair = dVarPositionsToWires.get(i);
+				Port firstPair = pair.getKey();
+				Port secondPair = pair.getValue();
+				logger.debug("D variable for ports: " + "\n\t" + firstPair + "\n\t of component " + firstPair.component() + "\n\t " + secondPair + "\n\t of component " + secondPair.component());
+				
+				Iterable<Data> portToDataInForTransition = componentBehaviourMapping.get(firstPair.component()).portToDataInForTransition(firstPair);
+				for (Data dataItem : portToDataInForTransition) {
+					String dataOutName = dataIsProvided(secondPair, componentBehaviourMapping.get(firstPair.component()).getComponentType(), dataItem.name());
 
-				logger.info("Chosen Component: {}", firstPair.component().getName());
-				logger.info("Chosen Port: {}", componentPorts.get(0).id);
-				ArrayList<Port> secondComponentPorts = new ArrayList<Port>();
-				secondComponentPorts.add(secondPair);
+					if (dataOutName != null && !dataOutName.isEmpty()) {
+						Object dataValue = secondPair.component().getData(dataOutName, dataItem.type());
+						logger.debug("GETTING DATA: from component " + secondPair.component() + " the value " + dataValue);
+						firstPair.component().setData(dataItem.name(), dataValue);
+					}
+					
+				}
 
-				logger.info("Chosen Component: {}", secondPair.component().getName());
-				logger.info("Chosen Port: {}", secondComponentPorts.get(0).id);
-
-				boolean found = false;
-				Map<BIPComponent, Iterable<Port>> mergedInteractions = new Hashtable<BIPComponent, Iterable<Port>>();
-				ArrayList<Integer> indexOfInteractionsToBeDeleted = new ArrayList<Integer>();
 				portsExecuted.add(firstPair);
 				portsExecuted.add(secondPair);
-
-				for (Map<BIPComponent, Iterable<Port>> subInteraction : bigInteraction) {
-					if (found == false) {
-						/*
-						 * If both of the ports of the d-variable are already in a subinteraction, dont add the again.
-						 */
-						if (subInteraction.containsKey(firstPair.component()) && subInteraction.containsKey(secondPair.component())) {
-							if (subInteraction.get(firstPair.component()).iterator().next().id.equals(firstPair.id)
-									&& subInteraction.get(secondPair.component()).iterator().next().id.equals(secondPair.id)) {
-								found = true;
-								logger.debug("Double match");
-								logger.debug("Merged interactions size: " + mergedInteractions.size());
-							}
-							/*
-							 * If one of the ports (the first port) of the d-variable are already in a subinteraction. Add only the second port.
-							 */
-						} else if (subInteraction.containsKey( firstPair.component()) && !subInteraction.containsKey(secondPair.component())) {
-							if (subInteraction.get( firstPair.component()).iterator().next().id.equals(firstPair.id)) {
-								found = true;
-								indexOfInteractionsToBeDeleted.add(bigInteraction.indexOf(subInteraction));
-								mergedInteractions.putAll(subInteraction);
-								mergedInteractions.put(secondPair.component(), secondComponentPorts);
-							}
-							/*
-							 * If one of the ports (the second port) of the d-variable are already in a subinteraction. Add only the first port.
-							 */
-						} else if (subInteraction.containsKey(secondPair.component()) && !subInteraction.containsKey( firstPair.component())) {
-							if (subInteraction.get(secondPair.component()).iterator().next().id.equals(secondPair.id)) {
-								found = true;
-								indexOfInteractionsToBeDeleted.add(bigInteraction.indexOf(subInteraction));
-								mergedInteractions.putAll(subInteraction);
-								mergedInteractions.put( firstPair.component(), componentPorts);
-							}
-						}
-					}
-				}
-				/*
-				 * If no merging necessary add both ports
-				 */
-				if (found == false) {
-					oneInteraction.put(firstPair.component(),  componentPorts);
-					oneInteraction.put(secondPair.component(), secondComponentPorts);
-					(bigInteraction).add(oneInteraction);
-				} else {
-					logger.debug("indexOfInteractionsToBeDeleted size: " + indexOfInteractionsToBeDeleted.size());
-					
-					for (Integer index : indexOfInteractionsToBeDeleted) {
-						logger.debug("allInteractions size before removing: " + bigInteraction.size());
-						bigInteraction.remove(bigInteraction.get(index));
-						logger.debug("allInteractions size after removing: " + bigInteraction.size());
-					}
-					/*
-					 * Add the newly created subsets of chosen ports
-					 */
-					if (mergedInteractions.size() != 0) {
-						logger.debug("mergedInteractions size: " + mergedInteractions.size());
-						bigInteraction.add(mergedInteractions);
-					}
-				}
 			}
 		}
+
+		List<List<Port>> bigInteraction = new ArrayList<List<Port>>();
+		bigInteraction.add(portsExecuted);
 		return bigInteraction;
 	}
 
 	/**
-	 * BDDBIPEngine informs the BIPCoordinator for the components (and their associated ports) that are part of the same chosen interaction.
+	 * BDDBIPEngine informs the BIPCoordinator for the components (and their
+	 * associated ports) that are part of the same chosen interaction.
 	 * 
-	 * Through this function all the components need to be notified. If they are participating in an interaction then their port to be fired is sent
-	 * to them through the execute function of the BIPExecutor. If they are not participating in an interaction then null is sent to them.
+	 * Through this function all the components need to be notified. If they are
+	 * participating in an interaction then their port to be fired is sent to
+	 * them through the execute function of the BIPExecutor. If they are not
+	 * participating in an interaction then null is sent to them.
 	 * 
 	 * @throws BIPEngineException
 	 */
-	public void executeInteractions(Iterable<Map<BIPComponent, Iterable<Port>>> portGroupsToExecute) throws BIPEngineException {	
+	public void executeInteractions(List<List<Port>> portGroupsToExecute) throws BIPEngineException {
 		this.count++;
-		Iterator<Map<BIPComponent, Iterable<Port>>> oneGroupToExecuteIterator = portGroupsToExecute.iterator();
-		Hashtable<Entry<BIPComponent, Port>, Hashtable<String, Object>> requiredDataMapping = new Hashtable<Entry<BIPComponent, Port>, Hashtable<String, Object>>();
 		/**
-		 * This is a list of components participating in the chosen-by-the-engine interactions. This keeps track of the chosen components in order to
-		 * differentiate them from the non chosen ones. Through this function all the components need to be notified. Either by sending null to them
-		 * or the port to be fired.
+		 * This is a list of components participating in the
+		 * chosen-by-the-engine interactions. This keeps track of the chosen
+		 * components in order to differentiate them from the non chosen ones.
+		 * Through this function all the components need to be notified. Either
+		 * by sending null to them or the port to be fired.
 		 */
-		ArrayList<BIPComponent> enabledComponents = new ArrayList<BIPComponent>();
-		while (oneGroupToExecuteIterator.hasNext()) {
-			Map<BIPComponent, Iterable<Port>> oneInteraction = oneGroupToExecuteIterator.next();
-			Iterator<BIPComponent> interactionComponents = oneInteraction.keySet().iterator();
-			while (interactionComponents.hasNext()) {
-
-				BIPComponent component = interactionComponents.next();
-				enabledComponents.add(component);
-				Iterator<Port> compPortsToFire = oneInteraction.get(component).iterator();
-
-				logger.debug("For component {} the ports are {}. ", component.getName(), oneInteraction.get(component));
-				/*
-				 * If the Iterator<Port> is null or empty for a chosen component, throw an exception. This should not happen.
-				 */
-				if (compPortsToFire == null || !compPortsToFire.hasNext()) {
-					logger.error("In a chosen by the engine interaction, associated to component " + component.getName() + " is a null or empty list of ports to be fired.");
-					throw new BIPEngineException("Exception in thread: " + Thread.currentThread().getName() + " In a chosen by the engine interaction, associated to component " + component.getName()
-							+ " is a null or empty list of ports to be fired.");
-				}
-				assert (compPortsToFire != null);
-
-				// This loop will be executed at least once
-				while (compPortsToFire.hasNext()) {
-					Port port = compPortsToFire.next();
-					getDataForOnePort(requiredDataMapping, oneInteraction, component, port);
-				}
-			}
-		}
-
-		// this loop is separated from the previous one, because we should first get all the data and execute only afterwards
-		for (Map<BIPComponent, Iterable<Port>> combination : portGroupsToExecute) {
-			for (BIPComponent component : combination.keySet()) {
-				for (Port port : combination.get(component)) {
-					component.execute(port.id, getData(requiredDataMapping, component, port));
-				}
-			}
-		}
-		/*
-		 * Send null to the components that are not part of the overall interaction
-		 */
-		for (BIPComponent component : registeredComponents) {
-			if (!enabledComponents.contains(component)) {
-				component.execute(null);
-			}
-		}
+		bipCoordinator.executeInteractions(portGroupsToExecute);
 	}
 
-	private Hashtable<Entry<BIPComponent, Port>, Hashtable<String, Object>> getDataForOnePort(Hashtable<Entry<BIPComponent, Port>, Hashtable<String, Object>> requiredDataMapping,
-			Map<BIPComponent, Iterable<Port>> oneInteraction, BIPComponent component, Port port) throws BIPEngineException {
-		/*
-		 * If the port is null or empty for a chosen component, throw an exception. This should not happen.
-		 */
-		if (port == null || port.id.isEmpty()) {
-			logger.error("In a chosen by the engine interaction, associated to component " + component.getName() + " the port to be fired is null or empty.");
-			throw new BIPEngineException("Exception in thread: " + Thread.currentThread().getName() + " In a chosen by the engine interaction, associated to component " + component.getName()
-					+ " the port to be fired is null or empty.");
-		}
-		assert (port != null && !port.id.isEmpty());
 
-		/*
-		 * Find out which components are sending data to this component
-		 */
-		Iterable<Data> portToDataInForTransition = componentBehaviourMapping.get(component).portToDataInForTransition(port);
-		Hashtable<String, Object> nameToValue = new Hashtable<String, Object>();
-		Entry<BIPComponent, Port> key = new AbstractMap.SimpleEntry<BIPComponent, Port>(component, port);
-		/*
-		 * if there is no data required, put empty values and continue
-		 */
-		if (portToDataInForTransition == null || !portToDataInForTransition.iterator().hasNext()) {
-			requiredDataMapping.put(key, nameToValue);
-			return requiredDataMapping;
-		}
-		for (Data dataItem : portToDataInForTransition) {
-			logger.debug("Component {} execute port with inData {}", component.getName(), dataItem.name());
-			for (BIPComponent aComponent : oneInteraction.keySet()) {
-				if (component.equals(aComponent)) {
-					continue;
-				}
-				String dataOutName = dataIsProvided(aComponent, componentBehaviourMapping.get(component).getComponentType(), dataItem.name(), oneInteraction.get(aComponent));
-				if (dataOutName != null && !dataOutName.isEmpty()) {
-					Object dataValue = aComponent.getData(dataOutName, dataItem.type());
-					logger.debug("GETTING DATA: from component " + aComponent.getName() + " the value " + dataValue);
-					nameToValue.put(dataItem.name(), dataValue);
-					break;
-				}
-			}
-		}
-		logger.debug("Data<->value table: {}", nameToValue);
-		requiredDataMapping.put(key, nameToValue);
-		return requiredDataMapping;
+	private Map<String, ?> getData(Hashtable<Port, Hashtable<String, Object>> requiredDataMapping, BIPComponent component, Port port) {
+		return requiredDataMapping.get(port);
 	}
 
-	private Map<String, ?> getData(Hashtable<Entry<BIPComponent, Port>, Hashtable<String, Object>> requiredDataMapping, BIPComponent component, Port port) {
-		for (Entry<BIPComponent, Port> entry : requiredDataMapping.keySet()) {
-			if (component.equals(entry.getKey()) && port.equals(entry.getValue())) {
-				return requiredDataMapping.get(entry);
-			}
-		}
-		return null;
-	}
-
-	private String dataIsProvided(BIPComponent providingComponent, String requiringComponentType, String dataName, Iterable<Port> port) {
+	private String dataIsProvided(Port providingPort, String requiringComponentType, String dataName) {
+		BIPComponent providingComponent = providingPort.component();
 		for (DataWire wire : this.componentDataWires.get(requiringComponentType).get(dataName)) {
 			if (wire.from.specType.equals(componentBehaviourMapping.get(providingComponent).getComponentType())) {
 				Set<Port> portsProviding = componentBehaviourMapping.get(providingComponent).getDataProvidingPorts(wire.from.id);
-				for (Port p : port) {
-					for (Port inport : portsProviding) {
-						if (inport.id.equals(p.id) && inport.specType.equals(p.specType)) {
-							return wire.from.id;
-						}
+				for (Port outport : portsProviding) {
+					if (outport.id.equals(providingPort.id) && outport.specType.equals(providingPort.specType)) {
+						return wire.from.id;
 					}
 				}
 			}
@@ -509,7 +378,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 	}
 
 	public void execute() {
-		if (this.interactionExecutor == null){
+		if (this.interactionExecutor == null) {
 			setInteractionExecutor(this);
 		}
 		bipCoordinator.execute();
@@ -535,7 +404,8 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 			// for each DataIn variable get info which components provide it as
 			// their outData
 			for (Data inDataItem : dataIn) {
-				// for each wire that is incoming for this data of this component (as precomputed)
+				// for each wire that is incoming for this data of this
+				// component (as precomputed)
 				for (DataWire wire : this.componentDataWires.get(decidingBehaviour.getComponentType()).get(inDataItem.name())) {
 
 					// for this dataVariable: all the values that it can take
@@ -713,7 +583,8 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 	}
 
 	/**
-	 * Helper function that returns the registered component instances that correspond to a component type.
+	 * Helper function that returns the registered component instances that
+	 * correspond to a component type.
 	 * 
 	 * @throws BIPEngineException
 	 */
@@ -734,21 +605,24 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 	}
 
 	/**
-	 * Helper function that given a component returns the corresponding behaviour as a Behaviour Object.
+	 * Helper function that given a component returns the corresponding
+	 * behaviour as a Behaviour Object.
 	 */
 	public Behaviour getBehaviourByComponent(BIPComponent component) {
 		return componentBehaviourMapping.get(component);
 	}
 
 	/**
-	 * Helper function that returns the total number of ports of the registered components.
+	 * Helper function that returns the total number of ports of the registered
+	 * components.
 	 */
 	public int getNoPorts() {
 		return nbPorts;
 	}
 
 	/**
-	 * Helper function that returns the total number of states of the registered components.
+	 * Helper function that returns the total number of states of the registered
+	 * components.
 	 */
 	public int getNoStates() {
 		return nbStates;
@@ -761,90 +635,84 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 	public void execute(byte[] valuation) throws BIPEngineException {
 		if (interactionExecutor != this) {
 			interactionExecutor.execute(valuation);
+		} else {
+			executeInteractions(preparePorts(valuation));
 		}
-		else {
-			executeInteractions(preparePorts(valuation));		
-		}
+		logger.info("*************************************************************************");
 	}
 
-	private Iterable<Map<BIPComponent, Iterable<Port>>> preparePorts(byte[] valuation) {
+	private List<List<Port>> preparePorts(byte[] valuation) {
 		/*
-		 * Grouping the interaction into smaller ones (with respect to data transfer)
+		 * Grouping the interaction into smaller ones (with respect to data
+		 * transfer)
 		 */
-		List<Map<BIPComponent, Iterable<Port>>> bigInteraction = new ArrayList<Map<BIPComponent, Iterable<Port>>>();
 		Map<BIPComponent, Iterable<Port>> chosenPorts = new Hashtable<BIPComponent, Iterable<Port>>();
-		ArrayList<BIPComponent> chosenComponents = new ArrayList<BIPComponent>();
-
 		logger.debug("positionsOfDVariables size: " + positionsOfDVariables.size());
 
 		ArrayList<Port> portsExecuted = new ArrayList<Port>();
-		bigInteraction=mergingSubInteractions(valuation, portsExecuted);
+		List<List<Port>> bigInteraction = mergingSubInteractions(valuation, portsExecuted);
 
 		/*
-		 * Find ports that participate in the interaction but not in data transfer
-		 * and add them as a separate group
+		 * Find ports that participate in the interaction but not in data
+		 * transfer and add them as a separate group
 		 */
+
+		ArrayList<Port> enabledPorts = new ArrayList<Port>();
 		Map<Port, Integer> portToPosition = bipCoordinator.getBehaviourEncoderInstance().getPortToPosition();
-		ArrayList <BIPComponent> componentsEnum =  registeredComponents; 
-		for (BIPComponent component: componentsEnum) {
+		ArrayList<BIPComponent> componentsEnum = registeredComponents;
+		for (BIPComponent component : componentsEnum) {
 			logger.debug("Component: " + component.getName());
 
 			Iterable<Port> componentPorts = getBehaviourByComponent(component).getEnforceablePorts();
 			if (componentPorts == null || !componentPorts.iterator().hasNext()) {
 				logger.warn("Component {} does not have any enforceable ports.", component.getName());
 			}
-			ArrayList<Port> enabledPorts = new ArrayList<Port>();
+			
+			// ArrayList<Port> enabledPorts = new ArrayList<Port>();
 
-			for (Port componentPort : componentPorts) {
-				if (!portsExecuted.contains(componentPort) && valuation[portToPosition.get(componentPort)] == 1) {
-					enabledPorts.add(componentPort);
+			for (Port port : componentPorts) {
+				if (!portsExecuted.contains(port) && valuation[portToPosition.get(port)] == 1) {
+					logger.info("Chosen Port: {}", port.id+ "of component: "+port.component());
+					enabledPorts.add(port);
 				}
-			}
-			if (!enabledPorts.isEmpty()) {
-				logger.info("Chosen Component: {}", component.getName());
-				logger.info("Chosen Port: {}", enabledPorts.get(0).id);
-			}
-			if (enabledPorts.size() != 0) {
-				chosenPorts.put(component, enabledPorts);
-				chosenComponents.add(component);
-			}
+			}	
+
 		}
 
-		logger.info("*************************************************************************");
-		logger.info("chosenPorts size: " + chosenPorts.size());
-		if (chosenPorts.size() != 0) {
-			(bigInteraction).add(chosenPorts);
+		
+		logger.debug("chosenPorts size: " + chosenPorts.size());
+		if (enabledPorts.size() != 0) {
+			bigInteraction.add(enabledPorts);
 		}
 
 		/*
 		 * Here the ports mentioned above have been added
 		 */
-		
-		for (Map<BIPComponent, Iterable<Port>> inter : bigInteraction) {
-			for (Map.Entry<BIPComponent, Iterable<Port>> e : inter.entrySet()) {
-				logger.debug("ENGINE ENTRY: " + e.getKey().hashCode() + " - " + e.getValue());
+
+		for (Iterable<Port> inter : bigInteraction) {
+			for (Port port : inter) {
+				logger.debug("ENGINE ENTRY: " + port.component().hashCode() + " - " + port.id);
 			}
 		}
-		logger.debug("Interactions: "+bigInteraction.size());
+		logger.debug("Interactions: " + bigInteraction.size());
 
 		return bigInteraction;
 	}
 
 	public void setInteractionExecutor(InteractionExecutor interactionExecutor) {
 		this.interactionExecutor = interactionExecutor;
-		
+
 	}
 
 	public void specifyTemporaryConstraints(BDD constraints) {
 		bipCoordinator.specifyTemporaryConstraints(constraints);
-		
+
 	}
 
 	public BehaviourEncoder getBehaviourEncoderInstance() {
 		return bipCoordinator.getBehaviourEncoderInstance();
 	}
 
-	
 	public BDDFactory getBDDManager() {
 		return bipCoordinator.getBDDManager();
 	}
@@ -856,14 +724,13 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 	public DataEncoder getDataEncoder() {
 		return dataEncoder;
 	}
-	
+
 	/**
 	 * @return the dVariablesToPosition
 	 */
-	public Map<Integer, BiDirectionalPair> getdVariablesToPosition() {
-		return dVariablesToPosition;
+	public Map<Integer, Entry<Port, Port>> getdVarPositionsToWires() {
+		return dVarPositionsToWires;
 	}
-	
 
 	/**
 	 * @return the positionsOfDVariables
@@ -871,22 +738,21 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 	public List<Integer> getPositionsOfDVariables() {
 		return positionsOfDVariables;
 	}
-	
+
 	/**
-	 * @param dVariablesToPosition
+	 * @param dVarPositionsToWires
 	 *            the dVariablesToPosition to set
 	 */
-	public void setdVariablesToPosition(Map<Integer, BiDirectionalPair> dVariablesToPosition) {
-		this.dVariablesToPosition = dVariablesToPosition;
+	public void setdVariablesToPosition(Map<Integer, Entry<Port, Port>> dVarPositionsToWires) {
+		this.dVarPositionsToWires = dVarPositionsToWires;
 	}
-
 
 	/**
 	 * @param positionsOfDVariables
 	 *            the positionsOfDVariables to set
 	 */
 	public void setPositionsOfDVariables(List<Integer> positionsOfDVariables) {
-		this.positionsOfDVariables =  positionsOfDVariables;
+		this.positionsOfDVariables = positionsOfDVariables;
 	}
 
 }

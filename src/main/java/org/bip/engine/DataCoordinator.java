@@ -2,8 +2,10 @@ package org.bip.engine;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import org.bip.api.BIPEngine;
+import org.bip.api.Port;
 
 /**
  * @author mavridou
@@ -15,7 +17,7 @@ public interface DataCoordinator extends BIPEngine, BIPCoordinator, InteractionE
 	/**
 	 * @param dVariablesToPosition the dVariablesToPosition to set
 	 */
-	void setdVariablesToPosition(Map<Integer, BiDirectionalPair> dVariablesToPosition);
+	void setdVariablesToPosition(Map<Integer, Entry<Port, Port>> dVariablesToPosition);
 	
 	/**
 	 * @param positionsOfDVariables the positionsOfDVariables to set
@@ -25,7 +27,7 @@ public interface DataCoordinator extends BIPEngine, BIPCoordinator, InteractionE
 	/**
 	 * @return the dVariablesToPosition
 	 */
-	Map<Integer, BiDirectionalPair> getdVariablesToPosition() ;
+	Map<Integer, Entry<Port, Port>> getdVarPositionsToWires() ;
 
 	
 	/**

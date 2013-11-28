@@ -53,19 +53,10 @@ public interface BDDBIPEngine {
 	 * Getter for the BDD Manager
 	 */
 	BDDFactory getBDDManager(); 
-	
-//	/**
-//	 * @return the position of port BDDs in the BDD Manager
-//	 */
-//	List<Integer> getPositionsOfPorts();
-//	
-//	Map<Port, Integer> getPortToPosition();
+		
+	void specifyTemporaryExtraConstraints(BDD informSpecific);
 
-
-	
-	void informSpecific(BDD informSpecific);
-
-	void specifyAdditionalConstraints(BDD specifyDataGlue);
+	void specifyPermanentExtraConstraints(BDD specifyDataGlue);
 
 
 

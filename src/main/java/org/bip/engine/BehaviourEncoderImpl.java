@@ -20,16 +20,11 @@ import org.slf4j.LoggerFactory;
  * @author mavridou
  */
 
-/** Computes the BDD of the behaviour of all components
- * @author mavridou
- *  */
 public class BehaviourEncoderImpl implements BehaviourEncoder {
 
 	private Logger logger = LoggerFactory.getLogger(BehaviourEncoderImpl.class);
-	//TODO: pass the portBDDs, (stateBDDs ?) to the BDDEngine
 	private volatile Hashtable<BIPComponent, BDD[]> stateBDDs = new Hashtable<BIPComponent, BDD[]>();
 	private volatile Hashtable<BIPComponent, BDD[]> portBDDs = new Hashtable<BIPComponent, BDD[]>();
-	//TODO: move the portToBDDs to the BDDEngine (?)
 	private volatile Hashtable <BIPComponent, Hashtable<String, BDD>> componentToPortToBDD = new Hashtable <BIPComponent, Hashtable<String,BDD>>();
 	private volatile Hashtable <BIPComponent, Hashtable<String, BDD>> componentToStateToBDD = new Hashtable <BIPComponent, Hashtable<String,BDD>>();
 	private int auxSum;

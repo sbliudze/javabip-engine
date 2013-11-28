@@ -8,6 +8,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Map.Entry;
 
 import net.sf.javabdd.BDD;
 import net.sf.javabdd.BDDFactory;
@@ -32,13 +33,8 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 	private Hashtable<BIPComponent, BDD> currentStateBDDs = new Hashtable<BIPComponent, BDD>();
 	private ArrayList<BDD> temporaryConstraints = new ArrayList<BDD>();
 	private Hashtable<BIPComponent, BDD> behaviourBDDs = new Hashtable<BIPComponent, BDD>();
-	
-	/* BDD for ΛFi */
-	private BDD totalBehaviour;
-	/* BDD for Glue */
-	private BDD totalGlue;
 
-	private BDD totalBehaviourAndGlue;
+	private BDD totalConstraints;
 
 	//
 	private int noNodes = 10000;
@@ -46,11 +42,10 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 
 	/* Use JavaBDD Bdd Manager */
 	private BDDFactory bdd_mgr = BDDFactory.init("java", noNodes, cacheSize);
-	Map<Integer, BiDirectionalPair> dVariablesToPosition = new Hashtable<Integer, BiDirectionalPair>();
+	Map<Integer, Entry<Port, Port>> dVariablesToPosition = new Hashtable<Integer, Entry<Port, Port>>();
 	List<Integer> positionsOfDVariables = new ArrayList<Integer>();
 
 	private BIPCoordinator wrapper;
-	private BDD dataGlueBDD;
 
 	/**
 	 * Counts the number of enabled ports in the Maximal cube chosen
@@ -130,7 +125,7 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 			BIPComponent component = componentsEnum.nextElement();
 			if (currentStateBDDs.get(component) == null) {
 				logger.error("Current state BDD is null of component {}", component);
-				throw new BIPEngineException("Current state BDD is null of component "+ component);
+				throw new BIPEngineException("Current state BDD is null of component " + component);
 			}
 			tmp = totalCurrentStateBdd.and(currentStateBDDs.get(component));
 			totalCurrentStateBdd.free();
@@ -139,7 +134,7 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		return totalCurrentStateBdd;
 	}
 
-	public final BDD totalDisabledCombinationsBdd(ArrayList<BDD> disabledCombinationBDDs) throws BIPEngineException {
+	public final BDD totalExtraBdd(ArrayList<BDD> disabledCombinationBDDs) throws BIPEngineException {
 		BDD totalDisabledCombinationBdd = bdd_mgr.one();
 
 		for (BDD disabledCombinationBDD : disabledCombinationBDDs) {
@@ -156,45 +151,21 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 
 		byte[] chosenInteraction;
 
-//		byte[] cubeMaximal = new byte[wrapper.getNoPorts() + wrapper.getNoStates() + positionsOfDVariables.size()];
+		BDD totalCurrentStateAndDisabledCombinations = totalCurrentStateBdd(currentStateBDDs);
+		// TODO: Check that the assert is correct
+		assert (totalCurrentStateAndDisabledCombinations == null);
 
-//		cubeMaximals.add(0, cubeMaximal);
-
-		BDD totalCurrentStateAndDisabledCombinations;
-		if (!temporaryConstraints.isEmpty() || temporaryConstraints != null) {
-			totalCurrentStateAndDisabledCombinations = totalCurrentStateBdd(currentStateBDDs).and(totalDisabledCombinationsBdd(temporaryConstraints));
-			if (totalCurrentStateAndDisabledCombinations == null) {
-				try {
-					logger.error("Total Current States BDD is null");
-					throw new BIPEngineException("Total Current States BDD is null with disabled combinations");
-				} catch (BIPEngineException e) {
-					e.printStackTrace();
-					throw e;
-				}
-			}
-		} else {
-			/* Λi Ci */
-			totalCurrentStateAndDisabledCombinations = totalCurrentStateBdd(currentStateBDDs);
-
-			if (totalCurrentStateAndDisabledCombinations == null) {
-				try {
-					logger.error("Total Current States BDD is null");
-					throw new BIPEngineException("Total Current States BDD is null");
-				} catch (BIPEngineException e) {
-					e.printStackTrace();
-					throw e;
-				}
-			}
+		if (temporaryConstraints != null || !temporaryConstraints.isEmpty()) {
+			totalCurrentStateAndDisabledCombinations.andWith(totalExtraBdd(temporaryConstraints));
 		}
 
 		/* Compute global BDD: solns= Λi Fi Λ G Λ (Λi Ci) */
-		BDD solns = totalBehaviourAndGlue.and(totalCurrentStateAndDisabledCombinations);
-
-		if (solns == null) {
-			logger.error("Global BDD is null");
-			throw new BIPEngineException("Global BDD is null");
-		}
+//		BDD solns = totalConstraints;
+		BDD solns = totalConstraints.and(totalCurrentStateAndDisabledCombinations);
 		totalCurrentStateAndDisabledCombinations.free();
+//		solns.
+//		andWith(totalCurrentStateAndDisabledCombinations);
+
 		ArrayList<byte[]> possibleInteraction = new ArrayList<byte[]>();
 
 		/*
@@ -203,7 +174,7 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		// bdd_mgr.reorder(BDDFactory.REORDER_SIFTITE);
 		// logger.info("Reorder stats: "+bdd_mgr.getReorderStats());
 
-		possibleInteraction.addAll(solns.allsat()); 
+		possibleInteraction.addAll(solns.allsat());
 
 		logger.info("******************************* Engine **********************************");
 		logger.info("Number of possible interactions is: {} ", possibleInteraction.size());
@@ -233,13 +204,13 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		if (size == 0) {
 			logger.error("Deadlock. No maximal interactions.");
 			throw new BIPEngineException("Deadlock. No maximal interactions.");
-		} 
-//		else if (size == 1) {
-//			if (countPortEnable(cubeMaximals.get(0), positionsOfPorts) == 0) {
-//				logger.error("Deadlock. No enabled ports.");
-//				throw new BIPEngineException("Deadlock. No enabled ports.");
-//			}
-//		}
+		}
+		 else if (size == 1) {
+			if (countPortEnable(cubeMaximals.get(0), (ArrayList<Integer>) wrapper.getBehaviourEncoderInstance().getPositionsOfPorts()) == 0) {
+				logger.error("Deadlock. No enabled ports.");
+				throw new BIPEngineException("Deadlock. No enabled ports.");
+			}
+		}
 
 		logger.debug("Number of maximal interactions: " + cubeMaximals.size());
 		Random rand = new Random();
@@ -259,17 +230,14 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 
 		/*
 		 * Beginning of the part to move to the Data Coordinator
-		 * 
 		 */
 
 		wrapper.execute(chosenInteraction);
-	
 
 		/*
 		 * End of the part to move to the Data Coordinator
-		 * 
-		 */	
-		
+		 */
+
 		solns.free();
 		temporaryConstraints.clear();
 		// for (BDD disabledCombination: disabledCombinationBDDs){
@@ -282,21 +250,21 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		currentStateBDDs.put(component, componentBDD);
 	}
 
-	public synchronized void informSpecific(final BDD informSpecific) {
+	public synchronized void specifyTemporaryExtraConstraints(final BDD informSpecific) {
 		temporaryConstraints.add(informSpecific);
 		logger.debug("INFORM SPECIFIC CALL: Disabled Combinations size " + temporaryConstraints.size());
 	}
 
-	public synchronized void specifyAdditionalConstraints(BDD specifyDataGlue) {
-		this.dataGlueBDD = specifyDataGlue;
-		if (totalBehaviourAndGlue != null) {
-			totalBehaviourAndGlue.andWith(dataGlueBDD);
-		} else if (this.totalGlue != null) {
-			totalGlue.andWith(dataGlueBDD);
-		} else {
-			return;
+	public synchronized void specifyPermanentExtraConstraints(BDD extraConstraints) {
+		synchronized (this) {
+			if (totalConstraints == null) {
+				totalConstraints = extraConstraints;
+				logger.debug("Extra permanent constraints added to empty total BDD.");
+			} else {
+				totalConstraints.andWith(extraConstraints);
+				logger.debug("Extra permanent constraints added to existing total BDD.");
+			}
 		}
-
 	}
 
 	public synchronized void informBehaviour(BIPComponent component, BDD componentBDD) {
@@ -306,66 +274,37 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 	public synchronized final void totalBehaviourBDD() throws BIPEngineException {
 
 		BDD totalBehaviourBdd = bdd_mgr.one();
-		BDD tmp;
 
 		for (Enumeration<BIPComponent> componentsEnum = behaviourBDDs.keys(); componentsEnum.hasMoreElements();) {
+			BDD tmp;
 			tmp = totalBehaviourBdd.and(behaviourBDDs.get(componentsEnum.nextElement()));
 			totalBehaviourBdd.free();
 			totalBehaviourBdd = tmp;
 		}
-		this.totalBehaviour = totalBehaviourBdd;
-		if (totalGlue != null) {
-			totalBehaviourAndGlue = this.totalBehaviour.and(totalGlue);
-			if (totalBehaviourAndGlue == null) {
-				try {
-					logger.error("Total Behaviour and Glue is null");
-					throw new BIPEngineException("Total Behaviour and Glue is null");
-				} catch (BIPEngineException e) {
-					e.printStackTrace();
-					throw e;
-				}
+
+		synchronized (this) {
+			if (totalConstraints == null) {
+				totalConstraints = totalBehaviourBdd;
+				logger.debug("Behaviour constraints added to empty total BDD.");
+			} else {
+				totalConstraints.andWith(totalBehaviourBdd);
+				logger.debug("Behaviour constraints added to existing total BDD.");
 			}
-			this.totalBehaviour.free();
-			totalGlue.free();
 		}
 	}
+
 
 	public synchronized void informGlue(BDD totalGlue) throws BIPEngineException {
-
-		this.totalGlue = totalGlue;
-
-		if (this.totalBehaviourAndGlue == null && this.totalBehaviour != null) {
-			totalBehaviourAndGlue = totalBehaviour.and(this.totalGlue);
-			if (this.dataGlueBDD != null) {
-				totalBehaviourAndGlue.andWith(dataGlueBDD);
+		synchronized (this) {
+			if (totalConstraints == null) {
+				totalConstraints = totalGlue;
+				logger.debug("Glue constraints added to empty total BDD.");
+			} else {
+				totalConstraints.andWith(totalGlue);
+				logger.debug("Glue constraints added to existing total BDD.");
 			}
-			// bdd_mgr.reorder(BDDFactory.REORDER_SIFTITE);
-			// logger.info("Reorder stats: "+bdd_mgr.getReorderStats());
-			if (totalBehaviourAndGlue == null) {
-				try {
-					logger.error("Total Behaviour and Glue is null");
-					throw new BIPEngineException("Total Behaviour and Glue is null");
-				} catch (BIPEngineException e) {
-					e.printStackTrace();
-					throw e;
-				}
-			}
-			this.totalBehaviour.free();
-			this.totalGlue.free();
 		}
 	}
-
-//	public List<Integer> getPositionsOfPorts() {
-//		return positionsOfPorts;
-//	}
-//
-//	public Map<Port, Integer> getPortToPosition() {
-//		return portToPosition;
-//	}
-
-
-
-
 
 	public void setOSGiBIPEngine(BIPCoordinator wrapper) {
 		this.wrapper = wrapper;

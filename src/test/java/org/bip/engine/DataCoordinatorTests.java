@@ -236,8 +236,13 @@ public class DataCoordinatorTests implements BIPComponent {
 		assertEquals(6, list.size());
 	}
 
-	@Override
 	public void setData(Map<String, ?> data) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void setData(String arg0, Object arg1) {
 		// TODO Auto-generated method stub
 		
 	}
