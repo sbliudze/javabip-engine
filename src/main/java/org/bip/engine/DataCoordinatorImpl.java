@@ -100,7 +100,6 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 		dataEncoder.setDataCoordinator(this);
 		dataEncoder.setBehaviourEncoder(this.bipCoordinator.getBehaviourEncoderInstance());
 		dataEncoder.setBDDManager(this.bipCoordinator.getBDDManager());
-		// dataEncoder.setEngine(this.bipCoordinator.getBDDManager());
 		componentDataWires = new HashMap<String, Map<String, Set<DataWire>>>();
 		registrationSemaphore = new Semaphore(1);
 	}

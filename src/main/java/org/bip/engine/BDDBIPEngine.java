@@ -1,13 +1,10 @@
 package org.bip.engine;
 
-import java.util.List;
-import java.util.Map;
 
 import net.sf.javabdd.BDD;
 import net.sf.javabdd.BDDFactory;
 
 import org.bip.api.BIPComponent;
-import org.bip.api.Port;
 import org.bip.exceptions.BIPEngineException;
 
 /**

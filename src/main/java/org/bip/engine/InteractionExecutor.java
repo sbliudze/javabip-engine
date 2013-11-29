@@ -1,9 +1,6 @@
 package org.bip.engine;
 
 import java.util.List;
-import java.util.Map;
-
-import org.bip.api.BIPComponent;
 import org.bip.api.Port;
 import org.bip.exceptions.BIPEngineException;
 
@@ -23,6 +20,4 @@ public interface InteractionExecutor {
 	void execute (byte[] valuation) throws BIPEngineException;
 
 	public void executeInteractions(List<List<Port>> portsToFire) throws BIPEngineException;
-//	public void executeInteractions(byte[] valuation) throws BIPEngineException;
-
 }

@@ -1,7 +1,6 @@
 package org.bip.engine;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.Iterator;
@@ -14,7 +13,6 @@ import net.sf.javabdd.BDD;
 import net.sf.javabdd.BDDFactory;
 
 import org.bip.api.BIPComponent;
-import org.bip.api.Behaviour;
 import org.bip.api.Port;
 import org.bip.exceptions.BIPEngineException;
 import org.slf4j.Logger;
@@ -36,7 +34,6 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 
 	private BDD totalConstraints;
 
-	//
 	private int noNodes = 10000;
 	private int cacheSize = 1000;
 
@@ -103,6 +100,8 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 	private void findMaximals(ArrayList<byte[]> cubeMaximals, byte[] c_cube, List<Integer> portBDDsPosition) {
 		int size = cubeMaximals.size();
 		logger.debug("findMaximals size: " + size);
+		logger.trace("fgdg");
+
 		for (int i = 0; i < size; i++) {
 			int comparison = compareCube(c_cube, cubeMaximals.get(i), portBDDsPosition);
 			if (comparison == 1 || comparison == 0) {

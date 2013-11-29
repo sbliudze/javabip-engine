@@ -85,7 +85,6 @@ public class DataEncoderImpl implements DataEncoder {
 
 				Set<Entry<Port, Port>> allpairsBiDirectionalPairs = portsToDVarBDDMapping.keySet();
 				Entry<Port, Port> pairToNegate=  new AbstractMap.SimpleEntry<Port, Port>(decidingPort, port);
-//				Pair pairToNegate = new Pair(decidingPort, port);
 				if (allpairsBiDirectionalPairs.contains(pairToNegate)) {
 					result.andWith(portsToDVarBDDMapping.get(pairToNegate).not());
 				}
@@ -187,7 +186,6 @@ public class DataEncoderImpl implements DataEncoder {
 					if (!moreImplications.containsKey(outPort)) {
 					}
 					Entry<Port, Port> inOutPortsPair=  new AbstractMap.SimpleEntry<Port, Port>(inPort, outPort);
-//					Pair inOutPortsPair = new Pair(inPort, outPort);
 
 					if (!portsToDVarBDDMapping.containsKey(inOutPortsPair)) {
 						/*
