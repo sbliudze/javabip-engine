@@ -156,8 +156,8 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 				throw new BIPEngineException("Registering component must not be null.");
 			}
 			if (registeredComponents.contains(component)) {
-				logger.error("Component " + component.getName() + " has already registered before.");
-				throw new BIPEngineException("Component " + component.getName() + " has already registered before.");
+				logger.error("Component " + component + " has already registered before.");
+				throw new BIPEngineException("Component " + component + " has already registered before.");
 			} else {
 				registeredComponents.add(component);
 				componentBehaviourMapping.put(component, behaviour);
@@ -285,15 +285,12 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 				Iterable<Data> portToDataInForTransition = componentBehaviourMapping.get(firstPair.component()).portToDataInForTransition(firstPair);
 				for (Data dataItem : portToDataInForTransition) {
 					String dataOutName = dataIsProvided(secondPair, componentBehaviourMapping.get(firstPair.component()).getComponentType(), dataItem.name());
-
 					if (dataOutName != null && !dataOutName.isEmpty()) {
 						Object dataValue = secondPair.component().getData(dataOutName, dataItem.type());
 						logger.trace("GETTING DATA: from component " + secondPair.component() + " the value " + dataValue);
 						firstPair.component().setData(dataItem.name(), dataValue);
 					}
-
 				}
-
 				portsExecuted.add(firstPair);
 				portsExecuted.add(secondPair);
 			}
@@ -412,7 +409,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 				if (!(portActive.get(i))) {
 					ArrayList<DataContainer> dataContainer = containerList.get(i);
 					for (DataContainer dc : dataContainer) {
-						logger.trace(this.count + " CONTAINER CHOSEN: For deciding " + component.hashCode() + " and " + port.id + " disabled is " + dc.component() + " with ports " + dc.ports());
+						logger.debug(this.count + " CONTAINER CHOSEN: For deciding " + component.hashCode() + " and " + port.id + " disabled is " + dc.component() + " with ports " + dc.ports());
 						disabledCombinations.put(dc.component(), dc.ports());
 					}
 				}
@@ -606,7 +603,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 		} else {
 			executeInteractions(preparePorts(valuation));
 		}
-		logger.info("*************************************************************************");
+		logger.debug("*************************************************************************");
 	}
 
 	private List<List<Port>> preparePorts(byte[] valuation) {
@@ -614,38 +611,31 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 		 * Grouping the interaction into smaller ones (with respect to data transfer)
 		 */
 		Map<BIPComponent, Iterable<Port>> chosenPorts = new Hashtable<BIPComponent, Iterable<Port>>();
-		logger.debug("positionsOfDVariables size: " + positionsOfDVariables.size());
-
+		logger.trace("positionsOfDVariables size: " + positionsOfDVariables.size());
 		ArrayList<Port> portsExecuted = new ArrayList<Port>();
 		List<List<Port>> bigInteraction = mergingSubInteractions(valuation, portsExecuted);
 
 		/*
 		 * Find ports that participate in the interaction but not in data transfer and add them as a separate group
 		 */
-
 		ArrayList<Port> enabledPorts = new ArrayList<Port>();
 		Map<Port, Integer> portToPosition = bipCoordinator.getBehaviourEncoderInstance().getPortToPosition();
 		ArrayList<BIPComponent> componentsEnum = registeredComponents;
 		for (BIPComponent component : componentsEnum) {
-			logger.debug("Component: " + component.getName());
-
 			Iterable<Port> componentPorts = getBehaviourByComponent(component).getEnforceablePorts();
 			if (componentPorts == null || !componentPorts.iterator().hasNext()) {
-				logger.warn("Component {} does not have any enforceable ports.", component.getName());
+				logger.trace("Component {} does not have any enforceable ports.", component);
 			}
-
-			// ArrayList<Port> enabledPorts = new ArrayList<Port>();
-
 			for (Port port : componentPorts) {
 				if (!portsExecuted.contains(port) && valuation[portToPosition.get(port)] == 1) {
-					logger.info("Chosen Port: {}", port.id + "of component: " + port.component());
+					logger.trace("Chosen Port: {}", port.id + "of component: " + port.component());
 					enabledPorts.add(port);
 				}
 			}
 
 		}
 
-		logger.debug("chosenPorts size: " + chosenPorts.size());
+		logger.trace("chosenPorts size: " + chosenPorts.size());
 		if (enabledPorts.size() != 0) {
 			bigInteraction.add(enabledPorts);
 		}
@@ -653,14 +643,12 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 		/*
 		 * Here the ports mentioned above have been added
 		 */
-
 		for (Iterable<Port> inter : bigInteraction) {
 			for (Port port : inter) {
-				logger.debug("ENGINE ENTRY: " + port.component().hashCode() + " - " + port.id);
+				logger.debug("ENGINE choice: " +"Chosen Port: {}", port.id + "of component: " + port.component());
 			}
 		}
-		logger.debug("Interactions: " + bigInteraction.size());
-
+		logger.trace("Interactions: " + bigInteraction.size());
 		return bigInteraction;
 	}
 

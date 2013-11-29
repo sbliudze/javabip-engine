@@ -186,7 +186,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 			/*
 			 * Keep the local ID for now, but use OSGI IDs later
 			 */
-			logger.info("Component : {}", component.getName());
+			logger.info("Component : {}", component);
 
 			componentBehaviourMapping.put(component, behaviour);
 			int nbComponentPorts = (behaviour.getEnforceablePorts()).size();
@@ -226,13 +226,12 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	public synchronized void inform(BIPComponent component, String currentState, Set<Port> disabledPorts) {
 		if (componentsHaveInformed.contains(component)) {
 			try {
-				logger.info("************************ Already Have Informed *******************************");
-				logger.info("Component: {}", component.getName());
-				logger.info("informs that is at state: {}", currentState);
+				logger.debug("************************ Already Have Informed *******************************");
+				logger.debug("Component: "+ component + "informs that is at state: "+ currentState);
 				for (Port disabledPort : disabledPorts) {
-					logger.info("with disabled port: " + disabledPort.id);
+					logger.debug("with disabled port: " + disabledPort.id);
 				}
-				logger.info("******************************************************************************");
+				logger.debug("******************************************************************************");
 				logger.error("Component " + component.getName() + " has already informed the engine in this execution cycle.");
 				throw new BIPEngineException("Component " + component.getName() + " has already informed the engine in this execution cycle.");
 			} catch (BIPEngineException e) {
@@ -262,13 +261,12 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 					}
 
 					logger.debug("Number of components that have informed {}", componentsHaveInformed.size());
-					logger.info("********************************* Inform *************************************");
-					logger.info("Component: {}", component.getName());
-					logger.info("informs that is at state: {}", currentState);
+					logger.debug("********************************* Inform *************************************");
+					logger.debug("Component: "+ component + "informs that is at state: "+ currentState);
 					for (Port disabledPort : disabledPorts) {
-						logger.info("with disabled port: " + disabledPort.id);
+						logger.debug("with disabled port: " + disabledPort.id);
 					}
-					logger.info("******************************************************************************");
+					logger.debug("******************************************************************************");
 
 					/*
 					 * The haveAllComponentsInformed semaphore is used to
@@ -334,14 +332,14 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 			}
 		}
 
-		logger.info("*************************************************************************");
-		logger.debug("chosenPorts size: " + portsExecuted.size());
+		logger.debug("*************************************************************************");
+		logger.trace("chosenPorts size: " + portsExecuted.size());
 		if (portsExecuted.size() != 0) {
 			bigInteraction.add(portsExecuted);
 		}
 
 		for (Port port : portsExecuted) {
-			logger.debug("ENGINE ENTRY: " + port.component() + " - " + port.id);
+			logger.debug("ENGINE ENTRY: " + port.component() + " - " + port);
 		}
 
 		return bigInteraction;
@@ -422,7 +420,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 				logger.debug("Component {} execute port {}", port.component().getName(), port.id);
 
 				/* Execute the port */
-				logger.info("Chosen port: "+ port.id + " of component: "+port.component().getName());
+				logger.trace("Chosen port: "+ port.id + " of component: "+port.component().getName());
 				port.component().execute(port.id);
 
 				/*

@@ -67,7 +67,6 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		boolean cube2_big = false;
 
 		for (int i = 0; i < portBDDsPosition.size(); i++) {
-			logger.debug("portBDDsPosition: " + portBDDsPosition.get(i));
 			if ((cube1[portBDDsPosition.get(i)] != 0) && (cube2[portBDDsPosition.get(i)] == 0)) {
 				cube1_big = true;
 			} else if ((cube2[portBDDsPosition.get(i)] != 0) && (cube1[portBDDsPosition.get(i)] == 0)) {
@@ -90,7 +89,7 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 
 	/** Copy maximal cube */
 	private void addCube(ArrayList<byte[]> cubeMaximals, byte[] cube, int position) {
-		logger.debug("Cube length: " + cube.length);
+		logger.trace("Cube length: " + cube.length);
 		for (int i = 0; i < cube.length; i++)
 			if (cube[i] == -1)
 				cube[i] = 1;
@@ -99,8 +98,7 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 
 	private void findMaximals(ArrayList<byte[]> cubeMaximals, byte[] c_cube, List<Integer> portBDDsPosition) {
 		int size = cubeMaximals.size();
-		logger.debug("findMaximals size: " + size);
-		logger.trace("fgdg");
+		logger.trace("findMaximals size: " + size);
 
 		for (int i = 0; i < size; i++) {
 			int comparison = compareCube(c_cube, cubeMaximals.get(i), portBDDsPosition);
@@ -159,12 +157,8 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		}
 
 		/* Compute global BDD: solns= Λi Fi Λ G Λ (Λi Ci) */
-//		BDD solns = totalConstraints;
 		BDD solns = totalConstraints.and(totalCurrentStateAndDisabledCombinations);
 		totalCurrentStateAndDisabledCombinations.free();
-//		solns.
-//		andWith(totalCurrentStateAndDisabledCombinations);
-
 		ArrayList<byte[]> possibleInteraction = new ArrayList<byte[]>();
 
 		/*
@@ -175,8 +169,8 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 
 		possibleInteraction.addAll(solns.allsat());
 
-		logger.info("******************************* Engine **********************************");
-		logger.info("Number of possible interactions is: {} ", possibleInteraction.size());
+		logger.debug("******************************* Engine **********************************");
+		logger.debug("Number of possible interactions is: {} ", possibleInteraction.size());
 		Iterator<byte[]> it = possibleInteraction.iterator();
 
 		/* for debugging */
@@ -187,14 +181,14 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 			for (byte b : value) {
 				sb.append(String.format("%02X ", b));
 			}
-			logger.debug(sb.toString());
+			logger.trace(sb.toString());
 		}
 
 		logger.debug("Number of possible interactions: " + possibleInteraction.size());
 		ArrayList<byte[]> cubeMaximals = new ArrayList<byte[]>();
 		for (int i = 0; i < possibleInteraction.size(); i++) {
 
-			logger.debug("Positions of D Variables size:" + positionsOfDVariables.size());
+			logger.trace("Positions of D Variables size:" + positionsOfDVariables.size());
 			findMaximals(cubeMaximals, possibleInteraction.get(i), wrapper.getBehaviourEncoderInstance().getPositionsOfPorts());
 		}
 
@@ -223,25 +217,20 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		chosenInteraction = cubeMaximals.get(randomInt);
 
 		cubeMaximals.clear();
-		logger.debug("ChosenInteraction: ");
+		logger.trace("ChosenInteraction: ");
 		for (int k = 0; k < chosenInteraction.length; k++)
-			logger.debug("{}", chosenInteraction[k]);
+			logger.trace("{}", chosenInteraction[k]);
 
 		/*
 		 * Beginning of the part to move to the Data Coordinator
 		 */
-
 		wrapper.execute(chosenInteraction);
 
 		/*
 		 * End of the part to move to the Data Coordinator
 		 */
-
 		solns.free();
 		temporaryConstraints.clear();
-		// for (BDD disabledCombination: disabledCombinationBDDs){
-		// disabledCombination.free();
-		// }
 
 	}
 
@@ -251,17 +240,17 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 
 	public synchronized void specifyTemporaryExtraConstraints(final BDD informSpecific) {
 		temporaryConstraints.add(informSpecific);
-		logger.debug("INFORM SPECIFIC CALL: Disabled Combinations size " + temporaryConstraints.size());
+		logger.trace("INFORM SPECIFIC CALL: Disabled Combinations size " + temporaryConstraints.size());
 	}
 
 	public synchronized void specifyPermanentExtraConstraints(BDD extraConstraints) {
 		synchronized (this) {
 			if (totalConstraints == null) {
 				totalConstraints = extraConstraints;
-				logger.debug("Extra permanent constraints added to empty total BDD.");
+				logger.trace("Extra permanent constraints added to empty total BDD.");
 			} else {
 				totalConstraints.andWith(extraConstraints);
-				logger.debug("Extra permanent constraints added to existing total BDD.");
+				logger.trace("Extra permanent constraints added to existing total BDD.");
 			}
 		}
 	}
@@ -284,10 +273,10 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		synchronized (this) {
 			if (totalConstraints == null) {
 				totalConstraints = totalBehaviourBdd;
-				logger.debug("Behaviour constraints added to empty total BDD.");
+				logger.trace("Behaviour constraints added to empty total BDD.");
 			} else {
 				totalConstraints.andWith(totalBehaviourBdd);
-				logger.debug("Behaviour constraints added to existing total BDD.");
+				logger.trace("Behaviour constraints added to existing total BDD.");
 			}
 		}
 	}
@@ -297,10 +286,10 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		synchronized (this) {
 			if (totalConstraints == null) {
 				totalConstraints = totalGlue;
-				logger.debug("Glue constraints added to empty total BDD.");
+				logger.trace("Glue constraints added to empty total BDD.");
 			} else {
 				totalConstraints.andWith(totalGlue);
-				logger.debug("Glue constraints added to existing total BDD.");
+				logger.trace("Glue constraints added to existing total BDD.");
 			}
 		}
 	}

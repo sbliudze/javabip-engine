@@ -83,9 +83,8 @@ public class BehaviourEncoderImpl implements BehaviourEncoder {
 
 		BDD[] singleNodeBDDsForPorts = new BDD[nbComponentPorts];
 		Hashtable <String, BDD> portToBDD = new Hashtable<String, BDD>();
-		logger.debug("Number of component port: "+ nbComponentPorts);
-		logger.debug("Number of component states: "+nbComponentStates);
-		logger.debug("auxSum: "+auxSum);
+		logger.trace("Behaviour Encoder: Number of component ports: "+ nbComponentPorts+ " for component: "+component);
+		logger.trace("Behaviour Encoder: Number of component states: "+nbComponentStates+ " for component: "+component);
 		
 		for (int i = 0; i < nbComponentPorts; i++) {
 			/*Create new variable in the BDD manager for the port of each component instance.*/
@@ -99,7 +98,6 @@ public class BehaviourEncoderImpl implements BehaviourEncoder {
 					throw e;
 				}
 			}	
-			logger.debug("Port {} to BDD {} ",componentPorts.get(i).id, singleNodeBDDsForPorts[i] );
 			portToBDD.put(componentPorts.get(i).id, singleNodeBDDsForPorts[i]);
 			if (portToBDD.get(componentPorts.get(i).id) == null){
 				try {
@@ -140,13 +138,13 @@ public class BehaviourEncoderImpl implements BehaviourEncoder {
 		
 		BDD tmp;
 		for (String componentState: componentStates){
-			logger.debug("Component State: "+componentState);
+			logger.trace("BE: Component State: "+componentState);
 
 			BDD onlyState = engine.getBDDManager().one().and(stateToBDD.get(componentState)); 
 
 			for (String otherState : componentStates){
 				if (!componentState.equals(otherState)){
-					logger.debug("Negated State: "+otherState);
+					logger.trace("BE: Negated State: "+otherState);
 					tmp =onlyState.and(stateToBDD.get(otherState).not());
 					onlyState.free();
 					onlyState=tmp;
@@ -155,14 +153,14 @@ public class BehaviourEncoderImpl implements BehaviourEncoder {
 			Set<Port> statePorts = behaviour.getStateToPorts().get(componentState);
 			if (!statePorts.isEmpty()){
 				for (Port port: statePorts){
-					logger.debug("Component state port: "+port);
+					logger.trace("BE: Component state port: "+port);
 					BDD ports = engine.getBDDManager().one().and(onlyState);
 					tmp = ports.and(portToBDD.get(port.id));
 					ports.free();
 					ports = tmp;
 					for (Port otherPort: componentPorts){
 						if (!port.id.equals(otherPort.id)){
-							logger.debug("Negated ports: "+otherPort);
+							logger.trace("BE: Negated ports: "+otherPort);
 							ports.andWith(portToBDD.get(otherPort.id).not());
 						}		
 					}
@@ -171,7 +169,7 @@ public class BehaviourEncoderImpl implements BehaviourEncoder {
 			}
 			else{	
 				for (Port otherPort: componentPorts){
-					logger.debug("All negated ports: "+otherPort);
+					logger.trace("BE: All negated ports: "+otherPort);
 					onlyState.andWith(portToBDD.get(otherPort.id).not());
 				}
 				componentBehaviourBDD.orWith(onlyState);
