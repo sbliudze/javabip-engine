@@ -260,7 +260,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 						e.printStackTrace();
 					}
 
-					logger.debug("Number of components that have informed {}", componentsHaveInformed.size());
+					logger.trace("Number of components that have informed {}", componentsHaveInformed.size());
 					logger.debug("********************************* Inform *************************************");
 					logger.debug("Component: "+ component + "informs that is at state: "+ currentState);
 					for (Port disabledPort : disabledPorts) {
@@ -285,7 +285,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 					 */
 					if (isEngineSemaphoreReady) {
 						haveAllComponentsInformed.release();
-						logger.debug("Number of available permits in the semaphore: {}", haveAllComponentsInformed.availablePermits());
+						logger.trace("Number of available permits in the semaphore: {}", haveAllComponentsInformed.availablePermits());
 					}
 				}
 				/**
@@ -331,8 +331,6 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 				portsExecuted.add(port);
 			}
 		}
-
-		logger.debug("*************************************************************************");
 		logger.trace("chosenPorts size: " + portsExecuted.size());
 		if (portsExecuted.size() != 0) {
 			bigInteraction.add(portsExecuted);
@@ -341,6 +339,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 		for (Port port : portsExecuted) {
 			logger.debug("ENGINE ENTRY: " + port.component() + " - " + port);
 		}
+		logger.debug("*************************************************************************");
 
 		return bigInteraction;
 	}
@@ -417,7 +416,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 							+ " does not have an associated component.");
 				}
 
-				logger.debug("Component {} execute port {}", port.component().getName(), port.id);
+				logger.trace("Component {} execute port {}", port.component().getName(), port.id);
 
 				/* Execute the port */
 				logger.trace("Chosen port: "+ port.id + " of component: "+port.component().getName());
@@ -457,9 +456,9 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 		synchronized (this) {
 			while (!isEngineExecuting) {
 				try {
-					logger.debug("Waiting for the engine execute to be called...");
+					logger.trace("Waiting for the engine execute to be called...");
 					wait();
-					logger.debug("Waiting for the engine execute done.");
+					logger.trace("Waiting for the engine execute done.");
 				} catch (InterruptedException e) {
 					logger.warn("Engine run is interrupted: {}", Thread.currentThread().getName());
 				}
@@ -494,10 +493,10 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 		synchronized (componentsHaveInformed) {
 			haveAllComponentsInformed = new Semaphore(nbComponents);
 			try {
-				logger.debug("Waiting for the engine semaphore to be initialized to 0...");
+				logger.trace("Waiting for the engine semaphore to be initialized to 0...");
 				haveAllComponentsInformed.acquire(nbComponents);
 				isEngineSemaphoreReady = true;
-				logger.debug("Engine semaphore initialised");
+				logger.trace("Engine semaphore initialised");
 			} catch (InterruptedException e1) {
 				logger.error("Semaphore's haveAllComponentsInformed acquire method for the number of registered components in the system was interrupted.");
 				e1.printStackTrace();
@@ -505,9 +504,9 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 		}
 
 		try {
-			logger.debug("Waiting for the cycle initialisation acquire...");
+			logger.trace("Waiting for the cycle initialisation acquire...");
 			haveAllComponentsInformed.acquire(nbComponents - componentsHaveInformed.size());
-			logger.debug("The cycle initialisation acquire successful");
+			logger.trace("The cycle initialisation acquire successful");
 		} catch (InterruptedException e1) {
 			logger.error("Semaphore's haveAllComponentsInformed acquire method for the number of components that still have to inform was interrupted.");
 			e1.printStackTrace();
@@ -538,9 +537,9 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 		 */
 		while (isEngineExecuting) {
 
-			logger.debug("isEngineExecuting: {} ", isEngineExecuting);
-			logger.debug("noComponents: {}, componentCounter: {}", nbComponents, componentsHaveInformed.size());
-			logger.debug("Number of available permits in the semaphore: {}", haveAllComponentsInformed.availablePermits());
+			logger.trace("isEngineExecuting: {} ", isEngineExecuting);
+			logger.trace("noComponents: {}, componentCounter: {}", nbComponents, componentsHaveInformed.size());
+			logger.trace("Number of available permits in the semaphore: {}", haveAllComponentsInformed.availablePermits());
 
 			componentsHaveInformed.clear();
 			try {
@@ -550,9 +549,9 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 			}
 
 			try {
-				logger.debug("Waiting for the acquire in run()...");
+				logger.trace("Waiting for the acquire in run()...");
 				haveAllComponentsInformed.acquire(nbComponents);
-				logger.debug("run() acquire successful.");
+				logger.trace("run() acquire successful.");
 			} catch (InterruptedException e) {
 				isEngineExecuting = false;
 				e.printStackTrace();

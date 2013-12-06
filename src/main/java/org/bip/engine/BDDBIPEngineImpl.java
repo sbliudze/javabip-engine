@@ -62,14 +62,17 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 	 *         1 if cube2 in cube1, cube1 bigger <br>
 	 *         2 not comparable 3 if cube1 in cube2, cube2 bigger <br>
 	 */
-	private int compareCube(byte[] cube1, byte[] cube2, List<Integer> portBDDsPosition) {
+	private int compareCube(byte[] cube1, byte[] cube2,
+			List<Integer> portBDDsPosition) {
 		boolean cube1_big = false;
 		boolean cube2_big = false;
 
 		for (int i = 0; i < portBDDsPosition.size(); i++) {
-			if ((cube1[portBDDsPosition.get(i)] != 0) && (cube2[portBDDsPosition.get(i)] == 0)) {
+			if ((cube1[portBDDsPosition.get(i)] != 0)
+					&& (cube2[portBDDsPosition.get(i)] == 0)) {
 				cube1_big = true;
-			} else if ((cube2[portBDDsPosition.get(i)] != 0) && (cube1[portBDDsPosition.get(i)] == 0)) {
+			} else if ((cube2[portBDDsPosition.get(i)] != 0)
+					&& (cube1[portBDDsPosition.get(i)] == 0)) {
 				cube2_big = true;
 			}
 		}
@@ -88,7 +91,8 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 	}
 
 	/** Copy maximal cube */
-	private void addCube(ArrayList<byte[]> cubeMaximals, byte[] cube, int position) {
+	private void addCube(ArrayList<byte[]> cubeMaximals, byte[] cube,
+			int position) {
 		logger.trace("Cube length: " + cube.length);
 		for (int i = 0; i < cube.length; i++)
 			if (cube[i] == -1)
@@ -96,12 +100,14 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		cubeMaximals.add(position, cube);
 	}
 
-	private void findMaximals(ArrayList<byte[]> cubeMaximals, byte[] c_cube, List<Integer> portBDDsPosition) {
+	private void findMaximals(ArrayList<byte[]> cubeMaximals, byte[] c_cube,
+			List<Integer> portBDDsPosition) {
 		int size = cubeMaximals.size();
 		logger.trace("findMaximals size: " + size);
 
 		for (int i = 0; i < size; i++) {
-			int comparison = compareCube(c_cube, cubeMaximals.get(i), portBDDsPosition);
+			int comparison = compareCube(c_cube, cubeMaximals.get(i),
+					portBDDsPosition);
 			if (comparison == 1 || comparison == 0) {
 				cubeMaximals.remove(i);
 				addCube(cubeMaximals, c_cube, i);
@@ -114,15 +120,20 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		addCube(cubeMaximals, c_cube, cubeMaximals.size());
 	}
 
-	public final BDD totalCurrentStateBdd(Hashtable<BIPComponent, BDD> currentStateBDDs) throws BIPEngineException {
+	public final BDD totalCurrentStateBdd(
+			Hashtable<BIPComponent, BDD> currentStateBDDs)
+			throws BIPEngineException {
 		BDD totalCurrentStateBdd = bdd_mgr.one();
 		BDD tmp;
 
-		for (Enumeration<BIPComponent> componentsEnum = currentStateBDDs.keys(); componentsEnum.hasMoreElements();) {
+		for (Enumeration<BIPComponent> componentsEnum = currentStateBDDs.keys(); componentsEnum
+				.hasMoreElements();) {
 			BIPComponent component = componentsEnum.nextElement();
 			if (currentStateBDDs.get(component) == null) {
-				logger.error("Current state BDD is null of component {}", component);
-				throw new BIPEngineException("Current state BDD is null of component " + component);
+				logger.error("Current state BDD is null of component {}",
+						component);
+				throw new BIPEngineException(
+						"Current state BDD is null of component " + component);
 			}
 			tmp = totalCurrentStateBdd.and(currentStateBDDs.get(component));
 			totalCurrentStateBdd.free();
@@ -131,7 +142,8 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		return totalCurrentStateBdd;
 	}
 
-	public final BDD totalExtraBdd(ArrayList<BDD> disabledCombinationBDDs) throws BIPEngineException {
+	public final BDD totalExtraBdd(ArrayList<BDD> disabledCombinationBDDs)
+			throws BIPEngineException {
 		BDD totalDisabledCombinationBdd = bdd_mgr.one();
 
 		for (BDD disabledCombinationBDD : disabledCombinationBDDs) {
@@ -153,11 +165,13 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		assert (totalCurrentStateAndDisabledCombinations == null);
 
 		if (temporaryConstraints != null || !temporaryConstraints.isEmpty()) {
-			totalCurrentStateAndDisabledCombinations.andWith(totalExtraBdd(temporaryConstraints));
+			totalCurrentStateAndDisabledCombinations
+					.andWith(totalExtraBdd(temporaryConstraints));
 		}
 
 		/* Compute global BDD: solns= Λi Fi Λ G Λ (Λi Ci) */
-		BDD solns = totalConstraints.and(totalCurrentStateAndDisabledCombinations);
+		BDD solns = totalConstraints
+				.and(totalCurrentStateAndDisabledCombinations);
 		totalCurrentStateAndDisabledCombinations.free();
 		ArrayList<byte[]> possibleInteraction = new ArrayList<byte[]>();
 
@@ -170,7 +184,8 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		possibleInteraction.addAll(solns.allsat());
 
 		logger.debug("******************************* Engine **********************************");
-		logger.debug("Number of possible interactions is: {} ", possibleInteraction.size());
+		logger.debug("Number of possible interactions is: {} ",
+				possibleInteraction.size());
 		Iterator<byte[]> it = possibleInteraction.iterator();
 
 		/* for debugging */
@@ -183,12 +198,10 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 			}
 			logger.trace(sb.toString());
 		}
-
-		logger.debug("Number of possible interactions: " + possibleInteraction.size());
 		ArrayList<byte[]> cubeMaximals = new ArrayList<byte[]>();
 		for (int i = 0; i < possibleInteraction.size(); i++) {
 
-			logger.trace("Positions of D Variables size:" + positionsOfDVariables.size());
+			logger.trace("Positions of D Variables size:"+ positionsOfDVariables.size());
 			findMaximals(cubeMaximals, possibleInteraction.get(i), wrapper.getBehaviourEncoderInstance().getPositionsOfPorts());
 		}
 
@@ -197,9 +210,10 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		if (size == 0) {
 			logger.error("Deadlock. No maximal interactions.");
 			throw new BIPEngineException("Deadlock. No maximal interactions.");
-		}
-		 else if (size == 1) {
-			if (countPortEnable(cubeMaximals.get(0), (ArrayList<Integer>) wrapper.getBehaviourEncoderInstance().getPositionsOfPorts()) == 0) {
+		} else if (size == 1) {
+			if (countPortEnable(cubeMaximals.get(0),
+					(ArrayList<Integer>) wrapper.getBehaviourEncoderInstance()
+							.getPositionsOfPorts()) == 0) {
 				logger.error("Deadlock. No enabled ports.");
 				throw new BIPEngineException("Deadlock. No enabled ports.");
 			}
@@ -234,16 +248,20 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 
 	}
 
-	public synchronized void informCurrentState(BIPComponent component, BDD componentBDD) {
+	public synchronized void informCurrentState(BIPComponent component,
+			BDD componentBDD) {
 		currentStateBDDs.put(component, componentBDD);
 	}
 
-	public synchronized void specifyTemporaryExtraConstraints(final BDD informSpecific) {
+	public synchronized void specifyTemporaryExtraConstraints(
+			final BDD informSpecific) {
 		temporaryConstraints.add(informSpecific);
-		logger.trace("INFORM SPECIFIC CALL: Disabled Combinations size " + temporaryConstraints.size());
+		logger.trace("INFORM SPECIFIC CALL: Disabled Combinations size "
+				+ temporaryConstraints.size());
 	}
 
-	public synchronized void specifyPermanentExtraConstraints(BDD extraConstraints) {
+	public synchronized void specifyPermanentExtraConstraints(
+			BDD extraConstraints) {
 		synchronized (this) {
 			if (totalConstraints == null) {
 				totalConstraints = extraConstraints;
@@ -255,17 +273,21 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		}
 	}
 
-	public synchronized void informBehaviour(BIPComponent component, BDD componentBDD) {
+	public synchronized void informBehaviour(BIPComponent component,
+			BDD componentBDD) {
 		behaviourBDDs.put(component, componentBDD);
 	}
 
-	public synchronized final void totalBehaviourBDD() throws BIPEngineException {
+	public synchronized final void totalBehaviourBDD()
+			throws BIPEngineException {
 
 		BDD totalBehaviourBdd = bdd_mgr.one();
 
-		for (Enumeration<BIPComponent> componentsEnum = behaviourBDDs.keys(); componentsEnum.hasMoreElements();) {
+		for (Enumeration<BIPComponent> componentsEnum = behaviourBDDs.keys(); componentsEnum
+				.hasMoreElements();) {
 			BDD tmp;
-			tmp = totalBehaviourBdd.and(behaviourBDDs.get(componentsEnum.nextElement()));
+			tmp = totalBehaviourBdd.and(behaviourBDDs.get(componentsEnum
+					.nextElement()));
 			totalBehaviourBdd.free();
 			totalBehaviourBdd = tmp;
 		}
@@ -281,8 +303,8 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		}
 	}
 
-
-	public synchronized void informGlue(BDD totalGlue) throws BIPEngineException {
+	public synchronized void informGlue(BDD totalGlue)
+			throws BIPEngineException {
 		synchronized (this) {
 			if (totalConstraints == null) {
 				totalConstraints = totalGlue;
