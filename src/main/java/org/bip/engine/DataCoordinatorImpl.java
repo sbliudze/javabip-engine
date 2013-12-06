@@ -444,7 +444,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 
 		if (dataList == null || dataList.isEmpty()) {
 			// throw exception
-			return null;
+			return result;
 		}
 		ArrayList<ArrayList<DataContainer>> sortedList = getListList(dataList);
 
