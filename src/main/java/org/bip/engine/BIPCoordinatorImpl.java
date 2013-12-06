@@ -176,8 +176,11 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 			 * type.
 			 */
 			if (typeInstancesMapping.containsKey(component.getName())) {
+//				System.err.println("component . getName "+ component.getName());
+//				System.exit(0);
 				componentInstances.addAll(typeInstancesMapping.get(component.getName()));
 			}
+			
 
 			componentInstances.add(component);
 			typeInstancesMapping.put(component.getName(), componentInstances);
@@ -713,10 +716,10 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 		List<BIPComponent> instances = typeInstancesMapping.get(type);
 		if (instances == null) {
 			try {
-				logger.error("No registered component instances for the: {} ", type
+				logger.error("No registered component instances for the: "+ type
 						+ " component type. Possible reasons: The name of the component instances was specified in another way at registration.");
 				throw new BIPEngineException("Exception in thread " + Thread.currentThread().getName() + " No registered component instances for the component type: " + type
-						+ "Possible reasons: The name of the component instances was specified in another way at registration.");
+						+ " Possible reasons: The name of the component instances was specified in another way at registration.");
 			} catch (BIPEngineException e) {
 				e.printStackTrace();
 				throw e;

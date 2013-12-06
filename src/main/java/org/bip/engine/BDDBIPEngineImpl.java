@@ -162,7 +162,7 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 
 		BDD totalCurrentStateAndDisabledCombinations = totalCurrentStateBdd(currentStateBDDs);
 		// TODO: Check that the assert is correct
-		assert (totalCurrentStateAndDisabledCombinations == null);
+//		assert (totalCurrentStateAndDisabledCombinations != null);
 
 		if (temporaryConstraints != null || !temporaryConstraints.isEmpty()) {
 			totalCurrentStateAndDisabledCombinations
