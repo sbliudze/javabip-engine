@@ -1,5 +1,7 @@
 package org.bip.engine;
 
+import java.util.List;
+
 import net.sf.javabdd.BDD;
 
 import org.bip.exceptions.BIPEngineException;
@@ -35,7 +37,7 @@ public interface GlueEncoder {
 	 * @return the total Glue BDD
 	 * @throws BIPEngineException 
 	 */
-	BDD totalGlue() throws BIPEngineException;
+	List<BDD> totalGlue() throws BIPEngineException;
 
 }
 

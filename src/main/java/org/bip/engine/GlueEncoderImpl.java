@@ -281,6 +281,7 @@ public class GlueEncoderImpl implements GlueEncoder {
 		
 		BDD allDisjunctiveCauses = engine.getBDDManager().zero();
 
+		logger.trace("Start computing the require BDDs");
 		for(Hashtable<Port, ArrayList<BDD>> requiredPort : requiredPorts){
 			BDD allCausesBDD = engine.getBDDManager().one();
 			for (Enumeration<Port> portEnum = requiredPort.keys(); portEnum.hasMoreElements();) {
@@ -300,21 +301,28 @@ public class GlueEncoderImpl implements GlueEncoder {
 							BDD tmp = monomial.and(auxPortBDDs.get(j));
 							monomial.free();
 							monomial = tmp;
+							logger.trace("Glue Encoder: small disjunction");
 						} else {
 							/* Cannot use andWith here. Do not want to free the 
 							 * BDDs assigned to the ports at the Behaviour Encoder.*/
 							BDD tmp = monomial.and(auxPortBDDs.get(j).not());
 							monomial.free();
 							monomial = tmp;
+							logger.trace("Glue Encoder: small disjunction");
 						}
 					}
+					logger.trace("before one Cause OR");
 					oneCauseBDD.orWith(monomial);
 				}
+				logger.trace("before all Causes AND");
 				allCausesBDD.andWith(oneCauseBDD);
 			}
+			logger.trace("before all Disjunctive Causes OR");
 			allDisjunctiveCauses.orWith(allCausesBDD);
 		}
+		logger.trace("Finished with the require BDDs");
 		allDisjunctiveCauses.orWith(requirePortHolder.not());
+		logger.trace("Finished with the disjunctive causes");
 		return allDisjunctiveCauses;			
 	}
 	
@@ -347,6 +355,7 @@ public class GlueEncoderImpl implements GlueEncoder {
 		BDD allCausesBDD = engine.getBDDManager().one();
 		
 		if (acceptedPorts.size()>1){
+			logger.trace("Start computing the accept BDDs");
 			for (BDD portBDD : totalPortBDDs){
 				boolean exist = false;
 				
@@ -402,29 +411,19 @@ public class GlueEncoderImpl implements GlueEncoder {
 				}
 			}
 		}
+		logger.trace("Finished computing the accept BDDs");
 		return allCausesBDD.orWith(acceptPortHolder.not());
 	}
 
-
-	/**
-	 * This function computes the total Glue BDD that is the conjunction of the require and accept constraints.
-	 * For each require/accept macro we find the different combinations of the component instances that correspond
-	 * to each constraint and take the conjunction of all these.
-	 * 
-	 * @throws BIPEngineException 
-	 * @throws InterruptedException 
-	 */
-	public BDD totalGlue() throws BIPEngineException{
-		
-		BDD result = engine.getBDDManager().one();
+public ArrayList<BDD> totalGlue() throws BIPEngineException{
+		ArrayList<BDD> allGlueBDDs = new ArrayList<BDD>();
 
 		logger.trace("Glue spec require Constraints size: {} ", glueSpec.requiresConstraints.size());
 		if (!glueSpec.requiresConstraints.isEmpty() || !glueSpec.requiresConstraints.equals(null)) {
+			logger.trace("Start conjunction of requires");
 			for (Requires requires : glueSpec.requiresConstraints) {
-				ArrayList<BDD> RequireBDDs = decomposeRequireGlue(requires);
-				for (BDD effectInstance : RequireBDDs) {
-					result.andWith(effectInstance);
-				}
+				allGlueBDDs.addAll(decomposeRequireGlue(requires));
+				
 			}
 		} else {
 			logger.warn("No require constraints provided (usually there should be some).");
@@ -433,15 +432,12 @@ public class GlueEncoderImpl implements GlueEncoder {
 		logger.trace("Glue spec accept Constraints size: {} ", glueSpec.acceptConstraints.size());
 		if (!glueSpec.acceptConstraints.isEmpty() || !glueSpec.acceptConstraints.equals(null)) {
 			for (Accepts accepts : glueSpec.acceptConstraints) {
-				ArrayList<BDD> AcceptBDDs = decomposeAcceptGlue(accepts);
-				for (BDD effectInstance : AcceptBDDs) {
-					result.andWith(effectInstance);
-				}
+				allGlueBDDs.addAll(decomposeAcceptGlue(accepts));
 			}
 		} else {
 			logger.warn("No accept constraints were provided (usually there should be some).");
 		}
-		return result;
+		return allGlueBDDs;
 	}
 
 	public void setBehaviourEncoder(BehaviourEncoder behaviourEncoder) {

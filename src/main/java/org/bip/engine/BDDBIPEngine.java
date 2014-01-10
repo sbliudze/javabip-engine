@@ -1,6 +1,8 @@
 package org.bip.engine;
 
 
+import java.util.List;
+
 import net.sf.javabdd.BDD;
 import net.sf.javabdd.BDDFactory;
 
@@ -30,8 +32,8 @@ public interface BDDBIPEngine {
 	/**
 	 * @param totalGlue BDD corresponding to the total glue of the components of the system
 	 * @throws BIPEngineException 
-	 */
-	void informGlue(BDD totalGlue) throws BIPEngineException;
+	 */	
+	void informGlue(List<BDD> totalGlue) throws BIPEngineException;
 	
 	void totalBehaviourBDD() throws BIPEngineException;
 	

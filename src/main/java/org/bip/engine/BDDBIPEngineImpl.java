@@ -33,7 +33,6 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 	private Hashtable<BIPComponent, BDD> behaviourBDDs = new Hashtable<BIPComponent, BDD>();
 
 	private BDD totalConstraints;
-
 	private int noNodes = 10000;
 	private int cacheSize = 1000;
 
@@ -126,6 +125,7 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		BDD totalCurrentStateBdd = bdd_mgr.one();
 		BDD tmp;
 
+		logger.trace("Conjunction of current states about to start..");
 		for (Enumeration<BIPComponent> componentsEnum = currentStateBDDs.keys(); componentsEnum
 				.hasMoreElements();) {
 			BIPComponent component = componentsEnum.nextElement();
@@ -139,6 +139,13 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 			totalCurrentStateBdd.free();
 			totalCurrentStateBdd = tmp;
 		}
+		logger.trace("Conjunction of current states has finished");
+		/*
+		 * Re-ordering function and statistics printouts
+		 * When the total current state BDD of this round is computed
+		 */
+		 bdd_mgr.reorder(BDDFactory.REORDER_SIFTITE);
+		 logger.trace("E1: Reorder stats: "+bdd_mgr.getReorderStats());
 		return totalCurrentStateBdd;
 	}
 
@@ -146,6 +153,7 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 			throws BIPEngineException {
 		BDD totalDisabledCombinationBdd = bdd_mgr.one();
 
+		logger.trace("Conjunction of disabled combinations about to start..");
 		for (BDD disabledCombinationBDD : disabledCombinationBDDs) {
 			if (disabledCombinationBDD == null) {
 				logger.error("Disabled Combination BDD is null");
@@ -153,6 +161,7 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 			}
 			totalDisabledCombinationBdd.andWith(disabledCombinationBDD);
 		}
+		logger.trace("Conjunction of disabled combinations has finished");
 		return totalDisabledCombinationBdd;
 	}
 
@@ -161,25 +170,19 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		byte[] chosenInteraction;
 
 		BDD totalCurrentStateAndDisabledCombinations = totalCurrentStateBdd(currentStateBDDs);
-		// TODO: Check that the assert is correct
-//		assert (totalCurrentStateAndDisabledCombinations != null);
-
-		if (temporaryConstraints != null || !temporaryConstraints.isEmpty()) {
-			totalCurrentStateAndDisabledCombinations
-					.andWith(totalExtraBdd(temporaryConstraints));
+		logger.trace("INFORM SPECIFIC CALL: Disabled Combinations size "+ temporaryConstraints.size());
+		
+		/*
+		 * Temporary Constraints cannot be null.
+		 */
+		if (!temporaryConstraints.isEmpty()) {
+			totalCurrentStateAndDisabledCombinations.andWith(totalExtraBdd(temporaryConstraints));
 		}
 
 		/* Compute global BDD: solns= Λi Fi Λ G Λ (Λi Ci) */
-		BDD solns = totalConstraints
-				.and(totalCurrentStateAndDisabledCombinations);
+		BDD solns = totalConstraints.and(totalCurrentStateAndDisabledCombinations);
 		totalCurrentStateAndDisabledCombinations.free();
 		ArrayList<byte[]> possibleInteraction = new ArrayList<byte[]>();
-
-		/*
-		 * Re-ordering function and statistics printouts
-		 */
-		// bdd_mgr.reorder(BDDFactory.REORDER_SIFTITE);
-		// logger.info("Reorder stats: "+bdd_mgr.getReorderStats());
 
 		possibleInteraction.addAll(solns.allsat());
 
@@ -260,15 +263,28 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 				+ temporaryConstraints.size());
 	}
 
+
 	public synchronized void specifyPermanentExtraConstraints(
 			BDD extraConstraints) {
 		synchronized (this) {
 			if (totalConstraints == null) {
 				totalConstraints = extraConstraints;
 				logger.trace("Extra permanent constraints added to empty total BDD.");
+				/*
+				 * Re-ordering function and statistics printouts
+				 * for data permanent constraints
+				 */
+				 bdd_mgr.reorder(BDDFactory.REORDER_SIFTITE);
+				 logger.trace("E3: Reorder stats: "+bdd_mgr.getReorderStats());
 			} else {
 				totalConstraints.andWith(extraConstraints);
 				logger.trace("Extra permanent constraints added to existing total BDD.");
+				/*
+				 * Re-ordering function and statistics printouts
+				 * for data permanent constraints
+				 */
+				 bdd_mgr.reorder(BDDFactory.REORDER_SIFTITE);
+				 logger.trace("E4: Reorder stats: "+bdd_mgr.getReorderStats());
 			}
 		}
 	}
@@ -286,11 +302,20 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		for (Enumeration<BIPComponent> componentsEnum = behaviourBDDs.keys(); componentsEnum
 				.hasMoreElements();) {
 			BDD tmp;
+			logger.trace("Conjunction of behaviours about to start..");
 			tmp = totalBehaviourBdd.and(behaviourBDDs.get(componentsEnum
 					.nextElement()));
 			totalBehaviourBdd.free();
 			totalBehaviourBdd = tmp;
 		}
+		logger.trace("Conjunction of behaviours has finished");
+		/*
+		 * Re-ordering function and statistics printouts. If data are used this the gain is relatively small 2-5%
+		 * If no data are used the gain is more than 50%
+		 * After total behaviour BDD is computed
+		 */
+		 bdd_mgr.reorder(BDDFactory.REORDER_SIFTITE);
+		 logger.trace("E5: Reorder stats: "+bdd_mgr.getReorderStats());
 
 		synchronized (this) {
 			if (totalConstraints == null) {
@@ -299,19 +324,50 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 			} else {
 				totalConstraints.andWith(totalBehaviourBdd);
 				logger.trace("Behaviour constraints added to existing total BDD.");
+				/*
+				 * Re-ordering function and statistics printouts
+				 * After total behaviour BDD is conjucted to the total Constraints
+				 */
+				 bdd_mgr.reorder(BDDFactory.REORDER_SIFTITE);
+				 logger.trace("E7: Reorder stats: "+bdd_mgr.getReorderStats());
 			}
 		}
 	}
 
-	public synchronized void informGlue(BDD totalGlue)
-			throws BIPEngineException {
+
+	public synchronized void informGlue(List<BDD> totalGlue) throws BIPEngineException {
 		synchronized (this) {
 			if (totalConstraints == null) {
-				totalConstraints = totalGlue;
+				totalConstraints = bdd_mgr.one();
+
+				for (BDD glueBDD : totalGlue) {
+					/*
+					 * Re-ordering function and statistics printouts
+					 */
+					 logger.trace("And with effect Instance");
+					 totalConstraints.andWith(glueBDD);
+					logger.trace("Finish andwith effect Instance");
+				}
 				logger.trace("Glue constraints added to empty total BDD.");
+				/*
+				 * Re-ordering function and statistics printouts
+				 */
+				 logger.trace("E8: Reorder stats: "+bdd_mgr.getReorderStats());
+				 bdd_mgr.reorder(BDDFactory.REORDER_SIFTITE);
 			} else {
-				totalConstraints.andWith(totalGlue);
-				logger.trace("Glue constraints added to existing total BDD.");
+				logger.trace("E9: Reorder stats: "+bdd_mgr.getReorderStats());
+				 bdd_mgr.reorder(BDDFactory.REORDER_SIFTITE);
+				 for (BDD glueBDD : totalGlue) {
+						 logger.trace("And with effect Instance");
+						 totalConstraints.andWith(glueBDD);
+						logger.trace("Finish andwith effect Instance");
+					}
+				logger.info("Glue constraints added to existing total BDD.");
+				/*
+				 * Re-ordering function and statistics printouts
+				 */
+				logger.trace("E10: Reorder stats: "+bdd_mgr.getReorderStats());
+				 bdd_mgr.reorder(BDDFactory.REORDER_SIFTITE);
 			}
 		}
 	}
