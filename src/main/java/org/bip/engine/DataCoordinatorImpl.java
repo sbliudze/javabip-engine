@@ -86,6 +86,8 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 	private List<Integer> positionsOfDVariables = new ArrayList<Integer>();
 
 	public DataCoordinatorImpl(BIPCoordinator bipCoordinator) {
+		//TODO: please improve: no null arguments to the constructor
+		//provide a constructor without parameters
 		if (bipCoordinator == null)
 			this.bipCoordinator = new BIPCoordinatorImpl();
 		else
