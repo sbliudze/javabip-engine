@@ -328,10 +328,10 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 	private String dataIsProvided(Port providingPort, String requiringComponentType, String dataName) {
 		BIPComponent providingComponent = providingPort.component();
 		for (DataWire wire : this.componentDataWires.get(requiringComponentType).get(dataName)) {
-			if (wire.from.specType.equals(componentBehaviourMapping.get(providingComponent).getComponentType())) {
+			if (wire.from.getSpecType().equals(componentBehaviourMapping.get(providingComponent).getComponentType())) {
 				Set<Port> portsProviding = componentBehaviourMapping.get(providingComponent).getDataProvidingPorts(wire.from.getId());
 				for (Port outport : portsProviding) {
-					if (outport.getId().equals(providingPort.getId()) && outport.specType.equals(providingPort.specType)) {
+					if (outport.getId().equals(providingPort.getId()) && outport.getSpecType().equals(providingPort.getSpecType())) {
 						return wire.from.getId();
 					}
 				}
@@ -382,7 +382,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 					// for this dataVariable: all the values that it can take
 					ArrayList<Object> dataValues = new ArrayList<Object>();
 					// for each component of this type, call getData
-					for (BIPComponent aComponent : getBIPComponentInstances(wire.from.specType)) {
+					for (BIPComponent aComponent : getBIPComponentInstances(wire.from.getSpecType())) {
 						Object inValue = aComponent.getData(wire.from.getId(), inDataItem.type());
 						// get data out variable in order to get the ports
 						if (inValue != null) {

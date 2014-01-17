@@ -267,7 +267,7 @@ public class DataEncoderImpl implements DataEncoder {
 		 * list of ports of the component that will re receiving the data.
 		 */
 		List<Port> dataInPorts = new ArrayList<Port>();
-		Iterable<BIPComponent> inComponentInstances = dataCoordinator.getBIPComponentInstances(inData.specType);
+		Iterable<BIPComponent> inComponentInstances = dataCoordinator.getBIPComponentInstances(inData.getSpecType());
 		for (BIPComponent component : inComponentInstances) {
 			logger.trace("inData: " + inData.getId());
 			logger.trace("inData component: " + component.getName());
@@ -299,7 +299,7 @@ public class DataEncoderImpl implements DataEncoder {
 		 * Input data are always assigned to transitions. Therefore, I need the
 		 * list of ports of the component that will be receiving the data.
 		 */
-		Iterable<BIPComponent> outComponentInstances = dataCoordinator.getBIPComponentInstances(outData.specType);
+		Iterable<BIPComponent> outComponentInstances = dataCoordinator.getBIPComponentInstances(outData.getSpecType());
 		List<Port> dataOutPorts = new ArrayList<Port>();
 		for (BIPComponent component : outComponentInstances) {
 			if (dataCoordinator.getBehaviourByComponent(component).getDataProvidingPorts(outData.getId()).isEmpty()
