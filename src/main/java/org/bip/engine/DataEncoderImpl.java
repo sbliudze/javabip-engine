@@ -164,10 +164,10 @@ public class DataEncoderImpl implements DataEncoder {
 			// wire
 			DataWire dataWire = dataIterator.next();
 			// In-end of the wire
-			List<Port> inPorts = inPorts(dataWire.to);
+			List<Port> inPorts = inPorts(dataWire.getTo());
 			logger.trace("inPorts Size: " + inPorts.size());
 			// Out-end of the wire
-			List<Port> outPorts = outPorts(dataWire.from);
+			List<Port> outPorts = outPorts(dataWire.getFrom());
 			logger.trace("outPorts size: " + outPorts.size());
 
 			/*
@@ -229,7 +229,7 @@ public class DataEncoderImpl implements DataEncoder {
 		Iterator<DataWire> wires = dataWires.iterator();
 		while (wires.hasNext()) {
 			DataWire wire = wires.next();
-			List<Port> inPorts = inPorts(wire.to);
+			List<Port> inPorts = inPorts(wire.getTo());
 			for (Port inPort : inPorts) {
 				ArrayList<BDD> auxiliary = createImplications(inPort);
 				logger.trace("Auxiliary size " + auxiliary.size() + " for port " + inPort.getId() + " of component " + inPort.component().getName());

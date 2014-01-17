@@ -106,7 +106,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 	 */
 	public void specifyGlue(BIPGlue glue) {
 		bipCoordinator.specifyGlue(glue);
-		this.dataWires = glue.dataWires;
+		this.dataWires = glue.getDataWires();
 		try {
 			/*
 			 * Send the information about the dataWires to the DataEncoder to create the d-variables BDD nodes.
@@ -136,7 +136,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 					for (DataWire wire : this.dataWires) {
 						if (wire.isIncoming(data.name(), behaviour.getComponentType())) {
 							wireSet.add(wire);
-							logger.trace("Added wire " + wire.from + " to data " + data.name() + " of component " + componentType);
+							logger.trace("Added wire " + wire.getFrom() + " to data " + data.name() + " of component " + componentType);
 						}
 					}
 					dataWire.put(data.name(), wireSet);
@@ -328,11 +328,11 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 	private String dataIsProvided(Port providingPort, String requiringComponentType, String dataName) {
 		BIPComponent providingComponent = providingPort.component();
 		for (DataWire wire : this.componentDataWires.get(requiringComponentType).get(dataName)) {
-			if (wire.from.getSpecType().equals(componentBehaviourMapping.get(providingComponent).getComponentType())) {
-				Set<Port> portsProviding = componentBehaviourMapping.get(providingComponent).getDataProvidingPorts(wire.from.getId());
+			if (wire.getFrom().getSpecType().equals(componentBehaviourMapping.get(providingComponent).getComponentType())) {
+				Set<Port> portsProviding = componentBehaviourMapping.get(providingComponent).getDataProvidingPorts(wire.getFrom().getId());
 				for (Port outport : portsProviding) {
 					if (outport.getId().equals(providingPort.getId()) && outport.getSpecType().equals(providingPort.getSpecType())) {
-						return wire.from.getId();
+						return wire.getFrom().getId();
 					}
 				}
 			}
@@ -382,11 +382,11 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 					// for this dataVariable: all the values that it can take
 					ArrayList<Object> dataValues = new ArrayList<Object>();
 					// for each component of this type, call getData
-					for (BIPComponent aComponent : getBIPComponentInstances(wire.from.getSpecType())) {
-						Object inValue = aComponent.getData(wire.from.getId(), inDataItem.type());
+					for (BIPComponent aComponent : getBIPComponentInstances(wire.getFrom().getSpecType())) {
+						Object inValue = aComponent.getData(wire.getFrom().getId(), inDataItem.type());
 						// get data out variable in order to get the ports
 						if (inValue != null) {
-							Set<Port> providingPorts = componentBehaviourMapping.get(aComponent).getDataProvidingPorts(wire.from.getId());
+							Set<Port> providingPorts = componentBehaviourMapping.get(aComponent).getDataProvidingPorts(wire.getFrom().getId());
 							dataList.add(new DataContainer(inDataItem, inValue, aComponent, providingPorts));
 							dataValues.add(inValue);
 						}

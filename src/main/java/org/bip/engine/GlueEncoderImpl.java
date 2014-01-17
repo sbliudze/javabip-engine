@@ -146,7 +146,7 @@ public class GlueEncoderImpl implements GlueEncoder {
 	ArrayList<BDD> decomposeRequireGlue(Requires requires) throws BIPEngineException{
 		ArrayList<BDD> result = new ArrayList<BDD>();
 		
-		if (requires.effect == null) {
+		if (requires.getEffect() == null) {
 			try {
 				logger.error("Effect part of a Require constraint was not specified.");
 				throw new BIPEngineException("Effect part of a Require constraint was not specified.");
@@ -156,7 +156,7 @@ public class GlueEncoderImpl implements GlueEncoder {
 			}
 		}
 		
-		if (requires.effect.getId().isEmpty()) {
+		if (requires.getEffect().getId().isEmpty()) {
 			try {
 				logger.error("The port at the effect part of a Require constraint was not specified.");
 				throw new BIPEngineException("The port at the effect part of a Require constraint was not specified.");
@@ -166,7 +166,7 @@ public class GlueEncoderImpl implements GlueEncoder {
 			}
 		}
 		
-		if (requires.effect.getSpecType().isEmpty()) {
+		if (requires.getEffect().getSpecType().isEmpty()) {
 			try {
 				logger.error("The component type of a port at the effect part of a Require constraint was not specified.");
 				throw new BIPEngineException("The component type of a port at the effect part of a Require constraint was not specified.");
@@ -176,9 +176,9 @@ public class GlueEncoderImpl implements GlueEncoder {
 			}
 		}
 		/* Find all effect component instances */
-		List<BIPComponent> requireEffectComponents =findEffectComponents(requires.effect);
+		List<BIPComponent> requireEffectComponents =findEffectComponents(requires.getEffect());
 		
-		if (requires.causes == null) {
+		if (requires.getCauses() == null) {
 			try {
 				logger.error("Causes part of a Require constraint was not specified in the macro.");
 				throw new BIPEngineException("Causes part of a Require constraint was not specified");
@@ -189,7 +189,7 @@ public class GlueEncoderImpl implements GlueEncoder {
 		}
 		
 		/* Find all causes component instances */
-		List<List<Port>> requireCauses=requires.causes;
+		List<List<Port>> requireCauses=requires.getCauses();
 		List<Hashtable<Port, ArrayList<BDD>>> allPorts = new ArrayList<Hashtable<Port, ArrayList<BDD>>>();
 		for (List<Port> requireCause : requireCauses){
 			allPorts.add(findCausesComponents(requireCause));
@@ -197,8 +197,8 @@ public class GlueEncoderImpl implements GlueEncoder {
 		
 		//TODO: dont recompute the causes for each component instance
 		for (BIPComponent effectInstance : requireEffectComponents) {
-			logger.trace("Require Effect port type: "+ requires.effect.getId()+" of component "+requires.effect.getSpecType());
-			result.add(requireBDD(behenc.getBDDOfAPort(effectInstance, requires.effect.getId()), allPorts));
+			logger.trace("Require Effect port type: "+ requires.getEffect().getId()+" of component "+requires.getEffect().getSpecType());
+			result.add(requireBDD(behenc.getBDDOfAPort(effectInstance, requires.getEffect().getId()), allPorts));
 		}
 		return result;
 	}
@@ -217,7 +217,7 @@ public class GlueEncoderImpl implements GlueEncoder {
 	ArrayList<BDD> decomposeAcceptGlue(Accepts accept) throws BIPEngineException{
 		ArrayList<BDD> result = new ArrayList<BDD>();
 
-		if (accept.effect == null) {
+		if (accept.getEffect() == null) {
 			try {
 				logger.error("Effect part of an Accept constraint was not specified in the macro.");
 				throw new BIPEngineException("Effect part of an Accept constraint was not specified");
@@ -227,7 +227,7 @@ public class GlueEncoderImpl implements GlueEncoder {
 			}
 		}
 		
-		if (accept.effect.getId().isEmpty()) {
+		if (accept.getEffect().getId().isEmpty()) {
 			try {
 				logger.error("The port at the effect part of an Accept constraint was not specified.");
 				throw new BIPEngineException("The port at the effect part of an Accept constraint was not specified");
@@ -237,7 +237,7 @@ public class GlueEncoderImpl implements GlueEncoder {
 			}
 		}
 		
-		if (accept.effect.getSpecType().isEmpty()) {
+		if (accept.getEffect().getSpecType().isEmpty()) {
 			try {
 				logger.error("The component type of a port at the effect part of an Accept constraint was not specified");
 				throw new BIPEngineException("The component type of a port at the effect part of an Accept constraint was not specified");
@@ -247,9 +247,9 @@ public class GlueEncoderImpl implements GlueEncoder {
 			}
 		}
 		/* Find all effect component instances */
-		List<BIPComponent> acceptEffectComponents = findEffectComponents(accept.effect);
+		List<BIPComponent> acceptEffectComponents = findEffectComponents(accept.getEffect());
 		
-		if (accept.causes == null) {
+		if (accept.getCauses() == null) {
 			try {
 				logger.error("Causes part of an Accept constraint was not specified in the macro.");
 				throw new BIPEngineException("Causes part of an Accept constraint was not specified");
@@ -259,10 +259,10 @@ public class GlueEncoderImpl implements GlueEncoder {
 			}
 		}
 		/* Find all causes component instances */
-		Hashtable<Port, ArrayList<BDD>> portsToBDDs = findCausesComponents(accept.causes);
+		Hashtable<Port, ArrayList<BDD>> portsToBDDs = findCausesComponents(accept.getCauses());
 
 		for (BIPComponent effectInstance : acceptEffectComponents) {
-			result.add(acceptBDD(behenc.getBDDOfAPort(effectInstance, accept.effect.getId()), portsToBDDs));
+			result.add(acceptBDD(behenc.getBDDOfAPort(effectInstance, accept.getEffect().getId()), portsToBDDs));
 		}
 		return result;
 	}
@@ -418,10 +418,10 @@ public class GlueEncoderImpl implements GlueEncoder {
 public ArrayList<BDD> totalGlue() throws BIPEngineException{
 		ArrayList<BDD> allGlueBDDs = new ArrayList<BDD>();
 
-		logger.trace("Glue spec require Constraints size: {} ", glueSpec.requiresConstraints.size());
-		if (!glueSpec.requiresConstraints.isEmpty() || !glueSpec.requiresConstraints.equals(null)) {
+		logger.trace("Glue spec require Constraints size: {} ", glueSpec.getRequiresConstraints().size());
+		if (!glueSpec.getRequiresConstraints().isEmpty() || !glueSpec.getRequiresConstraints().equals(null)) {
 			logger.trace("Start conjunction of requires");
-			for (Requires requires : glueSpec.requiresConstraints) {
+			for (Requires requires : glueSpec.getRequiresConstraints()) {
 				allGlueBDDs.addAll(decomposeRequireGlue(requires));
 				
 			}
@@ -429,9 +429,9 @@ public ArrayList<BDD> totalGlue() throws BIPEngineException{
 			logger.warn("No require constraints provided (usually there should be some).");
 		}
 		
-		logger.trace("Glue spec accept Constraints size: {} ", glueSpec.acceptConstraints.size());
-		if (!glueSpec.acceptConstraints.isEmpty() || !glueSpec.acceptConstraints.equals(null)) {
-			for (Accepts accepts : glueSpec.acceptConstraints) {
+		logger.trace("Glue spec accept Constraints size: {} ", glueSpec.getAcceptConstraints().size());
+		if (!glueSpec.getAcceptConstraints().isEmpty() || !glueSpec.getAcceptConstraints().equals(null)) {
+			for (Accepts accepts : glueSpec.getAcceptConstraints()) {
 				allGlueBDDs.addAll(decomposeAcceptGlue(accepts));
 			}
 		} else {
