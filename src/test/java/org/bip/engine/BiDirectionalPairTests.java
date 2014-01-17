@@ -1,7 +1,5 @@
 package org.bip.engine;
 
-import static org.junit.Assert.*;
-
 import org.junit.Test;
 
 public class BiDirectionalPairTests {
