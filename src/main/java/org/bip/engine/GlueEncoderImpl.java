@@ -77,21 +77,21 @@ public class GlueEncoderImpl implements GlueEncoder {
 		for (Port causePort : requireCause) {
 			if (causePort.specType == null || causePort.specType.isEmpty()) {
 				logger.warn("Spec type not specified or empty in a macro cause. Skipping the port.");
-			} else  if (causePort.id == null || causePort.id.isEmpty()) {
+			} else  if (causePort.getId() == null || causePort.getId().isEmpty()) {
 				logger.warn("Port name not specified or empty in a macro cause. Skipping the port.");
 			} else {
 				Iterable<BIPComponent> components =  wrapper.getBIPComponentInstances(causePort.specType);
 				ArrayList<BDD> portBDDs = new ArrayList<BDD>();
 				for (BIPComponent component: components){
 					logger.trace("Component: "+component.getName()+ " has Causes ports: "+ causePort);
-					portBDDs.add(behenc.getBDDOfAPort(component, causePort.id));
+					portBDDs.add(behenc.getBDDOfAPort(component, causePort.getId()));
 				}
-				logger.trace("Number of BDDs for port {} {}", causePort.id , portBDDs.size() );
+				logger.trace("Number of BDDs for port {} {}", causePort.getId() , portBDDs.size() );
 
 				if (portBDDs.isEmpty() || portBDDs==null || portBDDs.get(0) == null) {
 					try {
-						logger.error("Port {} in causes was defined incorrectly. It does not match any registered port types", causePort.id);
-						throw new BIPEngineException("Port "+causePort.id+" in causes was defined incorrectly. It does not match any registered port types");
+						logger.error("Port {} in causes was defined incorrectly. It does not match any registered port types", causePort.getId());
+						throw new BIPEngineException("Port "+causePort.getId()+" in causes was defined incorrectly. It does not match any registered port types");
 					} catch (BIPEngineException e) {
 						e.printStackTrace();
 						throw e;	
@@ -116,7 +116,7 @@ public class GlueEncoderImpl implements GlueEncoder {
 	 */
 	List<BIPComponent> findEffectComponents (Port effectPort) throws BIPEngineException{
 		
-		assert(effectPort.id != null && !effectPort.id.isEmpty());
+		assert(effectPort.getId() != null && !effectPort.getId().isEmpty());
 		assert (effectPort.specType != null && !effectPort.specType.isEmpty());
 		
 		List<BIPComponent> requireEffectComponents =  wrapper.getBIPComponentInstances(effectPort.specType);
@@ -156,7 +156,7 @@ public class GlueEncoderImpl implements GlueEncoder {
 			}
 		}
 		
-		if (requires.effect.id.isEmpty()) {
+		if (requires.effect.getId().isEmpty()) {
 			try {
 				logger.error("The port at the effect part of a Require constraint was not specified.");
 				throw new BIPEngineException("The port at the effect part of a Require constraint was not specified.");
@@ -197,8 +197,8 @@ public class GlueEncoderImpl implements GlueEncoder {
 		
 		//TODO: dont recompute the causes for each component instance
 		for (BIPComponent effectInstance : requireEffectComponents) {
-			logger.trace("Require Effect port type: "+ requires.effect.id+" of component "+requires.effect.specType);
-			result.add(requireBDD(behenc.getBDDOfAPort(effectInstance, requires.effect.id), allPorts));
+			logger.trace("Require Effect port type: "+ requires.effect.getId()+" of component "+requires.effect.specType);
+			result.add(requireBDD(behenc.getBDDOfAPort(effectInstance, requires.effect.getId()), allPorts));
 		}
 		return result;
 	}
@@ -227,7 +227,7 @@ public class GlueEncoderImpl implements GlueEncoder {
 			}
 		}
 		
-		if (accept.effect.id.isEmpty()) {
+		if (accept.effect.getId().isEmpty()) {
 			try {
 				logger.error("The port at the effect part of an Accept constraint was not specified.");
 				throw new BIPEngineException("The port at the effect part of an Accept constraint was not specified");
@@ -262,7 +262,7 @@ public class GlueEncoderImpl implements GlueEncoder {
 		Hashtable<Port, ArrayList<BDD>> portsToBDDs = findCausesComponents(accept.causes);
 
 		for (BIPComponent effectInstance : acceptEffectComponents) {
-			result.add(acceptBDD(behenc.getBDDOfAPort(effectInstance, accept.effect.id), portsToBDDs));
+			result.add(acceptBDD(behenc.getBDDOfAPort(effectInstance, accept.effect.getId()), portsToBDDs));
 		}
 		return result;
 	}
@@ -288,7 +288,7 @@ public class GlueEncoderImpl implements GlueEncoder {
 				Port port = portEnum.nextElement();
 				ArrayList<BDD> auxPortBDDs = requiredPort.get(port);
 				logger.trace("Required port BDDs size: " + auxPortBDDs.size());
-				logger.trace("Required port: "+ port.id +" "+ port.specType);	
+				logger.trace("Required port: "+ port.getId() +" "+ port.specType);	
 				int size = auxPortBDDs.size();
 				BDD oneCauseBDD = engine.getBDDManager().zero();
 				

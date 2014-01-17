@@ -81,7 +81,7 @@ public class DataEncoderImpl implements DataEncoder {
 			Set<Port> componentPorts = disabledCombinations.get(component);
 			logger.trace("Inform Specific: disabled Component ports size: " + componentPorts.size());
 			for (Port port : componentPorts) {
-				logger.trace("Inform Specific: disabledPort is " + port.id + "of component" + port.component());
+				logger.trace("Inform Specific: disabledPort is " + port.getId() + "of component" + port.component());
 
 				Set<Entry<Port, Port>> allpairsBiDirectionalPairs = portsToDVarBDDMapping.keySet();
 				Entry<Port, Port> pairToNegate = new AbstractMap.SimpleEntry<Port, Port>(decidingPort, port);
@@ -194,9 +194,9 @@ public class DataEncoderImpl implements DataEncoder {
 						}
 						BDD node = BDDmanager.ithVar(currentSystemBddSize);
 						if (node == null) {
-							logger.error("Single node BDD for d-variable for port " + inPort.id + " of component " + inPort.component() + " and port " + outPort.id + " of component "
+							logger.error("Single node BDD for d-variable for port " + inPort.getId() + " of component " + inPort.component() + " and port " + outPort.getId() + " of component "
 									+ outPort.component() + " is null");
-							throw new BIPEngineException("Single node BDD for d-variable for port " + inPort.id + " of component " + inPort.component() + " and port " + outPort.id + " of component "
+							throw new BIPEngineException("Single node BDD for d-variable for port " + inPort.getId() + " of component " + inPort.component() + " and port " + outPort.getId() + " of component "
 									+ outPort.component() + " is null");
 						}
 						logger.trace("Create D-variable BDD node for inPort: " + inPort + " and outPort " + outPort);
@@ -210,8 +210,8 @@ public class DataEncoderImpl implements DataEncoder {
 						dataCoordinator.getdVarPositionsToWires().put(currentSystemBddSize, inOutPortsPair);
 						dataCoordinator.getPositionsOfDVariables().add(currentSystemBddSize);
 						if (portsToDVarBDDMapping.get(inOutPortsPair) == null || portsToDVarBDDMapping.get(inOutPortsPair).isZero()) {
-							logger.error("Single node BDD for d variable for ports " + inPort.id + " and " + outPort.toString() + " is equal to null");
-							throw new BIPEngineException("Single node BDD for d variable for ports " + inPort.id + " and " + outPort.toString() + " is equal to null");
+							logger.error("Single node BDD for d variable for ports " + inPort.getId() + " and " + outPort.toString() + " is equal to null");
+							throw new BIPEngineException("Single node BDD for d variable for ports " + inPort.getId() + " and " + outPort.toString() + " is equal to null");
 						}
 						currentSystemBddSize++;
 						logger.trace("CurrentSystemBDDSize: " + currentSystemBddSize);
@@ -232,7 +232,7 @@ public class DataEncoderImpl implements DataEncoder {
 			List<Port> inPorts = inPorts(wire.to);
 			for (Port inPort : inPorts) {
 				ArrayList<BDD> auxiliary = createImplications(inPort);
-				logger.trace("Auxiliary size " + auxiliary.size() + " for port " + inPort.id + " of component " + inPort.component().getName());
+				logger.trace("Auxiliary size " + auxiliary.size() + " for port " + inPort.getId() + " of component " + inPort.component().getName());
 				if (!auxiliary.isEmpty()) {
 					moreImplications.put(componentInBDDs.get(inPort), auxiliary);
 				}
@@ -269,16 +269,16 @@ public class DataEncoderImpl implements DataEncoder {
 		List<Port> dataInPorts = new ArrayList<Port>();
 		Iterable<BIPComponent> inComponentInstances = dataCoordinator.getBIPComponentInstances(inData.specType);
 		for (BIPComponent component : inComponentInstances) {
-			logger.trace("inData: " + inData.id);
+			logger.trace("inData: " + inData.getId());
 			logger.trace("inData component: " + component.getName());
-			dataInPorts.addAll(dataCoordinator.getBehaviourByComponent(component).portsNeedingData(inData.id));
+			dataInPorts.addAll(dataCoordinator.getBehaviourByComponent(component).portsNeedingData(inData.getId()));
 			logger.trace("dataInPorts size: " + dataInPorts.size());
 			for (Port port : dataInPorts) {
-				if (behaviourEncoder.getBDDOfAPort(port.component(), port.id) == null) {
+				if (behaviourEncoder.getBDDOfAPort(port.component(), port.getId()) == null) {
 					logger.error("BDD for inPort in DataEncoder was not found. Possible reason: specifyDataGlue is called before registration of components has finished.");
 					throw new BIPEngineException("BDD for inPort in DataEncoder was not found. Possible reason: specifyDataGlue is called before registration of components has finished.");
 				} else {
-					this.componentInBDDs.put(port, behaviourEncoder.getBDDOfAPort(port.component(), port.id));
+					this.componentInBDDs.put(port, behaviourEncoder.getBDDOfAPort(port.component(), port.getId()));
 					logger.trace("ComponentInBDDs size: " + componentInBDDs.size());
 				}
 			}
@@ -302,19 +302,19 @@ public class DataEncoderImpl implements DataEncoder {
 		Iterable<BIPComponent> outComponentInstances = dataCoordinator.getBIPComponentInstances(outData.specType);
 		List<Port> dataOutPorts = new ArrayList<Port>();
 		for (BIPComponent component : outComponentInstances) {
-			if (dataCoordinator.getBehaviourByComponent(component).getDataProvidingPorts(outData.id).isEmpty()
-					|| dataCoordinator.getBehaviourByComponent(component).getDataProvidingPorts(outData.id) == null) {
+			if (dataCoordinator.getBehaviourByComponent(component).getDataProvidingPorts(outData.getId()).isEmpty()
+					|| dataCoordinator.getBehaviourByComponent(component).getDataProvidingPorts(outData.getId()) == null) {
 				logger.error("getDataProvidingPorts is returning null or empty for a component that is specified in the data wire as input component.");
 				throw new BIPEngineException("getDataProvidingPorts is returning null or empty for a component that is specified in the data wire as input component.");
 			} else {
-				dataOutPorts.addAll(dataCoordinator.getBehaviourByComponent(component).getDataProvidingPorts(outData.id));
+				dataOutPorts.addAll(dataCoordinator.getBehaviourByComponent(component).getDataProvidingPorts(outData.getId()));
 				logger.trace("Get Data Out Ports size: " + (dataOutPorts.size()));
 				for (Port port : dataOutPorts) {
-					if (behaviourEncoder.getBDDOfAPort(port.component(), port.id) == null) {
+					if (behaviourEncoder.getBDDOfAPort(port.component(), port.getId()) == null) {
 						logger.error("BDD for outPort in DataEncoder was not found. Possible reason: specifyDataGlue is called before registration of components has finished.");
 						throw new BIPEngineException("BDD for outPort in DataEncoder was not found. Possible reason: specifyDataGlue is called before registration of components has finished.");
 					} else {
-						this.componentOutBDDs.put(port, behaviourEncoder.getBDDOfAPort(port.component(), port.id));
+						this.componentOutBDDs.put(port, behaviourEncoder.getBDDOfAPort(port.component(), port.getId()));
 						logger.trace("ComponentInBDDs size: " + componentOutBDDs.size());
 					}
 				}

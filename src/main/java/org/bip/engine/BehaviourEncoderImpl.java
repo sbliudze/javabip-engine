@@ -98,11 +98,11 @@ public class BehaviourEncoderImpl implements BehaviourEncoder {
 					throw e;
 				}
 			}	
-			portToBDD.put(componentPorts.get(i).id, singleNodeBDDsForPorts[i]);
-			if (portToBDD.get(componentPorts.get(i).id) == null){
+			portToBDD.put(componentPorts.get(i).getId(), singleNodeBDDsForPorts[i]);
+			if (portToBDD.get(componentPorts.get(i).getId()) == null){
 				try {
-					logger.error("BDD node that corresponds to the port {} of component {} is not created.", componentPorts.get(i).id, component.getName());
-					throw new BIPEngineException("BDD node that corresponds to the port " +componentPorts.get(i).id  +" of component " +component.getName()+" is not created.");
+					logger.error("BDD node that corresponds to the port {} of component {} is not created.", componentPorts.get(i).getId(), component.getName());
+					throw new BIPEngineException("BDD node that corresponds to the port " +componentPorts.get(i).getId()  +" of component " +component.getName()+" is not created.");
 				} catch (BIPEngineException e) {
 					e.printStackTrace();
 					throw e;
@@ -155,13 +155,13 @@ public class BehaviourEncoderImpl implements BehaviourEncoder {
 				for (Port port: statePorts){
 					logger.trace("BE: Component state port: "+port);
 					BDD ports = engine.getBDDManager().one().and(onlyState);
-					tmp = ports.and(portToBDD.get(port.id));
+					tmp = ports.and(portToBDD.get(port.getId()));
 					ports.free();
 					ports = tmp;
 					for (Port otherPort: componentPorts){
-						if (!port.id.equals(otherPort.id)){
+						if (!port.getId().equals(otherPort.getId())){
 							logger.trace("BE: Negated ports: "+otherPort);
-							ports.andWith(portToBDD.get(otherPort.id).not());
+							ports.andWith(portToBDD.get(otherPort.getId()).not());
 						}		
 					}
 					componentBehaviourBDD.orWith(ports);
@@ -170,7 +170,7 @@ public class BehaviourEncoderImpl implements BehaviourEncoder {
 			else{	
 				for (Port otherPort: componentPorts){
 					logger.trace("BE: All negated ports: "+otherPort);
-					onlyState.andWith(portToBDD.get(otherPort.id).not());
+					onlyState.andWith(portToBDD.get(otherPort.getId()).not());
 				}
 				componentBehaviourBDD.orWith(onlyState);
 			}		
@@ -178,7 +178,7 @@ public class BehaviourEncoderImpl implements BehaviourEncoder {
 
 		BDD allNegatedPortsBDD = engine.getBDDManager().one();
 		for(Port port: componentPorts){
-			allNegatedPortsBDD.andWith(portToBDD.get(port.id).not());
+			allNegatedPortsBDD.andWith(portToBDD.get(port.getId()).not());
 		}
 			
 		return componentBehaviourBDD.orWith(allNegatedPortsBDD);

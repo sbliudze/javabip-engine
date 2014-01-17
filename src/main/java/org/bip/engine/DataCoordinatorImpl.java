@@ -222,7 +222,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 	 */
 	public synchronized void informSpecific(BIPComponent decidingComponent, Port decidingPort, Map<BIPComponent, Set<Port>> disabledCombinations) throws BIPEngineException {
 		if (disabledCombinations == null || disabledCombinations.isEmpty()) {
-			logger.debug("No disabled combinations specified in informSpecific for deciding component." + decidingComponent.getName() + " for deciding port " + decidingPort.id
+			logger.debug("No disabled combinations specified in informSpecific for deciding component." + decidingComponent.getName() + " for deciding port " + decidingPort.getId()
 					+ " Map of disabledCombinations is empty.");
 			/*
 			 * This is not a bad situation, since that only means that all combinations are acceptable. Hence nothing to do.
@@ -329,10 +329,10 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 		BIPComponent providingComponent = providingPort.component();
 		for (DataWire wire : this.componentDataWires.get(requiringComponentType).get(dataName)) {
 			if (wire.from.specType.equals(componentBehaviourMapping.get(providingComponent).getComponentType())) {
-				Set<Port> portsProviding = componentBehaviourMapping.get(providingComponent).getDataProvidingPorts(wire.from.id);
+				Set<Port> portsProviding = componentBehaviourMapping.get(providingComponent).getDataProvidingPorts(wire.from.getId());
 				for (Port outport : portsProviding) {
-					if (outport.id.equals(providingPort.id) && outport.specType.equals(providingPort.specType)) {
-						return wire.from.id;
+					if (outport.getId().equals(providingPort.getId()) && outport.specType.equals(providingPort.specType)) {
+						return wire.from.getId();
 					}
 				}
 			}
@@ -383,10 +383,10 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 					ArrayList<Object> dataValues = new ArrayList<Object>();
 					// for each component of this type, call getData
 					for (BIPComponent aComponent : getBIPComponentInstances(wire.from.specType)) {
-						Object inValue = aComponent.getData(wire.from.id, inDataItem.type());
+						Object inValue = aComponent.getData(wire.from.getId(), inDataItem.type());
 						// get data out variable in order to get the ports
 						if (inValue != null) {
-							Set<Port> providingPorts = componentBehaviourMapping.get(aComponent).getDataProvidingPorts(wire.from.id);
+							Set<Port> providingPorts = componentBehaviourMapping.get(aComponent).getDataProvidingPorts(wire.from.getId());
 							dataList.add(new DataContainer(inDataItem, inValue, aComponent, providingPorts));
 							dataValues.add(inValue);
 						}
@@ -411,7 +411,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 				if (!(portActive.get(i))) {
 					ArrayList<DataContainer> dataContainer = containerList.get(i);
 					for (DataContainer dc : dataContainer) {
-						logger.debug(this.count + " CONTAINER CHOSEN: For deciding " + component.hashCode() + " and " + port.id + " disabled is " + dc.component() + " with ports " + dc.ports());
+						logger.debug(this.count + " CONTAINER CHOSEN: For deciding " + component.hashCode() + " and " + port.getId() + " disabled is " + dc.component() + " with ports " + dc.ports());
 						disabledCombinations.put(dc.component(), dc.ports());
 					}
 				}
@@ -539,7 +539,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 			for (Port disabledPort : disabledPorts) {
 				// if it is equal to one of the disabled ports, we mark it as
 				// disabled and do not add to the collection of undecided
-				if (port.id.equals(disabledPort.id)) {
+				if (port.getId().equals(disabledPort.getId())) {
 					portIsDisabled = true;
 					break;
 				}
@@ -630,7 +630,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 			}
 			for (Port port : componentPorts) {
 				if (!portsExecuted.contains(port) && valuation[portToPosition.get(port)] == 1) {
-					logger.trace("Chosen Port: {}", port.id + "of component: " + port.component());
+					logger.trace("Chosen Port: {}", port.getId() + "of component: " + port.component());
 					enabledPorts.add(port);
 				}
 			}
@@ -647,7 +647,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 		 */
 		for (Iterable<Port> inter : bigInteraction) {
 			for (Port port : inter) {
-				logger.debug("ENGINE choice: " +"Chosen Port: {}", port.id + "of component: " + port.component());
+				logger.debug("ENGINE choice: " +"Chosen Port: {}", port.getId() + "of component: " + port.component());
 			}
 		}
 		logger.trace("Interactions: " + bigInteraction.size());

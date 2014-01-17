@@ -75,8 +75,8 @@ public class CurrentStateEncoderImpl implements CurrentStateEncoder {
 		}
 
 		for (Port disabledPort : disabledPorts){
-			logger.trace("Conjunction of negated disabled ports: "+ disabledPort.id+ " of component "+ disabledPort.specType);
-			BDD tmp = result.and(portsToBDDs.get(disabledPort.id).not());
+			logger.trace("Conjunction of negated disabled ports: "+ disabledPort.getId()+ " of component "+ disabledPort.specType);
+			BDD tmp = result.and(portsToBDDs.get(disabledPort.getId()).not());
 			result.free();
 			result = tmp;		
 		}

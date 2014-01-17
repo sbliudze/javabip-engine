@@ -232,7 +232,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 				logger.debug("************************ Already Have Informed *******************************");
 				logger.debug("Component: "+ component + "informs that is at state: "+ currentState);
 				for (Port disabledPort : disabledPorts) {
-					logger.debug("with disabled port: " + disabledPort.id);
+					logger.debug("with disabled port: " + disabledPort.getId());
 				}
 				logger.debug("******************************************************************************");
 				logger.error("Component " + component.getName() + " has already informed the engine in this execution cycle.");
@@ -267,7 +267,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 					logger.debug("********************************* Inform *************************************");
 					logger.debug("Component: "+ component + "informs that is at state: "+ currentState);
 					for (Port disabledPort : disabledPorts) {
-						logger.debug("with disabled port: " + disabledPort.id);
+						logger.debug("with disabled port: " + disabledPort.getId());
 					}
 					logger.debug("******************************************************************************");
 
@@ -390,7 +390,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 				 * Throw an exception if the port is empty. This should not
 				 * happen.
 				 */
-				if (port.id.isEmpty()) {
+				if (port.getId().isEmpty()) {
 					try {
 						logger.error("Exception in thread: " + Thread.currentThread().getName() + "In the interaction chosen by the engine the port, associated to component "
 								+ port.component().getName() + ", is empty.");
@@ -413,17 +413,17 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 				 * This should not happen either.
 				 */
 				if (port.component() == null) {
-					logger.error("Exception in thread: " + Thread.currentThread().getName() + "In the interaction chosen by the engine the port with id = " + port.id
+					logger.error("Exception in thread: " + Thread.currentThread().getName() + "In the interaction chosen by the engine the port with id = " + port.getId()
 							+ " does not have an associated component.");
-					throw new BIPEngineException("Exception in thread: " + Thread.currentThread().getName() + "In the interaction chosen by the engine the port with id = " + port.id
+					throw new BIPEngineException("Exception in thread: " + Thread.currentThread().getName() + "In the interaction chosen by the engine the port with id = " + port.getId()
 							+ " does not have an associated component.");
 				}
 
-				logger.trace("Component {} execute port {}", port.component().getName(), port.id);
+				logger.trace("Component {} execute port {}", port.component().getName(), port.getId());
 
 				/* Execute the port */
-				logger.trace("Chosen port: "+ port.id + " of component: "+port.component().getName());
-				port.component().execute(port.id);
+				logger.trace("Chosen port: "+ port.getId() + " of component: "+port.component().getName());
+				port.component().execute(port.getId());
 
 				/*
 				 * Remove the corresponding component from the list of those
