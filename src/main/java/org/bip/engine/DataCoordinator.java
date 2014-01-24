@@ -13,23 +13,24 @@ import org.bip.api.Port;
 
 public interface DataCoordinator extends BIPEngine, BIPCoordinator, InteractionExecutor {
 	DataEncoder getDataEncoder();
-	
+
 	/**
-	 * @param dVariablesToPosition the dVariablesToPosition to set
+	 * @param dVariablesToPosition
+	 *            the dVariablesToPosition to set
 	 */
 	void setdVariablesToPosition(Map<Integer, Entry<Port, Port>> dVariablesToPosition);
-	
+
 	/**
-	 * @param positionsOfDVariables the positionsOfDVariables to set
+	 * @param positionsOfDVariables
+	 *            the positionsOfDVariables to set
 	 */
 	void setPositionsOfDVariables(List<Integer> positionsOfDVariables);
-	
+
 	/**
 	 * @return the dVariablesToPosition
 	 */
-	Map<Integer, Entry<Port, Port>> getdVarPositionsToWires() ;
+	Map<Integer, Entry<Port, Port>> getdVarPositionsToWires();
 
-	
 	/**
 	 * @return the positionsOfDVariables
 	 */

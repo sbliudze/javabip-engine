@@ -16,7 +16,7 @@ import net.sf.javabdd.BDDFactory;
 import org.bip.api.BIPComponent;
 import org.bip.api.Port;
 import org.bip.exceptions.BIPEngineException;
-import org.bip.glue.DataWire;
+import org.bip.api.DataWire;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

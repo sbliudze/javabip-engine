@@ -11,9 +11,9 @@ import net.sf.javabdd.BDD;
 import org.bip.api.BIPComponent;
 import org.bip.api.Port;
 import org.bip.exceptions.BIPEngineException;
-import org.bip.glue.Accepts;
-import org.bip.glue.BIPGlue;
-import org.bip.glue.Requires;
+import org.bip.api.Accepts;
+import org.bip.api.BIPGlue;
+import org.bip.api.Requires;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

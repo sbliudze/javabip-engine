@@ -10,7 +10,7 @@ import org.bip.api.BIPComponent;
 
 import org.bip.api.Port;
 import org.bip.exceptions.BIPEngineException;
-import org.bip.glue.DataWire;
+import org.bip.api.DataWire;
 
 /**
  * Deals with the DataGlue.

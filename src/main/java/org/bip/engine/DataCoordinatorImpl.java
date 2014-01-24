@@ -20,8 +20,8 @@ import org.bip.api.Behaviour;
 import org.bip.api.Data;
 import org.bip.api.Port;
 import org.bip.exceptions.BIPEngineException;
-import org.bip.glue.BIPGlue;
-import org.bip.glue.DataWire;
+import org.bip.api.BIPGlue;
+import org.bip.api.DataWire;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -86,8 +86,8 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 	private List<Integer> positionsOfDVariables = new ArrayList<Integer>();
 
 	public DataCoordinatorImpl(BIPCoordinator bipCoordinator) {
-		//TODO: please improve: no null arguments to the constructor
-		//provide a constructor without parameters
+		// TODO: please improve: no null arguments to the constructor
+		// provide a constructor without parameters
 		if (bipCoordinator == null)
 			this.bipCoordinator = new BIPCoordinatorImpl();
 		else
@@ -320,10 +320,6 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 		 */
 		bipCoordinator.executeInteractions(portGroupsToExecute);
 	}
-
-//	private Map<String, ?> getData(Hashtable<Port, Hashtable<String, Object>> requiredDataMapping, BIPComponent component, Port port) {
-//		return requiredDataMapping.get(port);
-//	}
 
 	private String dataIsProvided(Port providingPort, String requiringComponentType, String dataName) {
 		BIPComponent providingComponent = providingPort.component();
@@ -647,7 +643,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 		 */
 		for (Iterable<Port> inter : bigInteraction) {
 			for (Port port : inter) {
-				logger.debug("ENGINE choice: " +"Chosen Port: {}", port.getId() + "of component: " + port.component());
+				logger.debug("ENGINE choice: " + "Chosen Port: {}", port.getId() + "of component: " + port.component());
 			}
 		}
 		logger.trace("Interactions: " + bigInteraction.size());

@@ -16,7 +16,7 @@ import org.bip.api.BIPComponent;
 import org.bip.api.Behaviour;
 import org.bip.api.Port;
 import org.bip.exceptions.BIPEngineException;
-import org.bip.glue.BIPGlue;
+import org.bip.api.BIPGlue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

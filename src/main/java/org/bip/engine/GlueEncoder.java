@@ -5,7 +5,7 @@ import java.util.List;
 import net.sf.javabdd.BDD;
 
 import org.bip.exceptions.BIPEngineException;
-import org.bip.glue.BIPGlue;
+import org.bip.api.BIPGlue;
 
 /**
  * Receives information about the glue and computes the glue BDD.
