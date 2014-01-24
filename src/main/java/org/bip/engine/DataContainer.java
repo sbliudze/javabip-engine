@@ -12,7 +12,8 @@ class DataContainer {
 	private BIPComponent component;
 	private Set<Port> ports;
 
-	public DataContainer(Data inDataItem, Object value, BIPComponent component, Set<Port> ports) {
+	//TODO replace Data with String
+	public DataContainer(Data<?> inDataItem, Object value, BIPComponent component, Set<Port> ports) {
 		this.dataIn = inDataItem.name();
 		this.component = component;
 		this.value = value;

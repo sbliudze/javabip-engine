@@ -127,7 +127,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 			Behaviour behaviour = componentBehaviourMapping.get(typeInstancesMapping.get(componentType).get(0));
 			Map<String, Set<DataWire>> dataWire = new Hashtable<String, Set<DataWire>>();
 			for (Port port : behaviour.getEnforceablePorts()) {
-				for (Data data : behaviour.portToDataInForGuard(port)) {
+				for (Data<?> data : behaviour.portToDataInForGuard(port)) {
 					// if this data has already been treated for another port
 					if (dataWire.containsKey(data)) {
 						continue;
@@ -284,8 +284,8 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 				Port secondPair = pair.getValue();
 				logger.trace("D variable for ports: " + "\n\t" + firstPair + "\n\t of component " + firstPair.component() + "\n\t " + secondPair + "\n\t of component " + secondPair.component());
 
-				Iterable<Data> portToDataInForTransition = componentBehaviourMapping.get(firstPair.component()).portToDataInForTransition(firstPair);
-				for (Data dataItem : portToDataInForTransition) {
+				Iterable<Data<?>> portToDataInForTransition = componentBehaviourMapping.get(firstPair.component()).portToDataInForTransition(firstPair);
+				for (Data<?> dataItem : portToDataInForTransition) {
 					String dataOutName = dataIsProvided(secondPair, componentBehaviourMapping.get(firstPair.component()).getComponentType(), dataItem.name());
 					if (dataOutName != null && !dataOutName.isEmpty()) {
 						Object dataValue = secondPair.component().getData(dataOutName, dataItem.type());
@@ -361,7 +361,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 		// for each undecided port of each component :
 		for (Port port : componentUndecidedPorts.get(component)) {
 			// get list of DataIn needed for its guards
-			Set<Data> dataIn = decidingBehaviour.portToDataInForGuard(port);
+			Set<Data<?>> dataIn = decidingBehaviour.portToDataInForGuard(port);
 
 			if (dataIn.isEmpty()) {
 				// if the data is empty, then the port is enabled. just send it.
@@ -374,7 +374,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 			ArrayList<DataContainer> dataList = new ArrayList<DataContainer>();
 			// for each DataIn variable get info which components provide it as
 			// their outData
-			for (Data inDataItem : dataIn) {
+			for (Data<?> inDataItem : dataIn) {
 				// for each wire that is incoming for this data of this
 				// component (as precomputed)
 				for (DataWire wire : this.componentDataWires.get(decidingBehaviour.getComponentType()).get(inDataItem.name())) {
