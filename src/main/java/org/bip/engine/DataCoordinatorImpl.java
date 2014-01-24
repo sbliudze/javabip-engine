@@ -321,9 +321,9 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 		bipCoordinator.executeInteractions(portGroupsToExecute);
 	}
 
-	private Map<String, ?> getData(Hashtable<Port, Hashtable<String, Object>> requiredDataMapping, BIPComponent component, Port port) {
-		return requiredDataMapping.get(port);
-	}
+//	private Map<String, ?> getData(Hashtable<Port, Hashtable<String, Object>> requiredDataMapping, BIPComponent component, Port port) {
+//		return requiredDataMapping.get(port);
+//	}
 
 	private String dataIsProvided(Port providingPort, String requiringComponentType, String dataName) {
 		BIPComponent providingComponent = providingPort.component();
