@@ -232,7 +232,7 @@ public class DataEncoderImpl implements DataEncoder {
 			List<Port> inPorts = inPorts(wire.getTo());
 			for (Port inPort : inPorts) {
 				ArrayList<BDD> auxiliary = createImplications(inPort);
-				logger.trace("Auxiliary size " + auxiliary.size() + " for port " + inPort.getId() + " of component " + inPort.component().getName());
+				logger.trace("Auxiliary size " + auxiliary.size() + " for port " + inPort.getId() + " of component " + inPort.component().getId());
 				if (!auxiliary.isEmpty()) {
 					moreImplications.put(componentInBDDs.get(inPort), auxiliary);
 				}
@@ -270,7 +270,7 @@ public class DataEncoderImpl implements DataEncoder {
 		Iterable<BIPComponent> inComponentInstances = dataCoordinator.getBIPComponentInstances(inData.getSpecType());
 		for (BIPComponent component : inComponentInstances) {
 			logger.trace("inData: " + inData.getId());
-			logger.trace("inData component: " + component.getName());
+			logger.trace("inData component: " + component.getId());
 			dataInPorts.addAll(dataCoordinator.getBehaviourByComponent(component).portsNeedingData(inData.getId()));
 			logger.trace("dataInPorts size: " + dataInPorts.size());
 			for (Port port : dataInPorts) {

@@ -172,14 +172,14 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 			/*
 			 * If this component type already exists in the hashtable, update the ArrayList of BIPComponents that corresponds to this component type.
 			 */
-			if (typeInstancesMapping.containsKey(component.getName())) {
-				componentInstances.addAll(typeInstancesMapping.get(component.getName()));
+			if (typeInstancesMapping.containsKey(component.getId())) {
+				componentInstances.addAll(typeInstancesMapping.get(component.getId()));
 			}
 
 			componentInstances.add(component);
 			// SB: Not sure this is necessary, but should not harm
-			typeInstancesMapping.remove(component.getName());
-			typeInstancesMapping.put(component.getName(), componentInstances);
+			typeInstancesMapping.remove(component.getId());
+			typeInstancesMapping.put(component.getId(), componentInstances);
 		} catch (BIPEngineException e) {
 			e.printStackTrace();
 		}
@@ -222,7 +222,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 	 */
 	public synchronized void informSpecific(BIPComponent decidingComponent, Port decidingPort, Map<BIPComponent, Set<Port>> disabledCombinations) throws BIPEngineException {
 		if (disabledCombinations == null || disabledCombinations.isEmpty()) {
-			logger.debug("No disabled combinations specified in informSpecific for deciding component." + decidingComponent.getName() + " for deciding port " + decidingPort.getId()
+			logger.debug("No disabled combinations specified in informSpecific for deciding component." + decidingComponent.getId() + " for deciding port " + decidingPort.getId()
 					+ " Map of disabledCombinations is empty.");
 			/*
 			 * This is not a bad situation, since that only means that all combinations are acceptable. Hence nothing to do.
@@ -239,7 +239,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 
 		ArrayList<Port> componentPorts = (ArrayList<Port>) componentBehaviourMapping.get(decidingComponent).getEnforceablePorts();
 		if (!componentPorts.contains(decidingPort)) {
-			logger.error("Deciding port {} in informSpecific is not specified in the behaviour of the deciding component {}.", decidingPort, decidingComponent.getName());
+			logger.error("Deciding port {} in informSpecific is not specified in the behaviour of the deciding component {}.", decidingPort, decidingComponent.getId());
 			throw new BIPEngineException("Deciding port in informSpecific is not specified in the behaviour of the deciding component.");
 		}
 		assert (componentPorts.contains(decidingPort));
@@ -247,8 +247,8 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 		Set<BIPComponent> disabledComponents = disabledCombinations.keySet();
 		for (BIPComponent component : disabledComponents) {
 			if (!registeredComponents.contains(component)) {
-				logger.error("Component " + component.getName() + " specified in the disabledCombinations of informSpecific was not registered.");
-				throw new BIPEngineException("Component " + component.getName() + " specified in the disabledCombinations of informSpecific was not registered.");
+				logger.error("Component " + component.getId() + " specified in the disabledCombinations of informSpecific was not registered.");
+				throw new BIPEngineException("Component " + component.getId() + " specified in the disabledCombinations of informSpecific was not registered.");
 			}
 			assert (registeredComponents.contains(component));
 
@@ -256,8 +256,8 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 			for (Port port : disabledPortsOfOneComponent) {
 				List<Port> componentEnforceablePorts = componentBehaviourMapping.get(component).getEnforceablePorts();
 				if (!componentEnforceablePorts.contains(port)) {
-					logger.error("Disabled port " + port + " in informSpecific is not specified in the behaviour of the disabled component: " + component.getName());
-					throw new BIPEngineException("Disabled port " + port + " in informSpecific is not specified in the behaviour of the disabled component: " + component.getName());
+					logger.error("Disabled port " + port + " in informSpecific is not specified in the behaviour of the disabled component: " + component.getId());
+					throw new BIPEngineException("Disabled port " + port + " in informSpecific is not specified in the behaviour of the disabled component: " + component.getId());
 
 				}
 				assert (componentEnforceablePorts.contains(port));
@@ -545,7 +545,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 			}
 			portIsDisabled = false;
 		}
-		logger.trace("For component {} the undecided ports are {}. " + component.getName(), undecidedPorts);
+		logger.trace("For component {} the undecided ports are {}. " + component.getId(), undecidedPorts);
 		return undecidedPorts;
 	}
 

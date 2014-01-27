@@ -158,8 +158,8 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 		 */
 		if (registeredComponents.contains(component)) {
 			try {
-				logger.error("Component " + component.getName() + " has already registered before.");
-				throw new BIPEngineException("Component " + component.getName() + " has already registered before.");
+				logger.error("Component " + component.getId() + " has already registered before.");
+				throw new BIPEngineException("Component " + component.getId() + " has already registered before.");
 			} catch (BIPEngineException e) {
 				e.printStackTrace();
 			}
@@ -177,15 +177,15 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 			 * the ArrayList of BIPComponents that corresponds to this component
 			 * type.
 			 */
-			if (typeInstancesMapping.containsKey(component.getName())) {
-//				System.err.println("component . getName "+ component.getName());
+			if (typeInstancesMapping.containsKey(component.getId())) {
+//				System.err.println("component . getName "+ component.getId());
 //				System.exit(0);
-				componentInstances.addAll(typeInstancesMapping.get(component.getName()));
+				componentInstances.addAll(typeInstancesMapping.get(component.getId()));
 			}
 			
 
 			componentInstances.add(component);
-			typeInstancesMapping.put(component.getName(), componentInstances);
+			typeInstancesMapping.put(component.getId(), componentInstances);
 			registeredComponents.add(component);
 
 			/*
@@ -237,8 +237,8 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 					logger.debug("with disabled port: " + disabledPort.getId());
 				}
 				logger.debug("******************************************************************************");
-				logger.error("Component " + component.getName() + " has already informed the engine in this execution cycle.");
-				throw new BIPEngineException("Component " + component.getName() + " has already informed the engine in this execution cycle.");
+				logger.error("Component " + component.getId() + " has already informed the engine in this execution cycle.");
+				throw new BIPEngineException("Component " + component.getId() + " has already informed the engine in this execution cycle.");
 			} catch (BIPEngineException e) {
 				e.printStackTrace();
 			}
@@ -299,8 +299,8 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 				 */
 			} else {
 				try {
-					logger.error("Component " + component.getName() + " has not registered yet.");
-					throw new BIPEngineException("Component " + component.getName() + " has not registered yet.");
+					logger.error("Component " + component.getId() + " has not registered yet.");
+					throw new BIPEngineException("Component " + component.getId() + " has not registered yet.");
 				} catch (BIPEngineException e) {
 					e.printStackTrace();
 				}
@@ -395,9 +395,9 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 				if (port.getId().isEmpty()) {
 					try {
 						logger.error("Exception in thread: " + Thread.currentThread().getName() + "In the interaction chosen by the engine the port, associated to component "
-								+ port.component().getName() + ", is empty.");
+								+ port.component().getId() + ", is empty.");
 						throw new BIPEngineException("Exception in thread: " + Thread.currentThread().getName() + "In the interaction chosen by the engine the port, associated to component "
-								+ port.component().getName() + ", is empty.");
+								+ port.component().getId() + ", is empty.");
 					} catch (NullPointerException e) {
 						if (port.component() != null) {
 							throw e;
@@ -421,10 +421,10 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 							+ " does not have an associated component.");
 				}
 
-				logger.trace("Component {} execute port {}", port.component().getName(), port.getId());
+				logger.trace("Component {} execute port {}", port.component().getId(), port.getId());
 
 				/* Execute the port */
-				logger.trace("Chosen port: "+ port.getId() + " of component: "+port.component().getName());
+				logger.trace("Chosen port: "+ port.getId() + " of component: "+port.component().getId());
 				port.component().execute(port.getId());
 
 				/*

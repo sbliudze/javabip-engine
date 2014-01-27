@@ -70,8 +70,8 @@ public class BehaviourEncoderImpl implements BehaviourEncoder {
 			stateToBDD.put(componentStates.get(i), singleNodeBDDsForStates[i]);
 			if (stateToBDD.get(componentStates.get(i)) == null){
 				try {
-					logger.error("BDD node that corresponds to the state {} of component {} is not created.", componentStates.get(i), component.getName());
-					throw new BIPEngineException("BDD node that corresponds to the state "+ componentStates.get(i) + " of component " + component.getName()+ " is not created.");
+					logger.error("BDD node that corresponds to the state {} of component {} is not created.", componentStates.get(i), component.getId());
+					throw new BIPEngineException("BDD node that corresponds to the state "+ componentStates.get(i) + " of component " + component.getId()+ " is not created.");
 				} catch (BIPEngineException e) {
 					e.printStackTrace();
 					throw e;
@@ -101,8 +101,8 @@ public class BehaviourEncoderImpl implements BehaviourEncoder {
 			portToBDD.put(componentPorts.get(i).getId(), singleNodeBDDsForPorts[i]);
 			if (portToBDD.get(componentPorts.get(i).getId()) == null){
 				try {
-					logger.error("BDD node that corresponds to the port {} of component {} is not created.", componentPorts.get(i).getId(), component.getName());
-					throw new BIPEngineException("BDD node that corresponds to the port " +componentPorts.get(i).getId()  +" of component " +component.getName()+" is not created.");
+					logger.error("BDD node that corresponds to the port {} of component {} is not created.", componentPorts.get(i).getId(), component.getId());
+					throw new BIPEngineException("BDD node that corresponds to the port " +componentPorts.get(i).getId()  +" of component " +component.getId()+" is not created.");
 				} catch (BIPEngineException e) {
 					e.printStackTrace();
 					throw e;
@@ -124,8 +124,8 @@ public class BehaviourEncoderImpl implements BehaviourEncoder {
 		Behaviour behaviour = wrapper.getBehaviourByComponent(component);
 		if (behaviour == null){
 			try {
-				logger.error("Behaviour of component {} is null", component.getName());
-				throw new BIPEngineException("Behaviour of component "+component.getName() +" is null.");
+				logger.error("Behaviour of component {} is null", component.getId());
+				throw new BIPEngineException("Behaviour of component "+component.getId() +" is null.");
 			} catch (BIPEngineException e) {
 				e.printStackTrace();
 				throw e;
@@ -206,8 +206,8 @@ public class BehaviourEncoderImpl implements BehaviourEncoder {
 		Hashtable<String, BDD> aux = componentToPortToBDD.get(component);
 		if (aux.get(portName) == null){
 			try {
-				logger.error("BDD node of port {} of component {} is null", portName, component.getName());
-				throw new BIPEngineException("BDD node of a port "+ portName +" of component "+ component.getName() +" is null");
+				logger.error("BDD node of port {} of component {} is null", portName, component.getId());
+				throw new BIPEngineException("BDD node of a port "+ portName +" of component "+ component.getId() +" is null");
 			} catch (BIPEngineException e) {
 				e.printStackTrace();
 				throw e;

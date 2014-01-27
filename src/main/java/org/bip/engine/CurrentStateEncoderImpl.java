@@ -59,8 +59,8 @@ public class CurrentStateEncoderImpl implements CurrentStateEncoder {
 	
 		if (currentState == null || currentState.isEmpty()) {
 	        try {
-				logger.error("Current state of component {} is null or empty "+component.getName());
-				throw new BIPEngineException("Current State of component "+component.getName() +" is null.");
+				logger.error("Current state of component {} is null or empty "+component.getId());
+				throw new BIPEngineException("Current State of component "+component.getId() +" is null.");
 			} catch (BIPEngineException e) {
 				e.printStackTrace();
 				throw e;

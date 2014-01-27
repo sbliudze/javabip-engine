@@ -83,7 +83,7 @@ public class GlueEncoderImpl implements GlueEncoder {
 				Iterable<BIPComponent> components =  wrapper.getBIPComponentInstances(causePort.getSpecType());
 				ArrayList<BDD> portBDDs = new ArrayList<BDD>();
 				for (BIPComponent component: components){
-					logger.trace("Component: "+component.getName()+ " has Causes ports: "+ causePort);
+					logger.trace("Component: "+component.getId()+ " has Causes ports: "+ causePort);
 					portBDDs.add(behenc.getBDDOfAPort(component, causePort.getId()));
 				}
 				logger.trace("Number of BDDs for port {} {}", causePort.getId() , portBDDs.size() );
