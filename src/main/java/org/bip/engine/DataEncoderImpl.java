@@ -6,7 +6,6 @@ import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
-
 import java.util.Map;
 import java.util.Set;
 
@@ -15,6 +14,9 @@ import net.sf.javabdd.BDDFactory;
 
 import org.bip.api.BIPComponent;
 import org.bip.api.Port;
+import org.bip.engine.api.BehaviourEncoder;
+import org.bip.engine.api.DataCoordinator;
+import org.bip.engine.api.DataEncoder;
 import org.bip.exceptions.BIPEngineException;
 import org.bip.api.DataWire;
 import org.slf4j.Logger;

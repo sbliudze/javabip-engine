@@ -14,6 +14,8 @@ import net.sf.javabdd.BDDFactory;
 
 import org.bip.api.BIPComponent;
 import org.bip.api.Port;
+import org.bip.engine.api.BDDBIPEngine;
+import org.bip.engine.api.BIPCoordinator;
 import org.bip.exceptions.BIPEngineException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -19,6 +19,11 @@ import org.bip.api.BIPEngine;
 import org.bip.api.Behaviour;
 import org.bip.api.Data;
 import org.bip.api.Port;
+import org.bip.engine.api.BIPCoordinator;
+import org.bip.engine.api.BehaviourEncoder;
+import org.bip.engine.api.DataCoordinator;
+import org.bip.engine.api.DataEncoder;
+import org.bip.engine.api.InteractionExecutor;
 import org.bip.exceptions.BIPEngineException;
 import org.bip.api.BIPGlue;
 import org.bip.api.DataWire;
@@ -367,7 +372,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 			// for each data its different evaluations
 			Hashtable<String, ArrayList<Object>> dataEvaluation = new Hashtable<String, ArrayList<Object>>();
 			// list of data structures build upon receiving the data value
-			ArrayList<DataContainer> dataList = new ArrayList<DataContainer>();
+			ArrayList<DataContainerImpl> dataList = new ArrayList<DataContainerImpl>();
 			// for each DataIn variable get info which components provide it as
 			// their outData
 			for (Data<?> inDataItem : dataIn) {
@@ -383,7 +388,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 						// get data out variable in order to get the ports
 						if (inValue != null) {
 							Set<Port> providingPorts = componentBehaviourMapping.get(aComponent).getDataProvidingPorts(wire.getFrom().getId());
-							dataList.add(new DataContainer(inDataItem, inValue, aComponent, providingPorts));
+							dataList.add(new DataContainerImpl(inDataItem, inValue, aComponent, providingPorts));
 							dataValues.add(inValue);
 						}
 					}
@@ -391,7 +396,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 				}
 			}
 
-			ArrayList<ArrayList<DataContainer>> containerList = getDataValueTable(dataList);
+			ArrayList<ArrayList<DataContainerImpl>> containerList = getDataValueTable(dataList);
 			if (logger.isTraceEnabled()) {
 				print(containerList, component);
 			}
@@ -405,8 +410,8 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 			for (int i = 0; i < portActive.size(); i++) {
 				disabledCombinations.clear();
 				if (!(portActive.get(i))) {
-					ArrayList<DataContainer> dataContainer = containerList.get(i);
-					for (DataContainer dc : dataContainer) {
+					ArrayList<DataContainerImpl> dataContainer = containerList.get(i);
+					for (DataContainerImpl dc : dataContainer) {
 						logger.debug(this.count + " CONTAINER CHOSEN: For deciding " + component.hashCode() + " and " + port.getId() + " disabled is " + dc.component() + " with ports " + dc.ports());
 						disabledCombinations.put(dc.component(), dc.ports());
 					}
@@ -416,20 +421,20 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 		}
 	}
 
-	private void print(ArrayList<ArrayList<DataContainer>> containerList, BIPComponent component) {
-		for (ArrayList<DataContainer> dataList : containerList) {
-			for (DataContainer container : dataList) {
+	private void print(ArrayList<ArrayList<DataContainerImpl>> containerList, BIPComponent component) {
+		for (ArrayList<DataContainerImpl> dataList : containerList) {
+			for (DataContainerImpl container : dataList) {
 				logger.trace(this.count + " Deciding " + component.hashCode() + ", Providing " + container.component() + " the value " + container.value());
 			}
 		}
 
 	}
 
-	private ArrayList<Map<String, Object>> createDataTable(ArrayList<ArrayList<DataContainer>> containerList) {
+	private ArrayList<Map<String, Object>> createDataTable(ArrayList<ArrayList<DataContainerImpl>> containerList) {
 		ArrayList<Map<String, Object>> dataTable = new ArrayList<Map<String, Object>>();
-		for (ArrayList<DataContainer> container : containerList) {
+		for (ArrayList<DataContainerImpl> container : containerList) {
 			Map<String, Object> row = new Hashtable<String, Object>();
-			for (DataContainer dc : container) {
+			for (DataContainerImpl dc : container) {
 				row.put(dc.name(), dc.value());
 			}
 			dataTable.add(row);
@@ -437,25 +442,25 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 		return dataTable;
 	}
 
-	private ArrayList<ArrayList<DataContainer>> getDataValueTable(ArrayList<DataContainer> dataList) {
-		ArrayList<ArrayList<DataContainer>> result = new ArrayList<ArrayList<DataContainer>>();
+	private ArrayList<ArrayList<DataContainerImpl>> getDataValueTable(ArrayList<DataContainerImpl> dataList) {
+		ArrayList<ArrayList<DataContainerImpl>> result = new ArrayList<ArrayList<DataContainerImpl>>();
 
 		if (dataList == null || dataList.isEmpty()) {
 			// throw exception
 			return result;
 		}
-		ArrayList<ArrayList<DataContainer>> sortedList = getListList(dataList);
+		ArrayList<ArrayList<DataContainerImpl>> sortedList = getListList(dataList);
 
 		// for one bipData get iterator over its values
-		ArrayList<DataContainer> entry = sortedList.get(0);
-		Iterator<DataContainer> iterator = entry.iterator();
+		ArrayList<DataContainerImpl> entry = sortedList.get(0);
+		Iterator<DataContainerImpl> iterator = entry.iterator();
 
 		// for each value of this first bipData
 		while (iterator.hasNext()) {
 			// create one map, where
 			// all the different pairs name<->value will be stored
 			// put there the current value of the first bipData
-			ArrayList<DataContainer> dataRow = new ArrayList<DataContainer>();
+			ArrayList<DataContainerImpl> dataRow = new ArrayList<DataContainerImpl>();
 			dataRow.add(iterator.next());
 
 			// remove the current data from the initial data table
@@ -469,8 +474,8 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 		return result;
 	}
 
-	private ArrayList<ArrayList<DataContainer>> getNextTableRow(ArrayList<ArrayList<DataContainer>> sortedList, ArrayList<DataContainer> dataRow) {
-		ArrayList<ArrayList<DataContainer>> result = new ArrayList<ArrayList<DataContainer>>();
+	private ArrayList<ArrayList<DataContainerImpl>> getNextTableRow(ArrayList<ArrayList<DataContainerImpl>> sortedList, ArrayList<DataContainerImpl> dataRow) {
+		ArrayList<ArrayList<DataContainerImpl>> result = new ArrayList<ArrayList<DataContainerImpl>>();
 		// if there is no more data left, it means we have constructed one map
 		// of all the bipData variables
 		if (sortedList == null || sortedList.isEmpty()) {
@@ -479,8 +484,8 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 		}
 
 		// for one bipData get iterator over its values
-		ArrayList<DataContainer> entry = sortedList.iterator().next();
-		Iterator<DataContainer> iterator = entry.iterator();
+		ArrayList<DataContainerImpl> entry = sortedList.iterator().next();
+		Iterator<DataContainerImpl> iterator = entry.iterator();
 
 		// for each value of this bipData
 		while (iterator.hasNext()) {
@@ -489,7 +494,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 			// copy there all the previous values
 			// (this must be done to escape
 			// change of one variable that leads to change of all its copies
-			ArrayList<DataContainer> thisRow = new ArrayList<DataContainer>();
+			ArrayList<DataContainerImpl> thisRow = new ArrayList<DataContainerImpl>();
 			thisRow.addAll(dataRow);
 			// put there the current value of the bipData
 			thisRow.add(iterator.next());
@@ -505,15 +510,15 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 		return result;
 	}
 
-	private ArrayList<ArrayList<DataContainer>> getListList(ArrayList<DataContainer> list) {
-		ArrayList<ArrayList<DataContainer>> result = new ArrayList<ArrayList<DataContainer>>();
+	private ArrayList<ArrayList<DataContainerImpl>> getListList(ArrayList<DataContainerImpl> list) {
+		ArrayList<ArrayList<DataContainerImpl>> result = new ArrayList<ArrayList<DataContainerImpl>>();
 
 		while (!list.isEmpty()) {
-			ArrayList<DataContainer> oneDataList = new ArrayList<DataContainer>();
-			DataContainer data = list.get(0);
+			ArrayList<DataContainerImpl> oneDataList = new ArrayList<DataContainerImpl>();
+			DataContainerImpl data = list.get(0);
 			oneDataList.add(data);
 			list.remove(data);
-			for (DataContainer d : list) {
+			for (DataContainerImpl d : list) {
 				if (d.name().equals(data.name())) {
 					oneDataList.add(d);
 				}

@@ -4,12 +4,16 @@ import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Map;
-
 import java.util.Hashtable;
 
 import net.sf.javabdd.BDD;
+
 import org.bip.api.BIPComponent;
 import org.bip.api.Port;
+import org.bip.engine.api.BDDBIPEngine;
+import org.bip.engine.api.BIPCoordinator;
+import org.bip.engine.api.BehaviourEncoder;
+import org.bip.engine.api.GlueEncoder;
 import org.bip.exceptions.BIPEngineException;
 import org.bip.api.Accepts;
 import org.bip.api.BIPGlue;

@@ -1,4 +1,4 @@
-package org.bip.engine;
+package org.bip.engine.api;
 
 import java.util.Map;
 import java.util.Set;
@@ -7,7 +7,6 @@ import net.sf.javabdd.BDD;
 import net.sf.javabdd.BDDFactory;
 
 import org.bip.api.BIPComponent;
-
 import org.bip.api.Port;
 import org.bip.exceptions.BIPEngineException;
 import org.bip.api.DataWire;
