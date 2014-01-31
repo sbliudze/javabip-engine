@@ -30,6 +30,7 @@ import org.bip.api.DataWire;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+// TODO: Auto-generated Javadoc
 /**
  * There is no need for DataCoordinator interface, just DataCoordinatorImpl will implement BIP engine interface. DataCoordinatorImpl needs BIP
  * coordinator ( BIP Engine again ) that actual does all the computation of BIP engine. DataCoordinatorImpl takes care of only of data querying and
@@ -42,8 +43,10 @@ import org.slf4j.LoggerFactory;
 
 public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, DataCoordinator {
 
+	/** The logger. */
 	private Logger logger = LoggerFactory.getLogger(BIPCoordinatorImpl.class);
 
+	/** The registered components. */
 	private ArrayList<BIPComponent> registeredComponents = new ArrayList<BIPComponent>();
 
 	/**
@@ -62,34 +65,47 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 	 */
 	private Hashtable<String, ArrayList<BIPComponent>> typeInstancesMapping = new Hashtable<String, ArrayList<BIPComponent>>();
 
+	/** The data wires. */
 	private ArrayList<DataWire> dataWires;
 
-	/** Number of ports of components registered */
+	/**  Number of ports of components registered. */
 	private int nbPorts;
 
-	/** Number of states of components registered */
+	/**  Number of states of components registered. */
 	private int nbStates;
 
+	/** The count. */
 	private int count;
 
-	/**
-	 * Create instances of all the the Data Encoder and of the BIPCoordinator
-	 */
+	/** Create instances of all the the Data Encoder and of the BIPCoordinator. */
 	private DataEncoder dataEncoder = new DataEncoderImpl();
+	
+	/** The bip coordinator. */
 	private BIPCoordinator bipCoordinator = null;
 
+	/** The registration finished. */
 	private boolean registrationFinished = false;
 
+	/** The component data wires. */
 	private Map<String, Map<String, Set<DataWire>>> componentDataWires;
 
+	/** The registration semaphore. */
 	private Semaphore registrationSemaphore;
 
+	/** The interaction executor. */
 	private InteractionExecutor interactionExecutor;
 
+	/** The d var positions to wires. */
 	private Map<Integer, Entry<Port, Port>> dVarPositionsToWires = new Hashtable<Integer, Entry<Port, Port>>();
 
+	/** The positions of d variables. */
 	private List<Integer> positionsOfDVariables = new ArrayList<Integer>();
 
+	/**
+	 * Instantiates a new data coordinator impl.
+	 *
+	 * @param bipCoordinator the bip coordinator
+	 */
 	public DataCoordinatorImpl(BIPCoordinator bipCoordinator) {
 		// TODO: please improve: no null arguments to the constructor
 		// provide a constructor without parameters
@@ -108,6 +124,8 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 
 	/**
 	 * Sends interactions-glue to the BIP Coordinator Sends data-glue to the Data Encoder.
+	 *
+	 * @param glue the glue
 	 */
 	public void specifyGlue(BIPGlue glue) {
 		bipCoordinator.specifyGlue(glue);
@@ -154,6 +172,9 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 		registrationSemaphore.release();
 	}
 
+	/* (non-Javadoc)
+	 * @see org.bip.api.BIPEngine#register(org.bip.api.BIPComponent, org.bip.api.Behaviour)
+	 */
 	public void register(BIPComponent component, Behaviour behaviour) {
 		/*
 		 * The condition below checks whether the component has already been registered.
@@ -190,6 +211,9 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 		}
 	}
 
+	/* (non-Javadoc)
+	 * @see org.bip.api.BIPEngine#inform(org.bip.api.BIPComponent, java.lang.String, java.util.Set)
+	 */
 	public synchronized void inform(BIPComponent component, String currentState, Set<Port> disabledPorts) {
 		// for each component store its undecided ports
 		// TODO create undecided port with the help of set.removeAll
@@ -224,6 +248,11 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 	 * Exceptions are thrown if: 1. DecidingComponent are not in the list of registered components. 2. Deciding Port of the deciding component (holder
 	 * component) is not specified in the Behaviour of the holder. 3. DisabledComponents in the disabledCombinations are not in the list of registered
 	 * components. 4. Disabled Ports in the disabledCombinations are not specified in the Behaviour of the holder component.
+	 *
+	 * @param decidingComponent the deciding component
+	 * @param decidingPort the deciding port
+	 * @param disabledCombinations the disabled combinations
+	 * @throws BIPEngineException the BIP engine exception
 	 */
 	public synchronized void informSpecific(BIPComponent decidingComponent, Port decidingPort, Map<BIPComponent, Set<Port>> disabledCombinations) throws BIPEngineException {
 		if (disabledCombinations == null || disabledCombinations.isEmpty()) {
@@ -281,6 +310,13 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 	/*
 	 * Merging the "subinteractions". Some port can in more than one of the enabled d-variables. This port should not be sent to the Executors twice
 	 */
+	/**
+	 * Merging sub interactions.
+	 *
+	 * @param chosenInteraction the chosen interaction
+	 * @param portsExecuted the ports executed
+	 * @return the list
+	 */
 	private List<List<Port>> mergingSubInteractions(byte[] chosenInteraction, ArrayList<Port> portsExecuted) {
 		for (Integer i : positionsOfDVariables) {
 			if (chosenInteraction[i] == 1) {
@@ -313,8 +349,9 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 	 * 
 	 * Through this function all the components need to be notified. If they are participating in an interaction then their port to be fired is sent
 	 * to them through the execute function of the BIPExecutor. If they are not participating in an interaction then null is sent to them.
-	 * 
-	 * @throws BIPEngineException
+	 *
+	 * @param portGroupsToExecute the port groups to execute
+	 * @throws BIPEngineException the BIP engine exception
 	 */
 	public void executeInteractions(List<List<Port>> portGroupsToExecute) throws BIPEngineException {
 		this.count++;
@@ -326,6 +363,14 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 		bipCoordinator.executeInteractions(portGroupsToExecute);
 	}
 
+	/**
+	 * Data is provided.
+	 *
+	 * @param providingPort the providing port
+	 * @param requiringComponentType the requiring component type
+	 * @param dataName the data name
+	 * @return the string
+	 */
 	private String dataIsProvided(Port providingPort, String requiringComponentType, String dataName) {
 		BIPComponent providingComponent = providingPort.component();
 		for (DataWire wire : this.componentDataWires.get(requiringComponentType).get(dataName)) {
@@ -341,14 +386,23 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 		return null;
 	}
 
+	/* (non-Javadoc)
+	 * @see org.bip.api.BIPEngine#start()
+	 */
 	public void start() {
 		bipCoordinator.start();
 	}
 
+	/* (non-Javadoc)
+	 * @see org.bip.api.BIPEngine#stop()
+	 */
 	public void stop() {
 		bipCoordinator.stop();
 	}
 
+	/* (non-Javadoc)
+	 * @see org.bip.api.BIPEngine#execute()
+	 */
 	public void execute() {
 		if (this.interactionExecutor == null) {
 			setInteractionExecutor(this);
@@ -356,6 +410,12 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 		bipCoordinator.execute();
 	}
 
+	/**
+	 * Do inform specific.
+	 *
+	 * @param component the component
+	 * @throws BIPEngineException the BIP engine exception
+	 */
 	private void doInformSpecific(BIPComponent component) throws BIPEngineException {
 		// mapping port <-> data it needs for computing guards
 		Behaviour decidingBehaviour = componentBehaviourMapping.get(component);
@@ -421,6 +481,12 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 		}
 	}
 
+	/**
+	 * Prints the.
+	 *
+	 * @param containerList the container list
+	 * @param component the component
+	 */
 	private void print(ArrayList<ArrayList<DataContainerImpl>> containerList, BIPComponent component) {
 		for (ArrayList<DataContainerImpl> dataList : containerList) {
 			for (DataContainerImpl container : dataList) {
@@ -430,6 +496,12 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 
 	}
 
+	/**
+	 * Creates the data table.
+	 *
+	 * @param containerList the container list
+	 * @return the array list
+	 */
 	private ArrayList<Map<String, Object>> createDataTable(ArrayList<ArrayList<DataContainerImpl>> containerList) {
 		ArrayList<Map<String, Object>> dataTable = new ArrayList<Map<String, Object>>();
 		for (ArrayList<DataContainerImpl> container : containerList) {
@@ -442,6 +514,12 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 		return dataTable;
 	}
 
+	/**
+	 * Gets the data value table.
+	 *
+	 * @param dataList the data list
+	 * @return the data value table
+	 */
 	private ArrayList<ArrayList<DataContainerImpl>> getDataValueTable(ArrayList<DataContainerImpl> dataList) {
 		ArrayList<ArrayList<DataContainerImpl>> result = new ArrayList<ArrayList<DataContainerImpl>>();
 
@@ -474,6 +552,13 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 		return result;
 	}
 
+	/**
+	 * Gets the next table row.
+	 *
+	 * @param sortedList the sorted list
+	 * @param dataRow the data row
+	 * @return the next table row
+	 */
 	private ArrayList<ArrayList<DataContainerImpl>> getNextTableRow(ArrayList<ArrayList<DataContainerImpl>> sortedList, ArrayList<DataContainerImpl> dataRow) {
 		ArrayList<ArrayList<DataContainerImpl>> result = new ArrayList<ArrayList<DataContainerImpl>>();
 		// if there is no more data left, it means we have constructed one map
@@ -510,6 +595,12 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 		return result;
 	}
 
+	/**
+	 * Gets the list list.
+	 *
+	 * @param list the list
+	 * @return the list list
+	 */
 	private ArrayList<ArrayList<DataContainerImpl>> getListList(ArrayList<DataContainerImpl> list) {
 		ArrayList<ArrayList<DataContainerImpl>> result = new ArrayList<ArrayList<DataContainerImpl>>();
 
@@ -529,6 +620,14 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 		return result;
 	}
 
+	/**
+	 * Gets the undecided ports.
+	 *
+	 * @param component the component
+	 * @param currentState the current state
+	 * @param disabledPorts the disabled ports
+	 * @return the undecided ports
+	 */
 	private ArrayList<Port> getUndecidedPorts(BIPComponent component, String currentState, Set<Port> disabledPorts) {
 		ArrayList<Port> undecidedPorts = new ArrayList<Port>();
 		Behaviour behaviour = componentBehaviourMapping.get(component);
@@ -556,8 +655,10 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 
 	/**
 	 * Helper function that returns the registered component instances that correspond to a component type.
-	 * 
-	 * @throws BIPEngineException
+	 *
+	 * @param type the type
+	 * @return the BIP component instances
+	 * @throws BIPEngineException the BIP engine exception
 	 */
 	public List<BIPComponent> getBIPComponentInstances(String type) throws BIPEngineException {
 		ArrayList<BIPComponent> instances = typeInstancesMapping.get(type);
@@ -577,6 +678,9 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 
 	/**
 	 * Helper function that given a component returns the corresponding behaviour as a Behaviour Object.
+	 *
+	 * @param component the component
+	 * @return the behaviour by component
 	 */
 	public Behaviour getBehaviourByComponent(BIPComponent component) {
 		return componentBehaviourMapping.get(component);
@@ -584,6 +688,8 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 
 	/**
 	 * Helper function that returns the total number of ports of the registered components.
+	 *
+	 * @return the no ports
 	 */
 	public int getNoPorts() {
 		return nbPorts;
@@ -591,15 +697,23 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 
 	/**
 	 * Helper function that returns the total number of states of the registered components.
+	 *
+	 * @return the no states
 	 */
 	public int getNoStates() {
 		return nbStates;
 	}
 
+	/* (non-Javadoc)
+	 * @see org.bip.engine.api.BIPCoordinator#getNoComponents()
+	 */
 	public int getNoComponents() {
 		return bipCoordinator.getNoComponents();
 	}
 
+	/* (non-Javadoc)
+	 * @see org.bip.engine.api.InteractionExecutor#execute(byte[])
+	 */
 	public void execute(byte[] valuation) throws BIPEngineException {
 		if (interactionExecutor != this) {
 			interactionExecutor.execute(valuation);
@@ -609,6 +723,12 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 		logger.debug("*************************************************************************");
 	}
 
+	/**
+	 * Prepare ports.
+	 *
+	 * @param valuation the valuation
+	 * @return the list
+	 */
 	private List<List<Port>> preparePorts(byte[] valuation) {
 		/*
 		 * Grouping the interaction into smaller ones (with respect to data transfer)
@@ -655,33 +775,53 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 		return bigInteraction;
 	}
 
+	/* (non-Javadoc)
+	 * @see org.bip.engine.api.BIPCoordinator#setInteractionExecutor(org.bip.engine.api.InteractionExecutor)
+	 */
 	public void setInteractionExecutor(InteractionExecutor interactionExecutor) {
 		this.interactionExecutor = interactionExecutor;
 
 	}
 
+	/* (non-Javadoc)
+	 * @see org.bip.engine.api.BIPCoordinator#specifyTemporaryConstraints(net.sf.javabdd.BDD)
+	 */
 	public void specifyTemporaryConstraints(BDD constraints) {
 		bipCoordinator.specifyTemporaryConstraints(constraints);
 
 	}
 
+	/* (non-Javadoc)
+	 * @see org.bip.engine.api.BIPCoordinator#getBehaviourEncoderInstance()
+	 */
 	public BehaviourEncoder getBehaviourEncoderInstance() {
 		return bipCoordinator.getBehaviourEncoderInstance();
 	}
 
+	/* (non-Javadoc)
+	 * @see org.bip.engine.api.BIPCoordinator#getBDDManager()
+	 */
 	public BDDFactory getBDDManager() {
 		return bipCoordinator.getBDDManager();
 	}
 
+	/* (non-Javadoc)
+	 * @see org.bip.engine.api.BIPCoordinator#specifyPermanentConstraints(net.sf.javabdd.BDD)
+	 */
 	public void specifyPermanentConstraints(BDD constraints) {
 		bipCoordinator.specifyPermanentConstraints(constraints);
 	}
 
+	/* (non-Javadoc)
+	 * @see org.bip.engine.api.DataCoordinator#getDataEncoder()
+	 */
 	public DataEncoder getDataEncoder() {
 		return dataEncoder;
 	}
 
 	/**
+	 * Gets the d var positions to wires.
+	 *
 	 * @return the dVariablesToPosition
 	 */
 	public Map<Integer, Entry<Port, Port>> getdVarPositionsToWires() {
@@ -689,6 +829,8 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 	}
 
 	/**
+	 * Gets the positions of d variables.
+	 *
 	 * @return the positionsOfDVariables
 	 */
 	public List<Integer> getPositionsOfDVariables() {
@@ -696,16 +838,18 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 	}
 
 	/**
-	 * @param dVarPositionsToWires
-	 *            the dVariablesToPosition to set
+	 * Setd variables to position.
+	 *
+	 * @param dVarPositionsToWires            the dVariablesToPosition to set
 	 */
 	public void setdVariablesToPosition(Map<Integer, Entry<Port, Port>> dVarPositionsToWires) {
 		this.dVarPositionsToWires = dVarPositionsToWires;
 	}
 
 	/**
-	 * @param positionsOfDVariables
-	 *            the positionsOfDVariables to set
+	 * Sets the positions of d variables.
+	 *
+	 * @param positionsOfDVariables            the positionsOfDVariables to set
 	 */
 	public void setPositionsOfDVariables(List<Integer> positionsOfDVariables) {
 		this.positionsOfDVariables = positionsOfDVariables;

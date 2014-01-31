@@ -11,6 +11,7 @@ import org.bip.api.Port;
 import org.bip.exceptions.BIPEngineException;
 import org.bip.api.DataWire;
 
+// TODO: Auto-generated Javadoc
 /**
  * Deals with the DataGlue.
  * Encodes the informSpecific information.
@@ -32,31 +33,42 @@ public interface DataEncoder {
 	 * 
 	 * Returns to the core engine the BDD corresponding to the disabled combination of ports of component instances.
 	 *  
-	 * @param A map that gives information about a disabled interaction of ports of component instances according to data transfer information
-	 * @throws BIPEngineException 
+	 *
+	 * @param decidingComponent the deciding component
+	 * @param decidingPort the deciding port
+	 * @param disabledCombinations the disabled combinations
+	 * @return the bdd
+	 * @throws BIPEngineException the BIP engine exception
 	 */
 	BDD encodeDisabledCombinations(BIPComponent decidingComponent, Port decidingPort, Map<BIPComponent, Set<Port>> disabledCombinations) throws BIPEngineException;
 	
     /**
      * Receives the information about the data wires of the system.
-     * @param data glue
-     * @return 
-     * @throws BIPEngineException 
+     *
+     * @param dataGlue the data glue
+     * @return the bdd
+     * @throws BIPEngineException the BIP engine exception
      */
     BDD specifyDataGlue(Iterable<DataWire> dataGlue) throws BIPEngineException;
     
 	/**
-	 * Setter for the BDDBIPEngine
+	 * Setter for the BDDBIPEngine.
+	 *
+	 * @param manager the new BDD manager
 	 */
 	void setBDDManager(BDDFactory manager);
 	
 	/**
-	 * Setter for the DataCoordinator
+	 * Setter for the DataCoordinator.
+	 *
+	 * @param dataCoordinator the new data coordinator
 	 */
 	void setDataCoordinator(DataCoordinator dataCoordinator);
 	
 	/**
-	 * Setter for the Behaviour Encoder
+	 * Setter for the Behaviour Encoder.
+	 *
+	 * @param behaviourEncoder the new behaviour encoder
 	 */
 	void setBehaviourEncoder(BehaviourEncoder behaviourEncoder);
 

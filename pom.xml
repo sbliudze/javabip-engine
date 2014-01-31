@@ -3,19 +3,25 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
 	<modelVersion>4.0.0</modelVersion>
-
+	
+  <groupId>org.bip</groupId>
+  <artifactId>org.bip.engine</artifactId>
+  <version>0.1.0-SNAPSHOT</version>
+  
 	<description>
       It is an engine.
   </description>
 
-	<artifactId>bip.engine</artifactId>
+<!-- 	<artifactId>bip.engine</artifactId> -->
 
-	<groupId>org.bip</groupId>
+<!-- 	<groupId>org.bip</groupId> -->
 
 	<packaging>jar</packaging>
 
 	<name>BIP :: Engine</name>
-	<version>1.0.0-SNAPSHOT</version>
+<!-- 	<version>1.0.0-SNAPSHOT</version> -->
+
+
 
 	<properties>
 		<filemover.osgi.private></filemover.osgi.private>
@@ -33,7 +39,7 @@
 
         <dependency>
             <groupId>org.bip</groupId>
-            <artifactId>bip.api</artifactId>
+            <artifactId>org.bip.api</artifactId>
             <version>0.1.0-SNAPSHOT</version>
         </dependency>
 

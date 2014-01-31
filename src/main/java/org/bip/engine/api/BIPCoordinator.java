@@ -10,6 +10,7 @@ import org.bip.api.BIPEngine;
 import org.bip.api.Behaviour;
 import org.bip.exceptions.BIPEngineException;
 
+// TODO: Auto-generated Javadoc
 /**
  * Orchestrates the execution of the behaviour, glue and current state encoders.
  * At the initialization phase, it receives information about the behaviour of 
@@ -27,8 +28,8 @@ public interface BIPCoordinator extends BIPEngine, InteractionExecutor {
 
 	/**
 	 * Returns the Behaviour of the BIP component.
-	 * 
-	 * @param a component instance
+	 *
+	 * @param component the component
 	 * @return behaviour of the BIP component
 	 */
 	Behaviour getBehaviourByComponent(BIPComponent component);
@@ -36,12 +37,10 @@ public interface BIPCoordinator extends BIPEngine, InteractionExecutor {
 	/**
 	 * Returns the BIP component instances registered in the system that correspond
 	 * to the component type provided as a parameter.
-	 * 
-	 * 
-	 * @param BIP component type
+	 *
+	 * @param type the type
 	 * @return arrayList of component instances that correspond to this component type.
-	 * @throws BIPEngineException 
-	 * @throws InterruptedException 
+	 * @throws BIPEngineException the BIP engine exception
 	 */
 	List <BIPComponent> getBIPComponentInstances(String type) throws BIPEngineException;
 
@@ -72,13 +71,37 @@ public interface BIPCoordinator extends BIPEngine, InteractionExecutor {
 	/**
 	 * Set the interaction Execute instance either as DataCoordinator or as BIPCoordinator depending
 	 * on whether there are data transfer between the components or not respectively.
+	 *
+	 * @param interactionExecutor the new interaction executor
 	 */
 	void setInteractionExecutor(InteractionExecutor interactionExecutor);
 	
+    /**
+     * Gets the behaviour encoder instance.
+     *
+     * @return the behaviour encoder instance
+     */
     BehaviourEncoder getBehaviourEncoderInstance();
+    
+    /**
+     * Gets the BDD manager.
+     *
+     * @return the BDD manager
+     */
     BDDFactory getBDDManager();
 
+    /**
+     * Specify temporary constraints.
+     *
+     * @param constraints the constraints
+     */
     void specifyTemporaryConstraints(BDD constraints);
+	
+	/**
+	 * Specify permanent constraints.
+	 *
+	 * @param constraints the constraints
+	 */
 	void specifyPermanentConstraints(BDD constraints);
 	
 }

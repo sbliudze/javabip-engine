@@ -18,6 +18,7 @@ import org.bip.exceptions.BIPEngineException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+// TODO: Auto-generated Javadoc
 /**
  * Receives information about the behaviour of each registered component and computes the total behaviour BDD.
  * @author mavridou
@@ -25,26 +26,44 @@ import org.slf4j.LoggerFactory;
 
 public class BehaviourEncoderImpl implements BehaviourEncoder {
 
+	/** The logger. */
 	private Logger logger = LoggerFactory.getLogger(BehaviourEncoderImpl.class);
+	
+	/** The state bd ds. */
 	private volatile Hashtable<BIPComponent, BDD[]> stateBDDs = new Hashtable<BIPComponent, BDD[]>();
+	
+	/** The port bd ds. */
 	private volatile Hashtable<BIPComponent, BDD[]> portBDDs = new Hashtable<BIPComponent, BDD[]>();
+	
+	/** The component to port to bdd. */
 	private volatile Hashtable <BIPComponent, Hashtable<String, BDD>> componentToPortToBDD = new Hashtable <BIPComponent, Hashtable<String,BDD>>();
+	
+	/** The component to state to bdd. */
 	private volatile Hashtable <BIPComponent, Hashtable<String, BDD>> componentToStateToBDD = new Hashtable <BIPComponent, Hashtable<String,BDD>>();
+	
+	/** The aux sum. */
 	private int auxSum;
+	
+	/** The engine. */
 	private BDDBIPEngine engine;
+	
+	/** The wrapper. */
 	private BIPCoordinator wrapper;
+	
+	/** The positions of ports. */
 	private ArrayList<Integer> positionsOfPorts = new ArrayList<Integer>();
+	
+	/** The port to position. */
 	Map<Port, Integer> portToPosition = new Hashtable<Port, Integer>();
 
 	
 	/**
 	 * Creates one-node BDDs for the states and the ports of all components.
-	 * 
-	 * @param The component that we want to create the BDDs nodes for
-	 * @param The ports of the component 
-	 * @param The states of the component
-	 * 
-	 * @throws BIPEngineExc	eption
+	 *
+	 * @param component the component
+	 * @param componentPorts the component ports
+	 * @param componentStates the component states
+	 * @throws BIPEngineException the BIP engine exception
 	 */
 	public synchronized void createBDDNodes(BIPComponent component, List<Port> componentPorts, List<String> componentStates) throws BIPEngineException {
 
@@ -117,9 +136,13 @@ public class BehaviourEncoderImpl implements BehaviourEncoder {
 		auxSum = auxSum + nbComponentPorts + nbComponentStates;
 	}
 
-	/** 
-	 * Computes the Behavior BDD of a component 
-	 * @throws BIPEngineException 
+	/**
+	 *  
+	 * Computes the Behavior BDD of a component .
+	 *
+	 * @param component the component
+	 * @return the bdd
+	 * @throws BIPEngineException the BIP engine exception
 	 */
 	public synchronized BDD behaviourBDD(BIPComponent component) throws BIPEngineException {
 
@@ -189,22 +212,37 @@ public class BehaviourEncoderImpl implements BehaviourEncoder {
 	}
 
 
+	/* (non-Javadoc)
+	 * @see org.bip.engine.api.BehaviourEncoder#setEngine(org.bip.engine.api.BDDBIPEngine)
+	 */
 	public void setEngine(BDDBIPEngine engine) { 
 		this.engine = engine;
 	}
 
+	/* (non-Javadoc)
+	 * @see org.bip.engine.api.BehaviourEncoder#setBIPCoordinator(org.bip.engine.api.BIPCoordinator)
+	 */
 	public void setBIPCoordinator(BIPCoordinator wrapper) {
 		this.wrapper = wrapper;
 	}
 
+	/* (non-Javadoc)
+	 * @see org.bip.engine.api.BehaviourEncoder#getStateBDDs()
+	 */
 	public synchronized Hashtable<BIPComponent, BDD[]> getStateBDDs() {
 		return stateBDDs;
 	}
 
+	/* (non-Javadoc)
+	 * @see org.bip.engine.api.BehaviourEncoder#getPortBDDs()
+	 */
 	public synchronized Hashtable<BIPComponent, BDD[]> getPortBDDs() {
 		return portBDDs;
 	}
 	
+	/* (non-Javadoc)
+	 * @see org.bip.engine.api.BehaviourEncoder#getBDDOfAPort(org.bip.api.BIPComponent, java.lang.String)
+	 */
 	public synchronized BDD getBDDOfAPort(BIPComponent component, String portName) throws BIPEngineException {
 		Hashtable<String, BDD> aux = componentToPortToBDD.get(component);
 		if (aux.get(portName) == null){
@@ -219,6 +257,9 @@ public class BehaviourEncoderImpl implements BehaviourEncoder {
 		return aux.get(portName);
 	}
 	
+	/* (non-Javadoc)
+	 * @see org.bip.engine.api.BehaviourEncoder#getBDDOfAState(org.bip.api.BIPComponent, java.lang.String)
+	 */
 	public synchronized BDD getBDDOfAState(BIPComponent component, String stateName) throws BIPEngineException {
 		Hashtable<String, BDD> aux = componentToStateToBDD.get(component);
 		if (aux.get(stateName) == null){
@@ -233,18 +274,30 @@ public class BehaviourEncoderImpl implements BehaviourEncoder {
 		return aux.get(stateName);
 	}
 	
+	/* (non-Javadoc)
+	 * @see org.bip.engine.api.BehaviourEncoder#getStateToBDDOfAComponent(org.bip.api.BIPComponent)
+	 */
 	public synchronized Hashtable<String, BDD> getStateToBDDOfAComponent (BIPComponent component){
 		return componentToStateToBDD.get(component);
 	}
 
+	/* (non-Javadoc)
+	 * @see org.bip.engine.api.BehaviourEncoder#getPortToBDDOfAComponent(org.bip.api.BIPComponent)
+	 */
 	public synchronized Hashtable<String, BDD> getPortToBDDOfAComponent (BIPComponent component){
 		return componentToPortToBDD.get(component);
 	}
 
+	/* (non-Javadoc)
+	 * @see org.bip.engine.api.BehaviourEncoder#getPositionsOfPorts()
+	 */
 	public List<Integer> getPositionsOfPorts() {
 		return positionsOfPorts;
 	}
 
+	/* (non-Javadoc)
+	 * @see org.bip.engine.api.BehaviourEncoder#getPortToPosition()
+	 */
 	public Map<Port, Integer> getPortToPosition() {
 		return portToPosition;
 	}

@@ -16,6 +16,7 @@ import org.bip.exceptions.BIPEngineException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+// TODO: Auto-generated Javadoc
 /**
  * Receives information about the current state and the list of disabled ports of each 
  * registered component and computes the current state BDDs.
@@ -24,22 +25,28 @@ import org.slf4j.LoggerFactory;
 
 public class CurrentStateEncoderImpl implements CurrentStateEncoder {
 
+	/** The behaviour encoder. */
 	private BehaviourEncoder behaviourEncoder; 
+	
+	/** The engine. */
 	private BDDBIPEngine engine;
+	
+	/** The wrapper. */
 	private BIPCoordinator wrapper;
 
+	/** The logger. */
 	private Logger logger = LoggerFactory.getLogger(CurrentStateEncoderImpl.class);
 	
 	/**
 	 * Computes the current State BDD. Takes as an argument the current state of the component
 	 * and computes the disjunction of the BDD corresponding to this state with the negation of 
 	 * the BDDs of all the other states of this component.
-	 * 
-	 * @param BIP Component that informs about its current state
-	 * @param index of the current state of the component to be used to find the corresponding BDD
-	 * @param Indexes of the disabled ports of this current state of the component to be used to find the corresponding BDDs
-	 * 
+	 *
+	 * @param component the component
+	 * @param currentState the current state
+	 * @param disabledPorts the disabled ports
 	 * @return the current state BDD
+	 * @throws BIPEngineException the BIP engine exception
 	 */
 	/**
 	 * BIP Component informs about its current State and its list of disabled Ports due to guards.
@@ -87,14 +94,23 @@ public class CurrentStateEncoderImpl implements CurrentStateEncoder {
 		return result;
 	}
 	
+	/* (non-Javadoc)
+	 * @see org.bip.engine.api.CurrentStateEncoder#setBIPCoordinator(org.bip.engine.api.BIPCoordinator)
+	 */
 	public void setBIPCoordinator(BIPCoordinator wrapper) {
 		this.wrapper = wrapper;
 	}
 
+	/* (non-Javadoc)
+	 * @see org.bip.engine.api.CurrentStateEncoder#setBehaviourEncoder(org.bip.engine.api.BehaviourEncoder)
+	 */
 	public void setBehaviourEncoder(BehaviourEncoder behaviourEncoder) {
 		this.behaviourEncoder = behaviourEncoder;
 	}
 
+	/* (non-Javadoc)
+	 * @see org.bip.engine.api.CurrentStateEncoder#setEngine(org.bip.engine.api.BDDBIPEngine)
+	 */
 	public void setEngine(BDDBIPEngine engine) {
 		this.engine = engine;
 	}

@@ -22,6 +22,7 @@ import org.bip.api.DataWire;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+// TODO: Auto-generated Javadoc
 /**
  * Deals with the DataGlue. Encodes the informSpecific information.
  * 
@@ -29,16 +30,34 @@ import org.slf4j.LoggerFactory;
  */
 public class DataEncoderImpl implements DataEncoder {
 
+	/** The BD dmanager. */
 	private BDDFactory BDDmanager;
+	
+	/** The data coordinator. */
 	private DataCoordinator dataCoordinator;
+	
+	/** The behaviour encoder. */
 	private BehaviourEncoder behaviourEncoder;
 
+	/** The ports to d var bdd mapping. */
 	volatile Map<Entry<Port, Port>, BDD> portsToDVarBDDMapping = new Hashtable<Entry<Port, Port>, BDD>();
+	
+	/** The logger. */
 	private Logger logger = LoggerFactory.getLogger(CurrentStateEncoderImpl.class);
+	
+	/** The component out bd ds. */
 	Map<Port, BDD> componentOutBDDs = new Hashtable<Port, BDD>();
+	
+	/** The component in bd ds. */
 	Map<Port, BDD> componentInBDDs = new Hashtable<Port, BDD>();
+	
+	/** The implications of ds. */
 	ArrayList<BDD> implicationsOfDs = new ArrayList<BDD>();
+	
+	/** The more implications. */
 	Map<BDD, ArrayList<BDD>> moreImplications = new Hashtable<BDD, ArrayList<BDD>>();
+	
+	/** The port to triggers mapping. */
 	Map<Entry<Port, Port>, Boolean> portToTriggersMapping = new Hashtable<Entry<Port, Port>, Boolean>();
 
 	/*
@@ -62,6 +81,9 @@ public class DataEncoderImpl implements DataEncoder {
 	 * execution cycle.
 	 * 
 	 * @see org.bip.engine.DataEncoder#inform(java.util.Map)
+	 */
+	/* (non-Javadoc)
+	 * @see org.bip.engine.api.DataEncoder#encodeDisabledCombinations(org.bip.api.BIPComponent, org.bip.api.Port, java.util.Map)
 	 */
 	public synchronized BDD encodeDisabledCombinations(BIPComponent decidingComponent, Port decidingPort, Map<BIPComponent, Set<Port>> disabledCombinations) throws BIPEngineException {
 		/*
@@ -95,6 +117,9 @@ public class DataEncoderImpl implements DataEncoder {
 		return result;
 	}
 
+	/* (non-Javadoc)
+	 * @see org.bip.engine.api.DataEncoder#specifyDataGlue(java.lang.Iterable)
+	 */
 	public BDD specifyDataGlue(Iterable<DataWire> dataGlue) throws BIPEngineException {
 		if (dataGlue == null || !dataGlue.iterator().hasNext()) {
 			logger.error("The glue parser has failed to compute the data glue.\n" + "\tPossible reasons: No data transfer or corrupt/non-existant glue XML file.");
@@ -109,9 +134,8 @@ public class DataEncoderImpl implements DataEncoder {
 
 	/**
 	 * Conjunction of all implication BDDs.
-	 * 
-	 * @param
-	 * @return
+	 *
+	 * @return the bdd
 	 */
 	private BDD computeDvariablesBDDs() {
 		BDD result = BDDmanager.one();
@@ -125,9 +149,8 @@ public class DataEncoderImpl implements DataEncoder {
 	/**
 	 * Find the d-variables that correspond to each port. Find the BDDs of these
 	 * d-variables and return them.
-	 * 
-	 * @param The
-	 *            port and the component this port belongs to.
+	 *
+	 * @param port the port
 	 * @return ArrayList<BDD> of d-variables that correspond to the port given
 	 *         as an argument.
 	 */
@@ -148,6 +171,12 @@ public class DataEncoderImpl implements DataEncoder {
 		return auxiliary;
 	}
 
+	/**
+	 * Creates the data bdd nodes.
+	 *
+	 * @param dataWires the data wires
+	 * @throws BIPEngineException the BIP engine exception
+	 */
 	private void createDataBDDNodes(Iterable<DataWire> dataWires) throws BIPEngineException {
 		/*
 		 * Get the number of BDD-nodes of the System. We base this on the
@@ -259,6 +288,13 @@ public class DataEncoderImpl implements DataEncoder {
 	 * NB: Inputs are not ports actually. In the specType the type of the
 	 * component is stored. In the id the name of the data variable is stored.
 	 */
+	/**
+	 * In ports.
+	 *
+	 * @param inData the in data
+	 * @return the list
+	 * @throws BIPEngineException the BIP engine exception
+	 */
 	private synchronized List<Port> inPorts(Port inData) throws BIPEngineException {
 		/*
 		 * Store in the Arraylist below all the possible in ports. Later to take
@@ -288,6 +324,13 @@ public class DataEncoderImpl implements DataEncoder {
 		return dataInPorts;
 	}
 
+	/**
+	 * Out ports.
+	 *
+	 * @param outData the out data
+	 * @return the list
+	 * @throws BIPEngineException the BIP engine exception
+	 */
 	private synchronized List<Port> outPorts(Port outData) throws BIPEngineException {
 		/*
 		 * Store in the Arraylist below all the possible out ports. Later to
@@ -325,14 +368,23 @@ public class DataEncoderImpl implements DataEncoder {
 		return dataOutPorts;
 	}
 
+	/* (non-Javadoc)
+	 * @see org.bip.engine.api.DataEncoder#setBDDManager(net.sf.javabdd.BDDFactory)
+	 */
 	public void setBDDManager(BDDFactory manager) {
 		this.BDDmanager = manager;
 	}
 
+	/* (non-Javadoc)
+	 * @see org.bip.engine.api.DataEncoder#setBehaviourEncoder(org.bip.engine.api.BehaviourEncoder)
+	 */
 	public void setBehaviourEncoder(BehaviourEncoder behaviourEncoder) {
 		this.behaviourEncoder = behaviourEncoder;
 	}
 
+	/* (non-Javadoc)
+	 * @see org.bip.engine.api.DataEncoder#setDataCoordinator(org.bip.engine.api.DataCoordinator)
+	 */
 	public void setDataCoordinator(DataCoordinator dataCoordinator) {
 		this.dataCoordinator = dataCoordinator;
 	}

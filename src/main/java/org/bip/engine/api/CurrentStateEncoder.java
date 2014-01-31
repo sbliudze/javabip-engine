@@ -7,6 +7,7 @@ import org.bip.api.BIPComponent;
 import org.bip.api.Port;
 import org.bip.exceptions.BIPEngineException;
 
+// TODO: Auto-generated Javadoc
 /**
  * Receives information about the current state and the list of disabled ports of 
  * each registered component and computes the current state BDDs.
@@ -27,24 +28,33 @@ public interface CurrentStateEncoder {
 	 * it means that all the calls to informSpecific have finished at this execution cycle for the particular component.
 	 * 
 	 * Returns the current state BDD of the specified component.
-	 * 
-	 * @param component
-	 * @param currentState
-	 * @param disabledPorts
-	 * @throws BIPEngineException 
+	 *
+	 * @param component the component
+	 * @param currentState the current state
+	 * @param disabledPorts the disabled ports
+	 * @return the bdd
+	 * @throws BIPEngineException the BIP engine exception
 	 */
 	BDD inform(BIPComponent component, String currentState, Set<Port> disabledPorts) throws BIPEngineException;
 	
 	/**
-	 * Setter for the BIPCoordinator
+	 * Setter for the BIPCoordinator.
+	 *
+	 * @param wrapper the new BIP coordinator
 	 */
 	void setBIPCoordinator(BIPCoordinator wrapper);
+	
 	/**
-	 * Setter for the BehaviourEncoder
+	 * Setter for the BehaviourEncoder.
+	 *
+	 * @param behaviourEncoder the new behaviour encoder
 	 */
 	void setBehaviourEncoder(BehaviourEncoder behaviourEncoder);
+	
 	/**
-	 * Setter for the BDDBIPEngine
+	 * Setter for the BDDBIPEngine.
+	 *
+	 * @param engine the new engine
 	 */
 	void setEngine(BDDBIPEngine engine);
 	
