@@ -5,6 +5,7 @@ import java.util.Set;
 import org.bip.api.BIPComponent;
 import org.bip.api.Data;
 import org.bip.api.Port;
+import org.bip.api.PortBase;
 
 class DataContainerImpl {
 	private String dataIn;

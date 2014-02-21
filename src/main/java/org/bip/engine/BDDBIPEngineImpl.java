@@ -13,7 +13,7 @@ import net.sf.javabdd.BDD;
 import net.sf.javabdd.BDDFactory;
 
 import org.bip.api.BIPComponent;
-import org.bip.api.Port;
+import org.bip.api.PortBase;
 import org.bip.engine.api.BDDBIPEngine;
 import org.bip.engine.api.BIPCoordinator;
 import org.bip.exceptions.BIPEngineException;
@@ -40,7 +40,7 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 
 	/* Use JavaBDD Bdd Manager */
 	private BDDFactory bdd_mgr = BDDFactory.init("java", noNodes, cacheSize);
-	Map<Integer, Entry<Port, Port>> dVariablesToPosition = new Hashtable<Integer, Entry<Port, Port>>();
+	Map<Integer, Entry<PortBase, PortBase>> dVariablesToPosition = new Hashtable<Integer, Entry<PortBase, PortBase>>();
 	List<Integer> positionsOfDVariables = new ArrayList<Integer>();
 
 	private BIPCoordinator wrapper;

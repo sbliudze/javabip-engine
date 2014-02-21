@@ -14,6 +14,7 @@ import net.sf.javabdd.BDDFactory;
 
 import org.bip.api.BIPComponent;
 import org.bip.api.Port;
+import org.bip.api.PortBase;
 import org.bip.engine.api.BehaviourEncoder;
 import org.bip.engine.api.DataCoordinator;
 import org.bip.engine.api.DataEncoder;
@@ -46,10 +47,10 @@ public class DataEncoderImpl implements DataEncoder {
 	private Logger logger = LoggerFactory.getLogger(CurrentStateEncoderImpl.class);
 	
 	/** The component out bd ds. */
-	Map<Port, BDD> componentOutBDDs = new Hashtable<Port, BDD>();
+	Map<PortBase, BDD> componentOutBDDs = new Hashtable<PortBase, BDD>();
 	
 	/** The component in bd ds. */
-	Map<Port, BDD> componentInBDDs = new Hashtable<Port, BDD>();
+	Map<PortBase, BDD> componentInBDDs = new Hashtable<PortBase, BDD>();
 	
 	/** The implications of ds. */
 	ArrayList<BDD> implicationsOfDs = new ArrayList<BDD>();
@@ -58,7 +59,7 @@ public class DataEncoderImpl implements DataEncoder {
 	Map<BDD, ArrayList<BDD>> moreImplications = new Hashtable<BDD, ArrayList<BDD>>();
 	
 	/** The port to triggers mapping. */
-	Map<Entry<Port, Port>, Boolean> portToTriggersMapping = new Hashtable<Entry<Port, Port>, Boolean>();
+	Map<Entry<PortBase, PortBase>, Boolean> portToTriggersMapping = new Hashtable<Entry<PortBase, PortBase>, Boolean>();
 
 	/*
 	 * Possible implementation: Send each combination's BDD to the engine that
@@ -295,7 +296,7 @@ public class DataEncoderImpl implements DataEncoder {
 	 * @return the list
 	 * @throws BIPEngineException the BIP engine exception
 	 */
-	private synchronized List<Port> inPorts(Port inData) throws BIPEngineException {
+	private synchronized List<Port> inPorts(PortBase inData) throws BIPEngineException {
 		/*
 		 * Store in the Arraylist below all the possible in ports. Later to take
 		 * their cross product.
@@ -331,7 +332,7 @@ public class DataEncoderImpl implements DataEncoder {
 	 * @return the list
 	 * @throws BIPEngineException the BIP engine exception
 	 */
-	private synchronized List<Port> outPorts(Port outData) throws BIPEngineException {
+	private synchronized List<Port> outPorts(PortBase outData) throws BIPEngineException {
 		/*
 		 * Store in the Arraylist below all the possible out ports. Later to
 		 * take their cross product.

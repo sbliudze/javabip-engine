@@ -19,6 +19,7 @@ import org.bip.api.BIPEngine;
 import org.bip.api.Behaviour;
 import org.bip.api.Data;
 import org.bip.api.Port;
+import org.bip.api.Port;
 import org.bip.engine.api.BIPCoordinator;
 import org.bip.engine.api.BehaviourEncoder;
 import org.bip.engine.api.DataCoordinator;
