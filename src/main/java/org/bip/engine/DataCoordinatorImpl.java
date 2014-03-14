@@ -21,6 +21,7 @@ import org.bip.api.Behaviour;
 import org.bip.api.Data;
 import org.bip.api.DataWire;
 import org.bip.api.Port;
+import org.bip.api.PortBase;
 import org.bip.engine.api.BIPCoordinator;
 import org.bip.engine.api.BehaviourEncoder;
 import org.bip.engine.api.DataCoordinator;
@@ -225,15 +226,15 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor,
 			 * the ArrayList of BIPComponents that corresponds to this component
 			 * type.
 			 */
-			if (typeInstancesMapping.containsKey(component.getId())) {
+			if (typeInstancesMapping.containsKey(component.getType())) {
 				componentInstances.addAll(typeInstancesMapping.get(component
-						.getId()));
+						.getType()));
 			}
 
 			componentInstances.add(component);
 			// SB: Not sure this is necessary, but should not harm
-			typeInstancesMapping.remove(component.getId());
-			typeInstancesMapping.put(component.getId(), componentInstances);
+			typeInstancesMapping.remove(component.getType());
+			typeInstancesMapping.put(component.getType(), componentInstances);
 		} catch (BIPEngineException e) {
 			e.printStackTrace();
 		}
@@ -829,7 +830,9 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor,
 						"Exception in thread "
 								+ Thread.currentThread().getName()
 								+ " No registered component instances for the component type: "
+								+ "'"
 								+ type
+								+ "'"
 								+ "Possible reasons: The name of the component instances was specified in another way at registration.");
 			} catch (BIPEngineException e) {
 				e.printStackTrace();

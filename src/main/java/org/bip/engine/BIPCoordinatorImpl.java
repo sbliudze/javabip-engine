@@ -136,7 +136,8 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	 * 
 	 * @throws BIPEngineException
 	 */
-	private synchronized void computeTotalGlueAndInformEngine() throws BIPEngineException {
+	private synchronized void computeTotalGlueAndInformEngine()
+			throws BIPEngineException {
 		engine.informGlue(glueenc.totalGlue());
 	}
 
@@ -157,15 +158,18 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 		engine.totalBehaviourBDD();
 	}
 
-	public synchronized void register(BIPComponent component, Behaviour behaviour) {
+	public synchronized void register(BIPComponent component,
+			Behaviour behaviour) {
 		/*
 		 * The condition below checks whether the component has already been
 		 * registered.
 		 */
 		if (registeredComponents.contains(component)) {
 			try {
-				logger.error("Component " + component.getId() + " has already registered before.");
-				throw new BIPEngineException("Component " + component.getId() + " has already registered before.");
+				logger.error("Component " + component.getId()
+						+ " has already registered before.");
+				throw new BIPEngineException("Component " + component.getId()
+						+ " has already registered before.");
 			} catch (BIPEngineException e) {
 				e.printStackTrace();
 			}
@@ -183,15 +187,16 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 			 * the ArrayList of BIPComponents that corresponds to this component
 			 * type.
 			 */
-			if (typeInstancesMapping.containsKey(component.getId())) {
-//				System.err.println("component . getName "+ component.getId());
-//				System.exit(0);
-				componentInstances.addAll(typeInstancesMapping.get(component.getId()));
+			if (typeInstancesMapping.containsKey(component.getType())) {
+				// System.err.println("component . getName "+
+				// component.getId());
+				// System.exit(0);
+				componentInstances.addAll(typeInstancesMapping.get(component
+						.getType()));
 			}
-			
 
 			componentInstances.add(component);
-			typeInstancesMapping.put(component.getId(), componentInstances);
+			typeInstancesMapping.put(component.getType(), componentInstances);
 			registeredComponents.add(component);
 
 			/*
@@ -204,19 +209,25 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 			int nbComponentStates = (behaviour.getStates()).size();
 
 			try {
-				behenc.createBDDNodes(component, (behaviour.getEnforceablePorts()), (behaviour.getStates()));
+				behenc.createBDDNodes(component,
+						(behaviour.getEnforceablePorts()),
+						(behaviour.getStates()));
 			} catch (BIPEngineException e) {
 				e.printStackTrace();
 			}
 			try {
-				engine.informBehaviour(component, behenc.behaviourBDD(component));
+				engine.informBehaviour(component,
+						behenc.behaviourBDD(component));
 			} catch (BIPEngineException e) {
 				e.printStackTrace();
 			}
 
 			for (int i = 0; i < nbComponentPorts; i++) {
-				behenc.getPositionsOfPorts().add(nbPorts + nbStates + nbComponentStates + i);
-				behenc.getPortToPosition().put((behaviour.getEnforceablePorts()).get(i), nbPorts + nbStates + nbComponentStates + i);
+				behenc.getPositionsOfPorts().add(
+						nbPorts + nbStates + nbComponentStates + i);
+				behenc.getPortToPosition().put(
+						(behaviour.getEnforceablePorts()).get(i),
+						nbPorts + nbStates + nbComponentStates + i);
 			}
 			nbPorts += nbComponentPorts;
 			nbStates += nbComponentStates;
@@ -234,17 +245,24 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	 * transfer then only this inform is called for a particular component.
 	 * Otherwise, also the other inform function is called.
 	 */
-	public synchronized void inform(BIPComponent component, String currentState, Set<Port> disabledPorts) {
+	public synchronized void inform(BIPComponent component,
+			String currentState, Set<Port> disabledPorts) {
 		if (componentsHaveInformed.contains(component)) {
 			try {
 				logger.debug("************************ Already Have Informed *******************************");
-				logger.debug("Component: "+ component + "informs that is at state: "+ currentState);
+				logger.debug("Component: " + component
+						+ "informs that is at state: " + currentState);
 				for (Port disabledPort : disabledPorts) {
 					logger.debug("with disabled port: " + disabledPort.getId());
 				}
 				logger.debug("******************************************************************************");
-				logger.error("Component " + component.getId() + " has already informed the engine in this execution cycle.");
-				throw new BIPEngineException("Component " + component.getId() + " has already informed the engine in this execution cycle.");
+				logger.error("Component "
+						+ component.getId()
+						+ " has already informed the engine in this execution cycle.");
+				throw new BIPEngineException(
+						"Component "
+								+ component.getId()
+								+ " has already informed the engine in this execution cycle.");
 			} catch (BIPEngineException e) {
 				e.printStackTrace();
 			}
@@ -266,16 +284,20 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 				synchronized (componentsHaveInformed) {
 					componentsHaveInformed.add(component);
 					try {
-						engine.informCurrentState(component, currstenc.inform(component, currentState, disabledPorts));
+						engine.informCurrentState(component, currstenc.inform(
+								component, currentState, disabledPorts));
 					} catch (BIPEngineException e) {
 						e.printStackTrace();
 					}
 
-					logger.trace("Number of components that have informed {}", componentsHaveInformed.size());
+					logger.trace("Number of components that have informed {}",
+							componentsHaveInformed.size());
 					logger.debug("********************************* Inform *************************************");
-					logger.debug("Component: "+ component + "informs that is at state: "+ currentState);
+					logger.debug("Component: " + component
+							+ "informs that is at state: " + currentState);
 					for (Port disabledPort : disabledPorts) {
-						logger.debug("with disabled port: " + disabledPort.getId());
+						logger.debug("with disabled port: "
+								+ disabledPort.getId());
 					}
 					logger.debug("******************************************************************************");
 
@@ -296,7 +318,9 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 					 */
 					if (isEngineSemaphoreReady) {
 						haveAllComponentsInformed.release();
-						logger.trace("Number of available permits in the semaphore: {}", haveAllComponentsInformed.availablePermits());
+						logger.trace(
+								"Number of available permits in the semaphore: {}",
+								haveAllComponentsInformed.availablePermits());
 					}
 				}
 				/**
@@ -305,8 +329,10 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 				 */
 			} else {
 				try {
-					logger.error("Component " + component.getId() + " has not registered yet.");
-					throw new BIPEngineException("Component " + component.getId() + " has not registered yet.");
+					logger.error("Component " + component.getId()
+							+ " has not registered yet.");
+					throw new BIPEngineException("Component "
+							+ component.getId() + " has not registered yet.");
 				} catch (BIPEngineException e) {
 					e.printStackTrace();
 				}
@@ -336,7 +362,8 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 		List<List<Port>> bigInteraction = new ArrayList<List<Port>>();
 		ArrayList<Port> portsExecuted = new ArrayList<Port>();
 
-		Map<Port, Integer> portToPosition = getBehaviourEncoderInstance().getPortToPosition();
+		Map<Port, Integer> portToPosition = getBehaviourEncoderInstance()
+				.getPortToPosition();
 		for (Port port : portToPosition.keySet()) {
 			if (valuation[portToPosition.get(port)] == 1) {
 				portsExecuted.add(port);
@@ -366,7 +393,8 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	 * 
 	 * @throws BIPEngineException
 	 */
-	public void executeInteractions(List<List<Port>> portsToFire) throws BIPEngineException {
+	public void executeInteractions(List<List<Port>> portsToFire)
+			throws BIPEngineException {
 		if (portsToFire == null) {
 			logger.warn("BIP Coordinator: Empty interaction requested for execution -- nothing to do.");
 
@@ -377,11 +405,11 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 			for (BIPComponent component : registeredComponents) {
 				component.execute(null);
 			}
-			
+
 			return;
 		}
 		assert (portsToFire != null);
-		
+
 		/*
 		 * This is a list of components participating in the
 		 * chosen-by-the-engine interactions. This keeps track of the chosen
@@ -389,7 +417,8 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 		 * Through this function all the components need to be notified. Either
 		 * by sending null to them or the port to be fired.
 		 */
-		ArrayList<BIPComponent> waitingComponents = (ArrayList<BIPComponent>) registeredComponents.clone();
+		ArrayList<BIPComponent> waitingComponents = (ArrayList<BIPComponent>) registeredComponents
+				.clone();
 		for (Iterable<Port> portGroup : portsToFire) {
 			Iterator<Port> ports = portGroup.iterator();
 			while (ports.hasNext()) {
@@ -400,18 +429,27 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 				 */
 				if (port.getId().isEmpty()) {
 					try {
-						logger.error("Exception in thread: " + Thread.currentThread().getName() + "In the interaction chosen by the engine the port, associated to component "
+						logger.error("Exception in thread: "
+								+ Thread.currentThread().getName()
+								+ "In the interaction chosen by the engine the port, associated to component "
 								+ port.component().getId() + ", is empty.");
-						throw new BIPEngineException("Exception in thread: " + Thread.currentThread().getName() + "In the interaction chosen by the engine the port, associated to component "
-								+ port.component().getId() + ", is empty.");
+						throw new BIPEngineException(
+								"Exception in thread: "
+										+ Thread.currentThread().getName()
+										+ "In the interaction chosen by the engine the port, associated to component "
+										+ port.component().getId()
+										+ ", is empty.");
 					} catch (NullPointerException e) {
 						if (port.component() != null) {
 							throw e;
 						} else {
-							logger.error("Exception in thread: " + Thread.currentThread().getName()
+							logger.error("Exception in thread: "
+									+ Thread.currentThread().getName()
 									+ "In the interaction chosen by the engine a port is empty and does not have an associated component.");
-							throw new BIPEngineException("Exception in thread: " + Thread.currentThread().getName()
-									+ "In the interaction chosen by the engine a port is empty and does not have an associated component.");
+							throw new BIPEngineException(
+									"Exception in thread: "
+											+ Thread.currentThread().getName()
+											+ "In the interaction chosen by the engine a port is empty and does not have an associated component.");
 						}
 					}
 				}
@@ -421,16 +459,25 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 				 * This should not happen either.
 				 */
 				if (port.component() == null) {
-					logger.error("Exception in thread: " + Thread.currentThread().getName() + "In the interaction chosen by the engine the port with id = " + port.getId()
+					logger.error("Exception in thread: "
+							+ Thread.currentThread().getName()
+							+ "In the interaction chosen by the engine the port with id = "
+							+ port.getId()
 							+ " does not have an associated component.");
-					throw new BIPEngineException("Exception in thread: " + Thread.currentThread().getName() + "In the interaction chosen by the engine the port with id = " + port.getId()
-							+ " does not have an associated component.");
+					throw new BIPEngineException(
+							"Exception in thread: "
+									+ Thread.currentThread().getName()
+									+ "In the interaction chosen by the engine the port with id = "
+									+ port.getId()
+									+ " does not have an associated component.");
 				}
 
-				logger.trace("Component {} execute port {}", port.component().getId(), port.getId());
+				logger.trace("Component {} execute port {}", port.component()
+						.getId(), port.getId());
 
 				/* Execute the port */
-				logger.trace("Chosen port: "+ port.getId() + " of component: "+port.component().getId());
+				logger.trace("Chosen port: " + port.getId() + " of component: "
+						+ port.component().getId());
 				port.component().execute(port.getId());
 
 				/*
@@ -448,9 +495,8 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 		for (BIPComponent component : waitingComponents) {
 			component.execute(null);
 		}
-		
-	}
 
+	}
 
 	/**
 	 * Initialization phase. Orders the Behaviour and Current State Encoders to
@@ -471,7 +517,8 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 					wait();
 					logger.trace("Waiting for the engine execute done.");
 				} catch (InterruptedException e) {
-					logger.warn("Engine run is interrupted: {}", Thread.currentThread().getName());
+					logger.warn("Engine run is interrupted: {}", Thread
+							.currentThread().getName());
 				}
 			}
 		}
@@ -516,7 +563,8 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 
 		try {
 			logger.trace("Waiting for the cycle initialisation acquire...");
-			haveAllComponentsInformed.acquire(nbComponents - componentsHaveInformed.size());
+			haveAllComponentsInformed.acquire(nbComponents
+					- componentsHaveInformed.size());
 			logger.trace("The cycle initialisation acquire successful");
 		} catch (InterruptedException e1) {
 			logger.error("Semaphore's haveAllComponentsInformed acquire method for the number of components that still have to inform was interrupted.");
@@ -549,8 +597,10 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 		while (isEngineExecuting) {
 
 			logger.trace("isEngineExecuting: {} ", isEngineExecuting);
-			logger.trace("noComponents: {}, componentCounter: {}", nbComponents, componentsHaveInformed.size());
-			logger.trace("Number of available permits in the semaphore: {}", haveAllComponentsInformed.availablePermits());
+			logger.trace("noComponents: {}, componentCounter: {}",
+					nbComponents, componentsHaveInformed.size());
+			logger.trace("Number of available permits in the semaphore: {}",
+					haveAllComponentsInformed.availablePermits());
 
 			componentsHaveInformed.clear();
 			try {
@@ -642,7 +692,9 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	 * this.
 	 */
 
-	public void informSpecific(BIPComponent decidingComponent, Port decidingPort, Map<BIPComponent, Set<Port>> disabledCombinations) throws BIPEngineException {
+	public void informSpecific(BIPComponent decidingComponent,
+			Port decidingPort, Map<BIPComponent, Set<Port>> disabledCombinations)
+			throws BIPEngineException {
 		logger.warn("InformSpecific of BIPCoordinator is called. That should never happen. All the information should be passed directly from the DataCoordinator to the DataEncoder.");
 	}
 
@@ -720,14 +772,20 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	 * 
 	 * @throws BIPEngineException
 	 */
-	public List<BIPComponent> getBIPComponentInstances(String type) throws BIPEngineException {
+	public List<BIPComponent> getBIPComponentInstances(String type)
+			throws BIPEngineException {
 		List<BIPComponent> instances = typeInstancesMapping.get(type);
 		if (instances == null) {
 			try {
-				logger.error("No registered component instances for the: "+ type
+				logger.error("No registered component instances for the: "
+						+ type
 						+ " component type. Possible reasons: The name of the component instances was specified in another way at registration.");
-				throw new BIPEngineException("Exception in thread " + Thread.currentThread().getName() + " No registered component instances for the component type: " + type
-						+ " Possible reasons: The name of the component instances was specified in another way at registration.");
+				throw new BIPEngineException(
+						"Exception in thread "
+								+ Thread.currentThread().getName()
+								+ " No registered component instances for the component type: "
+								+ type
+								+ " Possible reasons: The name of the component instances was specified in another way at registration.");
 			} catch (BIPEngineException e) {
 				e.printStackTrace();
 				throw e;
