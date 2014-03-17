@@ -784,7 +784,9 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 						"Exception in thread "
 								+ Thread.currentThread().getName()
 								+ " No registered component instances for the component type: "
+								+ "'"
 								+ type
+								+ "'"
 								+ " Possible reasons: The name of the component instances was specified in another way at registration.");
 			} catch (BIPEngineException e) {
 				e.printStackTrace();

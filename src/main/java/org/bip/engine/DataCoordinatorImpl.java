@@ -833,7 +833,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor,
 								+ "'"
 								+ type
 								+ "'"
-								+ "Possible reasons: The name of the component instances was specified in another way at registration.");
+								+ " Possible reasons: The name of the component instances was specified in another way at registration.");
 			} catch (BIPEngineException e) {
 				e.printStackTrace();
 				throw e;
