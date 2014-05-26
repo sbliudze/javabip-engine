@@ -7,12 +7,14 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+//import java.util.concurrent.Semaphore;
 import java.util.concurrent.Semaphore;
 
 import net.sf.javabdd.BDD;
 import net.sf.javabdd.BDDFactory;
 
 import org.bip.api.BIPComponent;
+import org.bip.api.BIPGlue;
 import org.bip.api.Behaviour;
 import org.bip.api.Port;
 import org.bip.engine.api.BDDBIPEngine;
@@ -22,7 +24,6 @@ import org.bip.engine.api.CurrentStateEncoder;
 import org.bip.engine.api.GlueEncoder;
 import org.bip.engine.api.InteractionExecutor;
 import org.bip.exceptions.BIPEngineException;
-import org.bip.api.BIPGlue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -266,16 +267,16 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 			} catch (BIPEngineException e) {
 				e.printStackTrace();
 			}
+			return;
 		}
 
-		/*
-		 * If a component informs more than once in the same execution cycle we
-		 * add the else below to prevent the re-computation of the current state
-		 * BDD for the specific component. The deletion of the else will not
-		 * result in any data corruption but overhead will be added.
-		 */
-		else {
-
+			/*
+			 * If a component informs more than once in the same execution cycle
+			 * we add the else below to prevent the re-computation of the
+			 * current state BDD for the specific component. The deletion of the
+			 * else will not result in any data corruption but overhead will be
+			 * added.
+			 */
 			/**
 			 * This condition checks whether the component has already
 			 * registered.
@@ -337,7 +338,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 					e.printStackTrace();
 				}
 			}
-		}
+
 	}
 
 	/**
