@@ -47,7 +47,7 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor,
 		DataCoordinator {
 
 	/** The logger. */
-	private Logger logger = LoggerFactory.getLogger(BIPCoordinatorKernel.class);
+	private Logger logger = LoggerFactory.getLogger(DataCoordinatorKernel.class);
 
 	/** The registered components. */
 	private ArrayList<BIPComponent> registeredComponents = new ArrayList<BIPComponent>();
@@ -62,8 +62,6 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor,
 	 * Helper hashset of the components that have informed in an execution
 	 * cycle.
 	 */
-	// private Hashtable<BIPComponent, ArrayList<Port>> componentUndecidedPorts
-	// = new Hashtable<BIPComponent, ArrayList<Port>>();
 
 	private ArrayList<BIPComponent> informedComponents = new ArrayList<BIPComponent>();
 	private ArrayList<String> informedComponentsState = new ArrayList<String>();
