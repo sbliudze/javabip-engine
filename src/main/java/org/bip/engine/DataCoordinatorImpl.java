@@ -21,7 +21,6 @@ import org.bip.api.Behaviour;
 import org.bip.api.Data;
 import org.bip.api.DataWire;
 import org.bip.api.Port;
-import org.bip.api.PortBase;
 import org.bip.engine.api.BIPCoordinator;
 import org.bip.engine.api.BehaviourEncoder;
 import org.bip.engine.api.DataCoordinator;
@@ -589,7 +588,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor,
 			ArrayList<Map<String, Object>> dataTable = createDataTable(containerList);
 
 			// the result provided must have the same order - put comment
-			// containerList and portActive are dependant on each other
+			// containerList and portActive are dependent on each other
 			List<Boolean> portActive = component.checkEnabledness(port,
 					dataTable);
 			logger.trace(
