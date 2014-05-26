@@ -47,7 +47,7 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor,
 		DataCoordinator {
 
 	/** The logger. */
-	private Logger logger = LoggerFactory.getLogger(BIPCoordinatorImpl.class);
+	private Logger logger = LoggerFactory.getLogger(BIPCoordinatorKernel.class);
 
 	/** The registered components. */
 	private ArrayList<BIPComponent> registeredComponents = new ArrayList<BIPComponent>();
