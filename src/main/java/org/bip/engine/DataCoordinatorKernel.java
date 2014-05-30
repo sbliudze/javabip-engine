@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.concurrent.Semaphore;
 
 import net.sf.javabdd.BDD;
 import net.sf.javabdd.BDDFactory;
@@ -98,9 +97,6 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor,
 	/** The component data wires. */
 	private Map<String, Map<String, Set<DataWire>>> componentDataWires;
 
-	/** The registration semaphore. */
-	private Semaphore registrationSemaphore;
-
 	/** The interaction executor. */
 	private InteractionExecutor interactionExecutor;
 
@@ -130,7 +126,6 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor,
 				.getBehaviourEncoderInstance());
 		dataEncoder.setBDDManager(this.bipCoordinator.getBDDManager());
 		componentDataWires = new HashMap<String, Map<String, Set<DataWire>>>();
-		registrationSemaphore = new Semaphore(0);
 	}
 
 	/**
@@ -189,13 +184,11 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor,
 			componentDataWires.put(componentType, dataWire);
 		}
 		registrationFinished = true;
-		// registrationSemaphore.release();
 		int nbComponent = informedComponents.size();
 		for (int i = 0; i < nbComponent; i++) {
 			inform(informedComponents.get(i), informedComponentsState.get(i),
 					informedComponentsPorts.get(i));
 		}
-		System.out.println("Registration semaphore released in specifyGlue");
 	}
 
 	/*
@@ -210,8 +203,6 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor,
 		 * registered.
 		 */
 		try {
-			System.out.println("Register started for component"
-					+ component.getId());
 			if (component == null) {
 				throw new BIPEngineException(
 						"Registering component must not be null.");
@@ -260,22 +251,17 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor,
 			String currentState, Set<Port> disabledPorts) {
 		// for each component store its undecided ports
 		// TODO create undecided port with the help of set.removeAll
-		System.out.println("Inform started for component" + component.getId());
 
 		/*
 		 * If all components have not finished registering the informSpecific
 		 * cannot be done: In the informSpecific information is required from
 		 * all the registered components.
 		 */
-		// System.out.println("registration finished: " + registrationFinished);
 		if (!registrationFinished) {
-//				System.out.println("before acquire");
 			informedComponents.add(component);
 			informedComponentsState.add(currentState);
 			informedComponentsPorts.add(disabledPorts);
 			return;
-//				registrationSemaphore.acquire();
-//				System.out.println("after acquire");
 		}
 
 		try {
@@ -288,7 +274,6 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor,
 		 * particular component have finished
 		 */
 		bipCoordinator.inform(component, currentState, disabledPorts);
-		System.out.println("Inform finished for component" + component.getId());
 	}
 
 	/**
@@ -549,8 +534,6 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor,
 	private void doInformSpecific(BIPComponent component, String currentState,
 			Set<Port> disabledPorts)
 			throws BIPEngineException {
-		System.out.println("Inform specific started for component: "
-				+ component.getId());
 		// mapping port <-> data it needs for computing guards
 		Behaviour decidingBehaviour = componentBehaviourMapping.get(component);
 		// for each undecided port of each component :

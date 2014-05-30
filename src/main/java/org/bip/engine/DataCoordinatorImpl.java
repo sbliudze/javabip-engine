@@ -21,7 +21,6 @@ import org.bip.api.Behaviour;
 import org.bip.api.Data;
 import org.bip.api.DataWire;
 import org.bip.api.Port;
-import org.bip.api.PortBase;
 import org.bip.engine.api.BIPCoordinator;
 import org.bip.engine.api.BehaviourEncoder;
 import org.bip.engine.api.DataCoordinator;
@@ -128,7 +127,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor,
 				.getBehaviourEncoderInstance());
 		dataEncoder.setBDDManager(this.bipCoordinator.getBDDManager());
 		componentDataWires = new HashMap<String, Map<String, Set<DataWire>>>();
-		registrationSemaphore = new Semaphore(1);
+		registrationSemaphore = new Semaphore(0);
 	}
 
 	/**
