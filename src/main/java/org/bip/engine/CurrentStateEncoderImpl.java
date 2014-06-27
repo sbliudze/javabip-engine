@@ -63,7 +63,7 @@ public class CurrentStateEncoderImpl implements CurrentStateEncoder {
 		assert(component != null);
 		assert (currentState != null && !currentState.isEmpty());
 		
-		ArrayList<String> componentStates = (ArrayList<String>) wrapper.getBehaviourByComponent(component).getStates();
+		ArrayList<String> componentStates = new ArrayList<String>( wrapper.getBehaviourByComponent(component).getStates());
 		Map<String, BDD> statesToBDDs = behaviourEncoder.getStateToBDDOfAComponent(component);
 		Map<String, BDD> portsToBDDs = behaviourEncoder.getPortToBDDOfAComponent(component);
 	

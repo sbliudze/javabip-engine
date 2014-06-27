@@ -158,7 +158,7 @@ public class BehaviourEncoderImpl implements BehaviourEncoder {
 			}
 		}	
 		List<Port> componentPorts = behaviour.getEnforceablePorts();
-		List<String> componentStates = behaviour.getStates();
+		List<String> componentStates = new ArrayList<String> (behaviour.getStates());
 		Hashtable<String, BDD> portToBDD = componentToPortToBDD.get(component); 
 		Hashtable<String, BDD> stateToBDD = componentToStateToBDD.get(component); 
 		

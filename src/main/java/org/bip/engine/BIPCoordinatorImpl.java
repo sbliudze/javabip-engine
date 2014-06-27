@@ -212,7 +212,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 			try {
 				behenc.createBDDNodes(component,
 						(behaviour.getEnforceablePorts()),
-						(behaviour.getStates()));
+						((new ArrayList<String>(behaviour.getStates()))));
 			} catch (BIPEngineException e) {
 				e.printStackTrace();
 			}

@@ -15,9 +15,9 @@ import org.bip.engine.api.BIPCoordinator;
 import org.bip.engine.api.BehaviourEncoder;
 import org.bip.engine.api.GlueEncoder;
 import org.bip.exceptions.BIPEngineException;
-import org.bip.api.Accepts;
+import org.bip.api.Accept;
 import org.bip.api.BIPGlue;
-import org.bip.api.Requires;
+import org.bip.api.Require;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -147,7 +147,7 @@ public class GlueEncoderImpl implements GlueEncoder {
 	 * @throws BIPEngineException 
 	 * @throws InterruptedException 
 	 */
-	ArrayList<BDD> decomposeRequireGlue(Requires requires) throws BIPEngineException{
+	ArrayList<BDD> decomposeRequireGlue(Require requires) throws BIPEngineException{
 		ArrayList<BDD> result = new ArrayList<BDD>();
 		
 		if (requires.getEffect() == null) {
@@ -218,7 +218,7 @@ public class GlueEncoderImpl implements GlueEncoder {
 	 * @throws BIPEngineException 
 	 * @throws InterruptedException 
 	 */
-	ArrayList<BDD> decomposeAcceptGlue(Accepts accept) throws BIPEngineException{
+	ArrayList<BDD> decomposeAcceptGlue(Accept accept) throws BIPEngineException{
 		ArrayList<BDD> result = new ArrayList<BDD>();
 
 		if (accept.getEffect() == null) {
@@ -425,7 +425,7 @@ public ArrayList<BDD> totalGlue() throws BIPEngineException{
 		logger.trace("Glue spec require Constraints size: {} ", glueSpec.getRequiresConstraints().size());
 		if (!glueSpec.getRequiresConstraints().isEmpty() || !glueSpec.getRequiresConstraints().equals(null)) {
 			logger.trace("Start conjunction of requires");
-			for (Requires requires : glueSpec.getRequiresConstraints()) {
+			for (Require requires : glueSpec.getRequiresConstraints()) {
 				allGlueBDDs.addAll(decomposeRequireGlue(requires));
 				
 			}
@@ -435,7 +435,7 @@ public ArrayList<BDD> totalGlue() throws BIPEngineException{
 		
 		logger.trace("Glue spec accept Constraints size: {} ", glueSpec.getAcceptConstraints().size());
 		if (!glueSpec.getAcceptConstraints().isEmpty() || !glueSpec.getAcceptConstraints().equals(null)) {
-			for (Accepts accepts : glueSpec.getAcceptConstraints()) {
+			for (Accept accepts : glueSpec.getAcceptConstraints()) {
 				allGlueBDDs.addAll(decomposeAcceptGlue(accepts));
 			}
 		} else {

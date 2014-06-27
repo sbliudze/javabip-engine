@@ -74,7 +74,7 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor,
 	private Hashtable<String, ArrayList<BIPComponent>> typeInstancesMapping = new Hashtable<String, ArrayList<BIPComponent>>();
 
 	/** The data wires. */
-	private ArrayList<DataWire> dataWires;
+	private List<DataWire> dataWires;
 
 	/** Number of ports of components registered. */
 	private int nbPorts;
@@ -215,9 +215,8 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor,
 			} else {
 				registeredComponents.add(component);
 				componentBehaviourMapping.put(component, behaviour);
-				nbPorts += ((ArrayList<Port>) behaviour.getEnforceablePorts())
-						.size();
-				nbStates += ((ArrayList<String>) behaviour.getStates()).size();
+				nbPorts += behaviour.getEnforceablePorts().size();
+				nbStates += behaviour.getStates().size();
 				bipCoordinator.register(component, behaviour);
 			}
 			ArrayList<BIPComponent> componentInstances = new ArrayList<BIPComponent>();
