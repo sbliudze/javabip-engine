@@ -139,7 +139,9 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	 */
 	private synchronized void computeTotalGlueAndInformEngine()
 			throws BIPEngineException {
+		System.out.println("Ask for the total Glue");
 		engine.informGlue(glueenc.totalGlue());
+
 	}
 
 	/**
@@ -161,6 +163,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 
 	public synchronized void register(BIPComponent component,
 			Behaviour behaviour) {
+		long startTime = System.currentTimeMillis();
 		/*
 		 * The condition below checks whether the component has already been
 		 * registered.
@@ -234,6 +237,8 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 			nbStates += nbComponentStates;
 			nbComponents++;
 			logger.info("******************************************************************************");
+			long estimatedTime = System.currentTimeMillis() - startTime;
+			System.out.println("Reg time for : " + component.getType() + " " + estimatedTime);
 		}
 	}
 
@@ -330,10 +335,12 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 				 */
 			} else {
 				try {
-					logger.error("Component " + component.getId()
-							+ " has not registered yet.");
-					throw new BIPEngineException("Component "
-							+ component.getId() + " has not registered yet.");
+				logger.error("No component with name" + component.getId() + " specified in the inform 	was registered."
+						+ "\tPossible reason: "
+						+ "Name attribute in ComponentType annotation does not match the name of the Class.");
+				throw new BIPEngineException("Component " + component.getId()
+						+ " specified in the inform was registered." + "\tPossible reason: "
+						+ "Name attribute in ComponentType annotation does not match the name of the Class.");
 				} catch (BIPEngineException e) {
 					e.printStackTrace();
 				}
@@ -507,6 +514,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	 * @throws InterruptedException
 	 */
 	private void coordinatorCycleInitialization() throws BIPEngineException {
+
 		/*
 		 * Wait until the execute() has been called signaling that all the
 		 * components have registered
@@ -578,11 +586,16 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 		 * register after the call to execute() these BDDs must be recomputed
 		 * accordingly.
 		 */
+		long startTime = System.currentTimeMillis();
 		computeTotalBehaviour();
 		computeTotalGlueAndInformEngine();
+		long estimatedTime = System.currentTimeMillis() - startTime;
+		System.out.println("Init time : " + estimatedTime);
+
 	}
 
 	public void run() {
+
 		logger.info("Engine thread is started.");
 
 		try {
@@ -592,6 +605,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 			isEngineExecuting = false;
 			engineThread.interrupt();
 		}
+
 		/**
 		 * Start the Engine cycle
 		 */

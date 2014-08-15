@@ -148,6 +148,7 @@ public class BehaviourEncoderImpl implements BehaviourEncoder {
 
 		BDD componentBehaviourBDD = engine.getBDDManager().zero();
 		Behaviour behaviour = wrapper.getBehaviourByComponent(component);
+		System.out.println("Number of BDD nodes: " + engine.getBDDManager().getNodeNum());
 		if (behaviour == null){
 			try {
 				logger.error("Behaviour of component {} is null", component.getId());
@@ -206,6 +207,7 @@ public class BehaviourEncoderImpl implements BehaviourEncoder {
 		for(Port port: componentPorts){
 			allNegatedPortsBDD.andWith(portToBDD.get(port.getId()).not());
 		}
+		System.out.println("Behaviour of one component is computed");
 			
 		return componentBehaviourBDD.orWith(allNegatedPortsBDD);
 
@@ -247,8 +249,11 @@ public class BehaviourEncoderImpl implements BehaviourEncoder {
 		Hashtable<String, BDD> aux = componentToPortToBDD.get(component);
 		if (aux.get(portName) == null){
 			try {
-				logger.error("BDD node of port {} of component {} is null", portName, component.getId());
-				throw new BIPEngineException("BDD node of a port "+ portName +" of component "+ component.getId() +" is null");
+				logger.error(
+						"BDD node of port {} of component {} is null. Possible reason: Port name in the glue not the same as in the BIP Spec.",
+						portName, component.getId());
+				throw new BIPEngineException("BDD node of a port " + portName + " of component " + component.getId()
+						+ " is null. Possible reason: Port name in the glue not the same as in the BIP Spec.");
 			} catch (BIPEngineException e) {
 				e.printStackTrace();
 				throw e;

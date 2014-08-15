@@ -9,7 +9,6 @@ import net.sf.javabdd.BDDFactory;
 import org.bip.api.BIPComponent;
 import org.bip.exceptions.BIPEngineException;
 
-// TODO: Auto-generated Javadoc
 /**
  * Receives the current state, glue and behaviour BDDs.
  * Computes the possible maximal interactions and picks one non-deterministically.
