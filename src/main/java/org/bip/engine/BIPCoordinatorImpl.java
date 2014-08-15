@@ -124,6 +124,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	}
 
 	public synchronized void specifyGlue(BIPGlue glue) {
+		System.out.println("Specify glue in BIP Coordinator");
 		try {
 			glueenc.specifyGlue(glue);
 		} catch (BIPEngineException e) {
@@ -587,7 +588,9 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 		 * accordingly.
 		 */
 		long startTime = System.currentTimeMillis();
+		System.out.println("Before compute total behaviour");
 		computeTotalBehaviour();
+		System.out.println("Before compute total glue");
 		computeTotalGlueAndInformEngine();
 		long estimatedTime = System.currentTimeMillis() - startTime;
 		System.out.println("Init time : " + estimatedTime);
@@ -597,6 +600,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	public void run() {
 
 		logger.info("Engine thread is started.");
+		System.out.println("Engine thread is started");
 
 		try {
 			coordinatorCycleInitialization();
@@ -684,6 +688,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	 * DataCoordinator. Otherwise set it to BIPCoordinator.
 	 */
 	public void execute() {
+		System.out.println("BIP Coordinator execute");
 		if (isEngineExecuting) {
 			logger.warn("Execute() called more than once");
 		} else {
@@ -730,6 +735,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	 * NB: DataCoordinator does not have any connection to the BDDBIPEngine.
 	 */
 	public void specifyPermanentConstraints(BDD constraints) {
+		System.out.println("Specify permanent constraints call");
 		engine.specifyPermanentExtraConstraints(constraints);
 	}
 

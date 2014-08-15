@@ -62,6 +62,7 @@ public class GlueEncoderImpl implements GlueEncoder {
 			}
 		}
 		this.glueSpec = glue;
+		System.out.println("Glue is updated");
 	}
 	
 	/**

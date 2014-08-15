@@ -134,6 +134,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 	public void specifyGlue(BIPGlue glue) {
 		bipCoordinator.specifyGlue(glue);
 		this.dataWires = glue.getDataWires();
+		System.out.println("Before try");
 		try {
 			/*
 			 * Send the information about the dataWires to the DataEncoder to create the d-variables

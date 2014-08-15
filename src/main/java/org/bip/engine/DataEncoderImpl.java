@@ -123,6 +123,7 @@ public class DataEncoderImpl implements DataEncoder {
 	 * @see org.bip.engine.api.DataEncoder#specifyDataGlue(java.lang.Iterable)
 	 */
 	public BDD specifyDataGlue(Iterable<DataWire> dataGlue) throws BIPEngineException {
+		System.out.println("In specify Data Glue ");
 		if (dataGlue == null || !dataGlue.iterator().hasNext()) {
 			logger.error("The glue parser has failed to compute the data glue.\n"
 					+ "\tPossible reasons: No data transfer or corrupt/non-existant glue XML file.");
@@ -143,10 +144,22 @@ public class DataEncoderImpl implements DataEncoder {
 	 */
 	private BDD computeDvariablesBDDs() {
 		BDD result = BDDmanager.one();
+		long time = System.currentTimeMillis();
 		logger.trace("Adding implications to the data constraints: " + implicationsOfDs.size());
+		System.out.println("Adding implications to the data constraints: " + implicationsOfDs.size());
+		System.out.println("Number of BDD nodes: " + BDDmanager.getNodeNum());
+		/*
+		 * The conjunction of all implications takes too much time..
+		 */
 		for (BDD eachD : this.implicationsOfDs) {
 			result.andWith(eachD);
+			// System.out.println("result is updated");
+			BDDmanager.reorder(BDDFactory.REORDER_SIFTITE);
+			// System.out.println("EData: Reorder stats: " + BDDmanager.getReorderStats());
+
 		}
+		System.out.println(System.currentTimeMillis() - time);
+		System.exit(0);
 		return result;
 	}
 
@@ -192,6 +205,7 @@ public class DataEncoderImpl implements DataEncoder {
 		int initialSystemBDDSize = dataCoordinator.getNoPorts() + dataCoordinator.getNoStates();
 		int currentSystemBddSize = initialSystemBDDSize;
 		logger.trace("CurrentSystemBDDSize: " + currentSystemBddSize);
+		System.out.println("CurrentSystemBDDSize: " + currentSystemBddSize);
 
 		// Create BDD nodes for all the variables representing data wires
 		Iterator<DataWire> dataIterator = dataWires.iterator();
@@ -256,6 +270,7 @@ public class DataEncoderImpl implements DataEncoder {
 						}
 						currentSystemBddSize++;
 						logger.trace("CurrentSystemBDDSize: " + currentSystemBddSize);
+						System.out.println("CurrentSystemBDDSize: " + currentSystemBddSize);
 					}
 				}
 			}
@@ -293,6 +308,7 @@ public class DataEncoderImpl implements DataEncoder {
 			BDD temp2 = bdd.not().or(result);
 			implicationsOfDs.add(temp2);
 		}
+		System.out.println("done");
 	}
 
 	/*

@@ -130,8 +130,10 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 	 *            the glue
 	 */
 	public void specifyGlue(BIPGlue glue) {
+		System.out.println("Specify glue in Kernel");
 		bipCoordinator.specifyGlue(glue);
 		this.dataWires = glue.getDataWires();
+		System.out.println("before try");
 		try {
 			/*
 			 * Send the information about the dataWires to the DataEncoder to create the d-variables
@@ -141,6 +143,7 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 			 */
 			BDD dataConstraints = dataEncoder.specifyDataGlue(dataWires);
 			logger.debug("Data constraints from the encoder not null: " + (dataConstraints != null));
+			System.out.println("lala");
 			bipCoordinator.specifyPermanentConstraints(dataConstraints);
 		} catch (BIPEngineException e) {
 			e.printStackTrace();
@@ -177,6 +180,7 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 		for (int i = 0; i < nbComponent; i++) {
 			inform(informedComponents.get(i), informedComponentsState.get(i), informedComponentsPorts.get(i));
 		}
+		System.out.println("Specify glue is finished in Kernel");
 	}
 
 	/*
@@ -447,6 +451,7 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 	 * @see org.bip.api.BIPEngine#start()
 	 */
 	public void start() {
+		System.out.println("Data Coordinator Kernel Start");
 		bipCoordinator.start();
 	}
 
@@ -465,9 +470,11 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 	 * @see org.bip.api.BIPEngine#execute()
 	 */
 	public void execute() {
+		System.out.println("Data coordinator kernel before execute");
 		if (this.interactionExecutor == null) {
 			setInteractionExecutor(this);
 		}
+
 		bipCoordinator.execute();
 	}
 

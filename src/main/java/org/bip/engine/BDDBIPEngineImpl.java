@@ -370,6 +370,7 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 					logger.trace("E7: Reorder stats: " + bdd_mgr.getReorderStats());
 
 				}
+				System.out.println("Behaviour constraints added to existing total BDD");
 				logger.trace("Behaviour constraints added to existing total BDD.");
 				/*
 				 * Re-ordering function and statistics printouts
