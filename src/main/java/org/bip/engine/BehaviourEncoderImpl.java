@@ -148,7 +148,6 @@ public class BehaviourEncoderImpl implements BehaviourEncoder {
 
 		BDD componentBehaviourBDD = engine.getBDDManager().zero();
 		Behaviour behaviour = wrapper.getBehaviourByComponent(component);
-		System.out.println("Number of BDD nodes: " + engine.getBDDManager().getNodeNum());
 		if (behaviour == null){
 			try {
 				logger.error("Behaviour of component {} is null", component.getId());
@@ -207,8 +206,6 @@ public class BehaviourEncoderImpl implements BehaviourEncoder {
 		for(Port port: componentPorts){
 			allNegatedPortsBDD.andWith(portToBDD.get(port.getId()).not());
 		}
-		System.out.println("Behaviour of one component is computed");
-			
 		return componentBehaviourBDD.orWith(allNegatedPortsBDD);
 
 	}

@@ -2,6 +2,7 @@ package org.bip.engine.api;
 
 
 import java.util.List;
+import java.util.Set;
 
 import net.sf.javabdd.BDD;
 import net.sf.javabdd.BDDFactory;
@@ -81,7 +82,7 @@ public interface BDDBIPEngine {
 	 *
 	 * @param specifyDataGlue the specify data glue
 	 */
-	void specifyPermanentExtraConstraints(BDD specifyDataGlue);
+	void specifyPermanentExtraConstraints(Set<BDD> specifyDataGlue);
 
 
 

@@ -2,6 +2,7 @@ package org.bip.engine;
 
 import java.util.AbstractMap;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
@@ -23,7 +24,6 @@ import org.bip.exceptions.BIPEngineException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-// TODO: Auto-generated Javadoc
 /**
  * Deals with the DataGlue. Encodes the informSpecific information.
  * 
@@ -53,7 +53,7 @@ public class DataEncoderImpl implements DataEncoder {
 	Map<PortBase, BDD> componentInBDDs = new Hashtable<PortBase, BDD>();
 
 	/** The implications of ds. */
-	ArrayList<BDD> implicationsOfDs = new ArrayList<BDD>();
+	Set<BDD> implicationsOfDs = new HashSet<BDD>();
 
 	/** The more implications. */
 	Map<BDD, ArrayList<BDD>> moreImplications = new Hashtable<BDD, ArrayList<BDD>>();
@@ -101,11 +101,17 @@ public class DataEncoderImpl implements DataEncoder {
 		Set<BIPComponent> disabledComponents = disabledCombinations.keySet();
 		for (BIPComponent component : disabledComponents) {
 			logger.trace("Inform Specific: decidingPort is " + decidingPort + " of component: " + decidingComponent);
+			// System.out.println("Inform Specific: decidingPort is " + decidingPort +
+			// " of component: "
+			// + decidingComponent);
 
 			Set<Port> componentPorts = disabledCombinations.get(component);
 			logger.trace("Inform Specific: disabled Component ports size: " + componentPorts.size());
 			for (Port port : componentPorts) {
 				logger.trace("Inform Specific: disabledPort is " + port.getId() + "of component" + port.component());
+				// System.out.println("Inform Specific: disabledPort is " + port.getId() +
+				// "of component"
+				// + port.component());
 
 				Set<Entry<Port, Port>> allpairsBiDirectionalPairs = portsToDVarBDDMapping.keySet();
 				Entry<Port, Port> pairToNegate = new AbstractMap.SimpleEntry<Port, Port>(decidingPort, port);
@@ -122,8 +128,7 @@ public class DataEncoderImpl implements DataEncoder {
 	 * 
 	 * @see org.bip.engine.api.DataEncoder#specifyDataGlue(java.lang.Iterable)
 	 */
-	public BDD specifyDataGlue(Iterable<DataWire> dataGlue) throws BIPEngineException {
-		System.out.println("In specify Data Glue ");
+	public Set<BDD> specifyDataGlue(Iterable<DataWire> dataGlue) throws BIPEngineException {
 		if (dataGlue == null || !dataGlue.iterator().hasNext()) {
 			logger.error("The glue parser has failed to compute the data glue.\n"
 					+ "\tPossible reasons: No data transfer or corrupt/non-existant glue XML file.");
@@ -131,37 +136,39 @@ public class DataEncoderImpl implements DataEncoder {
 					+ "\tPossible reasons: No data transfer or corrupt/non-existant glue XML file.");
 		}
 
-		createDataBDDNodes(dataGlue);
+		return createDataBDDNodes(dataGlue);
 		// Compute the BDD for the dataflow constraints and return it to the
 		// Data Coordinator, which then passes it to the BDD Engine kernel
-		return computeDvariablesBDDs();
+		// return computeDvariablesBDDs();
 	}
 
-	/**
-	 * Conjunction of all implication BDDs.
-	 * 
-	 * @return the bdd
-	 */
-	private BDD computeDvariablesBDDs() {
-		BDD result = BDDmanager.one();
-		long time = System.currentTimeMillis();
-		logger.trace("Adding implications to the data constraints: " + implicationsOfDs.size());
-		System.out.println("Adding implications to the data constraints: " + implicationsOfDs.size());
-		System.out.println("Number of BDD nodes: " + BDDmanager.getNodeNum());
-		/*
-		 * The conjunction of all implications takes too much time..
-		 */
-		for (BDD eachD : this.implicationsOfDs) {
-			result.andWith(eachD);
-			// System.out.println("result is updated");
-			BDDmanager.reorder(BDDFactory.REORDER_SIFTITE);
-			// System.out.println("EData: Reorder stats: " + BDDmanager.getReorderStats());
-
-		}
-		System.out.println(System.currentTimeMillis() - time);
-		System.exit(0);
-		return result;
-	}
+	// /**
+	// * Conjunction of all implication BDDs.
+	// *
+	// * @return the bdd
+	// */
+	// private Set<BDD> computeDvariablesBDDs() {
+	// Set<BDD> result = BDDmanager.one();
+	// long time = System.currentTimeMillis();
+	// logger.trace("Adding implications to the data constraints: " + implicationsOfDs.size());
+	// System.out.println("Adding implications to the data constraints: " +
+	// implicationsOfDs.size());
+	// System.out.println("Number of BDD nodes: " + BDDmanager.getNodeNum());
+	// /*
+	// * The conjunction of all implications takes too much time..
+	// */
+	// for (BDD eachD : this.implicationsOfDs) {
+	// result.andWith(eachD);
+	// // System.out.println("result is updated");
+	//
+	//
+	//
+	// }
+	// BDDmanager.reorder(BDDFactory.REORDER_SIFTITE);
+	// System.out.println("EData: Reorder stats: " + BDDmanager.getReorderStats());
+	// System.out.println(System.currentTimeMillis() - time);
+	// return result;
+	// }
 
 	/**
 	 * Find the d-variables that correspond to each port. Find the BDDs of these d-variables and
@@ -196,7 +203,7 @@ public class DataEncoderImpl implements DataEncoder {
 	 * @throws BIPEngineException
 	 *             the BIP engine exception
 	 */
-	private void createDataBDDNodes(Iterable<DataWire> dataWires) throws BIPEngineException {
+	private Set<BDD> createDataBDDNodes(Iterable<DataWire> dataWires) throws BIPEngineException {
 		/*
 		 * Get the number of BDD-nodes of the System. We base this on the assumption that all the
 		 * components have registered before. Therefore, we know the size of the BDD nodes created
@@ -205,7 +212,6 @@ public class DataEncoderImpl implements DataEncoder {
 		int initialSystemBDDSize = dataCoordinator.getNoPorts() + dataCoordinator.getNoStates();
 		int currentSystemBddSize = initialSystemBDDSize;
 		logger.trace("CurrentSystemBDDSize: " + currentSystemBddSize);
-		System.out.println("CurrentSystemBDDSize: " + currentSystemBddSize);
 
 		// Create BDD nodes for all the variables representing data wires
 		Iterator<DataWire> dataIterator = dataWires.iterator();
@@ -270,7 +276,6 @@ public class DataEncoderImpl implements DataEncoder {
 						}
 						currentSystemBddSize++;
 						logger.trace("CurrentSystemBDDSize: " + currentSystemBddSize);
-						System.out.println("CurrentSystemBDDSize: " + currentSystemBddSize);
 					}
 				}
 			}
@@ -308,7 +313,7 @@ public class DataEncoderImpl implements DataEncoder {
 			BDD temp2 = bdd.not().or(result);
 			implicationsOfDs.add(temp2);
 		}
-		System.out.println("done");
+		return implicationsOfDs;
 	}
 
 	/*

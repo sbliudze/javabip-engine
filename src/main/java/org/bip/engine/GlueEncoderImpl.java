@@ -62,7 +62,6 @@ public class GlueEncoderImpl implements GlueEncoder {
 			}
 		}
 		this.glueSpec = glue;
-		System.out.println("Glue is updated");
 	}
 	
 	/**
@@ -287,7 +286,6 @@ public class GlueEncoderImpl implements GlueEncoder {
 		
 
 		BDD allDisjunctiveCauses = engine.getBDDManager().zero();
-		System.out.println("Start computing the require BDDs");
 		logger.trace("Start computing the require BDDs");
 		for(Hashtable<PortBase, ArrayList<BDD>> requiredPort : requiredPorts){
 			BDD allCausesBDD = engine.getBDDManager().one();
@@ -323,13 +321,11 @@ public class GlueEncoderImpl implements GlueEncoder {
 				}
 				logger.trace("before all Causes AND");
 				allCausesBDD.andWith(oneCauseBDD);
-				System.out.println("Number of nodes: " + engine.getBDDManager().getNodeNum());
 			}
 			logger.trace("before all Disjunctive Causes OR");
 			allDisjunctiveCauses.orWith(allCausesBDD);
 		}
 		logger.trace("Finished with the require BDDs");
-		System.out.println("Finished with the require BDDs");
 		allDisjunctiveCauses.orWith(requirePortHolder.not());
 		logger.trace("Finished with the disjunctive causes");
 		return allDisjunctiveCauses;			
@@ -389,7 +385,6 @@ public class GlueEncoderImpl implements GlueEncoder {
 				}
 				if (!exist) {
 					allCausesBDD.andWith(portBDD.not());
-					System.out.println("Number of nodes: " + engine.getBDDManager().getNodeNum());
 				}
 			}
 		}
@@ -417,19 +412,16 @@ public class GlueEncoderImpl implements GlueEncoder {
 						tmp = portBDD.not().and(allCausesBDD);
 						allCausesBDD.free();
 						allCausesBDD = tmp;
-						System.out.println("Number of nodes: " + engine.getBDDManager().getNodeNum());
 					}
 				}
 			}
 		}
-		System.out.println("Finished computing the accept BDDs");
 		logger.trace("Finished computing the accept BDDs");
 		return allCausesBDD.orWith(acceptPortHolder.not());
 	}
 
 public ArrayList<BDD> totalGlue() throws BIPEngineException{
 		ArrayList<BDD> allGlueBDDs = new ArrayList<BDD>();
-		System.out.println("Starting computing the Glue..");
 
 
 		if (!glueSpec.getRequiresConstraints().isEmpty() || !glueSpec.getRequiresConstraints().equals(null)) {
@@ -451,7 +443,6 @@ public ArrayList<BDD> totalGlue() throws BIPEngineException{
 		} else {
 			logger.warn("No accept constraints were provided (usually there should be some).");
 		}
-		System.out.println("Number of nodes: " + engine.getBDDManager().getNodeNum());
 		return allGlueBDDs;
 	}
 

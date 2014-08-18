@@ -7,9 +7,9 @@ import net.sf.javabdd.BDD;
 import net.sf.javabdd.BDDFactory;
 
 import org.bip.api.BIPComponent;
+import org.bip.api.DataWire;
 import org.bip.api.Port;
 import org.bip.exceptions.BIPEngineException;
-import org.bip.api.DataWire;
 
 // TODO: Auto-generated Javadoc
 /**
@@ -49,7 +49,7 @@ public interface DataEncoder {
      * @return the bdd
      * @throws BIPEngineException the BIP engine exception
      */
-    BDD specifyDataGlue(Iterable<DataWire> dataGlue) throws BIPEngineException;
+	Set<BDD> specifyDataGlue(Iterable<DataWire> dataGlue) throws BIPEngineException;
     
 	/**
 	 * Setter for the BDDBIPEngine.

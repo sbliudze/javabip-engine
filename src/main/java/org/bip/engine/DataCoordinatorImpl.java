@@ -134,7 +134,6 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 	public void specifyGlue(BIPGlue glue) {
 		bipCoordinator.specifyGlue(glue);
 		this.dataWires = glue.getDataWires();
-		System.out.println("Before try");
 		try {
 			/*
 			 * Send the information about the dataWires to the DataEncoder to create the d-variables
@@ -142,7 +141,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 			 * 
 			 * specifyDataGlue checks the validity of wires and throws an exception if necessary.
 			 */
-			BDD dataConstraints = dataEncoder.specifyDataGlue(dataWires);
+			Set<BDD> dataConstraints = dataEncoder.specifyDataGlue(dataWires);
 			logger.debug("Data constraints from the encoder not null: " + (dataConstraints != null));
 			bipCoordinator.specifyPermanentConstraints(dataConstraints);
 		} catch (BIPEngineException e) {
@@ -915,7 +914,7 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 	 * 
 	 * @see org.bip.engine.api.BIPCoordinator#specifyPermanentConstraints(net.sf. javabdd.BDD)
 	 */
-	public void specifyPermanentConstraints(BDD constraints) {
+	public void specifyPermanentConstraints(Set<BDD> constraints) {
 		bipCoordinator.specifyPermanentConstraints(constraints);
 	}
 

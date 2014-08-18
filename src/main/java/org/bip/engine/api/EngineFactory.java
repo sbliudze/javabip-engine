@@ -27,7 +27,7 @@ public class EngineFactory {
 								return engine;
 							}
 						}), id);
-		System.out.println("engine actor " + actor);
+		// System.out.println("engine actor " + actor);
 
 		// TODO: make the DataCoordinatorImpl implement this function (after
 		// refactoring the coordinators)

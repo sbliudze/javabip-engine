@@ -1,6 +1,7 @@
 package org.bip.engine.api;
 
 import java.util.List;
+import java.util.Set;
 
 import net.sf.javabdd.BDD;
 import net.sf.javabdd.BDDFactory;
@@ -102,6 +103,6 @@ public interface BIPCoordinator extends BIPEngine, InteractionExecutor {
 	 *
 	 * @param constraints the constraints
 	 */
-	void specifyPermanentConstraints(BDD constraints);
+	void specifyPermanentConstraints(Set<BDD> constraints);
 	
 }

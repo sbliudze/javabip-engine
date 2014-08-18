@@ -29,7 +29,6 @@ import org.bip.exceptions.BIPEngineException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-// TODO: Auto-generated Javadoc
 /**
  * There is no need for DataCoordinator interface, just DataCoordinatorImpl will implement BIP
  * engine interface. DataCoordinatorImpl needs BIP coordinator ( BIP Engine again ) that actual does
@@ -40,7 +39,6 @@ import org.slf4j.LoggerFactory;
  * 
  * @authors: mavridou, zolotukhina
  */
-
 public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, DataCoordinator {
 
 	/** The logger. */
@@ -54,10 +52,10 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 	 * the keys and the Behaviours of these components as the values.
 	 */
 	private Hashtable<BIPComponent, Behaviour> componentBehaviourMapping = new Hashtable<BIPComponent, Behaviour>();
+
 	/**
 	 * Helper hashset of the components that have informed in an execution cycle.
 	 */
-
 	private ArrayList<BIPComponent> informedComponents = new ArrayList<BIPComponent>();
 	private ArrayList<String> informedComponentsState = new ArrayList<String>();
 	private ArrayList<Set<Port>> informedComponentsPorts = new ArrayList<Set<Port>>();
@@ -130,10 +128,8 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 	 *            the glue
 	 */
 	public void specifyGlue(BIPGlue glue) {
-		System.out.println("Specify glue in Kernel");
 		bipCoordinator.specifyGlue(glue);
 		this.dataWires = glue.getDataWires();
-		System.out.println("before try");
 		try {
 			/*
 			 * Send the information about the dataWires to the DataEncoder to create the d-variables
@@ -141,9 +137,8 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 			 * 
 			 * specifyDataGlue checks the validity of wires and throws an exception if necessary.
 			 */
-			BDD dataConstraints = dataEncoder.specifyDataGlue(dataWires);
+			Set<BDD> dataConstraints = dataEncoder.specifyDataGlue(dataWires);
 			logger.debug("Data constraints from the encoder not null: " + (dataConstraints != null));
-			System.out.println("lala");
 			bipCoordinator.specifyPermanentConstraints(dataConstraints);
 		} catch (BIPEngineException e) {
 			e.printStackTrace();
@@ -180,7 +175,6 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 		for (int i = 0; i < nbComponent; i++) {
 			inform(informedComponents.get(i), informedComponentsState.get(i), informedComponentsPorts.get(i));
 		}
-		System.out.println("Specify glue is finished in Kernel");
 	}
 
 	/*
@@ -451,7 +445,6 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 	 * @see org.bip.api.BIPEngine#start()
 	 */
 	public void start() {
-		System.out.println("Data Coordinator Kernel Start");
 		bipCoordinator.start();
 	}
 
@@ -470,7 +463,6 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 	 * @see org.bip.api.BIPEngine#execute()
 	 */
 	public void execute() {
-		System.out.println("Data coordinator kernel before execute");
 		if (this.interactionExecutor == null) {
 			setInteractionExecutor(this);
 		}
@@ -924,7 +916,7 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 	 * 
 	 * @see org.bip.engine.api.BIPCoordinator#specifyPermanentConstraints(net.sf. javabdd.BDD)
 	 */
-	public void specifyPermanentConstraints(BDD constraints) {
+	public void specifyPermanentConstraints(Set<BDD> constraints) {
 		bipCoordinator.specifyPermanentConstraints(constraints);
 	}
 
