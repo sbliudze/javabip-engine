@@ -508,6 +508,11 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 					ArrayList<Object> dataValues = new ArrayList<Object>();
 					// for each component of this type, call getData
 					for (BIPComponent aComponent : getBIPComponentInstances(wire.getFrom().getSpecType())) {
+						// TODO quick fix for the component not to receive data from itself
+						// discuss it and check whether it works fine in all situations and
+						if (aComponent.equals(component)) {
+							continue;
+						}
 						Object inValue = aComponent.getData(wire.getFrom().getId(), inDataItem.type());
 						// get data out variable in order to get the ports
 						if (inValue != null) {
@@ -540,6 +545,9 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 						logger.debug(this.count + " CONTAINER CHOSEN: For deciding " + component.hashCode() + " and "
 								+ port.getId() + " disabled is " + dc.component() + " with ports " + dc.ports());
 						disabledCombinations.put(dc.component(), dc.ports());
+						// TODO quick fix for the component not to receive data from itself
+						// discuss it and check whether it works fine in all situations and
+						disabledCombinations.put(component, new HashSet(decidingBehaviour.getEnforceablePorts()));
 					}
 				}
 				this.informSpecific(component, port, disabledCombinations);

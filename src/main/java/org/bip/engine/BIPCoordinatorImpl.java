@@ -162,7 +162,6 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 
 	public synchronized void register(BIPComponent component,
 			Behaviour behaviour) {
-		long startTime = System.currentTimeMillis();
 		/*
 		 * The condition below checks whether the component has already been
 		 * registered.
@@ -233,7 +232,6 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 			nbStates += nbComponentStates;
 			nbComponents++;
 			logger.info("******************************************************************************");
-			long estimatedTime = System.currentTimeMillis() - startTime;
 		}
 	}
 
