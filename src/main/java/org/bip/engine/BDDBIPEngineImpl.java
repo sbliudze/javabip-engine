@@ -43,7 +43,7 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 	private int cacheSize = 1000;
 
 	/* Use JavaBDD Bdd Manager */
-	private BDDFactory bdd_mgr = BDDFactory.init("j", noNodes, cacheSize);
+	private BDDFactory bdd_mgr = BDDFactory.init("buddy", noNodes, cacheSize);
 	Map<Integer, Entry<PortBase, PortBase>> dVariablesToPosition = new Hashtable<Integer, Entry<PortBase, PortBase>>();
 	List<Integer> positionsOfDVariables = new ArrayList<Integer>();
 	// private int nbIteration = 0;
@@ -158,10 +158,10 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		// System.out.println("E1 number of nodes: " + bdd_mgr.getNodeNum());
 		// if (nbIteration % iterationToReorder == 0) {
 		// bdd_mgr.reorder(BDDFactory.REORDER_WIN3);
-		// System.out.println("E1: Reorder stats: " + bdd_mgr.getReorderStats());
+		// // System.out.println("E1: Reorder stats: " + bdd_mgr.getReorderStats());
 		// nbIteration = 0;
 		//
-		// // }
+		// }
 		// nbIteration++;
 
 		// logger.trace("E1: Reorder stats: " + bdd_mgr.getReorderStats());
@@ -251,24 +251,26 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		 * Update chosen interaction
 		 */
 		chosenInteraction = cubeMaximals.get(randomInt);
-
+		System.out.println(System.currentTimeMillis() - time);
 		cubeMaximals.clear();
-		logger.trace("ChosenInteraction: ");
-		for (int k = 0; k < chosenInteraction.length; k++) {
-			logger.trace("{}", chosenInteraction[k]);
-		}
+		// logger.trace("ChosenInteraction: ");
+		// for (int k = 0; k < chosenInteraction.length; k++) {
+		// logger.trace("{}", chosenInteraction[k]);
+		// }
 
 		/*
 		 * Beginning of the part to move to the Data Coordinator
 		 */
+
 		wrapper.execute(chosenInteraction);
+
 
 		/*
 		 * End of the part to move to the Data Coordinator
 		 */
 		solns.free();
 		temporaryConstraints.clear();
-		System.out.println(System.currentTimeMillis() - time);
+
 
 	}
 
