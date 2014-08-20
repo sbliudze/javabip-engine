@@ -248,6 +248,7 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 		 * Inform the BIPCoordinator only after all the informSpecifics for the particular component
 		 * have finished
 		 */
+
 		bipCoordinator.inform(component, currentState, disabledPorts);
 	}
 
@@ -364,26 +365,42 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 				logger.trace("D variable for ports: " + "\n\t" + firstPair + "\n\t of component "
 						+ firstPair.component() + "\n\t " + secondPair + "\n\t of component " + secondPair.component());
 
-				Iterable<Data<?>> portToDataInForTransition = componentBehaviourMapping.get(firstPair.component())
-						.portToDataInForTransition(firstPair);
-				for (Data<?> dataItem : portToDataInForTransition) {
-					String dataOutName = dataIsProvided(secondPair, componentBehaviourMapping
-							.get(firstPair.component()).getComponentType(), dataItem.name());
-					if (dataOutName != null && !dataOutName.isEmpty()) {
-						Object dataValue = secondPair.component().getData(dataOutName, dataItem.type());
-						logger.trace("GETTING DATA: from component " + secondPair.component() + " the value "
-								+ dataValue);
-						firstPair.component().setData(dataItem.name(), dataValue);
-					}
+				// TODO DISCUSS DANGER remove from merged interactions those where component communicates with itself
+				if (firstPair.component().equals(secondPair.component())) {
+					continue;
 				}
-				portsExecuted.add(firstPair);
-				portsExecuted.add(secondPair);
+	
+				//  check for data for the first component
+				setDataValuationToExecutor(firstPair, secondPair);
+			    //  check for data for the second component
+				setDataValuationToExecutor(secondPair, firstPair);
+
+				if (!portsExecuted.contains(firstPair)) {
+					portsExecuted.add(firstPair);
+				}
+				if (!portsExecuted.contains(secondPair)) {
+					portsExecuted.add(secondPair);
+				}
 			}
 		}
-
 		List<List<Port>> bigInteraction = new ArrayList<List<Port>>();
 		bigInteraction.add(portsExecuted);
 		return bigInteraction;
+	}
+
+	private void setDataValuationToExecutor(Port askingData, Port providingData) {
+		Iterable<Data<?>> portToDataInForTransition = componentBehaviourMapping.get(askingData.component())
+				.portToDataInForTransition(askingData);
+		for (Data<?> dataItem : portToDataInForTransition) {
+			String dataOutName = dataIsProvided(providingData,
+					componentBehaviourMapping.get(askingData.component()).getComponentType(), dataItem.name());
+			if (dataOutName != null && !dataOutName.isEmpty()) {
+				Object dataValue = providingData.component().getData(dataOutName, dataItem.type());
+				logger.trace("GETTING DATA: from component "
+						+ providingData.component() + " the value " + dataValue);
+				askingData.component().setData(dataItem.name(), dataValue);
+			}
+		}
 	}
 
 	/**
@@ -544,15 +561,20 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 					for (DataContainerImpl dc : dataContainer) {
 						logger.debug(this.count + " CONTAINER CHOSEN: For deciding " + component.hashCode() + " and "
 								+ port.getId() + " disabled is " + dc.component() + " with ports " + dc.ports());
-						disabledCombinations.put(dc.component(), dc.ports());
-						// TODO quick fix for the component not to receive data from itself
-						// discuss it and check whether it works fine in all situations and
-						disabledCombinations.put(component, new HashSet(decidingBehaviour.getEnforceablePorts()));
+						disabledCombinations.put(dc.component(), dc.ports());						
 					}
 				}
 				this.informSpecific(component, port, disabledCombinations);
 			}
+			//TODO HACK this was added to  make the component unable to interact with itself.
+			// TODO quick fix for the component not to receive data from itself
+			// discuss it and check whether it works fine in all situations and
+			disabledCombinations.clear();
+			disabledCombinations.put(component, new HashSet(decidingBehaviour.getEnforceablePorts()));
+			this.informSpecific(component, port, disabledCombinations);
 		}
+
+
 	}
 
 	/**
@@ -867,7 +889,6 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 		if (enabledPorts.size() != 0) {
 			bigInteraction.add(enabledPorts);
 		}
-
 		/*
 		 * Here the ports mentioned above have been added
 		 */
