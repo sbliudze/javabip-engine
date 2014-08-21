@@ -366,7 +366,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 		Map<Port, Integer> portToPosition = getBehaviourEncoderInstance()
 				.getPortToPosition();
 		for (Port port : portToPosition.keySet()) {
-			if (valuation[portToPosition.get(port)] == 1) {
+			if (valuation[portToPosition.get(port)] == 1 || valuation[portToPosition.get(port)] == -1) {
 				portsExecuted.add(port);
 			}
 		}
@@ -375,9 +375,10 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 			bigInteraction.add(portsExecuted);
 		}
 
-		for (Port port : portsExecuted) {
-			logger.debug("ENGINE ENTRY: " + port.component() + " - " + port);
-		}
+		// for (Port port : portsExecuted) {
+		// logger.debug("ENGINE ENTRY: " + port.component() + " - " + port);
+		// System.out.println("ENGINE ENTRY: " + port.component() + " - " + port);
+		// }
 		logger.debug("*************************************************************************");
 
 		return bigInteraction;

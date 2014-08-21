@@ -877,8 +877,11 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 				logger.trace("Component {} does not have any enforceable ports.", component);
 			}
 			for (Port port : componentPorts) {
-				if (!portsExecuted.contains(port) && valuation[portToPosition.get(port)] == 1) {
-					logger.trace("Chosen Port: {}", port.getId() + "of component: " + port.component());
+				if (!portsExecuted.contains(port)
+						&& (valuation[portToPosition.get(port)] == 1 || valuation[portToPosition.get(port)] == -1)) {
+					logger.trace("Chosen Port: {}" + port.getId() + "of component: " + port.component());
+					// System.out.println("Chosen Port: {}" + port.getId() + "of component: " +
+					// port.component());
 					enabledPorts.add(port);
 				}
 			}
@@ -891,12 +894,17 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 		}
 		/*
 		 * Here the ports mentioned above have been added
+		 * For debug only
 		 */
-		for (Iterable<Port> inter : bigInteraction) {
-			for (Port port : inter) {
-				logger.debug("ENGINE choice: " + "Chosen Port: {}", port.getId() + "of component: " + port.component());
-			}
-		}
+		// for (Iterable<Port> inter : bigInteraction) {
+		// for (Port port : inter) {
+		// logger.debug("ENGINE choice: " + "Chosen Port: {}" + port.getId() + " of component: "
+		// + port.component());
+		// System.out.println("ENGINE choice: " + "Chosen Port: " +
+		// port.getId() + " of component: "
+		// + port.component());
+		// }
+		// }
 		logger.trace("Interactions: " + bigInteraction.size());
 		return bigInteraction;
 	}

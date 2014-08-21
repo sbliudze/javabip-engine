@@ -98,13 +98,42 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 	}
 
 	/** Copy maximal cube */
-	private void addCube(ArrayList<byte[]> cubeMaximals, byte[] cube,
-			int position) {
-		logger.trace("Cube length: " + cube.length);
-		for (int i = 0; i < cube.length; i++)
-			if (cube[i] == -1)
-				cube[i] = 1;
-		cubeMaximals.add(position, cube);
+	// TODO: Delete
+	// private void addCube(ArrayList<byte[]> cubeMaximals, byte[] cube,
+	// int position) {
+	// logger.trace("Cube length: " + cube.length);
+	// // for (int i = 0; i < cube.length; i++)
+	// // if (cube[i] == -1)
+	// // cube[i] = 1;
+	// cubeMaximals.add(position, cube);
+	// }
+	private ArrayList<byte[]> findOneMaxMaximal(ArrayList<byte[]> possibleInteractions, List<Integer> portBDDsPosition) {
+		
+		int size = possibleInteractions.size();
+		int nbOnes =0;
+		System.out.println("");
+		int nbOnestmp = 0;
+
+		ArrayList<byte[]> maxMaximals = new ArrayList<byte[]>();
+		
+		for (int i=0; i <size; i++){
+			byte[] oneInteraction = possibleInteractions.get(i);
+			for (int j = 0; j < portBDDsPosition.size(); j++) {
+				if ((oneInteraction[portBDDsPosition.get(j)]) != 0) {
+					nbOnestmp++;
+				}
+			}
+			if (nbOnes < nbOnestmp) {
+				maxMaximals.clear();
+				maxMaximals.add(oneInteraction);
+				nbOnes = nbOnestmp;
+				nbOnestmp = 0;
+			}
+			if (nbOnes == nbOnestmp) {
+				maxMaximals.add(oneInteraction);
+			}
+		}
+		return maxMaximals;
 	}
 
 	private void findMaximals(ArrayList<byte[]> cubeMaximals, byte[] c_cube,
@@ -117,14 +146,15 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 					portBDDsPosition);
 			if (comparison == 1 || comparison == 0) {
 				cubeMaximals.remove(i);
-				addCube(cubeMaximals, c_cube, i);
+				cubeMaximals.add(i, c_cube);
+				// addCube(cubeMaximals, c_cube, i);
 				return;
 			}
 			if (comparison == 3)
 				return;
 		}
-
-		addCube(cubeMaximals, c_cube, cubeMaximals.size());
+		cubeMaximals.add(cubeMaximals.size(), c_cube);
+		// addCube(cubeMaximals, c_cube, cubeMaximals.size());
 	}
 
 	public final BDD totalCurrentStateBdd(Hashtable<BIPComponent, BDD> currentStateBDDs)
@@ -194,8 +224,7 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		BDD totalCurrentStateAndDisabledCombinations = totalCurrentStateBdd(currentStateBDDs);
 		BDD solns = totalConstraints.and(totalCurrentStateAndDisabledCombinations);
 	
-		// logger.trace("INFORM SPECIFIC CALL: Disabled Combinations size "+
-		// temporaryConstraints.size());
+		logger.trace("INFORM SPECIFIC CALL: Disabled Combinations size " + temporaryConstraints.size());
 		/*
 		 * Temporary Constraints cannot be null.
 		 */
@@ -210,10 +239,87 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 
 		possibleInteraction.addAll(solns.allsat());
 
-		// logger.debug("******************************* Engine **********************************");
-		// logger.debug("Number of possible interactions is: {} " + possibleInteraction.size());
+
+		logger.debug("******************************* Engine **********************************");
+		logger.debug("Number of possible interactions is: {} " + possibleInteraction.size());
 		Iterator<byte[]> it = possibleInteraction.iterator();
 
+
+
+		/* for debugging */
+		// while (it.hasNext()) {
+		// byte[] value = it.next();
+		//
+		// StringBuilder sb = new StringBuilder();
+		// for (byte b : value) {
+		// sb.append(String.format("%02X ", b));
+		// }
+		// logger.trace(sb.toString());
+		List<Integer> positionOfPorts = wrapper.getBehaviourEncoderInstance().getPositionsOfPorts();
+		ArrayList<byte[]> cubeMaximals = findOneMaxMaximal(possibleInteraction, positionOfPorts);
+
+		/* deadlock detection */
+		int size = cubeMaximals.size();
+		if (size == 0) {
+			logger.error("Deadlock. No maximal interactions.");
+			throw new BIPEngineException("Deadlock. No maximal interactions.");
+		} else if (size == 1) {
+			if (countPortEnable(cubeMaximals.get(0), (ArrayList<Integer>) wrapper.getBehaviourEncoderInstance()
+					.getPositionsOfPorts()) == 0) {
+				logger.error("Deadlock. No enabled ports.");
+				throw new BIPEngineException("Deadlock. No enabled ports.");
+			}
+		}
+
+		logger.debug("Number of maximal interactions: " + cubeMaximals.size());
+		Random rand = new Random();
+		/*
+		 * Pick a random maximal interaction
+		 */
+		int randomInt = rand.nextInt(cubeMaximals.size());
+		/*
+		 * Update chosen interaction
+		 */
+		chosenInteraction = cubeMaximals.get(randomInt);
+		cubeMaximals.clear();
+		/*
+		 * Beginning of the part to move to the Data Coordinator
+		 */
+		wrapper.execute(chosenInteraction);
+		/*
+		 * End of the part to move to the Data Coordinator
+		 */
+		solns.free();
+		temporaryConstraints.clear();
+		System.out.println(System.currentTimeMillis() - time);
+
+	}
+
+	public synchronized final void runOneSlowIteration() throws BIPEngineException {
+
+		byte[] chosenInteraction;
+		long time = System.currentTimeMillis();
+		BDD totalCurrentStateAndDisabledCombinations = totalCurrentStateBdd(currentStateBDDs);
+		BDD solns = totalConstraints.and(totalCurrentStateAndDisabledCombinations);
+
+		logger.trace("INFORM SPECIFIC CALL: Disabled Combinations size " + temporaryConstraints.size());
+
+		/*
+		 * Temporary Constraints cannot be null.
+		 */
+		if (!temporaryConstraints.isEmpty()) {
+			solns.andWith(totalExtraBdd(temporaryConstraints));
+		}
+
+		/* Compute global BDD: solns= Λi Fi Λ G Λ (Λi Ci) */
+		totalCurrentStateAndDisabledCombinations.free();
+		ArrayList<byte[]> possibleInteraction = new ArrayList<byte[]>();
+
+		possibleInteraction.addAll(solns.allsat());
+
+		logger.debug("******************************* Engine **********************************");
+		logger.debug("Number of possible interactions is: {} " + possibleInteraction.size());
+		Iterator<byte[]> it = possibleInteraction.iterator();
 
 		/* for debugging */
 		// while (it.hasNext()) {
@@ -227,11 +333,11 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		// }
 
 		ArrayList<byte[]> cubeMaximals = new ArrayList<byte[]>();
+		List<Integer> positionOfPorts = wrapper.getBehaviourEncoderInstance().getPositionsOfPorts();
 		for (int i = 0; i < possibleInteraction.size(); i++) {
-			// logger.trace("Positions of D Variables size:"+ positionsOfDVariables.size());
-			findMaximals(cubeMaximals, possibleInteraction.get(i), wrapper.getBehaviourEncoderInstance().getPositionsOfPorts());
+			logger.trace("Positions of D Variables size:" + positionsOfDVariables.size());
+			findMaximals(cubeMaximals, possibleInteraction.get(i), positionOfPorts);
 		}
-
 
 		/* deadlock detection */
 		int size = cubeMaximals.size();
@@ -239,15 +345,14 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 			logger.error("Deadlock. No maximal interactions.");
 			throw new BIPEngineException("Deadlock. No maximal interactions.");
 		} else if (size == 1) {
-			if (countPortEnable(cubeMaximals.get(0),
-					(ArrayList<Integer>) wrapper.getBehaviourEncoderInstance()
-							.getPositionsOfPorts()) == 0) {
+			if (countPortEnable(cubeMaximals.get(0), (ArrayList<Integer>) wrapper.getBehaviourEncoderInstance()
+					.getPositionsOfPorts()) == 0) {
 				logger.error("Deadlock. No enabled ports.");
 				throw new BIPEngineException("Deadlock. No enabled ports.");
 			}
 		}
 
-		// logger.debug("Number of maximal interactions: " + cubeMaximals.size());
+		logger.debug("Number of maximal interactions: " + cubeMaximals.size());
 		Random rand = new Random();
 		/*
 		 * Pick a random maximal interaction
@@ -257,27 +362,19 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		 * Update chosen interaction
 		 */
 		chosenInteraction = cubeMaximals.get(randomInt);
-
 		cubeMaximals.clear();
-		// logger.trace("ChosenInteraction: ");
-		// for (int k = 0; k < chosenInteraction.length; k++) {
-		// logger.trace("{}", chosenInteraction[k]);
-		// }
 
 		/*
 		 * Beginning of the part to move to the Data Coordinator
 		 */
 		System.out.println(System.currentTimeMillis() - time);
-
 		wrapper.execute(chosenInteraction);
-
 
 		/*
 		 * End of the part to move to the Data Coordinator
 		 */
 		solns.free();
 		temporaryConstraints.clear();
-
 
 	}
 

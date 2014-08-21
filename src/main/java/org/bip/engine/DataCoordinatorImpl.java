@@ -867,7 +867,8 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 				logger.trace("Component {} does not have any enforceable ports.", component);
 			}
 			for (Port port : componentPorts) {
-				if (!portsExecuted.contains(port) && valuation[portToPosition.get(port)] == 1) {
+				if (!portsExecuted.contains(port)
+						&& (valuation[portToPosition.get(port)] == 1 || valuation[portToPosition.get(port)] == -1)) {
 					logger.trace("Chosen Port: {}", port.getId() + "of component: " + port.component());
 					enabledPorts.add(port);
 				}
