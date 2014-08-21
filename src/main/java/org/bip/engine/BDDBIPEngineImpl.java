@@ -43,7 +43,7 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 	private int cacheSize = 1000;
 
 	/* Use JavaBDD Bdd Manager */
-	private BDDFactory bdd_mgr = BDDFactory.init("buddy", noNodes, cacheSize);
+	private BDDFactory bdd_mgr = BDDFactory.init("java", noNodes, cacheSize);
 	Map<Integer, Entry<PortBase, PortBase>> dVariablesToPosition = new Hashtable<Integer, Entry<PortBase, PortBase>>();
 	List<Integer> positionsOfDVariables = new ArrayList<Integer>();
 	// private int nbIteration = 0;
@@ -142,6 +142,7 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 				throw new BIPEngineException(
 						"Current state BDD is null of component " + component);
 			}
+
 			tmp = totalCurrentStateBdd.and(currentStateBDDs.get(component));
 			totalCurrentStateBdd.free();
 			totalCurrentStateBdd = tmp;
@@ -186,46 +187,51 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 	}
 
 	public synchronized final void runOneIteration() throws BIPEngineException {
-		long time = System.currentTimeMillis();
+
 
 		byte[] chosenInteraction;
+		long time = System.currentTimeMillis();
 		BDD totalCurrentStateAndDisabledCombinations = totalCurrentStateBdd(currentStateBDDs);
-		logger.trace("INFORM SPECIFIC CALL: Disabled Combinations size "+ temporaryConstraints.size());
-		
+		BDD solns = totalConstraints.and(totalCurrentStateAndDisabledCombinations);
+	
+		// logger.trace("INFORM SPECIFIC CALL: Disabled Combinations size "+
+		// temporaryConstraints.size());
 		/*
 		 * Temporary Constraints cannot be null.
 		 */
+
 		if (!temporaryConstraints.isEmpty()) {
-			totalCurrentStateAndDisabledCombinations.andWith(totalExtraBdd(temporaryConstraints));
+			solns.andWith(totalExtraBdd(temporaryConstraints));
 		}
 
 		/* Compute global BDD: solns= Λi Fi Λ G Λ (Λi Ci) */
-		BDD solns = totalConstraints.and(totalCurrentStateAndDisabledCombinations);
 		totalCurrentStateAndDisabledCombinations.free();
 		ArrayList<byte[]> possibleInteraction = new ArrayList<byte[]>();
 
 		possibleInteraction.addAll(solns.allsat());
 
-		logger.debug("******************************* Engine **********************************");
-		logger.debug("Number of possible interactions is: {} " + possibleInteraction.size());
+		// logger.debug("******************************* Engine **********************************");
+		// logger.debug("Number of possible interactions is: {} " + possibleInteraction.size());
 		Iterator<byte[]> it = possibleInteraction.iterator();
 
-		/* for debugging */
-		while (it.hasNext()) {
-			byte[] value = it.next();
 
-			StringBuilder sb = new StringBuilder();
-			for (byte b : value) {
-				sb.append(String.format("%02X ", b));
-			}
-			logger.trace(sb.toString());
-		}
+		/* for debugging */
+		// while (it.hasNext()) {
+		// byte[] value = it.next();
+		//
+		// StringBuilder sb = new StringBuilder();
+		// for (byte b : value) {
+		// sb.append(String.format("%02X ", b));
+		// }
+		// logger.trace(sb.toString());
+		// }
+
 		ArrayList<byte[]> cubeMaximals = new ArrayList<byte[]>();
 		for (int i = 0; i < possibleInteraction.size(); i++) {
-
-			logger.trace("Positions of D Variables size:"+ positionsOfDVariables.size());
+			// logger.trace("Positions of D Variables size:"+ positionsOfDVariables.size());
 			findMaximals(cubeMaximals, possibleInteraction.get(i), wrapper.getBehaviourEncoderInstance().getPositionsOfPorts());
 		}
+
 
 		/* deadlock detection */
 		int size = cubeMaximals.size();
@@ -241,7 +247,7 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 			}
 		}
 
-		logger.debug("Number of maximal interactions: " + cubeMaximals.size());
+		// logger.debug("Number of maximal interactions: " + cubeMaximals.size());
 		Random rand = new Random();
 		/*
 		 * Pick a random maximal interaction
@@ -251,7 +257,7 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		 * Update chosen interaction
 		 */
 		chosenInteraction = cubeMaximals.get(randomInt);
-		System.out.println(System.currentTimeMillis() - time);
+
 		cubeMaximals.clear();
 		// logger.trace("ChosenInteraction: ");
 		// for (int k = 0; k < chosenInteraction.length; k++) {
@@ -261,6 +267,7 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		/*
 		 * Beginning of the part to move to the Data Coordinator
 		 */
+		System.out.println(System.currentTimeMillis() - time);
 
 		wrapper.execute(chosenInteraction);
 
