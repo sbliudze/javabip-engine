@@ -82,6 +82,8 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 					&& (cube1[portBDDsPosition.get(i)] == 0)) {
 				cube2_big = true;
 			}
+			if (cube1_big == true && cube2_big == true)
+				break;
 		}
 		/* if cube1 is bigger than cube2 (cube1 contains cube2) */
 		if (cube1_big && !cube2_big)
@@ -216,7 +218,7 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		return totalDisabledCombinationBdd;
 	}
 
-	public synchronized final void runOneIteration() throws BIPEngineException {
+	public synchronized final void runOneFastIteration() throws BIPEngineException {
 
 
 		byte[] chosenInteraction;
@@ -295,7 +297,7 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 
 	}
 
-	public synchronized final void runOneSlowIteration() throws BIPEngineException {
+	public synchronized final void runOneIteration() throws BIPEngineException {
 
 		byte[] chosenInteraction;
 		long time = System.currentTimeMillis();
