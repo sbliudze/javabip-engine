@@ -900,8 +900,7 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 		// for (Port port : inter) {
 		// logger.debug("ENGINE choice: " + "Chosen Port: {}" + port.getId() + " of component: "
 		// + port.component());
-		// System.out.println("ENGINE choice: " + "Chosen Port: " +
-		// port.getId() + " of component: "
+		// System.out.println("ENGINE choice: " + "Chosen Port: " + port.getId() + " of component: "
 		// + port.component());
 		// }
 		// }
