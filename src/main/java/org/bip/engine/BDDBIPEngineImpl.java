@@ -40,8 +40,8 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 
 	private BDD totalConstraints;
 	// TODO: Put these as arguments
-	private int noNodes = 1000000;
-	private int cacheSize = 100000;
+	private int noNodes = 1150000;
+	private int cacheSize = 50000;
 
 
 	/* Use JavaBDD Bdd Manager */
@@ -180,16 +180,6 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 			totalCurrentStateBdd = tmp;
 		}
 		logger.trace("Conjunction of current states has finished");
-		/*
-		 * Re-ordering function and statistics printouts
-		 * When the total current state BDD of this round is computed
-		 */
-		/*
-		 * The hybrid way: Reorder the BDD nodes only every a fixed number of iterations e.g. 100
-		 * iterations to keep the memory low and the performance high
-		 */
-
-		// System.out.println("E1 number of nodes: " + bdd_mgr.getNodeNum());
 		return totalCurrentStateBdd;
 	}
 
@@ -284,7 +274,7 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		 */
 		solns.free();
 		temporaryConstraints.clear();
-		System.out.println(System.currentTimeMillis() - time);
+		// System.out.println(System.currentTimeMillis() - time);
 
 	}
 
@@ -306,17 +296,8 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		if (!temporaryConstraints.isEmpty()) {
 			solns.andWith(totalExtraBdd(temporaryConstraints));
 		}
-		// TODO: Keep it only to measure memory usage
-		Runtime runtime = Runtime.getRuntime();
-		long maxMemory = runtime.maxMemory();
-		long allocatedMemory = runtime.totalMemory();
-		long freeMemory = runtime.freeMemory();
-		long totalFreeMemory = freeMemory + (maxMemory - allocatedMemory);
-		long usedMemory = maxMemory - totalFreeMemory;
-		// System.out.println("Used2 memory:" + (usedMemory / (1024 * 1024)));
+		System.out.println(this.bdd_mgr.getNodeTableSize());
 
-		// System.out.println("Management: " +
-		// ManagementFactory.getMemoryMXBean().getHeapMemoryUsage());
 		/* Compute global BDD: solns= Λi Fi Λ G Λ (Λi Ci) */
 		totalCurrentStateAndDisabledCombinations.free();
 		ArrayList<byte[]> possibleInteraction = new ArrayList<byte[]>();
