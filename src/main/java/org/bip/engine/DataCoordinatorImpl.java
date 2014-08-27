@@ -542,9 +542,11 @@ public class DataCoordinatorImpl implements BIPEngine, InteractionExecutor, Data
 			ArrayList<Map<String, Object>> dataTable = createDataTable(containerList);
 
 			// the result provided must have the same order - put comment
+
 			// containerList and portActive are dependant on each other
 			List<Boolean> portActive = component.checkEnabledness(port, dataTable);
 			logger.trace("The result of checkEndabledness for component {}: {}.", component, portActive);
+
 			HashMap<BIPComponent, Set<Port>> disabledCombinations = new HashMap<BIPComponent, Set<Port>>();
 			for (int i = 0; i < portActive.size(); i++) {
 				disabledCombinations.clear();
