@@ -40,7 +40,7 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 
 	private BDD totalConstraints;
 	// TODO: Put these as arguments
-	private int noNodes = 1150000;
+	private int noNodes = 50000;
 	private int cacheSize = 50000;
 
 
@@ -199,94 +199,102 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		return totalDisabledCombinationBdd;
 	}
 
-	public synchronized final void runOneFastIteration() throws BIPEngineException {
-
-
-		byte[] chosenInteraction;
-		long time = System.currentTimeMillis();
-		BDD totalCurrentStateAndDisabledCombinations = totalCurrentStateBdd(currentStateBDDs);
-		BDD solns = totalConstraints.and(totalCurrentStateAndDisabledCombinations);
-	
-		logger.trace("INFORM SPECIFIC CALL: Disabled Combinations size " + temporaryConstraints.size());
-		/*
-		 * Temporary Constraints cannot be null.
-		 */
-
-		if (!temporaryConstraints.isEmpty()) {
-			solns.andWith(totalExtraBdd(temporaryConstraints));
-		}
-
-		/* Compute global BDD: solns= Λi Fi Λ G Λ (Λi Ci) */
-		totalCurrentStateAndDisabledCombinations.free();
-		ArrayList<byte[]> possibleInteraction = new ArrayList<byte[]>();
-
-		possibleInteraction.addAll(solns.allsat());
-
-
-		logger.debug("******************************* Engine **********************************");
-		logger.debug("Number of possible interactions is: {} " + possibleInteraction.size());
-		Iterator<byte[]> it = possibleInteraction.iterator();
-
-
-
-		/* for debugging */
-		// while (it.hasNext()) {
-		// byte[] value = it.next();
-		//
-		// StringBuilder sb = new StringBuilder();
-		// for (byte b : value) {
-		// sb.append(String.format("%02X ", b));
-		// }
-		// logger.trace(sb.toString());
-		List<Integer> positionOfPorts = wrapper.getBehaviourEncoderInstance().getPositionsOfPorts();
-		ArrayList<byte[]> cubeMaximals = findOneMaxMaximal(possibleInteraction, positionOfPorts);
-
-		/* deadlock detection */
-		int size = cubeMaximals.size();
-		if (size == 0) {
-			logger.error("Deadlock. No maximal interactions.");
-			throw new BIPEngineException("Deadlock. No maximal interactions.");
-		} else if (size == 1) {
-			if (countPortEnable(cubeMaximals.get(0), (ArrayList<Integer>) wrapper.getBehaviourEncoderInstance()
-					.getPositionsOfPorts()) == 0) {
-				logger.error("Deadlock. No enabled ports.");
-				throw new BIPEngineException("Deadlock. No enabled ports.");
-			}
-		}
-
-		logger.debug("Number of maximal interactions: " + cubeMaximals.size());
-		Random rand = new Random();
-		/*
-		 * Pick a random maximal interaction
-		 */
-		int randomInt = rand.nextInt(cubeMaximals.size());
-		/*
-		 * Update chosen interaction
-		 */
-		chosenInteraction = cubeMaximals.get(randomInt);
-		cubeMaximals.clear();
-		/*
-		 * Beginning of the part to move to the Data Coordinator
-		 */
-		wrapper.execute(chosenInteraction);
-		/*
-		 * End of the part to move to the Data Coordinator
-		 */
-		solns.free();
-		temporaryConstraints.clear();
-		// System.out.println(System.currentTimeMillis() - time);
-
-	}
+	// public synchronized final void runOneFastIteration() throws BIPEngineException {
+	//
+	//
+	// byte[] chosenInteraction;
+	// // For performance info
+	// // long time = System.currentTimeMillis();
+	// BDD totalCurrentStateAndDisabledCombinations = totalCurrentStateBdd(currentStateBDDs);
+	// BDD solns = totalConstraints.and(totalCurrentStateAndDisabledCombinations);
+	//
+	// logger.trace("INFORM SPECIFIC CALL: Disabled Combinations size " +
+	// temporaryConstraints.size());
+	// /*
+	// * Temporary Constraints cannot be null.
+	// */
+	//
+	// if (!temporaryConstraints.isEmpty()) {
+	// solns.andWith(totalExtraBdd(temporaryConstraints));
+	// }
+	//
+	// /* Compute global BDD: solns= Λi Fi Λ G Λ (Λi Ci) */
+	// totalCurrentStateAndDisabledCombinations.free();
+	// ArrayList<byte[]> possibleInteraction = new ArrayList<byte[]>();
+	//
+	// possibleInteraction.addAll(solns.allsat());
+	//
+	//
+	// logger.debug("******************************* Engine **********************************");
+	// logger.debug("Number of possible interactions is: {} " + possibleInteraction.size());
+	// Iterator<byte[]> it = possibleInteraction.iterator();
+	//
+	//
+	//
+	// /* for debugging */
+	// // while (it.hasNext()) {
+	// // byte[] value = it.next();
+	// //
+	// // StringBuilder sb = new StringBuilder();
+	// // for (byte b : value) {
+	// // sb.append(String.format("%02X ", b));
+	// // }
+	// // logger.trace(sb.toString());
+	// List<Integer> positionOfPorts = wrapper.getBehaviourEncoderInstance().getPositionsOfPorts();
+	// ArrayList<byte[]> cubeMaximals = findOneMaxMaximal(possibleInteraction, positionOfPorts);
+	//
+	// /* deadlock detection */
+	// int size = cubeMaximals.size();
+	// if (size == 0) {
+	// logger.error("Deadlock. No maximal interactions.");
+	// throw new BIPEngineException("Deadlock. No maximal interactions.");
+	// } else if (size == 1) {
+	// if (countPortEnable(cubeMaximals.get(0), (ArrayList<Integer>)
+	// wrapper.getBehaviourEncoderInstance()
+	// .getPositionsOfPorts()) == 0) {
+	// logger.error("Deadlock. No enabled ports.");
+	// throw new BIPEngineException("Deadlock. No enabled ports.");
+	// }
+	// }
+	//
+	// logger.debug("Number of maximal interactions: " + cubeMaximals.size());
+	// Random rand = new Random();
+	// /*
+	// * Pick a random maximal interaction
+	// */
+	// int randomInt = rand.nextInt(cubeMaximals.size());
+	// /*
+	// * Update chosen interaction
+	// */
+	// chosenInteraction = cubeMaximals.get(randomInt);
+	// cubeMaximals.clear();
+	// /*
+	// * Beginning of the part to move to the Data Coordinator
+	// */
+	// wrapper.execute(chosenInteraction);
+	// /*
+	// * End of the part to move to the Data Coordinator
+	// */
+	// solns.free();
+	// temporaryConstraints.clear();
+	// // For performance info
+	// // System.out.println(System.currentTimeMillis() - time);
+	//
+	//
+	// }
 
 	public synchronized final void runOneIteration() throws BIPEngineException {
 
 		byte[] chosenInteraction;
 
 
+		// For performance info
+		// long time = System.currentTimeMillis();
 
-		long time = System.currentTimeMillis();
+
 		BDD totalCurrentStateAndDisabledCombinations = totalCurrentStateBdd(currentStateBDDs);
 		BDD solns = totalConstraints.and(totalCurrentStateAndDisabledCombinations);
+
 
 		logger.trace("INFORM SPECIFIC CALL: Disabled Combinations size " + temporaryConstraints.size());
 
@@ -296,10 +304,56 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		if (!temporaryConstraints.isEmpty()) {
 			solns.andWith(totalExtraBdd(temporaryConstraints));
 		}
-		System.out.println(this.bdd_mgr.getNodeTableSize());
+
+
+
 
 		/* Compute global BDD: solns= Λi Fi Λ G Λ (Λi Ci) */
 		totalCurrentStateAndDisabledCombinations.free();
+		// For performance and memory info
+		// System.out.println("Number of nodes " + this.bdd_mgr.getNodeTableSize());
+		// System.out.println("Number of all nodes: " + this.bdd_mgr.getNodeNum());
+		// System.out.println("Max memory: " + Runtime.getRuntime().maxMemory());
+		// System.out.println("Total memory: " + Runtime.getRuntime().totalMemory());
+		// System.out.println("free Memory: " + Runtime.getRuntime().freeMemory());
+
+		// System.gc();
+		// System.gc();
+		// System.gc();
+		// System.gc();
+		// System.gc();
+		// System.gc();
+		// System.gc();
+
+		// long mem0 = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
+		// System.out.println("Cache size " + this.bdd_mgr.getCacheSize());
+
+		// System.out.println("solns nodes: " + solns.nodeCount());
+
+		// System.out.println(bdd_mgr.getClass().toString());
+		// solns.free();
+		// bdd_mgr.done();
+		// System.out.println("Number of nodes " + this.bdd_mgr.getNodeTableSize());
+		// System.out.println("Number of all nodes: " + this.bdd_mgr.getNodeNum());
+		// System.out.println("Cache size " + this.bdd_mgr.getCacheSize());
+		// System.out.println("Number of nodes " + this.bdd_mgr.getNodeTableSize());
+		// System.out.println("Number of all nodes: " + this.bdd_mgr.getNodeNum());
+		// bdd_mgr = null;
+
+		// System.gc();
+		// System.gc();
+		// System.gc();
+		// System.gc();
+		// System.gc();
+		// System.gc();
+		// System.gc();
+		// System.out.println("Max memory: " + Runtime.getRuntime().maxMemory());
+		// System.out.println("Total memory: " + Runtime.getRuntime().totalMemory());
+		// System.out.println("free Memory: " + Runtime.getRuntime().freeMemory());
+
+		// System.out.println("Total mem: "
+		// + (mem0 - (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory())));
+
 		ArrayList<byte[]> possibleInteraction = new ArrayList<byte[]>();
 
 		possibleInteraction.addAll(solns.allsat());
@@ -318,6 +372,7 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		// sb.append(String.format("%02X ", b));
 		// }
 		// logger.trace(sb.toString());
+		// System.out.println("Engine: " + sb.toString());
 		// }
 
 		ArrayList<byte[]> cubeMaximals = new ArrayList<byte[]>();
@@ -355,7 +410,8 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		/*
 		 * Beginning of the part to move to the Data Coordinator
 		 */
-		System.out.println(System.currentTimeMillis() - time);
+		// For performance info
+		// System.out.println(System.currentTimeMillis() - time);
 		wrapper.execute(chosenInteraction);
 
 		/*
@@ -363,6 +419,11 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		 */
 		solns.free();
 		temporaryConstraints.clear();
+		// For performance info
+		// bdd_mgr.done();
+		// System.out.println("Number of nodes " + this.bdd_mgr.getNodeTableSize());
+		// bdd_mgr = null;
+		// time = System.currentTimeMillis() - time;
 
 	}
 

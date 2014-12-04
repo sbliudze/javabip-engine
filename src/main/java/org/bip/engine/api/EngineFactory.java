@@ -21,9 +21,8 @@ public class EngineFactory {
 		
 		
 		BIPEngine actor = TypedActor.get(actorSystem).typedActorOf(
-				new TypedProps<BIPEngine>(BIPEngine.class,
-						new Creator<BIPEngine>() {
-							public BIPEngine create() {
+				new TypedProps<BIPEngine>(BIPEngine.class, new Creator<BIPEngine>() {
+					public BIPEngine create() {
 								return engine;
 							}
 						}), id);
@@ -43,6 +42,17 @@ public class EngineFactory {
 		
 		if (TypedActor.get(actorSystem).isTypedActor(engine)) {
 			TypedActor.get(actorSystem).poisonPill(engine);
+			// TypedActor.get(actorSystem).stop(engine);
+			// Future<Boolean> stopped =
+			// gracefulStop(TypedActor.get(actorSystem).getActorRefFor(engine),
+			// Duration.create(5, TimeUnit.SECONDS), actorSystem);
+			// try {
+			// Await.result(stopped, Duration.create(5, TimeUnit.SECONDS));
+			// } catch (Exception e) {
+			// // System.out.println("Engine not destroyed within a TimeOut");
+			// // e.printStackTrace();
+			// // System.out.flush();
+			// }
 			return true;
 		}
 		else {

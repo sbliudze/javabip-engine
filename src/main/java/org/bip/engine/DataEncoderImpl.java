@@ -106,6 +106,9 @@ public class DataEncoderImpl implements DataEncoder {
 			// + decidingComponent);
 
 			Set<Port> componentPorts = disabledCombinations.get(component);
+			if (componentPorts == null) {
+				throw new BIPEngineException("component " + component + " disabled combinations are null ");
+			}
 			logger.trace("Inform Specific: disabled Component ports size: " + componentPorts.size());
 			for (Port port : componentPorts) {
 				logger.trace("Inform Specific: disabledPort is " + port.getId() + "of component" + port.component());

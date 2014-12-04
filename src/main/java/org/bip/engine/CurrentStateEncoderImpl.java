@@ -7,6 +7,7 @@ import java.util.Set;
 import net.sf.javabdd.BDD;
 
 import org.bip.api.BIPComponent;
+import org.bip.api.Behaviour;
 import org.bip.api.Port;
 import org.bip.engine.api.BDDBIPEngine;
 import org.bip.engine.api.BIPCoordinator;
@@ -63,7 +64,11 @@ public class CurrentStateEncoderImpl implements CurrentStateEncoder {
 		assert(component != null);
 		assert (currentState != null && !currentState.isEmpty());
 		
-		ArrayList<String> componentStates = new ArrayList<String>( wrapper.getBehaviourByComponent(component).getStates());
+		// For debugging
+		Behaviour behaviour = wrapper.getBehaviourByComponent(component);
+		assert (behaviour != null);
+
+		ArrayList<String> componentStates = new ArrayList<String>(behaviour.getStates());
 		Map<String, BDD> statesToBDDs = behaviourEncoder.getStateToBDDOfAComponent(component);
 		Map<String, BDD> portsToBDDs = behaviourEncoder.getPortToBDDOfAComponent(component);
 	

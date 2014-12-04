@@ -104,5 +104,7 @@ public interface BIPCoordinator extends BIPEngine, InteractionExecutor {
 	 * @param constraints the constraints
 	 */
 	void specifyPermanentConstraints(Set<BDD> constraints);
+
+	BIPComponent getComponentFromObject(Object component);
 	
 }
