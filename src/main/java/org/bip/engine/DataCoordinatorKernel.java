@@ -424,6 +424,11 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 		Iterable<Data<?>> portToDataInForTransition = behaviour.portToDataInForTransition(askingData);
 		for (Data<?> dataItem : portToDataInForTransition) {
 			assert (componentBehaviourMapping.get(askingData.component()) != null);
+					// System.out.println("Providing data" + providingData +
+					// " Component asking data: "
+					// + componentBehaviourMapping.get(askingData.component()).getComponentType()
+					// + " dataItem name: "
+					// + dataItem.name());
 			String dataOutName = dataIsProvided(providingData,
 					componentBehaviourMapping.get(askingData.component()).getComponentType(), dataItem.name());
 				BIPComponent component = providingData.component();
@@ -477,6 +482,8 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 	private String dataIsProvided(Port providingPort, String requiringComponentType, String dataName) {
 		BIPComponent providingComponent = providingPort.component();
 		assert (componentBehaviourMapping.get(providingComponent) != null);
+		// System.out.println("For component" + providingComponent.getId() + " Data wires size: "
+		// + this.componentDataWires.get(requiringComponentType).size());
 		for (DataWire wire : this.componentDataWires.get(requiringComponentType).get(dataName)) {
 			if (wire.getFrom().getSpecType()
 					.equals(componentBehaviourMapping.get(providingComponent).getComponentType())) {
@@ -890,13 +897,16 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 		Map<Port, Integer> portToPosition = bipCoordinator.getBehaviourEncoderInstance().getPortToPosition();
 		ArrayList<BIPComponent> componentsEnum = registeredComponents;
 		for (BIPComponent component : componentsEnum) {
-			Iterable<Port> componentPorts = getBehaviourByComponent(component).getEnforceablePorts();
+			Iterable<Port> componentPorts = null;
+			if (isEngineExecuting)
+				componentPorts = getBehaviourByComponent(component).getEnforceablePorts();
 			if (componentPorts == null || !componentPorts.iterator().hasNext()) {
 				logger.trace("Component {} does not have any enforceable ports.", component);
 			}
 			for (Port port : componentPorts) {
 				if (!portsExecuted.contains(port)
-						&& (valuation[portToPosition.get(port)] == 1 || valuation[portToPosition.get(port)] == -1)) {
+						&& (valuation[portToPosition.get(port)] == 1 || valuation[portToPosition.get(port)] == -1)
+						&& isEngineExecuting) {
 					logger.trace("Chosen Port: {}" + port.getId() + "of component: " + port.component());
 					enabledPorts.add(port);
 				}

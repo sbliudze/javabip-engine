@@ -518,12 +518,12 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 									+ " does not have an associated component.");
 				}
 
-				if (isEngineExecuting) 
-				 logger.trace("Component {} execute port {}", port.component().getId(), port.getId());
 
 				/* Execute the port */
+
+				// logger.trace("Chosen port: " + port.getId() + " of component: " +
+				// port.component().getId());
 				if (isEngineExecuting)
-				 logger.trace("Chosen port: " + port.getId() + " of component: " + port.component().getId());
 				port.component().execute(port.getId());
 
 				/*
@@ -700,8 +700,9 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	 */
 	public void stop() {
 		engineThread.stop();
-		isEngineExecuting = false;
 		// engineThread.interrupt();
+		isEngineExecuting = false;
+
 
 	}
 
