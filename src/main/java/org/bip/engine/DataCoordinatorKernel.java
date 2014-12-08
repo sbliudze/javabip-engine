@@ -147,7 +147,7 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 			logger.debug("Data constraints from the encoder not null: " + (dataConstraints != null));
 			bipCoordinator.specifyPermanentConstraints(dataConstraints);
 		} catch (BIPEngineException e) {
-			e.printStackTrace();
+			// e.printStackTrace();
 		}
 
 		for (String componentType : typeInstancesMapping.keySet()) {
@@ -234,7 +234,7 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 			typeInstancesMapping.remove(component.getType());
 			typeInstancesMapping.put(component.getType(), componentInstances);
 		} catch (BIPEngineException e) {
-			e.printStackTrace();
+			// e.printStackTrace();
 		}
 		return actor;
 	}
@@ -262,7 +262,7 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 		try {
 			doInformSpecific(component, currentState, disabledPorts);
 		} catch (BIPEngineException e) {
-			e.printStackTrace();
+			// e.printStackTrace();
 		}
 		/*
 		 * Inform the BIPCoordinator only after all the informSpecifics for the particular component
@@ -422,23 +422,19 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 		
 		if (behaviour!=null){
 		Iterable<Data<?>> portToDataInForTransition = behaviour.portToDataInForTransition(askingData);
-		for (Data<?> dataItem : portToDataInForTransition) {
-			assert (componentBehaviourMapping.get(askingData.component()) != null);
-					// System.out.println("Providing data" + providingData +
-					// " Component asking data: "
-					// + componentBehaviourMapping.get(askingData.component()).getComponentType()
-					// + " dataItem name: "
-					// + dataItem.name());
-			String dataOutName = dataIsProvided(providingData,
-					componentBehaviourMapping.get(askingData.component()).getComponentType(), dataItem.name());
-				BIPComponent component = providingData.component();
-			if (dataOutName != null && !dataOutName.isEmpty() && isEngineExecuting) {
-					Object dataValue = component.getData(dataOutName, dataItem.type());
-				logger.trace("GETTING DATA: from component " + providingData.component() + " the value " + dataValue);
-				askingData.component().setData(dataItem.name(), dataValue);
+				for (Data<?> dataItem : portToDataInForTransition) {
+					assert (componentBehaviourMapping.get(askingData.component()) != null);
+					String dataOutName = dataIsProvided(providingData,
+							componentBehaviourMapping.get(askingData.component()).getComponentType(), dataItem.name());
+					BIPComponent component = providingData.component();
+					if (dataOutName != null && !dataOutName.isEmpty() && isEngineExecuting) {
+						Object dataValue = component.getData(dataOutName, dataItem.type());
+						logger.trace("GETTING DATA: from component " + providingData.component() + " the value "
+								+ dataValue);
+						askingData.component().setData(dataItem.name(), dataValue);
+					}
+				}
 			}
-		}
-		}
 		}
 
 	}
@@ -822,7 +818,7 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 								+ "'"
 								+ " Possible reasons: The name of the component instances was specified in another way at registration.");
 			} catch (BIPEngineException e) {
-				e.printStackTrace();
+				// e.printStackTrace();
 				throw e;
 			}
 		}
@@ -884,7 +880,8 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 		/*
 		 * Grouping the interaction into smaller ones (with respect to data transfer)
 		 */
-		Map<BIPComponent, Iterable<Port>> chosenPorts = new Hashtable<BIPComponent, Iterable<Port>>();
+		// Map<BIPComponent, Iterable<Port>> chosenPorts = new Hashtable<BIPComponent,
+		// Iterable<Port>>();
 		logger.trace("positionsOfDVariables size: " + positionsOfDVariables.size());
 		ArrayList<Port> portsExecuted = new ArrayList<Port>();
 		List<List<Port>> bigInteraction = mergingSubInteractions(valuation, portsExecuted);
@@ -898,8 +895,16 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 		ArrayList<BIPComponent> componentsEnum = registeredComponents;
 		for (BIPComponent component : componentsEnum) {
 			Iterable<Port> componentPorts = null;
-			if (isEngineExecuting)
-				componentPorts = getBehaviourByComponent(component).getEnforceablePorts();
+			Behaviour behaviour = getBehaviourByComponent(component);
+			if (behaviour == null) {
+				isEngineExecuting = false;
+				return null;
+			}
+
+				componentPorts = behaviour.getEnforceablePorts();
+
+
+
 			if (componentPorts == null || !componentPorts.iterator().hasNext()) {
 				logger.trace("Component {} does not have any enforceable ports.", component);
 			}
@@ -931,6 +936,7 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 		// }
 		// }
 		logger.trace("Interactions: " + bigInteraction.size());
+
 		return bigInteraction;
 	}
 
