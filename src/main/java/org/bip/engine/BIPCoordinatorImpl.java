@@ -199,19 +199,14 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 					final Object proxyingBoth = ExecutorHandler.newProxyInstance(
 						BIPCoordinatorImpl.class.getClassLoader(), executor, component);
 
-					TypedProps<Object> props = new TypedProps<Object>(Object.class, new Creator<Object>() {
-						public Object create() {
-							return proxyingBoth;
-						}
-					}); 
-					
-					// props.withInterface(interface)
-
-					executorActor = (OrchestratedExecutor) TypedActor.get(TypedActor.context()).typedActorOf(props,
-							executor.getId());
-
+					executorActor = (OrchestratedExecutor) TypedActor.get(TypedActor.context()).typedActorOf(
+							new TypedProps<Object>((Class<? super Object>) proxyingBoth.getClass(),
+									new Creator<Object>() {
+								public Object create() {
+											return proxyingBoth;
+								}
+							}), executor.getId());
 				} catch (Exception exception) {
-					exception.printStackTrace();
 					executorActor = TypedActor.get(TypedActor.context()).typedActorOf(
 							new TypedProps<OrchestratedExecutor>(OrchestratedExecutor.class,
 									new Creator<OrchestratedExecutor>() {
