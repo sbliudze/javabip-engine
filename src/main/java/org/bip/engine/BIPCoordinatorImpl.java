@@ -27,6 +27,7 @@ import org.bip.engine.api.CurrentStateEncoder;
 import org.bip.engine.api.GlueEncoder;
 import org.bip.engine.api.InteractionExecutor;
 import org.bip.exceptions.BIPEngineException;
+import org.bip.executor.ExecutorHandler;
 import org.bip.executor.ExecutorKernel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -138,7 +139,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 		try {
 			glueenc.specifyGlue(glue);
 		} catch (BIPEngineException e) {
-			e.printStackTrace();
+			// e.printStackTrace();
 		}
 	}
 
@@ -176,42 +177,73 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	}
 
 	private HashMap<Object, BIPComponent> objectToComponent = new HashMap<Object, BIPComponent>();
+	private final boolean hasBothProxies = true;
 
+	/**
+	 * The BIP Engine creates an Actor for every BIP component and registers the component.
+	 */
 	public synchronized BIPActor register(Object component, String id, boolean useSpec) {
+		if (registeredComponents.contains(component)) {
+				logger.error("Component " + objectToComponent.get(component).getId()
+						+ " has already registered before.");
+				throw new BIPEngineException("Component " + objectToComponent.get(component).getId()
+						+ " has already registered before.");
+		} else {
 
-		final ExecutorKernel executor = new ExecutorKernel(component, id, useSpec);
+			final ExecutorKernel executor = new ExecutorKernel(component, id, useSpec);
+			OrchestratedExecutor executorActor;
 
-		OrchestratedExecutor executorActor = TypedActor.get(TypedActor.context()).typedActorOf(
-				new TypedProps<ExecutorKernel>(ExecutorKernel.class, new Creator<ExecutorKernel>() {
-					public ExecutorKernel create() {
-						return executor;
-					}
-				}), executor.getId());
+			if (hasBothProxies) {
 
-		// System.out.println("Executor being created: " + executorActor);
+				try {
+					final Object proxyingBoth = ExecutorHandler.newProxyInstance(
+						BIPCoordinatorImpl.class.getClassLoader(), executor, component);
 
-		executor.setProxy(executorActor);
+					TypedProps<Object> props = new TypedProps<Object>(Object.class, new Creator<Object>() {
+						public Object create() {
+							return proxyingBoth;
+						}
+					}); 
+					
+					// props.withInterface(interface)
 
-		objectToComponent.put(component, executorActor);
+					executorActor = (OrchestratedExecutor) TypedActor.get(TypedActor.context()).typedActorOf(props,
+							executor.getId());
 
-		// final AkkaOrchestratedExecutorImpl actorWithLifeCycle = new
-		// AkkaOrchestratedExecutorImpl(system, actor);
+				} catch (Exception exception) {
+					exception.printStackTrace();
+					executorActor = TypedActor.get(TypedActor.context()).typedActorOf(
+							new TypedProps<OrchestratedExecutor>(OrchestratedExecutor.class,
+									new Creator<OrchestratedExecutor>() {
+										public ExecutorKernel create() {
+											return executor;
+										}
+									}), executor.getId());
+				}
 
-		Behaviour behaviour = executor.getBehavior();
+			} else {
+
+				executorActor = TypedActor.get(TypedActor.context()).typedActorOf(
+						new TypedProps<OrchestratedExecutor>(OrchestratedExecutor.class,
+								new Creator<OrchestratedExecutor>() {
+									public ExecutorKernel create() {
+										return executor;
+									}
+								}), executor.getId());
+
+			}
+
+
+			executor.setProxy(executorActor);
+
+			objectToComponent.put(component, executorActor);
+
+			Behaviour behaviour = executor.getBehavior();
 		/*
 		 * The condition below checks whether the component has already been
 		 * registered.
 		 */
-		if (registeredComponents.contains(component)) {
-			try {
-				logger.error("Component " + executorActor.getId()
-						+ " has already registered before.");
-				throw new BIPEngineException("Component " + executorActor.getId()
-						+ " has already registered before.");
-			} catch (BIPEngineException e) {
-				e.printStackTrace();
-			}
-		} else {
+
 			logger.info("********************************* Register *************************************");
 
 			/*
@@ -248,12 +280,12 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 						(behaviour.getEnforceablePorts()),
 						((new ArrayList<String>(behaviour.getStates()))));
 			} catch (BIPEngineException e) {
-				e.printStackTrace();
+				// e.printStackTrace();
 			}
 			try {
 				engine.informBehaviour(executorActor, behenc.behaviourBDD(executorActor));
 			} catch (BIPEngineException e) {
-				e.printStackTrace();
+				// e.printStackTrace();
 			}
 
 			for (int i = 0; i < nbComponentPorts; i++) {
@@ -267,14 +299,15 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 			nbStates += nbComponentStates;
 			nbComponents++;
 			logger.info("******************************************************************************");
+			org.bip.api.BIPEngine typedActorEngine = (org.bip.api.BIPEngine) TypedActor.self();
+			// System.out.println("Engine being registered with executor: " + typedActorEngine);
+			executorActor.register(typedActorEngine); // BIG TODO: Try
+														// synchronous call
+			// return actorWithLifeCycle;
+			return executorActor;
 		}
 
-		org.bip.api.BIPEngine typedActorEngine = (org.bip.api.BIPEngine) TypedActor.self();
-		// System.out.println("Engine being registered with executor: " + typedActorEngine);
-		executorActor.register(typedActorEngine); // BIG TODO: Try
-																			// synchronous call
-		// return actorWithLifeCycle;
-		return executorActor;
+
 	}
 
 	/**
@@ -305,7 +338,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 								+ component.getId()
 								+ " has already informed the engine in this execution cycle.");
 			} catch (BIPEngineException e) {
-				e.printStackTrace();
+				// e.printStackTrace();
 			}
 			return;
 		}
@@ -377,7 +410,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 						+ " specified in the inform was registered." + "\tPossible reason: "
 						+ "Name attribute in ComponentType annotation does not match the name of the Class.");
 				} catch (BIPEngineException e) {
-					e.printStackTrace();
+				// e.printStackTrace();
 				}
 			}
 
@@ -605,7 +638,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 				logger.trace("Engine semaphore initialised");
 			} catch (InterruptedException e1) {
 				logger.error("Semaphore's haveAllComponentsInformed acquire method for the number of registered components in the system was interrupted.");
-				e1.printStackTrace();
+				// e1.printStackTrace();
 			}
 		}
 
@@ -616,7 +649,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 			logger.trace("The cycle initialisation acquire successful");
 		} catch (InterruptedException e1) {
 			logger.error("Semaphore's haveAllComponentsInformed acquire method for the number of components that still have to inform was interrupted.");
-			e1.printStackTrace();
+			// e1.printStackTrace();
 		}
 
 		/*
@@ -642,7 +675,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 		try {
 			coordinatorCycleInitialization();
 		} catch (BIPEngineException e1) {
-			e1.printStackTrace();
+			// e1.printStackTrace();
 			isEngineExecuting = false;
 			engineThread.interrupt();
 		}
@@ -664,7 +697,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 				engine.runOneIteration();
 			} catch (BIPEngineException e1) {
 				isEngineExecuting = false;
-				e1.printStackTrace();
+				// e1.printStackTrace();
 			}
 
 			try {
@@ -699,9 +732,14 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	 * Interrupt the Engine thread.
 	 */
 	public void stop() {
+		if (engineThread == null) {
+			logger.error("Stoping the engine before starting it.");
+			throw new BIPEngineException("Stoping the engine before starting it.");
+		}
+		isEngineExecuting = false;
 		engineThread.stop();
 		// engineThread.interrupt();
-		isEngineExecuting = false;
+
 
 
 	}
@@ -848,7 +886,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 								+ "'"
 								+ " Possible reasons: The name of the component instances was specified in another way at registration.");
 			} catch (BIPEngineException e) {
-				e.printStackTrace();
+				// e.printStackTrace();
 				throw e;
 			}
 		}
