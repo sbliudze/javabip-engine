@@ -144,10 +144,11 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 			 * specifyDataGlue checks the validity of wires and throws an exception if necessary.
 			 */
 			Set<BDD> dataConstraints = dataEncoder.specifyDataGlue(dataWires);
-			logger.debug("Data constraints from the encoder not null: " + (dataConstraints != null));
+			// logger.debug("Data constraints from the encoder not null: " + (dataConstraints !=
+			// null));
 			bipCoordinator.specifyPermanentConstraints(dataConstraints);
 		} catch (BIPEngineException e) {
-			// e.printStackTrace();
+			e.printStackTrace();
 		}
 
 		for (String componentType : typeInstancesMapping.keySet()) {
@@ -166,8 +167,26 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 					for (DataWire wire : this.dataWires) {
 						if (wire.isIncoming(data.name(), behaviour.getComponentType())) {
 							wireSet.add(wire);
-							logger.trace("Added wire " + wire.getFrom() + " to data " + data.name() + " of component "
-									+ componentType);
+							// logger.trace("Added wire " + wire.getFrom() + " to data " +
+							// data.name() + " of component "
+							// + componentType);
+						}
+					}
+					dataWire.put(data.name(), wireSet);
+				}
+				// Fixing bug: It should not only consider data associated to guards as above
+				for (Data<?> data : behaviour.portToDataInForTransition(port)) {
+					// if this data has already been treated for another port
+					if (dataWire.containsKey(data)) {
+						continue;
+					}
+					Set<DataWire> wireSet = new HashSet<DataWire>();
+					for (DataWire wire : this.dataWires) {
+						if (wire.isIncoming(data.name(), behaviour.getComponentType())) {
+							wireSet.add(wire);
+							// logger.trace("Added wire " + wire.getFrom() + " to data " +
+							// data.name() + " of component "
+							// + componentType);
 						}
 					}
 					dataWire.put(data.name(), wireSet);
@@ -210,7 +229,7 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 			assert (component != null && behaviour != null);
 
 			if (registeredComponents.contains(component)) {
-				// logger.error("Component " + component + " has already registered before.");
+				logger.error("Component " + component + " has already registered before.");
 				throw new BIPEngineException("Component " + component + " has already registered before.");
 			} else {
 				registeredComponents.add(component);
@@ -387,8 +406,9 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 				Entry<Port, Port> pair = dVarPositionsToWires.get(i);
 				Port firstPair = pair.getKey();
 				Port secondPair = pair.getValue();
-				logger.trace("D variable for ports: " + "\n\t" + firstPair + "\n\t of component "
-						+ firstPair.component() + "\n\t " + secondPair + "\n\t of component " + secondPair.component());
+				// logger.trace("D variable for ports: " + "\n\t" + firstPair + "\n\t of component "
+				// + firstPair.component() + "\n\t " + secondPair + "\n\t of component " +
+				// secondPair.component());
 
 				// TODO DISCUSS DANGER remove from merged interactions those where component communicates with itself
 				if (firstPair.component().equals(secondPair.component())) {
@@ -429,8 +449,9 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 					BIPComponent component = providingData.component();
 					if (dataOutName != null && !dataOutName.isEmpty() && isEngineExecuting) {
 						Object dataValue = component.getData(dataOutName, dataItem.type());
-						logger.trace("GETTING DATA: from component " + providingData.component() + " the value "
-								+ dataValue);
+						// logger.trace("GETTING DATA: from component " + providingData.component()
+						// + " the value "
+						// + dataValue);
 						askingData.component().setData(dataItem.name(), dataValue);
 					}
 				}
@@ -478,8 +499,6 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 	private String dataIsProvided(Port providingPort, String requiringComponentType, String dataName) {
 		BIPComponent providingComponent = providingPort.component();
 		assert (componentBehaviourMapping.get(providingComponent) != null);
-		// System.out.println("For component" + providingComponent.getId() + " Data wires size: "
-		// + this.componentDataWires.get(requiringComponentType).size());
 		for (DataWire wire : this.componentDataWires.get(requiringComponentType).get(dataName)) {
 			if (wire.getFrom().getSpecType()
 					.equals(componentBehaviourMapping.get(providingComponent).getComponentType())) {
@@ -494,6 +513,7 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 			}
 		}
 		return null;
+
 	}
 
 	public void start() {
@@ -503,6 +523,7 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 	public void stop() {
 		isEngineExecuting = false;
 		bipCoordinator.stop();
+
 	}
 
 	public void execute() {
@@ -588,8 +609,10 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 				if (!(portActive.get(i))) {
 					ArrayList<DataContainerImpl> dataContainer = containerList.get(i);
 					for (DataContainerImpl dc : dataContainer) {
-						logger.debug(this.count + " CONTAINER CHOSEN: For deciding " + component.hashCode() + " and "
-								+ port.getId() + " disabled is " + dc.component() + " with ports " + dc.ports());
+						// logger.debug(this.count + " CONTAINER CHOSEN: For deciding " +
+						// component.hashCode() + " and "
+						// + port.getId() + " disabled is " + dc.component() + " with ports " +
+						// dc.ports());
 						disabledCombinations.put(dc.component(), dc.ports());						
 					}
 				}
@@ -614,15 +637,17 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 	 * @param component
 	 *            the component
 	 */
-	private void print(ArrayList<ArrayList<DataContainerImpl>> containerList, BIPComponent component) {
-		for (ArrayList<DataContainerImpl> dataList : containerList) {
-			for (DataContainerImpl container : dataList) {
-				logger.trace(this.count + " Deciding " + component.hashCode() + ", Providing " + container.component()
-						+ " the value " + container.value());
-			}
-		}
-
-	}
+	// private void print(ArrayList<ArrayList<DataContainerImpl>> containerList, BIPComponent
+	// component) {
+	// for (ArrayList<DataContainerImpl> dataList : containerList) {
+	// for (DataContainerImpl container : dataList) {
+	// logger.trace(this.count + " Deciding " + component.hashCode() + ", Providing " +
+	// container.component()
+	// + " the value " + container.value());
+	// }
+	// }
+	//
+	// }
 
 	/**
 	 * Creates the data table. Alina
@@ -882,7 +907,7 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 		 */
 		// Map<BIPComponent, Iterable<Port>> chosenPorts = new Hashtable<BIPComponent,
 		// Iterable<Port>>();
-		logger.trace("positionsOfDVariables size: " + positionsOfDVariables.size());
+		// logger.trace("positionsOfDVariables size: " + positionsOfDVariables.size());
 		ArrayList<Port> portsExecuted = new ArrayList<Port>();
 		List<List<Port>> bigInteraction = mergingSubInteractions(valuation, portsExecuted);
 
@@ -905,14 +930,15 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 
 
 
-			if (componentPorts == null || !componentPorts.iterator().hasNext()) {
-				logger.trace("Component {} does not have any enforceable ports.", component);
-			}
+			// if (componentPorts == null || !componentPorts.iterator().hasNext()) {
+			// logger.trace("Component {} does not have any enforceable ports.", component);
+			// }
 			for (Port port : componentPorts) {
 				if (!portsExecuted.contains(port)
 						&& (valuation[portToPosition.get(port)] == 1 || valuation[portToPosition.get(port)] == -1)
 						&& isEngineExecuting) {
-					logger.trace("Chosen Port: {}" + port.getId() + "of component: " + port.component());
+					// logger.trace("Chosen Port: {}" + port.getId() + "of component: " +
+					// port.component());
 					enabledPorts.add(port);
 				}
 			}
@@ -922,21 +948,18 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 			bigInteraction.add(enabledPorts);
 		}
 		/*
-		 * Here the ports mentioned above have been added
-		 * For debug only
+		 * Here the ports mentioned above have been added For debug only //TODO: Comment out before
+		 * performance evaluation
 		 */
-//		for (Iterable<Port> inter : bigInteraction) {
-//			for (Port port : inter) {
-				// logger.debug("ENGINE choice: " + "Chosen Port: {}" + port.getId() +
-				// " of component: "
-				// + port.component());
-				// System.out.println("ENGINE choice: " + "Chosen Port: " + port.getId() +
-				// " of component: "
-				// + port.component());
+		// for (Iterable<Port> inter : bigInteraction) {
+		// for (Port port : inter) {
+		// logger.debug("ENGINE choice: " + "Chosen Port: {}" + port.getId() + " of component: "
+		// + port.component());
+		// System.out.println("ENGINE choice: " + "Chosen Port: " + port.getId() + " of component: "
+		// + port.component());
 		// }
 		// }
-		logger.trace("Interactions: " + bigInteraction.size());
-
+		// logger.trace("Interactions: " + bigInteraction.size());
 		return bigInteraction;
 	}
 

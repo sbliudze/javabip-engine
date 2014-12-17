@@ -27,8 +27,8 @@ import org.bip.engine.api.CurrentStateEncoder;
 import org.bip.engine.api.GlueEncoder;
 import org.bip.engine.api.InteractionExecutor;
 import org.bip.exceptions.BIPEngineException;
-import org.bip.executor.ExecutorHandler;
 import org.bip.executor.ExecutorKernel;
+import org.bip.executor.TunellingExecutorHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -95,6 +95,12 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 
 	/** Number of components registered */
 	public int nbComponents;
+
+	/**
+	 * If a component does not have any enforceable transitions, it will not inform the engine. This
+	 * integer should be used to set the haveAllComponentsInformed semaphore
+	 */
+	// public int nbComponentsWithEnforceableTransitions;
 
 	/** Thread for the BIPCoordinator */
 	private Thread engineThread;
@@ -196,7 +202,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 			if (hasBothProxies) {
 
 				try {
-					final Object proxyingBoth = ExecutorHandler.newProxyInstance(
+					final Object proxyingBoth = TunellingExecutorHandler.newProxyInstance(
 						BIPCoordinatorImpl.class.getClassLoader(), executor, component);
 
 					executorActor = (OrchestratedExecutor) TypedActor.get(TypedActor.context()).typedActorOf(
@@ -293,9 +299,11 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 			nbPorts += nbComponentPorts;
 			nbStates += nbComponentStates;
 			nbComponents++;
+			// if (!behaviour.getEnforceablePorts().isEmpty()) {
+			// nbComponentsWithEnforceableTransitions++;
+			// }
 			logger.info("******************************************************************************");
 			org.bip.api.BIPEngine typedActorEngine = (org.bip.api.BIPEngine) TypedActor.self();
-			// System.out.println("Engine being registered with executor: " + typedActorEngine);
 			executorActor.register(typedActorEngine); // BIG TODO: Try
 														// synchronous call
 			// return actorWithLifeCycle;
@@ -319,11 +327,10 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 		if (componentsHaveInformed.contains(component)) {
 			try {
 				logger.debug("************************ Already Have Informed *******************************");
-				logger.debug("Component: " + component
-						+ "informs that is at state: " + currentState);
-				for (Port disabledPort : disabledPorts) {
-					logger.debug("with disabled port: " + disabledPort.getId());
-				}
+				logger.debug("Component: " + component + "informs that is at state: " + currentState);
+				// for (Port disabledPort : disabledPorts) {
+				// logger.debug("with disabled port: " + disabledPort.getId());
+				// }
 				logger.debug("******************************************************************************");
 				logger.error("Component "
 						+ component.getId()
@@ -359,15 +366,13 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 						e.printStackTrace();
 					}
 
-					logger.trace("Number of components that have informed {}",
-							componentsHaveInformed.size());
+				// logger.trace("Number of components that have informed {}",
+				// componentsHaveInformed.size());
 					logger.debug("********************************* Inform *************************************");
-					logger.debug("Component: " + component
-							+ "informs that is at state: " + currentState);
-					for (Port disabledPort : disabledPorts) {
-						logger.debug("with disabled port: "
-								+ disabledPort.getId());
-					}
+				logger.debug("Component: " + component + "informs that is at state: " + currentState);
+				// for (Port disabledPort : disabledPorts) {
+				// logger.debug("with disabled port: " + disabledPort.getId());
+				// }
 					logger.debug("******************************************************************************");
 
 					/*
@@ -680,17 +685,24 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 		 */
 
 		while (isEngineExecuting) {
+			
 
 			logger.trace("isEngineExecuting: {} ", isEngineExecuting);
 			logger.trace("noComponents: {}, componentCounter: {}",
-					nbComponents, componentsHaveInformed.size());
+ nbComponents,
+					componentsHaveInformed.size());
 			logger.trace("Number of available permits in the semaphore: {}",
 					haveAllComponentsInformed.availablePermits());
 
 			componentsHaveInformed.clear();
+
 			try {
+
+				long time1 = System.currentTimeMillis();
 				engine.runOneIteration();
+				System.out.printf("E: %s ", (System.currentTimeMillis() - time1));
 			} catch (BIPEngineException e1) {
+
 				isEngineExecuting = false;
 				// e1.printStackTrace();
 			}
@@ -698,6 +710,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 			try {
 				logger.trace("Waiting for the acquire in run()...");
 				haveAllComponentsInformed.acquire(nbComponents);
+
 				logger.trace("run() acquire successful.");
 			} catch (InterruptedException e) {
 				isEngineExecuting = false;

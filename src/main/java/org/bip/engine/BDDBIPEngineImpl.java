@@ -44,6 +44,7 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 	private int cacheSize = 50000;
 
 
+
 	/* Use JavaBDD Bdd Manager */
 	private BDDFactory bdd_mgr = BDDFactory.init("java", noNodes, cacheSize);
 	Map<Integer, Entry<PortBase, PortBase>> dVariablesToPosition = new Hashtable<Integer, Entry<PortBase, PortBase>>();
@@ -199,97 +200,13 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		return totalDisabledCombinationBdd;
 	}
 
-	// public synchronized final void runOneFastIteration() throws BIPEngineException {
-	//
-	//
-	// byte[] chosenInteraction;
-	// // For performance info
-	// // long time = System.currentTimeMillis();
-	// BDD totalCurrentStateAndDisabledCombinations = totalCurrentStateBdd(currentStateBDDs);
-	// BDD solns = totalConstraints.and(totalCurrentStateAndDisabledCombinations);
-	//
-	// logger.trace("INFORM SPECIFIC CALL: Disabled Combinations size " +
-	// temporaryConstraints.size());
-	// /*
-	// * Temporary Constraints cannot be null.
-	// */
-	//
-	// if (!temporaryConstraints.isEmpty()) {
-	// solns.andWith(totalExtraBdd(temporaryConstraints));
-	// }
-	//
-	// /* Compute global BDD: solns= Λi Fi Λ G Λ (Λi Ci) */
-	// totalCurrentStateAndDisabledCombinations.free();
-	// ArrayList<byte[]> possibleInteraction = new ArrayList<byte[]>();
-	//
-	// possibleInteraction.addAll(solns.allsat());
-	//
-	//
-	// logger.debug("******************************* Engine **********************************");
-	// logger.debug("Number of possible interactions is: {} " + possibleInteraction.size());
-	// Iterator<byte[]> it = possibleInteraction.iterator();
-	//
-	//
-	//
-	// /* for debugging */
-	// // while (it.hasNext()) {
-	// // byte[] value = it.next();
-	// //
-	// // StringBuilder sb = new StringBuilder();
-	// // for (byte b : value) {
-	// // sb.append(String.format("%02X ", b));
-	// // }
-	// // logger.trace(sb.toString());
-	// List<Integer> positionOfPorts = wrapper.getBehaviourEncoderInstance().getPositionsOfPorts();
-	// ArrayList<byte[]> cubeMaximals = findOneMaxMaximal(possibleInteraction, positionOfPorts);
-	//
-	// /* deadlock detection */
-	// int size = cubeMaximals.size();
-	// if (size == 0) {
-	// logger.error("Deadlock. No maximal interactions.");
-	// throw new BIPEngineException("Deadlock. No maximal interactions.");
-	// } else if (size == 1) {
-	// if (countPortEnable(cubeMaximals.get(0), (ArrayList<Integer>)
-	// wrapper.getBehaviourEncoderInstance()
-	// .getPositionsOfPorts()) == 0) {
-	// logger.error("Deadlock. No enabled ports.");
-	// throw new BIPEngineException("Deadlock. No enabled ports.");
-	// }
-	// }
-	//
-	// logger.debug("Number of maximal interactions: " + cubeMaximals.size());
-	// Random rand = new Random();
-	// /*
-	// * Pick a random maximal interaction
-	// */
-	// int randomInt = rand.nextInt(cubeMaximals.size());
-	// /*
-	// * Update chosen interaction
-	// */
-	// chosenInteraction = cubeMaximals.get(randomInt);
-	// cubeMaximals.clear();
-	// /*
-	// * Beginning of the part to move to the Data Coordinator
-	// */
-	// wrapper.execute(chosenInteraction);
-	// /*
-	// * End of the part to move to the Data Coordinator
-	// */
-	// solns.free();
-	// temporaryConstraints.clear();
-	// // For performance info
-	// // System.out.println(System.currentTimeMillis() - time);
-	//
-	//
-	// }
-
 	public synchronized final void runOneIteration() throws BIPEngineException {
 
 		byte[] chosenInteraction;
 
 
 		// For performance info
-		// long time = System.currentTimeMillis();
+		long time = System.currentTimeMillis();
 
 
 		BDD totalCurrentStateAndDisabledCombinations = totalCurrentStateBdd(currentStateBDDs);
@@ -411,8 +328,9 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		 * Beginning of the part to move to the Data Coordinator
 		 */
 		// For performance info
-		// System.out.println(System.currentTimeMillis() - time);
+
 		wrapper.execute(chosenInteraction);
+		System.out.println(System.currentTimeMillis() - time);
 
 		/*
 		 * End of the part to move to the Data Coordinator
@@ -424,6 +342,7 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		// System.out.println("Number of nodes " + this.bdd_mgr.getNodeTableSize());
 		// bdd_mgr = null;
 		// time = System.currentTimeMillis() - time;
+		// System.out.println("Engine cycle time: "+ time);
 
 	}
 
