@@ -40,7 +40,7 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 
 	private BDD totalConstraints;
 	// TODO: Put these as arguments
-	private int noNodes = 50000;
+	private int noNodes = 1500;
 	private int cacheSize = 50000;
 
 
@@ -206,7 +206,7 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 
 
 		// For performance info
-		long time = System.currentTimeMillis();
+		// long time = System.currentTimeMillis();
 
 
 		BDD totalCurrentStateAndDisabledCombinations = totalCurrentStateBdd(currentStateBDDs);
@@ -244,12 +244,13 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 
 		// long mem0 = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
 		// System.out.println("Cache size " + this.bdd_mgr.getCacheSize());
-
+		//
 		// System.out.println("solns nodes: " + solns.nodeCount());
 
 		// System.out.println(bdd_mgr.getClass().toString());
 		// solns.free();
 		// bdd_mgr.done();
+		// THIS IS WHAT I NEED FOR EVALUATION OF NODES
 		// System.out.println("Number of nodes " + this.bdd_mgr.getNodeTableSize());
 		// System.out.println("Number of all nodes: " + this.bdd_mgr.getNodeNum());
 		// System.out.println("Cache size " + this.bdd_mgr.getCacheSize());
@@ -330,7 +331,7 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		// For performance info
 
 		wrapper.execute(chosenInteraction);
-		System.out.println(System.currentTimeMillis() - time);
+		// System.out.println("EC: " + (System.currentTimeMillis() - time));
 
 		/*
 		 * End of the part to move to the Data Coordinator

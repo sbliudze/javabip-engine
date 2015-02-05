@@ -266,6 +266,7 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 	public synchronized void inform(BIPComponent component, String currentState, Set<Port> disabledPorts) {
 		// for each component store its undecided ports
 		// TODO create undecided port with the help of set.removeAll
+		// long time1 = System.currentTimeMillis();
 
 		/*
 		 * If all components have not finished registering the informSpecific cannot be done: In the
@@ -289,6 +290,7 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 		 */
 
 		bipCoordinator.inform(component, currentState, disabledPorts);
+		// System.out.println("DC:" + (System.currentTimeMillis() - time1));
 	}
 
 	/**
@@ -452,7 +454,19 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 						// logger.trace("GETTING DATA: from component " + providingData.component()
 						// + " the value "
 						// + dataValue);
+						if (dataValue == null) {
+							logger.error("Component: " + askingData.component()
+									+ " is asking data from component: "
+									+ providingData.component() + dataValue + " , with name: " + " and type: "
+									+ dataItem.type() + " The function getData of the Executor kernel returns null. ");
+
+							throw new IllegalArgumentException("Component: " + askingData.component()
+									+ " is asking data from component: " + providingData.component() + dataValue
+									+ " , with name: " + " and type: " + dataItem.type()
+									+ " The function getData of the Executor kernel returns null for these arguments. ");
+						}
 						askingData.component().setData(dataItem.name(), dataValue);
+
 					}
 				}
 			}

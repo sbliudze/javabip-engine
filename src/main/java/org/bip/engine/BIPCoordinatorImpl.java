@@ -324,6 +324,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	 */
 	public synchronized void inform(BIPComponent component,
 			String currentState, Set<Port> disabledPorts) {
+		// long time1 = System.currentTimeMillis();
 		if (componentsHaveInformed.contains(component)) {
 			try {
 				logger.debug("************************ Already Have Informed *******************************");
@@ -413,6 +414,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 				// e.printStackTrace();
 				}
 			}
+		// System.out.println("BC:" + (System.currentTimeMillis() - time1));
 
 	}
 
@@ -698,9 +700,9 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 
 			try {
 
-				long time1 = System.currentTimeMillis();
+				// long time1 = System.currentTimeMillis();
 				engine.runOneIteration();
-				System.out.printf("E: %s ", (System.currentTimeMillis() - time1));
+				// System.out.printf("E: %s ", (System.currentTimeMillis() - time1));
 			} catch (BIPEngineException e1) {
 
 				isEngineExecuting = false;
