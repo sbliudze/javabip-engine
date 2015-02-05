@@ -436,7 +436,9 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 	}
 
 	/**
-	 * Alina's code
+	 * by Alina
+	 * This method sets the data value in the Executor of a component which asks for it in order to execute the port askingData.
+	 * The data is provided through the port providingData of another component.
 	 */
 	private synchronized void setDataValuationToExecutor(Port askingData, Port providingData) {
 		if (isEngineExecuting) {
@@ -454,6 +456,7 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 						// logger.trace("GETTING DATA: from component " + providingData.component()
 						// + " the value "
 						// + dataValue);
+						// this condition makes it impossible for a method providing a dataOut to return null, it must always return some particular value
 						if (dataValue == null) {
 							logger.error("Component: " + askingData.component()
 									+ " is asking data from component: "
