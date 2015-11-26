@@ -31,6 +31,7 @@ public class EngineFactory {
 		// TODO: make the DataCoordinatorImpl implement this function (after
 		// refactoring the coordinators)
 		// executor.setProxy(actor);
+		actor.initialize();
 		
 		return actor;
 	}

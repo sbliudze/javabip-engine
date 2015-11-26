@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Hashtable;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -222,9 +221,6 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 			solns.andWith(totalExtraBdd(temporaryConstraints));
 		}
 
-
-
-
 		/* Compute global BDD: solns= Λi Fi Λ G Λ (Λi Ci) */
 		totalCurrentStateAndDisabledCombinations.free();
 		// For performance and memory info
@@ -275,23 +271,23 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		ArrayList<byte[]> possibleInteraction = new ArrayList<byte[]>();
 
 		possibleInteraction.addAll(solns.allsat());
-
+		// BigInteger[] oneSolution = solns.scanAllVar();
 
 		logger.debug("******************************* Engine **********************************");
 		logger.debug("Number of possible interactions is: {} " + possibleInteraction.size());
-		Iterator<byte[]> it = possibleInteraction.iterator();
+		// Iterator<byte[]> it = possibleInteraction.iterator();
 
 		/* for debugging */
-		// while (it.hasNext()) {
-		// byte[] value = it.next();
-		//
-		// StringBuilder sb = new StringBuilder();
-		// for (byte b : value) {
-		// sb.append(String.format("%02X ", b));
-		// }
-		// logger.trace(sb.toString());
-		// System.out.println("Engine: " + sb.toString());
-		// }
+//		while (it.hasNext()) {
+//			byte[] value = it.next();
+//
+//			StringBuilder sb = new StringBuilder();
+//			for (byte b : value) {
+//				sb.append(String.format("%02X ", b));
+//			}
+//			logger.trace(sb.toString());
+//			System.out.println("Engine: " + sb.toString());
+//		}
 
 		ArrayList<byte[]> cubeMaximals = new ArrayList<byte[]>();
 		List<Integer> positionOfPorts = wrapper.getBehaviourEncoderInstance().getPositionsOfPorts();
@@ -331,7 +327,7 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		// For performance info
 
 		wrapper.execute(chosenInteraction);
-		// System.out.println("EC: " + (System.currentTimeMillis() - time));
+		// System.out.println((System.currentTimeMillis() - time));
 
 		/*
 		 * End of the part to move to the Data Coordinator

@@ -290,7 +290,7 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 		 */
 
 		bipCoordinator.inform(component, currentState, disabledPorts);
-		// System.out.println("DC:" + (System.currentTimeMillis() - time1));
+		// System.out.println((System.currentTimeMillis() - time1));
 	}
 
 	/**
@@ -460,12 +460,12 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 						if (dataValue == null) {
 							logger.error("Component: " + askingData.component()
 									+ " is asking data from component: "
-									+ providingData.component() + dataValue + " , with name: " + " and type: "
+									+ providingData.component() + " , with name: " + dataOutName + " and type: "
 									+ dataItem.type() + " The function getData of the Executor kernel returns null. ");
 
 							throw new IllegalArgumentException("Component: " + askingData.component()
-									+ " is asking data from component: " + providingData.component() + dataValue
-									+ " , with name: " + " and type: " + dataItem.type()
+									+ " is asking data from component: " + providingData.component() + " , with name: "
+									+ dataOutName + " and type: " + dataItem.type()
 									+ " The function getData of the Executor kernel returns null for these arguments. ");
 						}
 						askingData.component().setData(dataItem.name(), dataValue);
@@ -968,6 +968,7 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 		 * Here the ports mentioned above have been added For debug only //TODO: Comment out before
 		 * performance evaluation
 		 */
+		// System.out.println("++++++++++++++++++++++++++++++++++++++++++++");
 		// for (Iterable<Port> inter : bigInteraction) {
 		// for (Port port : inter) {
 		// logger.debug("ENGINE choice: " + "Chosen Port: {}" + port.getId() + " of component: "
@@ -976,6 +977,7 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 		// + port.component());
 		// }
 		// }
+		// System.out.println("++++++++++++++++++++++++++++++++++++++++++++");
 		// logger.trace("Interactions: " + bigInteraction.size());
 		return bigInteraction;
 	}
@@ -1053,6 +1055,11 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 	@Override
 	public BIPComponent getComponentFromObject(Object component) {
 		return bipCoordinator.getComponentFromObject(component);
+	}
+
+	@Override
+	public void initialize() {
+		bipCoordinator.initialize();
 	}
 
 }

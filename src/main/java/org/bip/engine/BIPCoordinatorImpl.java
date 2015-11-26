@@ -32,6 +32,7 @@ import org.bip.executor.TunellingExecutorHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import akka.actor.ActorContext;
 import akka.actor.ActorSystem;
 import akka.actor.TypedActor;
 import akka.actor.TypedProps;
@@ -63,6 +64,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	private BDDBIPEngine engine = new BDDBIPEngineImpl();
 	private InteractionExecutor interactionExecutor;
 	private ActorSystem system;
+
 
 	Thread currentThread = null;
 
@@ -123,6 +125,8 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	 * components have inform the BIPCoordinator about their current state.
 	 */
 	private Semaphore haveAllComponentsInformed;
+	private ActorContext typedActorContext;
+	private Object typedActorSelf;
 
 	public BIPCoordinatorImpl(ActorSystem system) {
 
@@ -139,6 +143,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 
 		engine.setOSGiBIPEngine(this);
 		this.system = system;
+
 	}
 
 	public synchronized void specifyGlue(BIPGlue glue) {
@@ -205,7 +210,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 					final Object proxyingBoth = TunellingExecutorHandler.newProxyInstance(
 						BIPCoordinatorImpl.class.getClassLoader(), executor, component);
 
-					executorActor = (OrchestratedExecutor) TypedActor.get(TypedActor.context()).typedActorOf(
+					executorActor = (OrchestratedExecutor) TypedActor.get(typedActorContext).typedActorOf(
 							new TypedProps<Object>((Class<? super Object>) proxyingBoth.getClass(),
 									new Creator<Object>() {
 								public Object create() {
@@ -213,7 +218,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 								}
 							}), executor.getId());
 				} catch (Exception exception) {
-					executorActor = TypedActor.get(TypedActor.context()).typedActorOf(
+					executorActor = TypedActor.get(typedActorContext).typedActorOf(
 							new TypedProps<OrchestratedExecutor>(OrchestratedExecutor.class,
 									new Creator<OrchestratedExecutor>() {
 										public ExecutorKernel create() {
@@ -224,16 +229,14 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 
 			} else {
 
-				executorActor = TypedActor.get(TypedActor.context()).typedActorOf(
+				executorActor = TypedActor.get(typedActorContext).typedActorOf(
 						new TypedProps<OrchestratedExecutor>(OrchestratedExecutor.class,
 								new Creator<OrchestratedExecutor>() {
 									public ExecutorKernel create() {
 										return executor;
 									}
 								}), executor.getId());
-
 			}
-
 
 			executor.setProxy(executorActor);
 
@@ -303,7 +306,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 			// nbComponentsWithEnforceableTransitions++;
 			// }
 			logger.info("******************************************************************************");
-			org.bip.api.BIPEngine typedActorEngine = (org.bip.api.BIPEngine) TypedActor.self();
+			org.bip.api.BIPEngine typedActorEngine = (org.bip.api.BIPEngine) typedActorSelf;
 			executorActor.register(typedActorEngine); // BIG TODO: Try
 														// synchronous call
 			// return actorWithLifeCycle;
@@ -556,8 +559,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 
 				/* Execute the port */
 
-				// logger.trace("Chosen port: " + port.getId() + " of component: " +
-				// port.component().getId());
+				logger.debug("Chosen port: " + port.getId() + " of component: " + port.component().getId());
 				if (isEngineExecuting)
 				port.component().execute(port.getId());
 
@@ -905,6 +907,15 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 
 	public ActorSystem getSystem() {
 		return system;
+	}
+
+	@Override
+	public void initialize() {
+		// // The following two function calls are causing problems in OSGi context . They need to
+		// be
+		// // executed in special manner (only within the function of TypedActor itself).
+		this.typedActorContext = TypedActor.context();
+		this.typedActorSelf = TypedActor.self();
 	}
 
 }
