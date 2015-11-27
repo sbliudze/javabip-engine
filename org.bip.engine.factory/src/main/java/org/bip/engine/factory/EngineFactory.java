@@ -2,8 +2,18 @@ package org.bip.engine.factory;
 
 import org.bip.api.BIPEngine;
 import org.bip.api.BIPGlue;
-import org.bip.engine.*;
-import org.bip.engine.api.*;
+import org.bip.engine.BDDBIPEngineImpl;
+import org.bip.engine.BehaviourEncoderImpl;
+import org.bip.engine.CurrentStateEncoderImpl;
+import org.bip.engine.DataEncoderImpl;
+import org.bip.engine.GlueEncoderImpl;
+import org.bip.engine.api.BDDBIPEngine;
+import org.bip.engine.api.BIPCoordinator;
+import org.bip.engine.api.BehaviourEncoder;
+import org.bip.engine.api.CurrentStateEncoder;
+import org.bip.engine.api.DataEncoder;
+import org.bip.engine.api.GlueEncoder;
+import org.bip.engine.coordinator.BIPCoordinatorImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,7 +37,7 @@ public class EngineFactory {
 		CurrentStateEncoder currstenc = new CurrentStateEncoderImpl();
 		BDDBIPEngine bddBIPEngine = new BDDBIPEngineImpl();
 
-		BIPCoordinator basicCoordinator = new BIPCoordinatorImpl(actorSystem);
+		BIPCoordinator basicCoordinator = new BIPCoordinatorImpl(actorSystem, glueenc, behenc, currstenc, bddBIPEngine);
 
 		BIPEngine bipEngine;
 
