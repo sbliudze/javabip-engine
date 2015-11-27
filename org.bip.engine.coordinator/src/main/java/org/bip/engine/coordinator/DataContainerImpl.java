@@ -1,4 +1,4 @@
-package org.bip.coordinator;
+package org.bip.engine.coordinator;
 
 import java.util.Set;
 

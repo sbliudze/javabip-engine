@@ -1,4 +1,4 @@
-package org.bip.coordinator;
+package org.bip.engine.coordinator;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -21,7 +21,6 @@ import org.bip.api.Behaviour;
 import org.bip.api.Data;
 import org.bip.api.DataWire;
 import org.bip.api.Port;
-import org.bip.engine.DataEncoderImpl;
 import org.bip.engine.api.BIPCoordinator;
 import org.bip.engine.api.BehaviourEncoder;
 import org.bip.engine.api.DataCoordinator;
@@ -84,7 +83,7 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 	private int count;
 
 	/** Create instances of all the the Data Encoder and of the BIPCoordinator. */
-	private DataEncoder dataEncoder = new DataEncoderImpl();
+	private DataEncoder dataEncoder;
 
 	/** The bip coordinator. */
 	private BIPCoordinator bipCoordinator = null;
@@ -115,7 +114,9 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 	 * @param bipCoordinator
 	 *            the bip coordinator
 	 */
-	public DataCoordinatorKernel(BIPCoordinator bipCoordinator) {
+	public DataCoordinatorKernel(BIPCoordinator bipCoordinator, DataEncoder dataEncoder) {
+
+		this.dataEncoder = dataEncoder;
 
 		assert (bipCoordinator != null);
 

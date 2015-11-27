@@ -1,6 +1,9 @@
-package org.bip.engine.api;
+package org.bip.engine.factory;
 
 import org.bip.api.BIPEngine;
+import org.bip.api.BIPGlue;
+import org.bip.engine.*;
+import org.bip.engine.api.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,16 +20,34 @@ public class EngineFactory {
 		this.actorSystem = actorSystem;		
 	}
 	
-	public BIPEngine create(String id, final BIPEngine engine) {
-		
-		
+	public BIPEngine create(String id, BIPGlue glue) {
+
+		GlueEncoder glueenc = new GlueEncoderImpl();
+		BehaviourEncoder behenc = new BehaviourEncoderImpl();
+		CurrentStateEncoder currstenc = new CurrentStateEncoderImpl();
+		BDDBIPEngine bddBIPEngine = new BDDBIPEngineImpl();
+
+		BIPCoordinator basicCoordinator = new BIPCoordinatorImpl(actorSystem);
+
+		BIPEngine bipEngine;
+
+		if (glue.getDataWires().size() == 0) {
+			bipEngine = basicCoordinator;
+		}
+		else {
+			DataEncoder dataEncoder = new DataEncoderImpl();
+			bipEngine = new org.bip.engine.coordinator.DataCoordinatorKernel(basicCoordinator, dataEncoder);
+		}
+
+		final BIPEngine engine = bipEngine;
+
 		BIPEngine actor = TypedActor.get(actorSystem).typedActorOf(
 				new TypedProps<BIPEngine>(BIPEngine.class, new Creator<BIPEngine>() {
 					public BIPEngine create() {
 								return engine;
 							}
 						}), id);
-		// System.out.println("engine actor " + actor);
+
 
 		// TODO: make the DataCoordinatorImpl implement this function (after
 		// refactoring the coordinators)

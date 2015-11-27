@@ -1,4 +1,4 @@
-package org.bip.coordinator;
+package org.bip.engine.coordinator;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -20,10 +20,6 @@ import org.bip.api.BIPGlue;
 import org.bip.api.Behaviour;
 import org.bip.api.OrchestratedExecutor;
 import org.bip.api.Port;
-import org.bip.engine.BDDBIPEngineImpl;
-import org.bip.engine.BehaviourEncoderImpl;
-import org.bip.engine.CurrentStateEncoderImpl;
-import org.bip.engine.GlueEncoderImpl;
 import org.bip.engine.api.BDDBIPEngine;
 import org.bip.engine.api.BIPCoordinator;
 import org.bip.engine.api.BehaviourEncoder;
@@ -62,10 +58,10 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	 * Create instances of all the the Glue Encoder, the Behaviour Encoder, the
 	 * Current State Encoder, the Symbolic BIP Engine
 	 */
-	private GlueEncoder glueenc = new GlueEncoderImpl();
-	private BehaviourEncoder behenc = new BehaviourEncoderImpl();
-	private CurrentStateEncoder currstenc = new CurrentStateEncoderImpl();
-	private BDDBIPEngine engine = new BDDBIPEngineImpl();
+	private GlueEncoder glueenc;
+	private BehaviourEncoder behenc;
+	private CurrentStateEncoder currstenc;
+	private BDDBIPEngine engine;
 	private InteractionExecutor interactionExecutor;
 	private ActorSystem system;
 
@@ -132,7 +128,15 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	private ActorContext typedActorContext;
 	private Object typedActorSelf;
 
-	public BIPCoordinatorImpl(ActorSystem system) {
+	public BIPCoordinatorImpl(ActorSystem system, GlueEncoder glueEncoder,
+							  BehaviourEncoder behenc,
+							  CurrentStateEncoder currentStateEncoder,
+							  BDDBIPEngine engine) {
+
+		this.glueenc = glueEncoder;
+		this.behenc = behenc;
+		this.currstenc = currentStateEncoder;
+		this.engine = engine;
 
 		glueenc.setBehaviourEncoder(behenc);
 		glueenc.setEngine(engine);
