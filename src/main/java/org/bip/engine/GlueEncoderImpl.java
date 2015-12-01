@@ -2,6 +2,7 @@ package org.bip.engine;
 
 import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
@@ -196,14 +197,45 @@ public class GlueEncoderImpl implements GlueEncoder {
 		/* Find all causes component instances */
 		List<List<PortBase>> requireCauses=requires.getCauses();
 		List<Hashtable<PortBase, ArrayList<BDD>>> allPorts = new ArrayList<Hashtable<PortBase, ArrayList<BDD>>>();
+		List<Hashtable<PortBase, Integer>> allCardinalities = new ArrayList<Hashtable<PortBase, Integer>>();
+
+
 		for (List<PortBase> requireCause : requireCauses){
+
 			allPorts.add(findCausesComponents(requireCause));
+			Hashtable<PortBase, Integer> cardinalityForOneRequireCause = new Hashtable<PortBase, Integer>();
+
+			/*
+			 * Beginning of New Part for cardinalities
+			 */
+			for (PortBase oneCause : requireCause) {
+				boolean identicalCause = false;
+				int cardinality = 0;
+
+				for (PortBase key : cardinalityForOneRequireCause.keySet()) {
+					if (key.getId().equals(oneCause.getId()) && key.getSpecType().equals(oneCause.getSpecType())) {
+						cardinality = cardinalityForOneRequireCause.get(key);
+						cardinalityForOneRequireCause.remove(key);
+						identicalCause = true;
+					}
+				}
+				if (identicalCause) {
+					cardinalityForOneRequireCause.put(oneCause, cardinality + 1);
+				} else {
+					cardinalityForOneRequireCause.put(oneCause, 1);
+				}
+			}
+			allCardinalities.add(cardinalityForOneRequireCause);
+			/*
+			 * End of new part for cardinalities
+			 */
 		}
 		
 		//TODO: dont recompute the causes for each component instance
 		for (BIPComponent effectInstance : requireEffectComponents) {
 			logger.trace("Require Effect port type: "+ requires.getEffect().getId()+" of component "+requires.getEffect().getSpecType());
-			result.add(requireBDD(behenc.getBDDOfAPort(effectInstance, requires.getEffect().getId()), allPorts));
+			result.add(requireBDD(behenc.getBDDOfAPort(effectInstance, requires.getEffect().getId()), allPorts,
+					allCardinalities));
 		}
 		return result;
 	}
@@ -281,54 +313,86 @@ public class GlueEncoderImpl implements GlueEncoder {
 	 * 
 	 *  @return the BDD that corresponds to a Require macro.
 	 */
-	// TODO: Think of the cardinality issue (move to Accept)
-	BDD requireBDD(BDD requirePortHolder, List<Hashtable<PortBase, ArrayList<BDD>>> requiredPorts) {
+
+	BDD requireBDD(BDD requirePortHolder, List<Hashtable<PortBase, ArrayList<BDD>>> allCausesPorts,
+			List<Hashtable<PortBase, Integer>> requiredCardinalities) {
 		
 
 		BDD allDisjunctiveCauses = engine.getBDDManager().zero();
 		logger.trace("Start computing the require BDDs");
-		for(Hashtable<PortBase, ArrayList<BDD>> requiredPort : requiredPorts){
+		for(Hashtable<PortBase, ArrayList<BDD>> oneCausePorts : allCausesPorts){
+
 			BDD allCausesBDD = engine.getBDDManager().one();
-			for (Enumeration<PortBase> portEnum = requiredPort.keys(); portEnum.hasMoreElements();) {
-				PortBase port = portEnum.nextElement();
-				ArrayList<BDD> auxPortBDDs = requiredPort.get(port);
-				logger.trace("Required port BDDs size: " + auxPortBDDs.size());
-				logger.trace("Required port: "+ port.getId() +" "+ port.getSpecType());	
-				int size = auxPortBDDs.size();
-				BDD oneCauseBDD = engine.getBDDManager().zero();
-				
-				for (int i = 0; i < size; i++) {
-					BDD monomial = engine.getBDDManager().one();				
-					for (int j = 0; j < size; j++) {
-						if (i == j) {
-							/* Cannot use andWith here. Do not want to free the 
-							 * BDDs assigned to the ports at the Behaviour Encoder.*/
-							BDD tmp = monomial.and(auxPortBDDs.get(j));
-							monomial.free();
-							monomial = tmp;
-							logger.trace("Glue Encoder: small disjunction");
-						} else {
-							/* Cannot use andWith here. Do not want to free the 
-							 * BDDs assigned to the ports at the Behaviour Encoder.*/
-							BDD tmp = monomial.and(auxPortBDDs.get(j).not());
-							monomial.free();
-							monomial = tmp;
-							logger.trace("Glue Encoder: small disjunction");
+			for (Enumeration<PortBase> portEnum = oneCausePorts.keys(); portEnum.hasMoreElements();) {
+
+
+				while (portEnum.hasMoreElements()) {
+					PortBase port = portEnum.nextElement();
+
+					boolean checkingCardinalities = false;
+					for (Hashtable<PortBase, Integer> auxPort : requiredCardinalities) {
+						if (auxPort.containsKey(port)) {
+							checkingCardinalities = true;
 						}
 					}
-					logger.trace("before one Cause OR");
-					oneCauseBDD.orWith(monomial);
+
+					if (checkingCardinalities == true) {
+						ArrayList<BDD> setOfPortBDDs = oneCausePorts.get(port);
+
+						/*
+						 * Gets all different subsets of size equal to the cardinality
+						 */
+
+						/*
+						 * TODO: Throw Exception if the cardinality specified in the Glue for a
+						 * specific component type is greater than the number of registered
+						 * instances of this component type
+						 */
+						ArrayList<HashSet<BDD>> subsetsOfGivenSize = HelperFunctions.enumerateSubsets(setOfPortBDDs,
+								requiredCardinalities.get(allCausesPorts.indexOf(oneCausePorts)).get(port));
+
+						logger.trace("Required port BDDs size: " + setOfPortBDDs.size());
+						logger.trace("Required port: " + port.getId() + " " + port.getSpecType());
+						int size = setOfPortBDDs.size();
+						BDD oneCauseBDD = engine.getBDDManager().zero();
+
+						for (HashSet<BDD> subset : subsetsOfGivenSize) {
+							BDD monomial = engine.getBDDManager().one();
+							for (int i = 0; i < size; i++) {
+								if (subset.contains(setOfPortBDDs.get(i))) {
+									/*
+									 * Cannot use andWith here. Do not want to free the BDDs
+									 * assigned to the ports at the Behaviour Encoder.
+									 */
+									BDD tmp = monomial.and(setOfPortBDDs.get(i));
+									monomial.free();
+									monomial = tmp;
+								} else {
+									/*
+									 * Cannot use andWith here. Do not want to free the BDDs
+									 * assigned to the ports at the Behaviour Encoder.
+									 */
+									BDD tmp = monomial.and(setOfPortBDDs.get(i).not());
+									monomial.free();
+									monomial = tmp;
+								}
+							}
+							logger.trace("before one Cause OR");
+							oneCauseBDD.orWith(monomial);
+						}
+
+						logger.trace("before all Causes AND");
+						allCausesBDD.andWith(oneCauseBDD);
+					}
+					}
 				}
-				logger.trace("before all Causes AND");
-				allCausesBDD.andWith(oneCauseBDD);
-			}
 			logger.trace("before all Disjunctive Causes OR");
 			allDisjunctiveCauses.orWith(allCausesBDD);
-		}
+			}
 		logger.trace("Finished with the require BDDs");
 		allDisjunctiveCauses.orWith(requirePortHolder.not());
 		logger.trace("Finished with the disjunctive causes");
-		return allDisjunctiveCauses;			
+		return allDisjunctiveCauses;
 	}
 	
 	/**
@@ -419,6 +483,7 @@ public class GlueEncoderImpl implements GlueEncoder {
 		logger.trace("Finished computing the accept BDDs");
 		return allCausesBDD.orWith(acceptPortHolder.not());
 	}
+
 
 public ArrayList<BDD> totalGlue() throws BIPEngineException{
 		ArrayList<BDD> allGlueBDDs = new ArrayList<BDD>();

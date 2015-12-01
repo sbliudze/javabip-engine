@@ -2,10 +2,13 @@ package org.bip.engine;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 
 // TODO: Auto-generated Javadoc
 /**
  * The Class HelperFunctions.
+ * 
+ * @author Anastasia Mavridou
  */
 public class HelperFunctions {
 	
@@ -35,4 +38,46 @@ public class HelperFunctions {
 	    }
 	    return list;
 	}
+
+
+	static private <T> ArrayList<HashSet<T>> _enumerateSubsets(ArrayList<T> baseSet, int size) {
+		if (size == 1) {
+			ArrayList<HashSet<T>> subsets = new ArrayList<HashSet<T>>();
+			for (T element : baseSet) {
+				HashSet<T> subset = new HashSet<T>();
+				subset.add(element);
+				subsets.add(subset);
+			}
+			return subsets;
+		} else if (baseSet.size() == size) {
+			ArrayList<HashSet<T>> subsets = new ArrayList<HashSet<T>>();
+			subsets.add(new HashSet<T>(baseSet));
+			return subsets;
+		} else {
+			T element = baseSet.remove(0);
+			ArrayList<HashSet<T>> subsets = _enumerateSubsets(baseSet, size);
+			for (HashSet<T> subset : _enumerateSubsets(baseSet, size - 1)) {
+				subset.add(element);
+				subsets.add(subset);
+			}
+			baseSet.add(0, element);
+			return subsets;
+		}
+	}
+
+	static public <T> ArrayList<HashSet<T>> enumerateSubsets(Collection<T> baseSet, int size) {
+		return _enumerateSubsets(new ArrayList<T>(baseSet), size);
+	}
+
+	static public <T> ArrayList<HashSet<T>> enumerateAllSubsets(Collection<T> baseSet) {
+		ArrayList<T> baseSetCopy = new ArrayList<T>(baseSet);
+		ArrayList<HashSet<T>> subsets = new ArrayList<HashSet<T>>();
+		subsets.add(new HashSet<T>()); // empty set
+
+		for (int size = 1; size <= baseSet.size(); size++)
+			subsets.addAll(_enumerateSubsets(baseSetCopy, size));
+
+		return subsets;
+	}
+
 }
