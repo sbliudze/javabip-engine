@@ -63,6 +63,8 @@ public class EngineFactory {
 		// refactoring the coordinators)
 		// executor.setProxy(actor);
 		actor.initialize();
+
+		actor.specifyGlue(glue);
 		
 		return actor;
 	}

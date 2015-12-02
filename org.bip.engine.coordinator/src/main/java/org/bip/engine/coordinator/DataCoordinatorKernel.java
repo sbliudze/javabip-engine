@@ -129,13 +129,19 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 		componentDataWires = new HashMap<String, Map<String, Set<DataWire>>>();
 	}
 
+	BIPGlue glueHolder;
+
+	public synchronized void specifyGlue(BIPGlue glue) {
+		glueHolder = glue;
+	}
+
 	/**
 	 * Sends interactions-glue to the BIP Coordinator Sends data-glue to the Data Encoder.
 	 * 
 	 * @param glue
 	 *            the glue
 	 */
-	public synchronized void specifyGlue(BIPGlue glue) {
+	private synchronized void delayedSpecifyGlue(BIPGlue glue) {
 		bipCoordinator.specifyGlue(glue);
 		this.dataWires = glue.getDataWires();
 		try {
@@ -257,6 +263,7 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 		} catch (BIPEngineException e) {
 			// e.printStackTrace();
 		}
+
 		return actor;
 	}
 
@@ -536,6 +543,7 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 	}
 
 	public void start() {
+		delayedSpecifyGlue(glueHolder);
 		bipCoordinator.start();
 	}
 

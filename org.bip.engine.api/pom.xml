@@ -38,14 +38,6 @@
             <version>0.1.0-SNAPSHOT</version>
         </dependency>
 
-<!--
-		<dependency>
-			<groupId>org.bip.epfl</groupId>
-			<artifactId>org.bip.engine</artifactId>
-			<version>0.1.0-SNAPSHOT</version>
-		</dependency>
--->
-
 		<dependency>
 			<groupId>javabdd</groupId>
 			<artifactId>javabdd</artifactId>
@@ -146,7 +138,6 @@
 
 		</plugins>
 	</build>
-
 
 	<pluginRepositories>
 		<pluginRepository>

@@ -154,11 +154,16 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 
 	}
 
+	BIPGlue glueHolder;
+
 	public synchronized void specifyGlue(BIPGlue glue) {
+		glueHolder = glue;
+	}
+
+	public synchronized void delayedSpecifyGlue(BIPGlue glue) {
 		try {
 			glueenc.specifyGlue(glue);
 		} catch (BIPEngineException e) {
-			// e.printStackTrace();
 		}
 	}
 
@@ -317,6 +322,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 			org.bip.api.BIPEngine typedActorEngine = (org.bip.api.BIPEngine) typedActorSelf;
 			executorActor.register(typedActorEngine); // BIG TODO: Try
 														// synchronous call
+
 			// return actorWithLifeCycle;
 			return executorActor;
 		}
@@ -744,6 +750,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	 * Create a thread for the Engine and start it.
 	 */
 	public void start() {
+		delayedSpecifyGlue(glueHolder);
 		engineThread = new Thread(this, "BIPEngine");
 		engineThread.start();
 	}
