@@ -2,63 +2,28 @@ package org.bip.engine.coordinator;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.Map;
 
-import org.bip.api.DataValue;
-
 public class DataHelper {
 
 	/**
-	 * OLD METHOD, SHOULD BE ELIMINATED (hence, no good comments here)
-	 * Given an sorted list of data containers and information about multiple usage of the same data,
-	 * the method returns a list of maps name-value, necessary for port execution
+	 * Given a grouped list of data containers,
+	 * the method creates a list of tuples consisting of name-value data pairs, necessary for port execution
 	 * 
 	 * @param containerList
-	 *            the container list
-	 * @param dataCount
-	 *            a map containing names of those data that are needed more than
-	 *            once, and their required count
-	 * @return the array list
+	 * 			a list of rows of containers with data, where each row provides all the data needed by a port
+	 * @return a list of maps of name-value pairs, where each map provides all the data needed by a port
 	 */
-	public static ArrayList<Map<String, Object>> createDataTable(
-			ArrayList<ArrayList<DataContainerImpl>> containerList, HashMap<String, Integer> dataCount) {
+	public static ArrayList<Map<String, Object>> createDataValueMaps(
+			ArrayList<ArrayList<DataContainerImpl>> containerList) {
 
-		ArrayList<Map<String, Object>> dataTable = new ArrayList<Map<String, Object>>();
-		for (ArrayList<DataContainerImpl> container : containerList) {
-			Map<String, Object> row = new Hashtable<String, Object>();
-			for (DataContainerImpl dc : container) {
-				row.put(dc.name(), dc.value());
-			}
-			dataTable.add(row);
-		}
-		return dataTable;
-	}
-
-	/**
-	 * Given an unsorted list of data containers and information about multiple usage of the same data,
-	 * the method returns a list of tuples consisting of name-value data pairs, necessary for port execution
-	 * 
-	 * @param dataList
-	 * 			list of unsorted data containers
-	 * @param dataCount
-	 * 			 a map containing the names of all data which are required more
-	 *            than once, where the value for the name is the number of
-	 *            additional(!) times that the specific data is needed. (i.e. if
-	 *            data is needed twice, the value will be 1).
-	 * @return a list of rows of dataValues (name-value pairs), where each row provides all the data needed by a port
-	 */
-	public static ArrayList<ArrayList<DataValue>> createDataValueTable(
-					ArrayList<DataContainerImpl> dataList,	HashMap<String, Integer> dataCount) {
-		
-		ArrayList<ArrayList<DataContainerImpl>> containerList = getDataValueTable(dataList, dataCount);
-		ArrayList<ArrayList<DataValue>> dataValues = new ArrayList<ArrayList<DataValue>>();
+		ArrayList<Map<String, Object>> dataValues = new ArrayList<Map<String, Object>>();
 		for (ArrayList<DataContainerImpl> row : containerList) {
-			ArrayList<DataValue> dataValueRow = new ArrayList<DataValue>();
+			Map<String, Object> dataValueRow = new Hashtable<String, Object>();
 			for (DataContainerImpl container : row) {
-				dataValueRow.add(new DataValue(container.name(), container.value()));
+				dataValueRow.put(container.name(), container.value());
 			}
 			dataValues.add(dataValueRow);
 		}
@@ -68,21 +33,16 @@ public class DataHelper {
 	/**
 	 * Given an unsorted list of data containers, creates a grouped list of data
 	 * containers, where each sub-list is a permutation containing a value for each data request 
-	 * (one for each data name, or several for those data names which are required more than once)
+	 * (one for each data name)
 	 * 
 	 * @param unsortedDataList
 	 *            list of unsorted data containers
-	 * @param dataCount
-	 * 			 a map containing the names of all data which are required more
-	 *            than once, where the value for the name is the number of
-	 *            additional(!) times that the specific data is needed. (i.e. if
-	 *            data is needed twice, the value will be 1).
 	 * @return a list of data containers grouped into sub-lists, 
 	 * 			each sub-list having a different tuple of data values, 
 	 * 			and the size of sublist must be equal to the number of required data 
 	 */
 	public static ArrayList<ArrayList<DataContainerImpl>> getDataValueTable(
-			ArrayList<DataContainerImpl> unsortedDataList, HashMap<String, Integer> dataCount) {
+			ArrayList<DataContainerImpl> unsortedDataList) {
 		ArrayList<ArrayList<DataContainerImpl>> result = new ArrayList<ArrayList<DataContainerImpl>>();
 
 		if (unsortedDataList == null || unsortedDataList.isEmpty()) {
@@ -90,7 +50,7 @@ public class DataHelper {
 		}
 		// the data is now grouped by the name
 		ArrayList<ArrayList<DataContainerImpl>> sortedList = dataGroupedByName(
-				unsortedDataList, dataCount);
+				unsortedDataList);
 		// for one bipData get iterator over its values
 		ArrayList<DataContainerImpl> entry = sortedList.get(0);
 		Iterator<DataContainerImpl> iterator = entry.iterator();
@@ -163,21 +123,14 @@ public class DataHelper {
 	/**
 	 * Transforms a list of data containers into a list of lists of data
 	 * containers, where all data containers of each inner list are grouped by
-	 * name. If one data must be used several times, as indicated by dataCount
-	 * parameter, the resulting list is augmented with repetitive lists.
+	 * name. 
 	 * 
 	 * @param unsortedList
 	 *            the list of all data acquired from all components
-	 * @param dataCount
-	 *            a map containing the names of all data which are required more
-	 *            than once, where the value for the name is the number of
-	 *            additional(!) times that the specific data is needed. (i.e. if
-	 *            data is needed twice, the value will be 1).
 	 * @return list of data lists grouped by name
 	 */
 	private static ArrayList<ArrayList<DataContainerImpl>> dataGroupedByName(
-			ArrayList<DataContainerImpl> unsortedList,
-			HashMap<String, Integer> dataCount) {
+			ArrayList<DataContainerImpl> unsortedList) {
 		ArrayList<ArrayList<DataContainerImpl>> groupedByName = new ArrayList<ArrayList<DataContainerImpl>>();
 		// double loop, for each name find all similar, create a list out of
 		// them and delete them all from the initial list
@@ -192,21 +145,13 @@ public class DataHelper {
 				}
 			}
 			unsortedList.removeAll(oneDataList);
-			// if the data grouped last is needed by a component more than once,
-			// add the same list several times
-			if (dataCount.containsKey(data.name())) {
-				for (int i = 0; i < dataCount.get(data.name()); i++) {
-					groupedByName.add(oneDataList);
-				}
-			}
 			groupedByName.add(oneDataList);
 		}
 		return groupedByName;
 	}
 
 	/**
-	 * Creates a dataContainer list with three elements, two out of which are for the same data, which is required twice.
-	 * Builds a data value table for this list.
+	 * Creates a dataContainer list with three elements, builds a data value table for this list.
 	 */
 	public static void test() {
 		String memory = "memory";
@@ -217,10 +162,7 @@ public class DataHelper {
 		DataContainerImpl c2 = new DataContainerImpl(processor, 1, null, null);
 		ArrayList<DataContainerImpl> dataList = new ArrayList<DataContainerImpl>(
 				Arrays.asList(c11, c12, c2));
-		HashMap<String, Integer> dataCount = new HashMap<String, Integer>();
-		dataCount.put(memory, 1);
-		ArrayList<ArrayList<DataContainerImpl>> dataTable = getDataValueTable(
-				dataList, dataCount);
+		ArrayList<ArrayList<DataContainerImpl>> dataTable = getDataValueTable(dataList);
 		System.out.println(dataTable);
 	}
 
