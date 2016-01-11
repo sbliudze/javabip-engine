@@ -31,7 +31,7 @@
     <dependencies>
 
         <dependency>
-            <groupId>net.sf.javabdd</groupId>
+            <groupId>ch.epfl.risdlab</groupId>
             <artifactId>javabdd</artifactId>
             <version>1.0b2</version>
         </dependency>

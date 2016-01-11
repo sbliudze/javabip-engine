@@ -64,7 +64,7 @@
 		</dependency>
 
 		<dependency>
-			<groupId>javabdd</groupId>
+			<groupId>ch.epfl.risdlab</groupId>
 			<artifactId>javabdd</artifactId>
 			<version>1.0b2</version>
 		</dependency>
