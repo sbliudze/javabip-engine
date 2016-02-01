@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Hashtable;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -79,7 +78,7 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 	/** Number of states of components registered. */
 	private int nbStates;
 
-	/** The count. */
+	/** The interactions count (for logging purposes). */
 	private int count;
 
 	/** Create instances of all the the Data Encoder and of the BIPCoordinator. */
@@ -128,12 +127,37 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 		dataEncoder.setBDDManager(this.bipCoordinator.getBDDManager());
 		componentDataWires = new HashMap<String, Map<String, Set<DataWire>>>();
 	}
+	
+	@Override
+	public void initialize() {
+		bipCoordinator.initialize();
+	}
+	
+	public void start() {
+		delayedSpecifyGlue(glueHolder);
+		bipCoordinator.start();
+	}
+
+	public void stop() {
+		isEngineExecuting = false;
+		bipCoordinator.stop();
+
+	}
 
 	BIPGlue glueHolder;
 
 	public synchronized void specifyGlue(BIPGlue glue) {
 		glueHolder = glue;
 	}
+
+	public void execute() {
+		if (this.interactionExecutor == null) {
+			setInteractionExecutor(this);
+		}
+		isEngineExecuting = true;
+		bipCoordinator.execute();
+	}
+	
 
 	/**
 	 * Sends interactions-glue to the BIP Coordinator Sends data-glue to the Data Encoder.
@@ -305,20 +329,19 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 	/**
 	 * Send each disabled combination of each deciding Component directly to the Data Encoder.
 	 * 
-	 * Exceptions are thrown if: 1. DecidingComponent are not in the list of registered components.
-	 * 2. Deciding Port of the deciding component (holder component) is not specified in the
-	 * Behaviour of the holder. 3. DisabledComponents in the disabledCombinations are not in the
-	 * list of registered components. 4. Disabled Ports in the disabledCombinations are not
-	 * specified in the Behaviour of the holder component.
-	 * 
 	 * @param decidingComponent
-	 *            the deciding component
+	 *            the component that has received data from other components 
+	 *            and has decided upon the possible combinations based on data
 	 * @param decidingPort
-	 *            the deciding port
+	 *            the port that has decided based on its guard
 	 * @param disabledCombinations
-	 *            the disabled combinations
+	 *            the combinations of components with their ports that are disabled based on data they provide
 	 * @throws BIPEngineException
-	 *             the BIP engine exception
+	 *              Exceptions are thrown if: 1. DecidingComponent are not in the list of registered components.
+	 *              2. Deciding Port of the deciding component (holder component) is not specified in the
+	 *              Behaviour of the holder. 3. DisabledComponents in the disabledCombinations are not in the
+	 *              list of registered components. 4. Disabled Ports in the disabledCombinations are not
+	 *              specified in the Behaviour of the holder component.
 	 */
 	public synchronized void informSpecific(BIPComponent decidingComponent, Port decidingPort,
 			Map<BIPComponent, Set<Port>> disabledCombinations) throws BIPEngineException {
@@ -397,93 +420,14 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 				decidingPort, disabledCombinations));
 
 	}
-
-	/*
-	 * Merging the "subinteractions". Some port can in more than one of the enabled d-variables.
-	 * This port should not be sent to the Executors twice
-	 */
-	/**
-	 * Merging sub interactions.
-	 * 
-	 * @param chosenInteraction
-	 *            the chosen interaction
-	 * @param portsExecuted
-	 *            the ports executed
-	 * @return the list
-	 */
-	private List<List<Port>> mergingSubInteractions(byte[] chosenInteraction, ArrayList<Port> portsExecuted) {
-		for (Integer i : positionsOfDVariables) {
-			if (chosenInteraction[i] == 1) {
-				Entry<Port, Port> pair = dVarPositionsToWires.get(i);
-				Port firstPair = pair.getKey();
-				Port secondPair = pair.getValue();
-				// logger.trace("D variable for ports: " + "\n\t" + firstPair + "\n\t of component "
-				// + firstPair.component() + "\n\t " + secondPair + "\n\t of component " +
-				// secondPair.component());
-
-				// TODO DISCUSS DANGER remove from merged interactions those where component communicates with itself
-				if (firstPair.component().equals(secondPair.component())) {
-					continue;
-				}
 	
-				//  check for data for the first component
-				setDataValuationToExecutor(firstPair, secondPair);
-			    //  check for data for the second component
-				setDataValuationToExecutor(secondPair, firstPair);
-
-				if (!portsExecuted.contains(firstPair)) {
-					portsExecuted.add(firstPair);
-				}
-				if (!portsExecuted.contains(secondPair)) {
-					portsExecuted.add(secondPair);
-				}
-			}
+	public void execute(byte[] valuation) throws BIPEngineException {
+		if (interactionExecutor != this && isEngineExecuting) {
+			interactionExecutor.execute(valuation);
+		} else if (isEngineExecuting) {
+			executeInteractions(preparePorts(valuation));
 		}
-		List<List<Port>> bigInteraction = new ArrayList<List<Port>>();
-		bigInteraction.add(portsExecuted);
-		return bigInteraction;
-	}
-
-	/**
-	 * by Alina
-	 * This method sets the data value in the Executor of a component which asks for it in order to execute the port askingData.
-	 * The data is provided through the port providingData of another component.
-	 */
-	private synchronized void setDataValuationToExecutor(Port askingData, Port providingData) {
-		if (isEngineExecuting) {
-			Behaviour behaviour = componentBehaviourMapping.get(askingData.component());
-		
-		if (behaviour!=null){
-		Iterable<Data<?>> portToDataInForTransition = behaviour.portToDataInForTransition(askingData);
-				for (Data<?> dataItem : portToDataInForTransition) {
-					assert (componentBehaviourMapping.get(askingData.component()) != null);
-					String dataOutName = dataIsProvided(providingData,
-							componentBehaviourMapping.get(askingData.component()).getComponentType(), dataItem.name());
-					BIPComponent component = providingData.component();
-					if (dataOutName != null && !dataOutName.isEmpty() && isEngineExecuting) {
-						Object dataValue = component.getData(dataOutName, dataItem.type());
-						// logger.trace("GETTING DATA: from component " + providingData.component()
-						// + " the value "
-						// + dataValue);
-						// this condition makes it impossible for a method providing a dataOut to return null, it must always return some particular value
-						if (dataValue == null) {
-							logger.error("Component: " + askingData.component()
-									+ " is asking data from component: "
-									+ providingData.component() + " , with name: " + dataOutName + " and type: "
-									+ dataItem.type() + " The function getData of the Executor kernel returns null. ");
-
-							throw new IllegalArgumentException("Component: " + askingData.component()
-									+ " is asking data from component: " + providingData.component() + " , with name: "
-									+ dataOutName + " and type: " + dataItem.type()
-									+ " The function getData of the Executor kernel returns null for these arguments. ");
-						}
-						askingData.component().setData(dataItem.name(), dataValue);
-
-					}
-				}
-			}
-		}
-
+		logger.debug("*************************************************************************");
 	}
 
 	/**
@@ -512,80 +456,33 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 	}
 
 	/**
-	 * Data is provided.
-	 * 
-	 * @param providingPort
-	 *            the providing port
-	 * @param requiringComponentType
-	 *            the requiring component type
-	 * @param dataName
-	 *            the data name
-	 * @return the string
-	 */
-	private String dataIsProvided(Port providingPort, String requiringComponentType, String dataName) {
-		BIPComponent providingComponent = providingPort.component();
-		assert (componentBehaviourMapping.get(providingComponent) != null);
-		for (DataWire wire : this.componentDataWires.get(requiringComponentType).get(dataName)) {
-			if (wire.getFrom().getSpecType()
-					.equals(componentBehaviourMapping.get(providingComponent).getComponentType())) {
-				Set<Port> portsProviding = componentBehaviourMapping.get(providingComponent).getDataProvidingPorts(
-						wire.getFrom().getId());
-				for (Port outport : portsProviding) {
-					if (outport.getId().equals(providingPort.getId())
-							&& outport.getSpecType().equals(providingPort.getSpecType())) {
-						return wire.getFrom().getId();
-					}
-				}
-			}
-		}
-		return null;
-
-	}
-
-	public void start() {
-		delayedSpecifyGlue(glueHolder);
-		bipCoordinator.start();
-	}
-
-	public void stop() {
-		isEngineExecuting = false;
-		bipCoordinator.stop();
-
-	}
-
-	public void execute() {
-		if (this.interactionExecutor == null) {
-			setInteractionExecutor(this);
-		}
-		isEngineExecuting = true;
-		bipCoordinator.execute();
-	}
-
-
-	/**
-	 * Do inform specific. Alina's code
-	 * 
+	 * For each port which is neither enabled, nor disabled, for each data that the port needs, 
+	 * the method gets the data from other components (based on data-wires), calls the checkEnabledness method of Executor and finally
+	 *  calls informSpecific method with the port combinations which are disabled based on data.
 	 * @param component
-	 *            the component
+	 * 			component requiring data
+	 * @param currentState
+	 * 			the current state of the component
+	 * @param disabledPorts
+	 * 			the set of globally disabled ports of the component
 	 * @throws BIPEngineException
-	 *             the BIP engine exception
 	 */
 	private void doInformSpecific(BIPComponent component, String currentState, Set<Port> disabledPorts)
-			throws BIPEngineException {
+		 {
 		// mapping port <-> data it needs for computing guards
 		Behaviour decidingBehaviour = componentBehaviourMapping.get(component);
 		// for each undecided port of each component :
 		for (Port port : getUndecidedPorts(component, currentState, disabledPorts)) {
 			// get list of DataIn needed for its guards
 			Set<Data<?>> dataIn = decidingBehaviour.portToDataInForGuard(port);
-
+			logger.debug("Port "+ port+ " of component " + decidingBehaviour.getComponentType() + 
+					" required the following dataIn: "+dataIn);
 			if (dataIn.isEmpty()) {
 				// if the data is empty, then the port is enabled. just send it.
 				this.informSpecific(component, port, new HashMap<BIPComponent, Set<Port>>());
 				continue;
 			}
-			// for each data its different evaluations
-			Hashtable<String, ArrayList<Object>> dataEvaluation = new Hashtable<String, ArrayList<Object>>();
+			
 			// list of data structures build upon receiving the data value
 			ArrayList<DataContainerImpl> dataList = new ArrayList<DataContainerImpl>();
 			// for each DataIn variable get info which components provide it as
@@ -601,7 +498,7 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 					// for each component of this type, call getData
 					for (BIPComponent aComponent : getBIPComponentInstances(wire.getFrom().getSpecType())) {
 						// TODO quick fix for the component not to receive data from itself
-						// discuss it and check whether it works fine in all situations and
+						// discuss it and check whether it works fine in all situations 
 						if (aComponent.equals(component)) {
 							continue;
 						}
@@ -612,22 +509,27 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 							assert (wire.getFrom() != null);
 							Set<Port> providingPorts = componentBehaviourMapping.get(aComponent).getDataProvidingPorts(
 									wire.getFrom().getId());
-							dataList.add(new DataContainerImpl(inDataItem, inValue, aComponent, providingPorts));
+							dataList.add(new DataContainerImpl(inDataItem.name(), inValue, aComponent, providingPorts));
 							dataValues.add(inValue);
 						}
 					}
-					dataEvaluation.put(inDataItem.name(), dataValues);
+					logger.debug("Added a data evaluation of data " + inDataItem.name() + " with the values " + dataValues +
+							" for port "+ port+ " of component " + decidingBehaviour.getComponentType());
 				}
 			}
 
-			ArrayList<ArrayList<DataContainerImpl>> containerList = getDataValueTable(dataList);
-			// if (logger.isTraceEnabled()) {
-			// print(containerList, component);
-			// }
-			ArrayList<Map<String, Object>> dataTable = createDataTable(containerList);
-
-			// the result provided must have the same order - put comment
-			// containerList and portActive are dependant on each other
+			// a list with sub-lists consisting of different permutations of all required data values
+			ArrayList<ArrayList<DataContainerImpl>> containerList = DataHelper.getDataValueTable(dataList);
+			if (logger.isTraceEnabled()) {
+				logDataValuations(containerList, component);
+			}
+			//a list of maps, each map containing values for all required data
+			ArrayList<Map<String, Object>> dataTable = DataHelper.createDataValueMaps(containerList);
+			/* NOTE: We need both lists above, as one contains information about component providing the data, 
+					and the other has only name-value pairs used in checkEnabledness.
+			        List of booleans portActive below is mutually dependent with containerList, 
+			        as the order of variables in one must correspond to the order of variables in the other.
+			*/
 			List<Boolean> portActive = component.checkEnabledness(port, dataTable);
 			logger.trace("The result of checkEndabledness for component {}: {}.", component, portActive);
 			HashMap<BIPComponent, Set<Port>> disabledCombinations = new HashMap<BIPComponent, Set<Port>>();
@@ -636,188 +538,57 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 				if (!(portActive.get(i))) {
 					ArrayList<DataContainerImpl> dataContainer = containerList.get(i);
 					for (DataContainerImpl dc : dataContainer) {
-						// logger.debug(this.count + " CONTAINER CHOSEN: For deciding " +
-						// component.hashCode() + " and "
-						// + port.getId() + " disabled is " + dc.component() + " with ports " +
-						// dc.ports());
 						disabledCombinations.put(dc.component(), dc.ports());						
 					}
+					 logger.debug(this.count + " CONTAINER CHOSEN: For deciding component " +
+					 component + " and its port "
+					 + port.getId() + " the disabled combinations are " + disabledCombinations);
 				}
 				this.informSpecific(component, port, disabledCombinations);
 			}
 			//TODO HACK this was added to  make the component unable to interact with itself.
-			// TODO quick fix for the component not to receive data from itself
-			// discuss it and check whether it works fine in all situations and
+			// discuss it and check whether it works fine in all situations 
 			disabledCombinations.clear();
-			disabledCombinations.put(component, new HashSet(decidingBehaviour.getEnforceablePorts()));
+			disabledCombinations.put(component, new HashSet<Port>(decidingBehaviour.getEnforceablePorts()));
 			this.informSpecific(component, port, disabledCombinations);
 		}
-
-
 	}
 
 	/**
-	 * Prints the. Alina' code
+	 * Log in trace mode: the list of data values provided by one component to another.
 	 * 
 	 * @param containerList
-	 *            the container list
+	 *            the list of lists of data
 	 * @param component
 	 *            the component
 	 */
-	// private void print(ArrayList<ArrayList<DataContainerImpl>> containerList, BIPComponent
-	// component) {
-	// for (ArrayList<DataContainerImpl> dataList : containerList) {
-	// for (DataContainerImpl container : dataList) {
-	// logger.trace(this.count + " Deciding " + component.hashCode() + ", Providing " +
-	// container.component()
-	// + " the value " + container.value());
-	// }
-	// }
-	//
-	// }
-
-	/**
-	 * Creates the data table. Alina
-	 * 
-	 * @param containerList
-	 *            the container list
-	 * @return the array list
-	 */
-	private ArrayList<Map<String, Object>> createDataTable(ArrayList<ArrayList<DataContainerImpl>> containerList) {
-		ArrayList<Map<String, Object>> dataTable = new ArrayList<Map<String, Object>>();
-		for (ArrayList<DataContainerImpl> container : containerList) {
-			Map<String, Object> row = new Hashtable<String, Object>();
-			for (DataContainerImpl dc : container) {
-				row.put(dc.name(), dc.value());
+	private void logDataValuations(ArrayList<ArrayList<DataContainerImpl>> containerList,
+			BIPComponent component) {
+		for (ArrayList<DataContainerImpl> dataList : containerList) {
+			for (DataContainerImpl container : dataList) {
+				logger.trace(this.count + " Deciding " + component
+						+ ", Providing " + container.component()
+						+ " the value " + container.value());
 			}
-			dataTable.add(row);
 		}
-		return dataTable;
+
 	}
 
-	/**
-	 * Gets the data value table. Alina's code
-	 * 
-	 * @param dataList
-	 *            the data list
-	 * @return the data value table
-	 */
-	private ArrayList<ArrayList<DataContainerImpl>> getDataValueTable(ArrayList<DataContainerImpl> dataList) {
-		ArrayList<ArrayList<DataContainerImpl>> result = new ArrayList<ArrayList<DataContainerImpl>>();
 
-		if (dataList == null || dataList.isEmpty()) {
-			// throw exception
-			return result;
-		}
-		ArrayList<ArrayList<DataContainerImpl>> sortedList = getListList(dataList);
-
-		// for one bipData get iterator over its values
-		ArrayList<DataContainerImpl> entry = sortedList.get(0);
-		Iterator<DataContainerImpl> iterator = entry.iterator();
-
-		// for each value of this first bipData
-		while (iterator.hasNext()) {
-			// create one map, where
-			// all the different pairs name<->value will be stored
-			// put there the current value of the first bipData
-			ArrayList<DataContainerImpl> dataRow = new ArrayList<DataContainerImpl>();
-			dataRow.add(iterator.next());
-
-			// remove the current data from the initial data table
-			// so that it is not treated again further
-			sortedList.remove(entry);
-			// treat the other bipData variables
-			result.addAll(getNextTableRow(sortedList, dataRow));
-			// restore the current data
-			sortedList.add(entry);
-		}
-		return result;
-	}
 
 	/**
-	 * Gets the next table row. Alina's code
-	 * 
-	 * @param sortedList
-	 *            the sorted list
-	 * @param dataRow
-	 *            the data row
-	 * @return the next table row
-	 */
-	private ArrayList<ArrayList<DataContainerImpl>> getNextTableRow(ArrayList<ArrayList<DataContainerImpl>> sortedList,
-			ArrayList<DataContainerImpl> dataRow) {
-		ArrayList<ArrayList<DataContainerImpl>> result = new ArrayList<ArrayList<DataContainerImpl>>();
-		// if there is no more data left, it means we have constructed one map
-		// of all the bipData variables
-		if (sortedList == null || sortedList.isEmpty()) {
-			result.add(dataRow);
-			return result;
-		}
-
-		// for one bipData get iterator over its values
-		ArrayList<DataContainerImpl> entry = sortedList.iterator().next();
-		Iterator<DataContainerImpl> iterator = entry.iterator();
-
-		// for each value of this bipData
-		while (iterator.hasNext()) {
-			// create a new map, where
-			// all the different pairs name<->value will be stored
-			// copy there all the previous values
-			// (this must be done to escape
-			// change of one variable that leads to change of all its copies
-			ArrayList<DataContainerImpl> thisRow = new ArrayList<DataContainerImpl>();
-			thisRow.addAll(dataRow);
-			// put there the current value of the bipData
-			thisRow.add(iterator.next());
-
-			// remove the current data from the initial data table
-			// so that it is not treated again further
-			sortedList.remove(entry);
-			// treat the other bipData variables
-			result.addAll(getNextTableRow(sortedList, thisRow));
-			// restore the current data
-			sortedList.add(entry);
-		}
-		return result;
-	}
-
-	/**
-	 * Gets the list list. Alina's code
-	 * 
-	 * @param list
-	 *            the list
-	 * @return the list list
-	 */
-	private ArrayList<ArrayList<DataContainerImpl>> getListList(ArrayList<DataContainerImpl> list) {
-		ArrayList<ArrayList<DataContainerImpl>> result = new ArrayList<ArrayList<DataContainerImpl>>();
-
-		while (!list.isEmpty()) {
-			ArrayList<DataContainerImpl> oneDataList = new ArrayList<DataContainerImpl>();
-			DataContainerImpl data = list.get(0);
-			oneDataList.add(data);
-			list.remove(data);
-			for (DataContainerImpl d : list) {
-				if (d.name().equals(data.name())) {
-					oneDataList.add(d);
-				}
-			}
-			list.removeAll(oneDataList);
-			result.add(oneDataList);
-		}
-		return result;
-	}
-
-	/**
-	 * Gets the undecided ports. Alina's code
+	 * Helper functions to get ports about which the decision of enabledness depends on data (or other not known conditions)
 	 * 
 	 * @param component
-	 *            the component
+	 *            the component in question
 	 * @param currentState
-	 *            the current state
+	 *            the current state of the component
 	 * @param disabledPorts
-	 *            the disabled ports
-	 * @return the undecided ports
+	 *            the set of globally disabled ports of the component
+	 * @return the list of ports that haven't decided yet if they are enabled or not
 	 */
-	private ArrayList<Port> getUndecidedPorts(BIPComponent component, String currentState, Set<Port> disabledPorts) {
+	private ArrayList<Port> getUndecidedPorts(BIPComponent component,
+			String currentState, Set<Port> disabledPorts) {
 		ArrayList<Port> undecidedPorts = new ArrayList<Port>();
 		Behaviour behaviour = componentBehaviourMapping.get(component);
 		boolean portIsDisabled = false;
@@ -838,87 +609,9 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 			}
 			portIsDisabled = false;
 		}
-		// logger.trace("For component {} the undecided ports are {}. " + component.getId(),
-		// undecidedPorts);
+		logger.trace("For component {} the undecided ports are {}. ",
+				component.getId(), undecidedPorts);
 		return undecidedPorts;
-	}
-
-	/**
-	 * Helper function that returns the registered component instances that correspond to a
-	 * component type.
-	 * 
-	 * @param type
-	 *            the type
-	 * @return the BIP component instances
-	 * @throws BIPEngineException
-	 *             the BIP engine exception
-	 */
-	public List<BIPComponent> getBIPComponentInstances(String type) throws BIPEngineException {
-		ArrayList<BIPComponent> instances = typeInstancesMapping.get(type);
-		if (instances == null) {
-			try {
-				logger.error(
-						"No registered component instances for the: {} ",
-						type
-								+ " component type. Possible reasons: The name of the component instances was specified in another way at registration.");
-				throw new BIPEngineException(
-						"Exception in thread "
-								+ Thread.currentThread().getName()
-								+ " No registered component instances for the component type: "
-								+ "'"
-								+ type
-								+ "'"
-								+ " Possible reasons: The name of the component instances was specified in another way at registration.");
-			} catch (BIPEngineException e) {
-				// e.printStackTrace();
-				throw e;
-			}
-		}
-		return instances;
-	}
-
-	/**
-	 * Helper function that given a component returns the corresponding behaviour as a Behaviour
-	 * Object.
-	 * 
-	 * @param component
-	 *            the component
-	 * @return the behaviour by component
-	 */
-	public Behaviour getBehaviourByComponent(BIPComponent component) {
-		return componentBehaviourMapping.get(component);
-	}
-
-	/**
-	 * Helper function that returns the total number of ports of the registered components.
-	 * 
-	 * @return the no ports
-	 */
-	public int getNoPorts() {
-		return nbPorts;
-	}
-
-	/**
-	 * Helper function that returns the total number of states of the registered components.
-	 * 
-	 * @return the no states
-	 */
-	public int getNoStates() {
-		return nbStates;
-	}
-
-	public int getNoComponents() {
-		return bipCoordinator.getNoComponents();
-	}
-
-
-	public void execute(byte[] valuation) throws BIPEngineException {
-		if (interactionExecutor != this && isEngineExecuting) {
-			interactionExecutor.execute(valuation);
-		} else if (isEngineExecuting) {
-			executeInteractions(preparePorts(valuation));
-		}
-		logger.debug("*************************************************************************");
 	}
 
 	/**
@@ -991,6 +684,128 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 		// logger.trace("Interactions: " + bigInteraction.size());
 		return bigInteraction;
 	}
+	
+	/*
+	 * Merging the "subinteractions". Some port can in more than one of the enabled d-variables.
+	 * This port should not be sent to the Executors twice
+	 */
+	/**
+	 * Merging sub interactions.
+	 * 
+	 * @param chosenInteraction
+	 *            the chosen interaction
+	 * @param portsExecuted
+	 *            the ports executed
+	 * @return the list
+	 */
+	private List<List<Port>> mergingSubInteractions(byte[] chosenInteraction, ArrayList<Port> portsExecuted) {
+		for (Integer i : positionsOfDVariables) {
+			if (chosenInteraction[i] == 1) {
+				Entry<Port, Port> pair = dVarPositionsToWires.get(i);
+				Port firstPair = pair.getKey();
+				Port secondPair = pair.getValue();
+				// logger.trace("D variable for ports: " + "\n\t" + firstPair + "\n\t of component "
+				// + firstPair.component() + "\n\t " + secondPair + "\n\t of component " +
+				// secondPair.component());
+
+				// TODO DISCUSS DANGER remove from merged interactions those where component communicates with itself
+				if (firstPair.component().equals(secondPair.component())) {
+					continue;
+				}
+	
+				//  check for data for the first component
+				setDataValuationToExecutor(firstPair, secondPair);
+			    //  check for data for the second component
+				setDataValuationToExecutor(secondPair, firstPair);
+
+				if (!portsExecuted.contains(firstPair)) {
+					portsExecuted.add(firstPair);
+				}
+				if (!portsExecuted.contains(secondPair)) {
+					portsExecuted.add(secondPair);
+				}
+			}
+		}
+		List<List<Port>> bigInteraction = new ArrayList<List<Port>>();
+		bigInteraction.add(portsExecuted);
+		return bigInteraction;
+	}
+	
+	/**
+	 * Sets the data value in the Executor of a component which asks for it in order to execute the port askingData.
+	 * The data is provided through the port providingData of another component.
+	 * @param askingData
+	 * 		port that needs data for execution
+	 * @param providingData
+	 * 		port that provides data for execution
+	 */
+	private synchronized void setDataValuationToExecutor(Port askingData, Port providingData) {
+		if (isEngineExecuting) {
+			Behaviour behaviour = componentBehaviourMapping.get(askingData.component());
+		
+		if (behaviour!=null){
+		Iterable<Data<?>> requiredData = behaviour.portToDataInForTransition(askingData);
+				for (Data<?> dataItem : requiredData) {
+					assert (componentBehaviourMapping.get(askingData.component()) != null);
+					String dataOutName = getProviderDataName(providingData,
+							componentBehaviourMapping.get(askingData.component()).getComponentType(), dataItem.name());
+					BIPComponent providingComponent = providingData.component();
+					if (dataOutName != null && !dataOutName.isEmpty() && isEngineExecuting) {
+						Object dataValue = providingComponent.getData(dataOutName, dataItem.type());
+						// logger.trace("GETTING DATA: from component " + providingData.component()
+						// + " the value "
+						// + dataValue);
+						// this condition makes it impossible for a method providing a dataOut to return null, it must always return some particular value
+						if (dataValue == null) {
+							logger.error("Component: " + askingData.component()
+									+ " is asking data from component: "
+									+ providingData.component() + " , with name: " + dataOutName + " and type: "
+									+ dataItem.type() + " The function getData of the Executor kernel returns null. ");
+
+							throw new IllegalArgumentException("Component: " + askingData.component()
+									+ " is asking data from component: " + providingData.component() + " , with name: "
+									+ dataOutName + " and type: " + dataItem.type()
+									+ " The function getData of the Executor kernel returns null for these arguments. ");
+						}
+						askingData.component().setData(dataItem.name(), dataValue);
+
+					}
+				}
+			}
+		}
+
+	}
+	
+	/**
+	 * Looks through all the wires and returns the name of the dataOut of a component providing the data required
+	 * 
+	 * @param providingPort
+	 *            the port providing the data
+	 * @param requiringComponentType
+	 *            the type of component that requires the data
+	 * @param dataName
+	 *            the required data name
+	 * @return the string
+	 */
+	private String getProviderDataName(Port providingPort, String requiringComponentType, String dataName) {
+		BIPComponent providingComponent = providingPort.component();
+		assert (componentBehaviourMapping.get(providingComponent) != null);
+		for (DataWire wire : this.componentDataWires.get(requiringComponentType).get(dataName)) {
+			if (wire.getFrom().getSpecType()
+					.equals(componentBehaviourMapping.get(providingComponent).getComponentType())) {
+				Set<Port> portsProviding = componentBehaviourMapping.get(providingComponent).getDataProvidingPorts(
+						wire.getFrom().getId());
+				for (Port outport : portsProviding) {
+					if (outport.getId().equals(providingPort.getId())
+							&& outport.getSpecType().equals(providingPort.getSpecType())) {
+						return wire.getFrom().getId();
+					}
+				}
+			}
+		}
+		return null;
+
+	}
 
 
 	public void setInteractionExecutor(InteractionExecutor interactionExecutor) {
@@ -1001,9 +816,11 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 
 	public void specifyTemporaryConstraints(BDD constraints) {
 		bipCoordinator.specifyTemporaryConstraints(constraints);
-
 	}
 
+	public void specifyPermanentConstraints(Set<BDD> constraints) {
+		bipCoordinator.specifyPermanentConstraints(constraints);
+	}
 
 	public BehaviourEncoder getBehaviourEncoderInstance() {
 		return bipCoordinator.getBehaviourEncoderInstance();
@@ -1013,12 +830,6 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 	public BDDFactory getBDDManager() {
 		return bipCoordinator.getBDDManager();
 	}
-
-
-	public void specifyPermanentConstraints(Set<BDD> constraints) {
-		bipCoordinator.specifyPermanentConstraints(constraints);
-	}
-
 
 	public DataEncoder getDataEncoder() {
 		return dataEncoder;
@@ -1043,7 +854,7 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 	}
 
 	/**
-	 * Setd variables to position.
+	 * Set d variables to position.
 	 * 
 	 * @param dVarPositionsToWires
 	 *            the dVariablesToPosition to set
@@ -1066,10 +877,73 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 	public BIPComponent getComponentFromObject(Object component) {
 		return bipCoordinator.getComponentFromObject(component);
 	}
+	
+	/**
+	 * Helper function that returns the registered component instances that correspond to a
+	 * component type.
+	 * 
+	 * @param type
+	 *            the name of the component type
+	 * @return the BIP component instances
+	 * @throws BIPEngineException
+	 *             The exception is thrown when there are no registered component instances of the type specified.
+	 */
+	public List<BIPComponent> getBIPComponentInstances(String type) throws BIPEngineException {
+		ArrayList<BIPComponent> instances = typeInstancesMapping.get(type);
+		if (instances == null) {
+			try {
+				logger.error(
+						"No registered component instances for the: {} ",
+						type
+								+ " component type. Possible reasons: The name of the component instances was specified in another way at registration.");
+				throw new BIPEngineException(
+						"Exception in thread "
+								+ Thread.currentThread().getName()
+								+ " No registered component instances for the component type: "
+								+ "'"
+								+ type
+								+ "'"
+								+ " Possible reasons: The name of the component instances was specified in another way at registration.");
+			} catch (BIPEngineException e) {
+				// e.printStackTrace();
+				throw e;
+			}
+		}
+		return instances;
+	}
 
-	@Override
-	public void initialize() {
-		bipCoordinator.initialize();
+	/**
+	 * Helper function that given a component returns the corresponding behaviour as a Behaviour
+	 * Object.
+	 * 
+	 * @param component
+	 *            the component
+	 * @return the behaviour by component
+	 */
+	public Behaviour getBehaviourByComponent(BIPComponent component) {
+		return componentBehaviourMapping.get(component);
+	}
+
+	/**
+	 * Helper function that returns the total number of ports of the registered components.
+	 * 
+	 * @return the no ports
+	 */
+	public int getNoPorts() {
+		return nbPorts;
+	}
+
+	/**
+	 * Helper function that returns the total number of states of the registered components.
+	 * 
+	 * @return the no states
+	 */
+	public int getNoStates() {
+		return nbStates;
+	}
+
+	public int getNoComponents() {
+		return bipCoordinator.getNoComponents();
 	}
 
 }
