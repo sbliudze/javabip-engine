@@ -346,9 +346,9 @@ public class DataEncoderImpl implements DataEncoder {
 		for (BIPComponent component : inComponentInstances) {
 			if (dataCoordinator.getBehaviourByComponent(component).portsNeedingData(inData.getId()).isEmpty()
 					|| dataCoordinator.getBehaviourByComponent(component).portsNeedingData(inData.getId()) == null) {
-				logger.error("Output Component of data wire for component "+ inData.getSpecType() + " and data " + inData.getId() +" is incorrect. Possible reason: Input and output components of data wire are reversed.");
+				logger.error("Output Component of data wire for component "+ inData.getSpecType() + " and data " + inData.getId() +" is incorrect. Possible reasons: 1) Input and output components of data wire are reversed; 2) The required data is not specified in the data wires.");
 				throw new BIPEngineException(
-						"Output Component of data wire for component "+ inData.getSpecType() + " and data " + inData.getId() +" is incorrect. Possible reason: Input and output components of data wire are reversed.");
+						"Output Component of data wire for component "+ inData.getSpecType() + " and data " + inData.getId() +" is incorrect. Possible reasons: 1) Input and output components of data wire are reversed; 2) The required data is not specified in the data wires.");
 			} else {
 				logger.trace("inData: " + inData.getId());
 				logger.trace("inData component: " + component.getId());
