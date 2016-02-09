@@ -895,7 +895,7 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 				logger.error(
 						"No registered component instances for the: {} ",
 						type
-								+ " component type. Possible reasons: The name of the component instances was specified in another way at registration.");
+								+ " component type. Possible reasons: 1) The name of the component instances was specified in another way at registration; 2) The function specifyGlue was called before registering all the components.");
 				throw new BIPEngineException(
 						"Exception in thread "
 								+ Thread.currentThread().getName()
@@ -903,7 +903,7 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 								+ "'"
 								+ type
 								+ "'"
-								+ " Possible reasons: The name of the component instances was specified in another way at registration.");
+								+ " Possible reasons: 1) The name of the component instances was specified in another way at registration; 2) The function specifyGlue was called before registering all the components.");
 			} catch (BIPEngineException e) {
 				// e.printStackTrace();
 				throw e;
