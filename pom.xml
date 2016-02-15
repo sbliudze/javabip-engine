@@ -19,6 +19,7 @@
 
   <modules>
 	<module>org.bip.engine.api</module>
+    <module>org.bip.engine.bdd</module>
 	<module>org.bip.engine.coordinator</module>
 	<module>org.bip.engine.factory</module>
   </modules>

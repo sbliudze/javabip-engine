@@ -24,7 +24,7 @@
 	<name>BIP :: Engine :: Factory </name>
 
 	<properties>
-		<osgi.private></osgi.private>
+		<osgi.private>org.bip.engine</osgi.private>
 		<osgi.import>*</osgi.import>
 		<osgi.export>org.bip.engine.factory</osgi.export>
 		<osgi.dynamic.import></osgi.dynamic.import>
@@ -64,7 +64,7 @@
 		</dependency>
 
 		<dependency>
-			<groupId>javabdd</groupId>
+			<groupId>ch.epfl.risdlab</groupId>
 			<artifactId>javabdd</artifactId>
 			<version>1.0b2</version>
 		</dependency>
@@ -89,8 +89,8 @@
 		
 		<dependency>
     		<groupId>com.typesafe.akka</groupId>
-    		<artifactId>akka-actor_2.10</artifactId>
-    		<version>2.1.1</version>
+    		<artifactId>akka-actor_2.11</artifactId>
+    		<version>2.3.9</version>
     	</dependency>
 
 		<dependency>
