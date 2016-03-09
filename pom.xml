@@ -184,6 +184,7 @@
 				<configuration>
 					<includes>
 						<include>**/org/bip/executor/*Tests.class</include>
+						<include>**/org/bip/dynamicity/*Tests.class</include>
 					</includes>
 				</configuration>
 			</plugin>
