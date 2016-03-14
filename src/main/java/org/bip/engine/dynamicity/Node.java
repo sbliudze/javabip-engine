@@ -48,12 +48,6 @@ class Node {
 		isSatisfied = false;
 	}
 
-	void decrementCounters() {
-		for (Edge e : edges.values()) {
-			e.decrementCounter();
-		}
-	}
-
 	int nbTimesRequired() {
 		int n = 0;
 		for (Edge e : edges.values()) {
@@ -61,15 +55,16 @@ class Node {
 		}
 		return n;
 	}
-
-	 void remove(int n) {
-		for (Edge e : edges.values()) {
-			e.incrementCounterBy(n);
-		}
-	}
 	 
 	String getType() {
 		return type;
+	}
+
+	void reset() {
+		this.notSatisfied();
+		for (Edge e : edges.values()) {
+			e.resetCounter();
+		}
 	}
 }
 
@@ -108,12 +103,11 @@ class Edge {
 		counter++;
 	}
 
+	void incrementCounter() {
+		counter++;
+	}
 	void decrementCounter() {
 		counter--;
-	}
-
-	void incrementCounterBy(int n) {
-		counter += n;
 	}
 
 	boolean isSatisfied() {

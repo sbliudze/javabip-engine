@@ -30,6 +30,9 @@ public class ComponentPool {
 	private Map<String, Set<Edge>> incomingEdges;
 	private Set<BIPComponent> pool;
 	private Map<Color, Set<Edge>> edgesPerSolution;
+	private boolean valid;
+	private Set<String> added;
+	private Map<String, Integer> subsystem;
 
 	public ComponentPool(BIPGlue glue) {
 		this.glue = glue;
@@ -37,6 +40,9 @@ public class ComponentPool {
 		this.incomingEdges = new HashMap<String, Set<Edge>>();
 		this.pool = new HashSet<BIPComponent>();
 		this.edgesPerSolution = new HashMap<Color, Set<Edge>>();
+		this.valid = false;
+		this.added = new HashSet<String>();
+		this.subsystem = new HashMap<String, Integer>();
 	}
 
 	/**
@@ -54,16 +60,15 @@ public class ComponentPool {
 			}
 		}
 
-		for (String type : nodes.keySet()) {
-			logger.debug("{} is a node of the graph", type);
-		}
+		// for (String type : nodes.keySet()) {
+		// logger.debug("{} is a node of the graph", type);
+		// }
 
 		// Create all edges
 		Color requirementColor, solutionColor = null;
 		String effectType, causeType;
 		Edge edge;
 		Node causeNode;
-		// Set<String> seen;
 
 		// For each requirement
 		for (Require require : requires) {
@@ -91,7 +96,6 @@ public class ComponentPool {
 				// For every cause in the disjunction
 				for (PortBase cause : causes) {
 					causeType = cause.getSpecType();
-					// seen.add(causeType);
 					causeNode = nodes.get(causeType);
 
 					if (!seen.contains(effectType)) {
@@ -126,18 +130,21 @@ public class ComponentPool {
 			seen.addAll(tmpSeen);
 		}
 
-		for (Node n : nodes.values()) {
-			for (Edge e : n.getEdges()) {
-				logger.debug("Color: {}, edge: {}", e.getSolutionColor(), e.toString());
-			}
-		}
-
+		// for (Node n : nodes.values()) {
+		// for (Edge e : n.getEdges()) {
+		// logger.debug("Color: {}, edge: {}", e.getSolutionColor(),
+		// e.toString());
+		// }
+		// }
 	}
 
 	public void cleanup() {
-		pool = new HashSet<BIPComponent>();
+		this.pool = new HashSet<BIPComponent>();
+		this.valid = false;
+		this.added = new HashSet<String>();
+		this.subsystem = new HashMap<String, Integer>();
 		for (Node node : nodes.values()) {
-			node.resetCounters();
+			node.reset();
 		}
 	}
 
@@ -154,23 +161,38 @@ public class ComponentPool {
 		}
 
 		List<Port> enforceablePorts = ((ExecutorKernel) instance).getBehavior().getEnforceablePorts();
-		
+
 		if (!nodes.containsKey(instance.getType()) && (enforceablePorts == null || enforceablePorts.isEmpty())) {
 			return new HashSet<BIPComponent>(Arrays.asList(instance));
-		} else if (!nodes.containsKey(instance.getType()) && !(enforceablePorts == null || enforceablePorts.isEmpty())) {
+		} else if (!nodes.containsKey(instance.getType())
+				&& !(enforceablePorts == null || enforceablePorts.isEmpty())) {
 			logger.error("Trying to add a component of type that is not in the graph: {}", instance.getType());
 			throw new BIPEngineException(
 					"Trying to add a component of type that is not in the graph: " + instance.getType());
 		}
 
-		logger.debug("Adding an instance of type {} to the pool", instance.getType());
+		if (this.added.contains(instance.getId())) {
+			logger.error("Component {} has already been added to the pool. ID = {}", instance, instance.getId());
+			throw new BIPEngineException(
+					"Component " + instance + " has already been added to the pool. ID = " + instance.getId());
+		}
+
+		// logger.debug("Adding an instance of type {} to the pool",
+		// instance.getType());
 
 		// Always update the counters
-		boolean validSystem = decrementCounters(instance.getType());
+		this.valid |= decrementCounters(instance.getType());
+		this.added.add(instance.getId());
+		Integer count = this.subsystem.get(instance.getType());
+		if(count == null || count.intValue() == 0) {
+			this.subsystem.put(instance.getType(), 1);
+		} else {
+			this.subsystem.put(instance.getType(), count + 1);
+		}
 
 		// if we have a valid system then add this component to the pool
 		// return a set of all the instances that were in it and empty the pool
-		if (validSystem) {
+		if (valid) {
 			pool.add(instance);
 			Set<BIPComponent> poolCopy = pool;
 			pool = new HashSet<BIPComponent>();
@@ -181,6 +203,133 @@ public class ComponentPool {
 			pool.add(instance);
 			return Collections.emptySet();
 		}
+	}
+
+	public boolean removeInstance(BIPComponent instance) {
+		if (instance == null) {
+			logger.error("Trying to remove a null component from the pool.");
+			throw new BIPEngineException("Trying to remove a null component from the pool.");
+		}
+
+		if (!nodes.containsKey(instance.getType())) {
+			logger.error("Trying to remove a componnent of type that is not in the graph {}", instance.getType());
+			throw new BIPEngineException(
+					"Trying to remove a componnent of type that is not in the graph " + instance.getType());
+		}
+
+		if (!added.contains(instance.getId())) {
+			logger.error("Component {} has never been added to the pool but is asked to be removed.", instance);
+			throw new BIPEngineException(
+					"Component " + instance + " has never been added to the pool but is asked to be removed.");
+		}
+
+		this.added.remove(instance.getId());
+		Integer count = this.subsystem.get(instance.getType());
+		if (count == null || count.intValue() == 0) {
+			logger.error("We are removing a component and we should not be able to remove this one.");
+			throw new BIPEngineException("We are removing a component and we should not be able to remove this one.");
+		} else {
+			this.subsystem.put(instance.getType(), count - 1);
+		}
+		this.valid = incrementCounters(instance.getType());
+		
+		return this.valid;
+	}
+
+	/**
+	 * 
+	 * @param type
+	 * @return
+	 */
+	private boolean incrementCounters(String type) {
+		Node node = nodes.get(type);
+
+		if (node == null) {
+			logger.error("Trying to remove an instance whose type hasn't been registered yet: {}", type);
+			throw new BIPEngineException("Trying to remove an instance whose type hasn't been registered yet: " + type);
+		}
+
+		if (node.getEdges().isEmpty()) {
+			return this.valid;
+		}
+
+		for (Edge e : node.getEdges()) {
+			e.incrementCounter();
+		}
+		
+		Set<String> subsystemNodes = new HashSet<String>();
+		for (Map.Entry<String, Integer> entry : this.subsystem.entrySet()) {
+			if (entry.getValue().intValue() > 0)
+				subsystemNodes.add(entry.getKey());
+		}
+
+		return checkValidSystem(subsystemNodes);
+	}
+
+	private boolean checkValidSystem(Set<String> system) {
+		if (system.isEmpty()) {
+			return false;
+		}
+		
+		for (Node n : nodes.values()) {
+			n.notSatisfied();
+		}
+		
+		return checkValidSystemInternal(system, new HashSet<String>());
+	}
+
+	private boolean checkValidSystemInternal(Set<String> system, Set<String> seen) {
+		for (String type : system) {
+			if (!seen.contains(type)) {
+				seen.add(type);
+				Node node = nodes.get(type);
+				if (node == null) {
+					logger.error("Node of type {} does not exist.", type);
+					throw new BIPEngineException("Node of type " + type + " does not exist");
+				}
+
+				if (node.isSatisfied()) {
+					return true;
+				}
+
+				Set<Edge> incomingEdges = this.incomingEdges.get(type);
+
+				if (incomingEdges == null || incomingEdges.isEmpty()) {
+					node.satisfied();
+					return true;
+				}
+
+				// TODO Use Guava's MultiMap?
+				Map<Color, Set<Edge>> incomingEdgesPerSolution = new HashMap<Color, Set<Edge>>();
+				for (Edge incomingEdge : incomingEdges) {
+					Set<Edge> tmp = incomingEdgesPerSolution.get(incomingEdge.getSolutionColor());
+					if (tmp == null) {
+						incomingEdgesPerSolution.put(incomingEdge.getSolutionColor(),
+								new HashSet<Edge>(Arrays.asList(incomingEdge)));
+					} else {
+						tmp.add(incomingEdge);
+					}
+				}
+
+				for (Map.Entry<Color, Set<Edge>> entry : incomingEdgesPerSolution.entrySet()) {
+					boolean solutionIsSatisfied = true;
+					Set<String> dependenciesOfSolution = new HashSet<String>();
+					for (Edge edge : entry.getValue()) {
+						solutionIsSatisfied &= edge.isSatisfied();
+						dependenciesOfSolution.add(edge.getSource());
+					}
+
+					if (solutionIsSatisfied && checkValidSystemInternal(dependenciesOfSolution, seen)) {
+						node.satisfied();
+						return true;
+					}
+				}
+
+				node.notSatisfied();
+			}
+		}
+		
+		return false;
 	}
 
 	private boolean decrementCounters(String type) throws BIPEngineException {
@@ -198,7 +347,7 @@ public class ComponentPool {
 
 			return true;
 		} else if (node.getEdges().isEmpty()) {
-			return checkDependencies(new HashSet<String>(Arrays.asList(type)), new HashSet<String>());
+			return checkDependenciesAND(type);
 		}
 
 		for (Edge edge : node.getEdges()) {
@@ -215,10 +364,9 @@ public class ComponentPool {
 						nodeDependencies.add(e.getSource());
 					}
 
-					return checkDependencies(nodeDependencies, new HashSet<String>());
+					return checkDependenciesAND(nodeDependencies);
 				} else if (edgeSolutionColor.equals(ColorFactory.getUnconditionalSolutionColor())) {
-					return checkDependencies(new HashSet<String>(Arrays.asList(edge.getDestination())),
-							new HashSet<String>());
+					return checkDependenciesAND(edge.getDestination());
 				}
 			}
 		}
@@ -226,27 +374,42 @@ public class ComponentPool {
 		return false;
 	}
 
-	private boolean checkDependencies(Set<String> nodeDependencies, Set<String> seen) {
-		if (nodeDependencies == null || nodeDependencies.isEmpty()) {
-			return true;
+	private boolean checkDependenciesAND(String dependency) {
+		Set<String> s = new HashSet<String>();
+		s.add(dependency);
+		return checkDependenciesAND(s);
+	}
+
+	private boolean checkDependenciesAND(Set<String> dependencies) {
+		for (Node n : nodes.values()) {
+			n.notSatisfied();
 		}
 
-		for (String currentType : nodeDependencies) {
-			if (!seen.contains(currentType)) {
-				seen.add(currentType);
-				Node currentNode = nodes.get(currentType);
-				if (currentNode == null) {
-					logger.error("Node of type {} does not exist.", currentType);
-					throw new BIPEngineException("Node of type " + currentType + " does not exist");
+		return checkDependenciesANDInternal(dependencies, new HashSet<String>());
+	}
+
+	private boolean checkDependenciesANDInternal(Set<String> dependencies, Set<String> seen) {
+		if (dependencies == null || dependencies.isEmpty())
+			return true;
+
+		for (String dependency : dependencies) {
+			if (!seen.contains(dependency)) {
+				seen.add(dependency);
+				Node nodeDependency = nodes.get(dependency);
+
+				if (nodeDependency == null) {
+					logger.error("Node of type {} does not exist.", dependency);
+					throw new BIPEngineException("Node of type " + dependency + " does not exist");
 				}
 
-				if (!currentNode.isSatisfied()) {
-					Set<Edge> edges = incomingEdges.get(currentType);
-					if (edges == null || edges.isEmpty()) {
-						currentNode.satisfied();
+				if (!nodeDependency.isSatisfied()) {
+					Set<Edge> incomingEdges = this.incomingEdges.get(dependency);
+					if (incomingEdges == null || incomingEdges.isEmpty()) {
+						nodeDependency.satisfied();
 					} else {
+						// TODO Use Guava's MultiMap?
 						Map<Color, Set<Edge>> incomingEdgesPerSolution = new HashMap<Color, Set<Edge>>();
-						for (Edge incomingEdge : edges) {
+						for (Edge incomingEdge : incomingEdges) {
 							Set<Edge> tmp = incomingEdgesPerSolution.get(incomingEdge.getSolutionColor());
 							if (tmp == null) {
 								incomingEdgesPerSolution.put(incomingEdge.getSolutionColor(),
@@ -266,20 +429,20 @@ public class ComponentPool {
 
 							if (solutionIsSatisfied) {
 								// TODO get rid of this recursive call.
-								if (checkDependencies(dependenciesOfSolution, seen)) {
-									currentNode.satisfied();
+								if (checkDependenciesANDInternal(dependenciesOfSolution, seen)) {
+									nodeDependency.satisfied();
 									break;
+								} else {
+									nodeDependency.notSatisfied();
 								}
 							}
 						}
 
-						if (!currentNode.isSatisfied()) {
+						if (!nodeDependency.isSatisfied()) {
 							return false;
 						}
 					}
 				}
-
-				seen.add(currentType);
 			}
 		}
 
