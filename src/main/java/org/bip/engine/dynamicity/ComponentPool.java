@@ -25,28 +25,28 @@ import org.slf4j.LoggerFactory;
  */
 public class ComponentPool {
 	private Logger logger = LoggerFactory.getLogger(ComponentPool.class);
-	
+
 	// The glue describing the interactions in the system.
 	private BIPGlue glue;
-	
+
 	// All nodes in the graph
 	private Map<String, Node> nodes;
-	
+
 	// Incoming edges per node
 	private Map<String, Set<Edge>> incomingEdges;
-	
+
 	// The pool of components
 	private Set<BIPComponent> pool;
-	
+
 	// Sorts all edges in the graph per solution
 	private Map<Color, Set<Edge>> edgesPerSolution;
-	
+
 	// Whether the system is currently valid.
 	private boolean valid;
-	
+
 	// Remembers what components are in the pool/system
 	private Set<String> added;
-	
+
 	// Remembers the number of components in the pool/system per type
 	private Map<String, Integer> subsystem;
 
@@ -62,11 +62,10 @@ public class ComponentPool {
 	}
 
 	/**
-	 * Must be called before using the pool.
-	 * Initializes the graph in the system checker as follows: - One node per
-	 * type in the glue (so no node for types who have only spontaneous or
-	 * internal transitions) - Edge from T to T' labeled x means that one
-	 * instance of type T' needs x instances of type T.
+	 * Must be called before using the pool. Initializes the graph in the system
+	 * checker as follows: - One node per type in the glue (so no node for types
+	 * who have only spontaneous or internal transitions) - Edge from T to T'
+	 * labeled x means that one instance of type T' needs x instances of type T.
 	 * 
 	 * See more at {@link org.bip.engine.dynamicity.Node} or
 	 * {@link org.bip.engine.dynamicity.Edge}
@@ -124,7 +123,7 @@ public class ComponentPool {
 
 						// Store the edges for further use mapped from their
 						// solution color
-						// TODO: Use Guava's MultiMap?
+						// TODO: Use Guava's SetMultimap?
 						Set<Edge> tmp = edgesPerSolution.get(solutionColor);
 						if (tmp == null) {
 							edgesPerSolution.put(solutionColor, new HashSet<Edge>(Arrays.asList(edge)));
@@ -133,7 +132,7 @@ public class ComponentPool {
 						}
 
 						// Store incoming edges too.
-						// TODO: Use Guava's MultiMap?
+						// TODO: Use Guava's SetMultimap?
 						tmp = incomingEdges.get(effectType);
 						if (tmp == null) {
 							incomingEdges.put(effectType, new HashSet<Edge>(Arrays.asList(edge)));
@@ -189,11 +188,12 @@ public class ComponentPool {
 			throw new BIPEngineException("Trying to add a null component to the pool.");
 		}
 
+		// TODO Find another way to find the ports without casting
 		List<Port> enforceablePorts = ((ExecutorKernel) instance).getBehavior().getEnforceablePorts();
 
 		// If the component has no enforceable ports, it is not in the graph but
 		// is a "valid system" so we return it.
-		if (!nodes.containsKey(instance.getType()) && (enforceablePorts == null || enforceablePorts.isEmpty())) {
+		if (enforceablePorts == null || enforceablePorts.isEmpty()) {
 			return new HashSet<BIPComponent>(Arrays.asList(instance));
 		} else if (!nodes.containsKey(instance.getType())
 				&& !(enforceablePorts == null || enforceablePorts.isEmpty())) {
@@ -249,10 +249,17 @@ public class ComponentPool {
 			throw new BIPEngineException("Trying to remove a null component from the pool.");
 		}
 
-		// Check the type is in the graph
-		// TODO check that the component has enforceable ports. Otherwise we
-		// just whether the system was valid.
-		if (!nodes.containsKey(instance.getType())) {
+		// TODO Find another way to find the ports without casting
+		List<Port> enforceablePorts = ((ExecutorKernel) instance).getBehavior().getEnforceablePorts();
+
+		// If the component has no enforceable ports, it is not in the graph so
+		// the system is as valid as it was before removing it
+		if (enforceablePorts == null || enforceablePorts.isEmpty()) {
+			return this.valid;
+
+			// Check whether this type is in the graph
+		} else if (!nodes.containsKey(instance.getType())
+				&& !(enforceablePorts == null || enforceablePorts.isEmpty())) {
 			logger.error("Trying to remove a componnent of type that is not in the graph {}", instance.getType());
 			throw new BIPEngineException(
 					"Trying to remove a componnent of type that is not in the graph " + instance.getType());
@@ -359,7 +366,7 @@ public class ComponentPool {
 					return true;
 				}
 
-				// TODO Use Guava's MultiMap?
+				// TODO Use Guava's SetMultimap?
 				Map<Color, Set<Edge>> incomingEdgesPerSolution = new HashMap<Color, Set<Edge>>();
 				// Sort every edge by solution
 				for (Edge incomingEdge : incomingEdges) {
@@ -381,9 +388,9 @@ public class ComponentPool {
 						dependenciesOfSolution.add(edge.getSource());
 					}
 
-					// if it is satisfied, check that all nodes of this solution
-					// are satisfied.
-					if (solutionIsSatisfied && checkValidSystemInternal(dependenciesOfSolution, seen)) {
+					// if it is satisfied, check that all dependency nodes of
+					// this solution are satisfied.
+					if (solutionIsSatisfied && checkDependenciesANDInternal(dependenciesOfSolution, seen)) {
 						node.satisfied();
 						return true;
 					}
@@ -424,7 +431,8 @@ public class ComponentPool {
 				Color edgeSolutionColor = edge.getSolutionColor();
 				Set<Edge> sameSolutionEdges = edgesPerSolution.get(edgeSolutionColor);
 
-				// If all edges of this solution are satisfied, then check their node dependencies 
+				// If all edges of this solution are satisfied, then check their
+				// node dependencies
 				if (allSatisfied(sameSolutionEdges)) {
 					Set<String> nodeDependencies = new HashSet<String>();
 					for (Edge e : sameSolutionEdges) {
@@ -463,7 +471,6 @@ public class ComponentPool {
 
 	/*
 	 * Should not be used even in the enclosing class.
-	 * TODO: Ask for nested methods in Java.
 	 */
 	private boolean checkDependenciesANDInternal(Set<String> dependencies, Set<String> seen) {
 		if (dependencies == null || dependencies.isEmpty())
@@ -481,12 +488,13 @@ public class ComponentPool {
 
 				if (!nodeDependency.isSatisfied()) {
 					Set<Edge> incomingEdges = this.incomingEdges.get(dependency);
-					
-					// If no dependencies then it changed nothing and the node is satisfied.
+
+					// If no dependencies then it changed nothing and the node
+					// is satisfied.
 					if (incomingEdges == null || incomingEdges.isEmpty()) {
 						nodeDependency.satisfied();
 					} else {
-						// TODO Use Guava's MultiMap?
+						// TODO Use Guava's SetMultimap?
 						// Sort edges per solution
 						Map<Color, Set<Edge>> incomingEdgesPerSolution = new HashMap<Color, Set<Edge>>();
 						for (Edge incomingEdge : incomingEdges) {
@@ -509,8 +517,8 @@ public class ComponentPool {
 							}
 
 							if (solutionIsSatisfied) {
-								// TODO get rid of this recursive call.
-								// check that dependencies of this solution are satisfied too.
+								// Check that dependencies of this solution are
+								// satisfied too.
 								if (checkDependenciesANDInternal(dependenciesOfSolution, seen)) {
 									nodeDependency.satisfied();
 									break;
@@ -520,7 +528,8 @@ public class ComponentPool {
 							}
 						}
 
-						// If none of the solution was satisfied, then the node is not satisfied then system is not valid.
+						// If none of the solution was satisfied, then the node
+						// is not satisfied then system is not valid.
 						if (!nodeDependency.isSatisfied()) {
 							return false;
 						}
