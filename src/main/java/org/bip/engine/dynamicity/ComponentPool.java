@@ -184,7 +184,7 @@ public class ComponentPool {
 		this.valid |= decrementCounters(instance.getType());
 		this.added.add(instance.getId());
 		Integer count = this.subsystem.get(instance.getType());
-		if(count == null || count.intValue() == 0) {
+		if (count == null || count.intValue() == 0) {
 			this.subsystem.put(instance.getType(), 1);
 		} else {
 			this.subsystem.put(instance.getType(), count + 1);
@@ -218,9 +218,12 @@ public class ComponentPool {
 		}
 
 		if (!added.contains(instance.getId())) {
-			logger.error("Component {} has never been added to the pool but is asked to be removed.", instance);
-			throw new BIPEngineException(
-					"Component " + instance + " has never been added to the pool but is asked to be removed.");
+			logger.error(
+					"Component {} has never been added to the pool but is asked to be removed or it has been removed already. ID = ",
+					instance, instance.getId());
+			throw new BIPEngineException("Component " + instance
+					+ " has never been added to the pool but is asked to be removed or it has been removed already. ID = "
+					+ instance.getId());
 		}
 
 		this.added.remove(instance.getId());
@@ -232,7 +235,7 @@ public class ComponentPool {
 			this.subsystem.put(instance.getType(), count - 1);
 		}
 		this.valid = incrementCounters(instance.getType());
-		
+
 		return this.valid;
 	}
 
@@ -256,7 +259,7 @@ public class ComponentPool {
 		for (Edge e : node.getEdges()) {
 			e.incrementCounter();
 		}
-		
+
 		Set<String> subsystemNodes = new HashSet<String>();
 		for (Map.Entry<String, Integer> entry : this.subsystem.entrySet()) {
 			if (entry.getValue().intValue() > 0)
@@ -270,11 +273,11 @@ public class ComponentPool {
 		if (system.isEmpty()) {
 			return false;
 		}
-		
+
 		for (Node n : nodes.values()) {
 			n.notSatisfied();
 		}
-		
+
 		return checkValidSystemInternal(system, new HashSet<String>());
 	}
 
@@ -328,7 +331,7 @@ public class ComponentPool {
 				node.notSatisfied();
 			}
 		}
-		
+
 		return false;
 	}
 
