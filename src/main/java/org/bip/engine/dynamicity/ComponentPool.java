@@ -7,6 +7,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.bip.api.BIPComponent;
 import org.bip.api.BIPGlue;
@@ -22,9 +24,12 @@ import org.slf4j.LoggerFactory;
  * Class representing a pool of components used for dynamic JavaBIP
  * 
  * @author rutz
- */
+ */// TODO concurrent tests
 public class ComponentPool {
 	private Logger logger = LoggerFactory.getLogger(ComponentPool.class);
+
+	// Add lock for concurrency purposes
+	private Lock lock;
 
 	// The glue describing the interactions in the system.
 	private BIPGlue glue;
@@ -33,29 +38,31 @@ public class ComponentPool {
 	private Map<String, Node> nodes;
 
 	// Incoming edges per node
-	private Map<String, Set<Edge>> incomingEdges;
+	private MultiMap<String, Edge> incomingEdges;
 
 	// The pool of components
 	private Set<BIPComponent> pool;
 
 	// Sorts all edges in the graph per solution
-	private Map<Color, Set<Edge>> edgesPerSolution;
+	private MultiMap<Color, Edge> edgesPerSolution;
 
 	// Whether the system is currently valid.
 	private boolean valid;
 
 	// Remembers what components are in the pool/system
+	// by ID
 	private Set<String> added;
 
 	// Remembers the number of components in the pool/system per type
 	private Map<String, Integer> subsystem;
 
 	public ComponentPool(BIPGlue glue) {
+		this.lock = new ReentrantLock();
 		this.glue = glue;
 		this.nodes = new HashMap<String, Node>();
-		this.incomingEdges = new HashMap<String, Set<Edge>>();
+		this.incomingEdges = new MultiHashMap<String, Edge>();
 		this.pool = new HashSet<BIPComponent>();
-		this.edgesPerSolution = new HashMap<Color, Set<Edge>>();
+		this.edgesPerSolution = new MultiHashMap<Color, Edge>();
 		this.valid = false;
 		this.added = new HashSet<String>();
 		this.subsystem = new HashMap<String, Integer>();
@@ -71,6 +78,7 @@ public class ComponentPool {
 	 * {@link org.bip.engine.dynamicity.Edge}
 	 */
 	public void initialize() {
+		lock.lock();
 		Set<String> seen = new HashSet<String>();
 		List<Require> requires = glue.getRequiresConstraints();
 		// Create all nodes
@@ -123,22 +131,10 @@ public class ComponentPool {
 
 						// Store the edges for further use mapped from their
 						// solution color
-						// TODO: Use Guava's SetMultimap?
-						Set<Edge> tmp = edgesPerSolution.get(solutionColor);
-						if (tmp == null) {
-							edgesPerSolution.put(solutionColor, new HashSet<Edge>(Arrays.asList(edge)));
-						} else {
-							tmp.add(edge);
-						}
+						edgesPerSolution.put(solutionColor, edge);
 
 						// Store incoming edges too.
-						// TODO: Use Guava's SetMultimap?
-						tmp = incomingEdges.get(effectType);
-						if (tmp == null) {
-							incomingEdges.put(effectType, new HashSet<Edge>(Arrays.asList(edge)));
-						} else {
-							tmp.add(edge);
-						}
+						incomingEdges.put(effectType, edge);
 
 						tmpSeen.add(effectType);
 					}
@@ -151,13 +147,15 @@ public class ComponentPool {
 			// instances of the type.
 			seen.addAll(tmpSeen);
 		}
+		lock.unlock();
 	}
 
 	/**
 	 * This method cleans up the pool, resets the node and reinitializes
-	 * necessasry data structures.
+	 * necessary data structures.
 	 */
 	public void cleanup() {
+		lock.lock();
 		this.pool = new HashSet<BIPComponent>();
 		this.valid = false;
 		this.added = new HashSet<String>();
@@ -165,6 +163,7 @@ public class ComponentPool {
 		for (Node node : nodes.values()) {
 			node.reset();
 		}
+		lock.unlock();
 	}
 
 	/**
@@ -183,55 +182,63 @@ public class ComponentPool {
 	 *             unregistered type or a component already in the pool.
 	 */
 	public Set<BIPComponent> addInstance(BIPComponent instance) throws BIPEngineException {
-		if (instance == null) {
-			logger.error("Trying to add a null component to the pool.");
-			throw new BIPEngineException("Trying to add a null component to the pool.");
-		}
+		lock.lock();
+		try {
+			if (instance == null) {
+				logger.error("Trying to add a null component to the pool.");
+				throw new BIPEngineException("Trying to add a null component to the pool.");
+			}
 
-		// TODO Find another way to find the ports without casting
-		List<Port> enforceablePorts = ((ExecutorKernel) instance).getBehavior().getEnforceablePorts();
+			// TODO Find another way to find the ports without casting
+			List<Port> enforceablePorts = ((ExecutorKernel) instance).getBehavior().getEnforceablePorts();
 
-		// If the component has no enforceable ports, it is not in the graph but
-		// is a "valid system" so we return it.
-		if (enforceablePorts == null || enforceablePorts.isEmpty()) {
-			return new HashSet<BIPComponent>(Arrays.asList(instance));
-		} else if (!nodes.containsKey(instance.getType())
-				&& !(enforceablePorts == null || enforceablePorts.isEmpty())) {
-			logger.error("Trying to add a component of type that is not in the graph: {}", instance.getType());
-			throw new BIPEngineException(
-					"Trying to add a component of type that is not in the graph: " + instance.getType());
-		}
+			// If the component has no enforceable ports, it is not in the graph
+			// but
+			// is a "valid system" so we return it.
+			if (enforceablePorts == null || enforceablePorts.isEmpty()) {
+				return new HashSet<BIPComponent>(Arrays.asList(instance));
+			} else if (!nodes.containsKey(instance.getType())
+					&& !(enforceablePorts == null || enforceablePorts.isEmpty())) {
+				logger.error("Trying to add a component of type that is not in the graph: {}", instance.getType());
+				throw new BIPEngineException(
+						"Trying to add a component of type that is not in the graph: " + instance.getType());
+			}
 
-		if (this.added.contains(instance.getId())) {
-			logger.error("Component {} has already been added to the pool. ID = {}", instance, instance.getId());
-			throw new BIPEngineException(
-					"Component " + instance + " has already been added to the pool. ID = " + instance.getId());
-		}
+			if (this.added.contains(instance.getId())) {
+				logger.error("Component {} has already been added to the pool or ID is wrong (duplicate). ID = {}",
+						instance, instance.getId());
+				throw new BIPEngineException("Component " + instance
+						+ " has already been added to the pool or ID is wrong (duplicate). ID = " + instance.getId());
+			}
 
-		// Always update the counters
-		this.valid |= decrementCounters(instance.getType());
-		// Remember we added this component
-		this.added.add(instance.getId());
-		// Increment the number of components of this type we have added
-		Integer count = this.subsystem.get(instance.getType());
-		if (count == null || count.intValue() == 0) {
-			this.subsystem.put(instance.getType(), 1);
-		} else {
-			this.subsystem.put(instance.getType(), count + 1);
-		}
+			// Always update the counters
+			this.valid |= decrementCounters(instance.getType());
+			// Remember we added this component
+			this.added.add(instance.getId());
+			// Increment the number of components of this type we have added
+			Integer count = this.subsystem.get(instance.getType());
+			if (count == null || count.intValue() == 0) {
+				this.subsystem.put(instance.getType(), 1);
+			} else {
+				this.subsystem.put(instance.getType(), count + 1);
+			}
 
-		// if we have a valid system then add this component to the pool
-		// return a set of all the instances that were in it and empty the pool
-		if (valid) {
-			pool.add(instance);
-			Set<BIPComponent> poolCopy = pool;
-			pool = new HashSet<BIPComponent>();
-			return poolCopy;
+			// if we have a valid system then add this component to the pool
+			// return a set of all the instances that were in it and empty the
+			// pool
+			if (valid) {
+				pool.add(instance);
+				Set<BIPComponent> poolCopy = pool;
+				pool = new HashSet<BIPComponent>();
+				return poolCopy;
 
-			// else add instance to the pool and return an empty set
-		} else {
-			pool.add(instance);
-			return Collections.emptySet();
+				// else add instance to the pool and return an empty set
+			} else {
+				pool.add(instance);
+				return Collections.emptySet();
+			}
+		} finally {
+			lock.unlock();
 		}
 	}
 
@@ -244,52 +251,61 @@ public class ComponentPool {
 	 *         otherwise.
 	 */
 	public boolean removeInstance(BIPComponent instance) {
-		if (instance == null) {
-			logger.error("Trying to remove a null component from the pool.");
-			throw new BIPEngineException("Trying to remove a null component from the pool.");
-		}
+		lock.lock();
+		try {
+			if (instance == null) {
+				logger.error("Trying to remove a null component from the pool.");
+				throw new BIPEngineException("Trying to remove a null component from the pool.");
+			}
 
-		// TODO Find another way to find the ports without casting
-		List<Port> enforceablePorts = ((ExecutorKernel) instance).getBehavior().getEnforceablePorts();
+			// TODO Find another way to find the ports without casting
+			List<Port> enforceablePorts = ((ExecutorKernel) instance).getBehavior().getEnforceablePorts();
 
-		// If the component has no enforceable ports, it is not in the graph so
-		// the system is as valid as it was before removing it
-		if (enforceablePorts == null || enforceablePorts.isEmpty()) {
+			// If the component has no enforceable ports, it is not in the graph
+			// so
+			// the system is as valid as it was before removing it
+			if (enforceablePorts == null || enforceablePorts.isEmpty()) {
+				return this.valid;
+
+				// Check whether this type is in the graph
+			} else if (!nodes.containsKey(instance.getType())
+					&& !(enforceablePorts == null || enforceablePorts.isEmpty())) {
+				logger.error("Trying to remove a componnent of type that is not in the graph {}", instance.getType());
+				throw new BIPEngineException(
+						"Trying to remove a componnent of type that is not in the graph " + instance.getType());
+			}
+
+			// Exception if this component has never been added or been
+			// remooved.
+			if (!added.contains(instance.getId())) {
+				logger.error(
+						"Component {} has never been added to the pool but is asked to be removed or it has been removed already. ID = ",
+						instance, instance.getId());
+				throw new BIPEngineException("Component " + instance
+						+ " has never been added to the pool but is asked to be removed or it has been removed already. ID = "
+						+ instance.getId());
+			}
+
+			// Decrement the number of those we have
+			Integer count = this.subsystem.get(instance.getType());
+			if (count == null || count.intValue() == 0) {
+				logger.error("We are removing a component and we should not be able to remove this one.");
+				throw new BIPEngineException(
+						"We are removing a component and we should not be able to remove this one.");
+			} else {
+				this.subsystem.put(instance.getType(), count - 1);
+			}
+			// Remove it from the added component
+			this.added.remove(instance.getId());
+
+			// Increment the counters and check whether the system is still
+			// valid.
+			this.valid = incrementCounters(instance.getType());
+
 			return this.valid;
-
-			// Check whether this type is in the graph
-		} else if (!nodes.containsKey(instance.getType())
-				&& !(enforceablePorts == null || enforceablePorts.isEmpty())) {
-			logger.error("Trying to remove a componnent of type that is not in the graph {}", instance.getType());
-			throw new BIPEngineException(
-					"Trying to remove a componnent of type that is not in the graph " + instance.getType());
+		} finally {
+			lock.unlock();
 		}
-
-		// Exception if this component has never been added or been remooved.
-		if (!added.contains(instance.getId())) {
-			logger.error(
-					"Component {} has never been added to the pool but is asked to be removed or it has been removed already. ID = ",
-					instance, instance.getId());
-			throw new BIPEngineException("Component " + instance
-					+ " has never been added to the pool but is asked to be removed or it has been removed already. ID = "
-					+ instance.getId());
-		}
-
-		// Remove it from the added component
-		this.added.remove(instance.getId());
-		// Decrement the number of those we have
-		Integer count = this.subsystem.get(instance.getType());
-		if (count == null || count.intValue() == 0) {
-			logger.error("We are removing a component and we should not be able to remove this one.");
-			throw new BIPEngineException("We are removing a component and we should not be able to remove this one.");
-		} else {
-			this.subsystem.put(instance.getType(), count - 1);
-		}
-
-		// Increment the counters and check whether the system is still valid.
-		this.valid = incrementCounters(instance.getType());
-
-		return this.valid;
 	}
 
 	private boolean incrementCounters(String type) {
@@ -366,17 +382,10 @@ public class ComponentPool {
 					return true;
 				}
 
-				// TODO Use Guava's SetMultimap?
-				Map<Color, Set<Edge>> incomingEdgesPerSolution = new HashMap<Color, Set<Edge>>();
+				MultiMap<Color, Edge> incomingEdgesPerSolution = new MultiHashMap<Color, Edge>();
 				// Sort every edge by solution
 				for (Edge incomingEdge : incomingEdges) {
-					Set<Edge> tmp = incomingEdgesPerSolution.get(incomingEdge.getSolutionColor());
-					if (tmp == null) {
-						incomingEdgesPerSolution.put(incomingEdge.getSolutionColor(),
-								new HashSet<Edge>(Arrays.asList(incomingEdge)));
-					} else {
-						tmp.add(incomingEdge);
-					}
+					incomingEdgesPerSolution.put(incomingEdge.getSolutionColor(), incomingEdge);
 				}
 
 				// Check that at least on of those solution is satisfied.
@@ -496,15 +505,9 @@ public class ComponentPool {
 					} else {
 						// TODO Use Guava's SetMultimap?
 						// Sort edges per solution
-						Map<Color, Set<Edge>> incomingEdgesPerSolution = new HashMap<Color, Set<Edge>>();
+						MultiMap<Color, Edge> incomingEdgesPerSolution = new MultiHashMap<Color, Edge>();
 						for (Edge incomingEdge : incomingEdges) {
-							Set<Edge> tmp = incomingEdgesPerSolution.get(incomingEdge.getSolutionColor());
-							if (tmp == null) {
-								incomingEdgesPerSolution.put(incomingEdge.getSolutionColor(),
-										new HashSet<Edge>(Arrays.asList(incomingEdge)));
-							} else {
-								tmp.add(incomingEdge);
-							}
+							incomingEdgesPerSolution.put(incomingEdge.getSolutionColor(), incomingEdge);
 						}
 
 						// For each solution, check if it is valid.
