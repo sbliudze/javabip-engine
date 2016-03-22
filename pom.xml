@@ -9,8 +9,8 @@
   <name>BIP :: Core :: Engine </name>
 
 <scm>
-	<developerConnection>scm:git:git@git.xtech.io/academy/bip.git</developerConnection>
-	<url>https://git.xtech.io/academy/bip.git</url>
+	<developerConnection>scm:git:git@git.xtech.io:bip/bip-engine-shared.git</developerConnection>
+	<url>https://git.xtech.io/bip/bip-engine-shared</url>
 	<tag>HEAD</tag>
 </scm>
 
