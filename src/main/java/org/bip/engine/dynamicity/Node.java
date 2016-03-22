@@ -76,6 +76,11 @@ class Node {
 		}
 		return res;
 	}
+	
+	@Override
+	public String toString() {
+		return type;
+	}
 }
 
 class Edge {

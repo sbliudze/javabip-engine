@@ -173,12 +173,20 @@ public class ComponentPool {
 	private Set<String> setConnectedComponent(Node start) {
 		Queue<Node> q = new LinkedList<Node>();
 		Set<String> seen = new HashSet<String>();
+		Set<String> toAdd = new HashSet<String>();
 		q.add(start);
 		Node current;
 		while (!q.isEmpty()) {
 			current = q.poll();
 			if (!seen.contains(current.getType())) {
-				for (String neighbourType : current.getNeighboursTypes()) {
+				if (incomingEdges.get(current.getType()) != null) {
+					for (Edge e : incomingEdges.get(current.getType())) {
+						toAdd.add(e.getSource());
+					}
+				}
+
+				toAdd.addAll(current.getNeighboursTypes());
+				for (String neighbourType : toAdd) {
 					q.add(nodes.get(neighbourType));
 				}
 			}
@@ -205,6 +213,9 @@ public class ComponentPool {
 		this.valid = false;
 		this.added = new HashSet<String>();
 		this.subsystem = new HashMap<String, Integer>();
+		for (Map.Entry<Set<String>, Boolean> entry : this.valids.entrySet()) {
+			entry.setValue(false);
+		}
 		for (Node node : nodes.values()) {
 			node.reset();
 		}
@@ -367,6 +378,7 @@ public class ComponentPool {
 
 	private boolean incrementCounters(String type) {
 		Node node = nodes.get(type);
+		String toCheck = null;
 
 		if (node == null) {
 			logger.error("Trying to remove an instance whose type hasn't been registered yet: {}", type);
@@ -382,19 +394,40 @@ public class ComponentPool {
 		// Increment counters in outgoing edges
 		for (Edge e : node.getEdges()) {
 			e.incrementCounter();
+			if (!e.isSatisfied() && toCheck == null) {
+				toCheck = type;
+			}
 		}
 
-		// TODO graph optimization
-
-		// For every node involved in the valid system, check if the system is
-		// still valid for at least one of them
-		Set<String> subsystemNodes = new HashSet<String>();
-		for (Map.Entry<String, Integer> entry : this.subsystem.entrySet()) {
-			if (entry.getValue().intValue() > 0)
-				subsystemNodes.add(entry.getKey());
+		// If no edge is unsatisfied then just return the previous state
+		if (toCheck == null) {
+			return this.valid;
 		}
 
-		return checkValidSystem(subsystemNodes);
+
+		boolean v;
+		boolean otherSolution = false;
+		for (Map.Entry<Set<String>, Boolean> entry : valids.entrySet()) {
+			if (entry.getKey().contains(toCheck) && entry.getValue().booleanValue()) {
+				Set<String> subsystemToCheck = new HashSet<String>();
+				for (String t : entry.getKey()) {
+					if (subsystem.get(t) != null && subsystem.get(t).intValue() > 0) {
+						subsystemToCheck.add(t);
+					}
+				}
+				
+				v = checkValidSystem(subsystemToCheck);
+				if (!v) {
+					entry.setValue(false);
+				} else {
+					return v;
+				}
+			} else {
+				otherSolution |= entry.getValue().booleanValue();
+			}
+		}
+
+		return otherSolution;
 	}
 
 	/*
