@@ -4,8 +4,10 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -24,7 +26,7 @@ import org.slf4j.LoggerFactory;
  * Class representing a pool of components used for dynamic JavaBIP
  * 
  * @author rutz
- */// TODO concurrent tests
+ */
 public class ComponentPool {
 	private Logger logger = LoggerFactory.getLogger(ComponentPool.class);
 
@@ -56,6 +58,8 @@ public class ComponentPool {
 	// Remembers the number of components in the pool/system per type
 	private Map<String, Integer> subsystem;
 
+	private Map<Set<String>, Boolean> valids;
+
 	public ComponentPool(BIPGlue glue) {
 		this.lock = new ReentrantLock();
 		this.glue = glue;
@@ -66,6 +70,7 @@ public class ComponentPool {
 		this.valid = false;
 		this.added = new HashSet<String>();
 		this.subsystem = new HashMap<String, Integer>();
+		this.valids = new HashMap<Set<String>, Boolean>();
 	}
 
 	/**
@@ -147,7 +152,47 @@ public class ComponentPool {
 			// instances of the type.
 			seen.addAll(tmpSeen);
 		}
+
+		// Get all connected components
+		setConnectedComponents();
+
 		lock.unlock();
+	}
+
+	private void setConnectedComponents() {
+		Set<String> seen = new HashSet<String>();
+
+		for (Map.Entry<String, Node> entry : nodes.entrySet()) {
+			if (!seen.contains(entry.getKey())) {
+				seen.addAll(setConnectedComponent(entry.getValue()));
+			}
+		}
+	}
+
+	// BFS to create connected components
+	private Set<String> setConnectedComponent(Node start) {
+		Queue<Node> q = new LinkedList<Node>();
+		Set<String> seen = new HashSet<String>();
+		q.add(start);
+		Node current;
+		while (!q.isEmpty()) {
+			current = q.poll();
+			if (!seen.contains(current.getType())) {
+				for (String neighbourType : current.getNeighboursTypes()) {
+					q.add(nodes.get(neighbourType));
+				}
+			}
+
+			seen.add(current.getType());
+		}
+
+		// For later use, in case we recompute connected components
+		Boolean previous = valids.get(new HashSet<String>(seen));
+		if (previous == null) {
+			valids.put(new HashSet<String>(seen), false);
+		}
+
+		return seen;
 	}
 
 	/**
@@ -212,7 +257,19 @@ public class ComponentPool {
 			}
 
 			// Always update the counters
-			this.valid |= decrementCounters(instance.getType());
+			boolean tmpValid = decrementCounters(instance.getType());
+			// Modify in the optimizers for valid checks whether the connected
+			// subgraph of instance makes the graph valid
+			this.valid |= tmpValid;
+			if (tmpValid) {
+				for (Map.Entry<Set<String>, Boolean> entry : valids.entrySet()) {
+					if (entry.getKey().contains(instance.getType())) {
+						entry.setValue(true);
+						break;
+					}
+				}
+			}
+
 			// Remember we added this component
 			this.added.add(instance.getId());
 			// Increment the number of components of this type we have added
@@ -276,7 +333,7 @@ public class ComponentPool {
 			}
 
 			// Exception if this component has never been added or been
-			// remooved.
+			// removed.
 			if (!added.contains(instance.getId())) {
 				logger.error(
 						"Component {} has never been added to the pool but is asked to be removed or it has been removed already. ID = ",
@@ -326,6 +383,8 @@ public class ComponentPool {
 		for (Edge e : node.getEdges()) {
 			e.incrementCounter();
 		}
+
+		// TODO graph optimization
 
 		// For every node involved in the valid system, check if the system is
 		// still valid for at least one of them
@@ -503,7 +562,6 @@ public class ComponentPool {
 					if (incomingEdges == null || incomingEdges.isEmpty()) {
 						nodeDependency.satisfied();
 					} else {
-						// TODO Use Guava's SetMultimap?
 						// Sort edges per solution
 						MultiMap<Color, Edge> incomingEdgesPerSolution = new MultiHashMap<Color, Edge>();
 						for (Edge incomingEdge : incomingEdges) {

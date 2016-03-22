@@ -2,7 +2,9 @@ package org.bip.engine.dynamicity;
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 class Node {
 	private String type;
@@ -65,6 +67,14 @@ class Node {
 		for (Edge e : edges.values()) {
 			e.resetCounter();
 		}
+	}
+
+	Set<String> getNeighboursTypes() {
+		Set<String> res = new HashSet<String>();
+		for (Edge e : edges.values()) {
+			res.add(e.getDestination());
+		}
+		return res;
 	}
 }
 
