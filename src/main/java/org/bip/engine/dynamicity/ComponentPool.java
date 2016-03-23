@@ -261,10 +261,10 @@ public class ComponentPool {
 			}
 
 			if (this.added.contains(instance.getId())) {
-				logger.error("Component {} has already been added to the pool or ID is wrong (duplicate). ID = {}",
-						instance, instance.getId());
-				throw new BIPEngineException("Component " + instance
-						+ " has already been added to the pool or ID is wrong (duplicate). ID = " + instance.getId());
+				logger.error("Component {} of type {} has already been added to the pool or ID is wrong (duplicate)",
+						instance.getId(), instance.getType());
+				throw new BIPEngineException("Component " + instance.getId() + " of type " + instance.getType()
+						+ " has already been added to the pool or ID is wrong (duplicate)");
 			}
 
 			// Always update the counters
@@ -347,11 +347,10 @@ public class ComponentPool {
 			// removed.
 			if (!added.contains(instance.getId())) {
 				logger.error(
-						"Component {} has never been added to the pool but is asked to be removed or it has been removed already. ID = ",
-						instance, instance.getId());
-				throw new BIPEngineException("Component " + instance
-						+ " has never been added to the pool but is asked to be removed or it has been removed already. ID = "
-						+ instance.getId());
+						"Component {} of type {} has never been added to the pool but is asked to be removed or it has been removed already.",
+						instance.getId(), instance.getType());
+				throw new BIPEngineException("Component " + instance.getId() + " of type " + instance.getType()
+						+ " has never been added to the pool and asked to be removed or has been removed already.");
 			}
 
 			// Decrement the number of those we have
@@ -404,7 +403,6 @@ public class ComponentPool {
 			return this.valid;
 		}
 
-
 		boolean v;
 		boolean otherSolution = false;
 		for (Map.Entry<Set<String>, Boolean> entry : valids.entrySet()) {
@@ -415,7 +413,7 @@ public class ComponentPool {
 						subsystemToCheck.add(t);
 					}
 				}
-				
+
 				v = checkValidSystem(subsystemToCheck);
 				if (!v) {
 					entry.setValue(false);

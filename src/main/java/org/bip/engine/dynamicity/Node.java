@@ -28,12 +28,6 @@ class Node {
 		return edge;
 	}
 	
-	void resetCounters() {
-		for (Edge e : edges.values()) {
-			e.resetCounter();
-		}
-	}
-	
 	Collection<Edge> getEdges() {
 		return edges.values();
 	}
@@ -50,14 +44,6 @@ class Node {
 		isSatisfied = false;
 	}
 
-	int nbTimesRequired() {
-		int n = 0;
-		for (Edge e : edges.values()) {
-			n += e.getLabel();
-		}
-		return n;
-	}
-	 
 	String getType() {
 		return type;
 	}
@@ -84,7 +70,6 @@ class Node {
 }
 
 class Edge {
-	private Color requirementColor;
 	private Color solutionColor;
 	private int label;
 	private int counter;
@@ -97,16 +82,11 @@ class Edge {
 		this.counter = 0;
 		this.src = src;
 		this.dest = dest;
-		this.requirementColor = requirementColor;
 		this.solutionColor = solutionColor;
 	}
 	
 	void resetCounter() {
 		counter = label;
-	}
-
-	Color getRequirementColor() {
-		return requirementColor;
 	}
 	
 	Color getSolutionColor() {
