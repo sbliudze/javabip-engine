@@ -1,7 +1,5 @@
 package org.bip.engine.dynamicity;
 
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -17,6 +15,7 @@ import org.bip.api.BIPGlue;
 import org.bip.api.Port;
 import org.bip.api.PortBase;
 import org.bip.api.Require;
+import org.bip.engine.dynamicity.api.Pool;
 import org.bip.exceptions.BIPEngineException;
 import org.bip.executor.ExecutorKernel;
 import org.slf4j.Logger;
@@ -27,7 +26,7 @@ import org.slf4j.LoggerFactory;
  * 
  * @author rutz
  */
-public class ComponentPool {
+public class ComponentPool implements Pool {
 	private Logger logger = LoggerFactory.getLogger(ComponentPool.class);
 
 	// Add lock for concurrency purposes
@@ -41,9 +40,6 @@ public class ComponentPool {
 
 	// Incoming edges per node
 	private MultiMap<String, Edge> incomingEdges;
-
-	// The pool of components
-	private Set<BIPComponent> pool;
 
 	// Sorts all edges in the graph per solution
 	private MultiMap<Color, Edge> edgesPerSolution;
@@ -65,7 +61,6 @@ public class ComponentPool {
 		this.glue = glue;
 		this.nodes = new HashMap<String, Node>();
 		this.incomingEdges = new MultiHashMap<String, Edge>();
-		this.pool = new HashSet<BIPComponent>();
 		this.edgesPerSolution = new MultiHashMap<Color, Edge>();
 		this.valid = false;
 		this.added = new HashSet<String>();
@@ -209,7 +204,6 @@ public class ComponentPool {
 	 */
 	public void cleanup() {
 		lock.lock();
-		this.pool = new HashSet<BIPComponent>();
 		this.valid = false;
 		this.added = new HashSet<String>();
 		this.subsystem = new HashMap<String, Integer>();
@@ -237,7 +231,7 @@ public class ComponentPool {
 	 *             if trying to add a null component or a component with
 	 *             unregistered type or a component already in the pool.
 	 */
-	public Set<BIPComponent> addInstance(BIPComponent instance) throws BIPEngineException {
+	public boolean addInstance(BIPComponent instance) throws BIPEngineException {
 		lock.lock();
 		try {
 			if (instance == null) {
@@ -252,7 +246,7 @@ public class ComponentPool {
 			// but
 			// is a "valid system" so we return it.
 			if (enforceablePorts == null || enforceablePorts.isEmpty()) {
-				return new HashSet<BIPComponent>(Arrays.asList(instance));
+				return true;
 			} else if (!nodes.containsKey(instance.getType())
 					&& !(enforceablePorts == null || enforceablePorts.isEmpty())) {
 				logger.error("Trying to add a component of type that is not in the graph: {}", instance.getType());
@@ -294,17 +288,7 @@ public class ComponentPool {
 			// if we have a valid system then add this component to the pool
 			// return a set of all the instances that were in it and empty the
 			// pool
-			if (valid) {
-				pool.add(instance);
-				Set<BIPComponent> poolCopy = pool;
-				pool = new HashSet<BIPComponent>();
-				return poolCopy;
-
-				// else add instance to the pool and return an empty set
-			} else {
-				pool.add(instance);
-				return Collections.emptySet();
-			}
+			return valid;
 		} finally {
 			lock.unlock();
 		}
