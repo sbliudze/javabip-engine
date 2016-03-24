@@ -14,6 +14,8 @@ import org.bip.engine.api.CurrentStateEncoder;
 import org.bip.engine.api.DataEncoder;
 import org.bip.engine.api.GlueEncoder;
 import org.bip.engine.coordinator.BIPCoordinatorImpl;
+import org.bip.engine.dynamicity.ComponentPool;
+import org.bip.engine.dynamicity.api.Pool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,8 +38,11 @@ public class EngineFactory {
 		BehaviourEncoder behenc = new BehaviourEncoderImpl();
 		CurrentStateEncoder currstenc = new CurrentStateEncoderImpl();
 		BDDBIPEngine bddBIPEngine = new BDDBIPEngineImpl();
+		
+		Pool pool = new ComponentPool(glue);
+		pool.initialize();
 
-		BIPCoordinator basicCoordinator = new BIPCoordinatorImpl(actorSystem, glueenc, behenc, currstenc, bddBIPEngine);
+		BIPCoordinator basicCoordinator = new BIPCoordinatorImpl(actorSystem, glueenc, behenc, currstenc, bddBIPEngine, pool);
 
 		BIPEngine bipEngine;
 
