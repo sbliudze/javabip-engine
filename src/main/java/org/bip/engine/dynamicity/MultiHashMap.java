@@ -21,6 +21,9 @@ public class MultiHashMap<K, V> implements MultiMap<K, V> {
 
 	@Override
 	public boolean containsValue(V value) {
+		if (internal == null || internal.values() == null)
+			return false;
+		
 		for (Set<V> set : internal.values()) {
 			if (set.contains(value)) {
 				return true;
@@ -66,9 +69,9 @@ public class MultiHashMap<K, V> implements MultiMap<K, V> {
 	public boolean putAll(K key, Set<V> values) {
 		Set<V> knownValues = internal.get(key);
 		if (knownValues == null) {
-			return !internal.put(key, values).isEmpty();
+			return internal.put(key, values) == null;
 		} else {
-			return values.addAll(values);
+			return knownValues.addAll(values);
 		}
 	}
 

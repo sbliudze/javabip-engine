@@ -3,7 +3,7 @@ package org.bip.engine.dynamicity;
 import java.util.Map;
 import java.util.Set;
 
-interface MultiMap<K, V> {
+public interface MultiMap<K, V> {
 
 	void clear();
 
