@@ -1,4 +1,4 @@
-package org.bip.engine.dynamicity;
+package org.bip.engine;
 
 class ColorFactory {
 	private static int requirementColor = 0;

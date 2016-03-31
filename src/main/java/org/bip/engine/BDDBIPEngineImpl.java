@@ -35,6 +35,7 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 	private Hashtable<BIPComponent, BDD> currentStateBDDs = new Hashtable<BIPComponent, BDD>();
 	private ArrayList<BDD> temporaryConstraints = new ArrayList<BDD>();
 	private Hashtable<BIPComponent, BDD> behaviourBDDs = new Hashtable<BIPComponent, BDD>();
+	private Hashtable<BIPComponent, BDD> tmpBehaviourBDDs = new Hashtable<BIPComponent, BDD>();
 	private Set<BDD> permanentDataBDDs = new HashSet<BDD>();
 
 	private BDD totalConstraints;
@@ -384,6 +385,10 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 	public synchronized void informBehaviour(BIPComponent component,
 			BDD componentBDD) {
 		behaviourBDDs.put(component, componentBDD);
+	}
+	
+	public synchronized void informNewBehaviour(BIPComponent component, BDD componentBDD) {
+		tmpBehaviourBDDs.put(component, componentBDD);
 	}
 
 	public synchronized final void totalBehaviourBDD()

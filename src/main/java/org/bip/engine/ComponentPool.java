@@ -1,4 +1,4 @@
-package org.bip.engine.dynamicity;
+package org.bip.engine;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -15,7 +15,7 @@ import org.bip.api.BIPGlue;
 import org.bip.api.Port;
 import org.bip.api.PortBase;
 import org.bip.api.Require;
-import org.bip.engine.dynamicity.api.Pool;
+import org.bip.engine.api.Pool;
 import org.bip.exceptions.BIPEngineException;
 import org.bip.executor.ExecutorKernel;
 import org.slf4j.Logger;
@@ -74,8 +74,8 @@ public class ComponentPool implements Pool {
 	 * who have only spontaneous or internal transitions) - Edge from T to T'
 	 * labeled x means that one instance of type T' needs x instances of type T.
 	 * 
-	 * See more at {@link org.bip.engine.dynamicity.Node} or
-	 * {@link org.bip.engine.dynamicity.Edge}
+	 * See more at {@link org.bip.engine.Node} or
+	 * {@link org.bip.engine.Edge}
 	 */
 	public void initialize() {
 		lock.lock();

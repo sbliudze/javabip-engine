@@ -1,4 +1,4 @@
-package org.bip.engine.dynamicity;
+package org.bip.engine;
 
 import java.util.Map;
 import java.util.Set;
