@@ -4,6 +4,7 @@ import org.bip.api.BIPEngine;
 import org.bip.api.BIPGlue;
 import org.bip.engine.BDDBIPEngineImpl;
 import org.bip.engine.BehaviourEncoderImpl;
+import org.bip.engine.ComponentPool;
 import org.bip.engine.CurrentStateEncoderImpl;
 import org.bip.engine.DataEncoderImpl;
 import org.bip.engine.GlueEncoderImpl;
@@ -13,9 +14,9 @@ import org.bip.engine.api.BehaviourEncoder;
 import org.bip.engine.api.CurrentStateEncoder;
 import org.bip.engine.api.DataEncoder;
 import org.bip.engine.api.GlueEncoder;
+import org.bip.engine.api.Pool;
 import org.bip.engine.coordinator.BIPCoordinatorImpl;
-import org.bip.engine.dynamicity.ComponentPool;
-import org.bip.engine.dynamicity.api.Pool;
+import org.bip.engine.coordinator.DataCoordinatorKernel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,7 +43,7 @@ public class EngineFactory {
 		Pool pool = new ComponentPool(glue);
 		pool.initialize();
 
-		BIPCoordinator basicCoordinator = new BIPCoordinatorImpl(actorSystem, glueenc, behenc, currstenc, bddBIPEngine, pool);
+		BIPCoordinator basicCoordinator = new BIPCoordinatorImpl(actorSystem, glueenc, behenc, currstenc, bddBIPEngine, null);
 
 		BIPEngine bipEngine;
 
@@ -51,7 +52,7 @@ public class EngineFactory {
 		}
 		else {
 			DataEncoder dataEncoder = new DataEncoderImpl();
-			bipEngine = new org.bip.engine.coordinator.DataCoordinatorKernel(basicCoordinator, dataEncoder);
+			bipEngine = new DataCoordinatorKernel(basicCoordinator, dataEncoder);
 		}
 
 		final BIPEngine engine = bipEngine;

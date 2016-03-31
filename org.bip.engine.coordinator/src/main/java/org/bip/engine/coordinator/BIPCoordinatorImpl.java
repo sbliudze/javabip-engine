@@ -7,14 +7,12 @@ import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 import java.util.Set;
-import java.util.concurrent.BrokenBarrierException;
-import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 //import java.util.concurrent.Semaphore;
 import java.util.concurrent.Semaphore;
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 import org.bip.api.BIPActor;
 import org.bip.api.BIPComponent;
@@ -28,7 +26,7 @@ import org.bip.engine.api.BehaviourEncoder;
 import org.bip.engine.api.CurrentStateEncoder;
 import org.bip.engine.api.GlueEncoder;
 import org.bip.engine.api.InteractionExecutor;
-import org.bip.engine.dynamicity.api.Pool;
+import org.bip.engine.api.Pool;
 import org.bip.exceptions.BIPEngineException;
 import org.bip.executor.ExecutorKernel;
 import org.bip.executor.TunellingExecutorHandler;
@@ -73,7 +71,8 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	Thread currentThread = null;
 
 	private Pool pool;
-	private CyclicBarrier initialized = new CyclicBarrier(2);
+	private Queue<BDD> bddsWaiting = new ConcurrentLinkedQueue<BDD>();
+	private Map<BDD, BIPComponent> bddToComponent = new ConcurrentHashMap<BDD, BIPComponent>();
 
 	private ArrayList<BIPComponent> registeredComponents = new ArrayList<BIPComponent>();
 
@@ -299,10 +298,13 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 			} catch (BIPEngineException e) {
 				// e.printStackTrace();
 			}
-			try {
-				engine.informBehaviour(executorActor, behenc.behaviourBDD(executorActor));
-			} catch (BIPEngineException e) {
-				// e.printStackTrace();
+			
+			if (!isEngineExecuting) {
+				try {
+					engine.informBehaviour(executorActor, behenc.behaviourBDD(executorActor));
+				} catch (BIPEngineException e) {
+					// e.printStackTrace();
+				}
 			}
 
 			for (int i = 0; i < nbComponentPorts; i++) {
@@ -320,9 +322,14 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 			org.bip.api.BIPEngine typedActorEngine = (org.bip.api.BIPEngine) typedActorSelf;
 			executorActor.register(typedActorEngine); // BIG TODO: Try
 														// synchronous call
-			if (pool.addInstance(executor) && !isEngineExecuting) {
+			boolean isSystemValid = pool.addInstance(executor);
+			if (isSystemValid && !isEngineExecuting) {
 				this.start();
 				this.execute();
+			} else if (isSystemValid && isEngineExecuting) {
+				BDD behaviourBDD = behenc.behaviourBDD(executorActor);
+				bddsWaiting.offer(behaviourBDD);
+				bddToComponent.put(behaviourBDD, executorActor);
 			}
 
 			// return actorWithLifeCycle;
@@ -341,6 +348,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	 * Otherwise, also the other inform function is called.
 	 */
 	public synchronized void inform(BIPComponent component, String currentState, Set<Port> disabledPorts) {
+		logger.debug("Inform engine from component " + component);
 		// long time1 = System.currentTimeMillis();
 		if (componentsHaveInformed.contains(component)) {
 			try {
@@ -551,7 +559,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 
 				/* Execute the port */
 
-				logger.debug("Chosen port: " + port.getId() + " of component: " + port.component().getId());
+				logger.debug("Chosen port: " + port.getId() + " of component: " + port.component());
 				if (isEngineExecuting)
 					port.component().execute(port.getId());
 
@@ -670,7 +678,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 		try {
 			coordinatorCycleInitialization();
 		} catch (BIPEngineException e1) {
-			// e1.printStackTrace();
+			e1.printStackTrace();
 			isEngineExecuting = false;
 			engineThread.interrupt();
 		}
@@ -679,7 +687,8 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 		 * Start the Engine cycle
 		 */
 
-		while (isEngineExecuting) {
+		while (isEngineExecuting && !Thread.interrupted()) {
+			logger.debug("***************************** NEW CYCLE *****************************");
 
 			logger.trace("isEngineExecuting: {} ", isEngineExecuting);
 			logger.trace("noComponents: {}, componentCounter: {}", nbComponents, componentsHaveInformed.size());
@@ -697,7 +706,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 			} catch (BIPEngineException e1) {
 
 				isEngineExecuting = false;
-				// e1.printStackTrace();
+				e1.printStackTrace();
 			}
 
 			try {
@@ -712,6 +721,15 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 				// method for the number of registered components in the system
 				// was interrupted.");
 			}
+			
+			while (!bddsWaiting.isEmpty()) {
+				BDD behaviourBDD = bddsWaiting.poll();
+				BIPComponent executor = bddToComponent.get(behaviourBDD);
+//				engine.informNewBehaviour(executor, behaviourBDD);
+			}
+			
+
+			logger.debug("***************************** END CYCLE *****************************");
 		}
 
 		// TODO: unregister components and notify the component that the engine
@@ -742,9 +760,13 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 			throw new BIPEngineException("Stoping the engine before starting it.");
 		}
 		isEngineExecuting = false;
-		engineThread.stop();
-		// engineThread.interrupt();
-
+		// engineThread.stop();
+		engineThread.interrupt();
+		try {
+			engineThread.join();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
 	}
 
 	/**
@@ -876,8 +898,11 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 		List<BIPComponent> instances = typeInstancesMapping.get(type);
 		if (instances == null) {
 			try {
-				logger.error("No registered component instances for the: " + type
-						+ " component type. Possible reasons: The name of the component instances was specified in another way at registration.");
+				// logger.error("No registered component instances for the: " +
+				// type
+				// + " component type. Possible reasons: The name of the
+				// component instances was specified in another way at
+				// registration.");
 				throw new BIPEngineException("Exception in thread " + Thread.currentThread().getName()
 						+ " No registered component instances for the component type: " + "'" + type + "'"
 						+ " Possible reasons: The name of the component instances was specified in another way at registration.");

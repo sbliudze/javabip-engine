@@ -1,4 +1,4 @@
-package org.bip.engine.dynamicity.api;
+package org.bip.engine.api;
 
 import org.bip.api.BIPComponent;
 
