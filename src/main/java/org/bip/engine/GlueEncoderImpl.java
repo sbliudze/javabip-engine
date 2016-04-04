@@ -96,9 +96,15 @@ public class GlueEncoderImpl implements GlueEncoder {
 			} else {
 				Iterable<BIPComponent> components = wrapper.getBIPComponentInstances(causePort.getSpecType());
 				ArrayList<BDD> portBDDs = new ArrayList<BDD>();
+				logger.debug("Before going through all components");
+				try {
 				for (BIPComponent component : components) {
-					logger.trace("Component: " + component.getId() + " has Causes ports: " + causePort);
+//					logger.trace("Component: " + component.getId() + " has Causes ports: " + causePort);
 					portBDDs.add(behenc.getBDDOfAPort(component, causePort.getId()));
+					logger.debug("Done with getting the BDD of the port {}", causePort);
+				}
+				} catch (Exception e) {
+					e.printStackTrace();
 				}
 				logger.trace("Number of BDDs for port {} {}", causePort.getId(), portBDDs.size());
 
@@ -168,7 +174,7 @@ public class GlueEncoderImpl implements GlueEncoder {
 		}
 
 		for (Map.Entry<String, Integer> entry : cardinalitiesPerType.entrySet()) {
-			if (wrapper.getBIPComponentInstances(entry.getKey()).size() != entry.getValue())
+			if (wrapper.getBIPComponentInstances(entry.getKey()).size() < entry.getValue())
 				return false;
 		}
 
@@ -376,7 +382,7 @@ public class GlueEncoderImpl implements GlueEncoder {
 				}
 				ArrayList<BDD> portBDDs = new ArrayList<BDD>();
 				for (BIPComponent component : components) {
-					logger.trace("Component: " + component.getId() + " has Causes ports: " + causePort);
+					logger.trace("Component: " + component + " has Causes ports: " + causePort);
 					portBDDs.add(behenc.getBDDOfAPort(component, causePort.getId()));
 				}
 				logger.trace("Number of BDDs for port {} {}", causePort.getId(), portBDDs.size());
