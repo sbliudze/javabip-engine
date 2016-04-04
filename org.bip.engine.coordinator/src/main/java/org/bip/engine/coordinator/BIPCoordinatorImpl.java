@@ -7,12 +7,11 @@ import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Queue;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
 //import java.util.concurrent.Semaphore;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.bip.api.BIPActor;
 import org.bip.api.BIPComponent;
@@ -71,8 +70,8 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	Thread currentThread = null;
 
 	private Pool pool;
-	private Queue<BDD> bddsWaiting = new ConcurrentLinkedQueue<BDD>();
-	private Map<BDD, BIPComponent> bddToComponent = new ConcurrentHashMap<BDD, BIPComponent>();
+	private int newComponents = 0;
+	private Lock registrationLock = new ReentrantLock();
 
 	private ArrayList<BIPComponent> registeredComponents = new ArrayList<BIPComponent>();
 
@@ -296,14 +295,14 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 				behenc.createBDDNodes(executorActor, (behaviour.getEnforceablePorts()),
 						((new ArrayList<String>(behaviour.getStates()))));
 			} catch (BIPEngineException e) {
-				// e.printStackTrace();
+				 e.printStackTrace();
 			}
-			
+
 			if (!isEngineExecuting) {
 				try {
 					engine.informBehaviour(executorActor, behenc.behaviourBDD(executorActor));
 				} catch (BIPEngineException e) {
-					// e.printStackTrace();
+					 e.printStackTrace();
 				}
 			}
 
@@ -324,13 +323,22 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 														// synchronous call
 			boolean isSystemValid = pool.addInstance(executor);
 			if (isSystemValid && !isEngineExecuting) {
+				logger.info("System is valid, can start the engine");
 				this.start();
 				this.execute();
 			} else if (isSystemValid && isEngineExecuting) {
-				BDD behaviourBDD = behenc.behaviourBDD(executorActor);
-				bddsWaiting.offer(behaviourBDD);
-				bddToComponent.put(behaviourBDD, executorActor);
+				registrationLock.lock();
+				try {
+					logger.debug("New component has been added, compute the BDD and all");
+					BDD behaviourBDD = behenc.behaviourBDD(executorActor);
+					engine.informBehaviour(executor, behaviourBDD);
+					newComponents++;
+				} finally {
+					registrationLock.unlock();
+				}
 			}
+
+			logger.debug("Registration of {} is done", id);
 
 			// return actorWithLifeCycle;
 			return executorActor;
@@ -348,7 +356,8 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	 * Otherwise, also the other inform function is called.
 	 */
 	public synchronized void inform(BIPComponent component, String currentState, Set<Port> disabledPorts) {
-		logger.debug("Inform engine from component " + component);
+		logger.debug("Inform engine from component {}", component);
+
 		// long time1 = System.currentTimeMillis();
 		if (componentsHaveInformed.contains(component)) {
 			try {
@@ -363,7 +372,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 				throw new BIPEngineException(
 						"Component " + component.getId() + " has already informed the engine in this execution cycle.");
 			} catch (BIPEngineException e) {
-				// e.printStackTrace();
+				 e.printStackTrace();
 			}
 			return;
 		}
@@ -429,7 +438,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 						+ " specified in the inform was registered." + "\tPossible reason: "
 						+ "Name attribute in ComponentType annotation does not match the name of the Class.");
 			} catch (BIPEngineException e) {
-				// e.printStackTrace();
+				 e.printStackTrace();
 			}
 		}
 		// System.out.println("BC:" + (System.currentTimeMillis() - time1));
@@ -641,7 +650,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 			} catch (InterruptedException e1) {
 				logger.error(
 						"Semaphore's haveAllComponentsInformed acquire method for the number of registered components in the system was interrupted.");
-				// e1.printStackTrace();
+				 e1.printStackTrace();
 			}
 		}
 
@@ -652,7 +661,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 		} catch (InterruptedException e1) {
 			logger.error(
 					"Semaphore's haveAllComponentsInformed acquire method for the number of components that still have to inform was interrupted.");
-			// e1.printStackTrace();
+			 e1.printStackTrace();
 		}
 
 		/*
@@ -709,6 +718,21 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 				e1.printStackTrace();
 			}
 
+			registrationLock.lock();
+			try {
+				int prev = newComponents;
+				if (newComponents != 0) {
+					logger.debug("new components!");
+
+					computeTotalBehaviour();
+					computeTotalGlueAndInformEngine();
+					newComponents = 0;
+					haveAllComponentsInformed.release(prev);
+				}
+			} finally {
+				registrationLock.unlock();
+			}
+
 			try {
 				logger.trace("Waiting for the acquire in run()...");
 				haveAllComponentsInformed.acquire(nbComponents);
@@ -716,18 +740,10 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 				logger.trace("run() acquire successful.");
 			} catch (InterruptedException e) {
 				isEngineExecuting = false;
-				// e.printStackTrace();
-				// logger.error("Semaphore's haveAllComponentsInformed acquire
-				// method for the number of registered components in the system
-				// was interrupted.");
+				engineThread.interrupt();
+				 e.printStackTrace();
+				 logger.error("Semaphore's haveAllComponentsInformed acquire method for the number of registered components in the system was interrupted.");
 			}
-			
-			while (!bddsWaiting.isEmpty()) {
-				BDD behaviourBDD = bddsWaiting.poll();
-				BIPComponent executor = bddToComponent.get(behaviourBDD);
-//				engine.informNewBehaviour(executor, behaviourBDD);
-			}
-			
 
 			logger.debug("***************************** END CYCLE *****************************");
 		}
@@ -755,6 +771,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	 * Interrupt the Engine thread.
 	 */
 	public void stop() {
+		logger.debug("*************** Calling engine.stop() ***************");
 		if (engineThread == null) {
 			logger.error("Stoping the engine before starting it.");
 			throw new BIPEngineException("Stoping the engine before starting it.");
@@ -767,6 +784,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
+		logger.debug("*************** Engine is stopped gracefully ***************");
 	}
 
 	/**
@@ -907,7 +925,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 						+ " No registered component instances for the component type: " + "'" + type + "'"
 						+ " Possible reasons: The name of the component instances was specified in another way at registration.");
 			} catch (BIPEngineException e) {
-				// e.printStackTrace();
+				 e.printStackTrace();
 				throw e;
 			}
 		}

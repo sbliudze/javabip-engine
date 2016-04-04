@@ -43,7 +43,7 @@ public class EngineFactory {
 		Pool pool = new ComponentPool(glue);
 		pool.initialize();
 
-		BIPCoordinator basicCoordinator = new BIPCoordinatorImpl(actorSystem, glueenc, behenc, currstenc, bddBIPEngine, null);
+		BIPCoordinator basicCoordinator = new BIPCoordinatorImpl(actorSystem, glueenc, behenc, currstenc, bddBIPEngine, pool);
 
 		BIPEngine bipEngine;
 
