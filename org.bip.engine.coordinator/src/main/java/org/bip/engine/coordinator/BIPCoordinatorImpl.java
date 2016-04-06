@@ -70,7 +70,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	Thread currentThread = null;
 
 	private Pool pool;
-	private int newComponents = 0;
+	private int nbNewComponents = 0;
 	private Lock registrationLock = new ReentrantLock();
 
 	private ArrayList<BIPComponent> registeredComponents = new ArrayList<BIPComponent>();
@@ -196,6 +196,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	 */
 	private synchronized void computeTotalBehaviour() throws BIPEngineException {
 		engine.totalBehaviourBDD();
+		logger.debug("total behaviour bdd computed");
 	}
 
 	public BIPComponent getComponentFromObject(Object component) {
@@ -294,18 +295,12 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 			try {
 				behenc.createBDDNodes(executorActor, (behaviour.getEnforceablePorts()),
 						((new ArrayList<String>(behaviour.getStates()))));
+
 			} catch (BIPEngineException e) {
 				 e.printStackTrace();
 			}
 
-			if (!isEngineExecuting) {
-				try {
-					engine.informBehaviour(executorActor, behenc.behaviourBDD(executorActor));
-				} catch (BIPEngineException e) {
-					 e.printStackTrace();
-				}
-			}
-
+			
 			for (int i = 0; i < nbComponentPorts; i++) {
 				behenc.getPositionsOfPorts().add(nbPorts + nbStates + nbComponentStates + i);
 				behenc.getPortToPosition().put((behaviour.getEnforceablePorts()).get(i),
@@ -313,7 +308,10 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 			}
 			nbPorts += nbComponentPorts;
 			nbStates += nbComponentStates;
-			nbComponents++;
+			if(!isEngineExecuting) {
+				engine.informBehaviour(executor, behenc.behaviourBDD(executorActor));
+				nbComponents++;
+			}
 			// if (!behaviour.getEnforceablePorts().isEmpty()) {
 			// nbComponentsWithEnforceableTransitions++;
 			// }
@@ -324,18 +322,19 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 			boolean isSystemValid = pool.addInstance(executor);
 			if (isSystemValid && !isEngineExecuting) {
 				logger.info("System is valid, can start the engine");
-				this.start();
-				this.execute();
+				start();
+				execute();
 			} else if (isSystemValid && isEngineExecuting) {
 				registrationLock.lock();
 				try {
 					logger.debug("New component has been added, compute the BDD and all");
-					BDD behaviourBDD = behenc.behaviourBDD(executorActor);
-					engine.informBehaviour(executor, behaviourBDD);
-					newComponents++;
+					engine.informBehaviour(executor, behenc.behaviourBDD(executorActor));
+					nbNewComponents++;
 				} finally {
 					registrationLock.unlock();
 				}
+			} else if(!isSystemValid && isEngineExecuting) {
+				throw new BIPEngineException("The system cannot be invalid if the engine is running");
 			}
 
 			logger.debug("Registration of {} is done", id);
@@ -356,7 +355,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	 * Otherwise, also the other inform function is called.
 	 */
 	public synchronized void inform(BIPComponent component, String currentState, Set<Port> disabledPorts) {
-		logger.debug("Inform engine from component {}", component);
+		logger.debug("Inform engine from component {} at state {}", component, currentState);
 
 		// long time1 = System.currentTimeMillis();
 		if (componentsHaveInformed.contains(component)) {
@@ -372,7 +371,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 				throw new BIPEngineException(
 						"Component " + component.getId() + " has already informed the engine in this execution cycle.");
 			} catch (BIPEngineException e) {
-				 e.printStackTrace();
+//				 e.printStackTrace();
 			}
 			return;
 		}
@@ -388,6 +387,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 		 */
 		if (registeredComponents.contains(component)) {
 			synchronized (componentsHaveInformed) {
+				logger.debug("Adding {} to the components that have informed this cycle.", component);
 				componentsHaveInformed.add(component);
 				try {
 					engine.informCurrentState(component, currstenc.inform(component, currentState, disabledPorts));
@@ -399,9 +399,10 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 				// componentsHaveInformed.size());
 				logger.debug("********************************* Inform *************************************");
 				logger.debug("Component: " + component + "informs that is at state: " + currentState);
-				// for (Port disabledPort : disabledPorts) {
-				// logger.debug("with disabled port: " + disabledPort.getId());
-				// }
+//				logger.debug("{} disabled ports", disabledPorts.size());
+//				for (Port disabledPort : disabledPorts) {
+//					logger.debug("with disabled port: " + disabledPort.getId());
+//				}
 				logger.debug("******************************************************************************");
 
 				/*
@@ -477,12 +478,12 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 		if (portsExecuted.size() != 0) {
 			bigInteraction.add(portsExecuted);
 		}
-
-		// for (Port port : portsExecuted) {
-		// logger.debug("ENGINE ENTRY: " + port.component() + " - " + port);
-		// System.out.println("ENGINE ENTRY: " + port.component() + " - " +
-		// port);
-		// }
+//
+//		 for (Port port : portsExecuted) {
+//		 logger.debug("ENGINE ENTRY: " + port.component() + " - " + port);
+////		 System.out.println("ENGINE ENTRY: " + port.component() + " - " +
+////		 port);
+//		 }
 		logger.debug("*************************************************************************");
 
 		return bigInteraction;
@@ -500,6 +501,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	 * @throws BIPEngineException
 	 */
 	public void executeInteractions(List<List<Port>> portsToFire) throws BIPEngineException {
+		logger.debug("Ports to fire: {}", portsToFire);
 
 		if (portsToFire == null) {
 			logger.warn("BIP Coordinator: Empty interaction requested for execution -- nothing to do.");
@@ -713,29 +715,42 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 				// System.out.printf("E: %s ", (System.currentTimeMillis() -
 				// time1));
 			} catch (BIPEngineException e1) {
-
+				logger.debug("Stopping the engine. BIPEngineException when running one iteration.");
 				isEngineExecuting = false;
+				engineThread.interrupt();
 				e1.printStackTrace();
 			}
 
+			logger.debug("Iteration done, checking for new components");
 			registrationLock.lock();
 			try {
-				int prev = newComponents;
-				if (newComponents != 0) {
-					logger.debug("new components!");
-
+				int prev = nbNewComponents;
+				nbNewComponents = 0;
+				if (prev != 0) {
+					logger.debug("{} new components!", prev);
+					
+					logger.debug("Adding the new components' BDDs to the total Behaviour BDD");
 					computeTotalBehaviour();
+					
+					logger.debug("Recomputing the glue's BDD completely");
 					computeTotalGlueAndInformEngine();
-					newComponents = 0;
+					
 					haveAllComponentsInformed.release(prev);
+					nbComponents += prev;
+					logger.debug("total number of components now is {}", nbComponents);
+				} else {
+					logger.debug("No new components");
 				}
 			} finally {
 				registrationLock.unlock();
 			}
+			logger.debug("Done with checking for new components");
 
 			try {
 				logger.trace("Waiting for the acquire in run()...");
+				logger.debug("{} components have informed. {} total", haveAllComponentsInformed.availablePermits(), nbComponents);
 				haveAllComponentsInformed.acquire(nbComponents);
+				logger.debug("Successfully acquired the {} permits.", nbComponents);
 
 				logger.trace("run() acquire successful.");
 			} catch (InterruptedException e) {
@@ -761,7 +776,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	 * Create a thread for the Engine and start it.
 	 */
 	public void start() {
-		logger.debug("Engine starts");
+		logger.debug("*************** Calling engine.start() ***************");
 		delayedSpecifyGlue(glueHolder);
 		engineThread = new Thread(this, "BIPEngine");
 		engineThread.start();
