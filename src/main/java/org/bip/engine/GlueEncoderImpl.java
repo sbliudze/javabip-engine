@@ -98,11 +98,12 @@ public class GlueEncoderImpl implements GlueEncoder {
 				ArrayList<BDD> portBDDs = new ArrayList<BDD>();
 				logger.debug("Before going through all components");
 				try {
-				for (BIPComponent component : components) {
-//					logger.trace("Component: " + component.getId() + " has Causes ports: " + causePort);
-					portBDDs.add(behenc.getBDDOfAPort(component, causePort.getId()));
-					logger.debug("Done with getting the BDD of the port {}", causePort);
-				}
+					for (BIPComponent component : components) {
+						// logger.trace("Component: " + component.getId() + "
+						// has Causes ports: " + causePort);
+						portBDDs.add(behenc.getBDDOfAPort(component, causePort.getId()));
+						logger.debug("Done with getting the BDD of the port {}", causePort);
+					}
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
@@ -596,15 +597,14 @@ public class GlueEncoderImpl implements GlueEncoder {
 			logger.trace("Glue spec require Constraints size: {} ", glueSpec.getRequiresConstraints().size());
 			logger.trace("Start conjunction of requires");
 			for (Require requires : glueSpec.getRequiresConstraints()) {
-				List<BIPComponent> componentsOfType = null;
 				try {
-					componentsOfType = wrapper.getBIPComponentInstances(requires.getEffect().getSpecType());
-				} catch (BIPEngineException e) {
-				}
-				logger.debug("Components of Type {}", componentsOfType);
-				if (componentsOfType != null && !componentsOfType.isEmpty())
+					wrapper.getBIPComponentInstances(requires.getEffect().getSpecType());
 					allGlueBDDs.addAll(decomposeRequireGlue(requires));
-
+				} catch (BIPEngineException e) {
+					// if BIPEngineException, then we just do not have any
+					// instance of this type but it does not matter since we
+					// know the system is valid from the component pool
+				}
 			}
 		} else {
 			logger.warn("No require constraints provided (usually there should be some).");
@@ -613,13 +613,11 @@ public class GlueEncoderImpl implements GlueEncoder {
 		logger.trace("Glue spec accept Constraints size: {} ", glueSpec.getAcceptConstraints().size());
 		if (!glueSpec.getAcceptConstraints().isEmpty() || !glueSpec.getAcceptConstraints().equals(null)) {
 			for (Accept accepts : glueSpec.getAcceptConstraints()) {
-				List<BIPComponent> componentsOfType = null;
 				try {
-					componentsOfType = wrapper.getBIPComponentInstances(accepts.getEffect().getSpecType());
+					wrapper.getBIPComponentInstances(accepts.getEffect().getSpecType());
+					allGlueBDDs.addAll(decomposeAcceptGlue(accepts));
 				} catch (BIPEngineException e) {
 				}
-				if (componentsOfType != null && !componentsOfType.isEmpty())
-					allGlueBDDs.addAll(decomposeAcceptGlue(accepts));
 			}
 		} else {
 			logger.warn("No accept constraints were provided (usually there should be some).");

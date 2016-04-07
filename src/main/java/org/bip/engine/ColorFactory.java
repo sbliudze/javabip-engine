@@ -1,12 +1,7 @@
 package org.bip.engine;
 
 class ColorFactory {
-	private static int requirementColor = 0;
 	private static int solutionColor = 1;
-
-	static Color getRequirementColor() {
-		return new RequirementColor(requirementColor++);
-	}
 
 	static Color getUnconditionalSolutionColor() {
 		return new SolutionColor(0);
@@ -49,13 +44,6 @@ abstract class Color {
 	@Override
 	public String toString() {
 		return color + "";
-	}
-}
-
-class RequirementColor extends Color {
-
-	RequirementColor(int color) {
-		super(color);
 	}
 }
 
