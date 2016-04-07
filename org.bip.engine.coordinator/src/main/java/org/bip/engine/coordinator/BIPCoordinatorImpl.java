@@ -784,15 +784,19 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 
 				logger.trace("run() acquire successful.");
 			} catch (InterruptedException e) {
+				// This exception is expected if we call engine.stop() before
+				// trying to acquire the permits in the semaphore
 				isEngineExecuting = false;
 				engineThread.interrupt();
-//				e.printStackTrace();
-				logger.error(
-						"Semaphore's haveAllComponentsInformed acquire method for the number of registered components in the system was interrupted.");
+				// e.printStackTrace();
+//				logger.error(
+//						"Semaphore's haveAllComponentsInformed acquire method for the number of registered components in the system was interrupted.");
 			}
 
 			logger.debug("***************************** END CYCLE *****************************");
 		}
+
+		logger.debug("Engine is stopping.");
 
 		// TODO: unregister components and notify the component that the engine
 		// is not working
@@ -801,16 +805,6 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 		// }
 
 		return;
-	}
-
-	/**
-	 * Create a thread for the Engine and start it.
-	 */
-	public void start() {
-		logger.debug("*************** Calling engine.start() ***************");
-		delayedSpecifyGlue(glueHolder);
-		engineThread = new Thread(this, "BIPEngine");
-		engineThread.start();
 	}
 
 	/**
@@ -823,14 +817,23 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 			throw new BIPEngineException("Stoping the engine before starting it.");
 		}
 		isEngineExecuting = false;
-		// engineThread.stop();
 		engineThread.interrupt();
 		try {
 			engineThread.join();
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
-		logger.debug("*************** Engine is stopped gracefully ***************");
+		logger.debug("*************** Engine has been stopped gracefully ***************");
+	}
+
+	/**
+	 * Create a thread for the Engine and start it.
+	 */
+	public void start() {
+		logger.debug("*************** Calling engine.start() ***************");
+		delayedSpecifyGlue(glueHolder);
+		engineThread = new Thread(this, "BIPEngine");
+		engineThread.start();
 	}
 
 	/**
@@ -971,7 +974,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 						+ " No registered component instances for the component type: " + "'" + type + "'"
 						+ " Possible reasons: The name of the component instances was specified in another way at registration.");
 			} catch (BIPEngineException e) {
-				e.printStackTrace();
+				// e.printStackTrace();
 				throw e;
 			}
 		}

@@ -47,10 +47,13 @@ public class EngineFactory {
 
 		BIPEngine bipEngine;
 
+//		logger.debug("Glue {}", glue);
 		if (glue.getDataWires().size() == 0) {
+//			logger.debug("Engine without data");
 			bipEngine = basicCoordinator;
 		}
 		else {
+//			logger.debug("Engine with data");
 			DataEncoder dataEncoder = new DataEncoderImpl();
 			bipEngine = new DataCoordinatorKernel(basicCoordinator, dataEncoder);
 		}
@@ -69,7 +72,7 @@ public class EngineFactory {
 		// refactoring the coordinators)
 		// executor.setProxy(actor);
 		actor.initialize();
-
+		
 		actor.specifyGlue(glue);
 		
 		return actor;
