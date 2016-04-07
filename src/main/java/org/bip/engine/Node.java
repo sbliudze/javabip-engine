@@ -17,12 +17,12 @@ class Node {
 		this.isSatisfied = false;
 	}
 
-	Edge getOrCreate(String type, Color requirementColor, Color solutionColor, String dest) {
+	Edge getOrCreate(String type, Color solutionColor, String dest) {
 		// See if the edge already exists from this to type
 		Edge edge = edges.get(solutionColor);
 		if (edge == null) {
 			// Otherwise create a new one and store it
-			edge = new Edge(requirementColor, solutionColor, this.type, dest);
+			edge = new Edge(solutionColor, this.type, dest);
 			edges.put(solutionColor, edge);
 		}
 		return edge;
@@ -77,7 +77,7 @@ class Edge {
 	private String dest;
 	
 
-	Edge(Color requirementColor, Color solutionColor, String src, String dest) {
+	Edge(Color solutionColor, String src, String dest) {
 		this.label = 0;
 		this.counter = 0;
 		this.src = src;

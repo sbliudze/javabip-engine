@@ -289,8 +289,7 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		 for (byte b : value) {
 		 sb.append(String.format("%02X ", b));
 		 }
-		 logger.trace(sb.toString());
-		 System.out.println("Engine: " + sb.toString());
+		 logger.debug("Engine solutions: " + sb.toString());
 		 }
 
 		ArrayList<byte[]> cubeMaximals = new ArrayList<byte[]>();

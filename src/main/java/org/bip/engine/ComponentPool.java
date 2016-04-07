@@ -90,20 +90,14 @@ public class ComponentPool implements Pool {
 		}
 
 		// Create all edges
-		Color requirementColor, solutionColor = null;
-		String effectType, causeType;
-		Edge edge;
-		Node causeNode;
-
 		// For each requirement
 		for (Require require : requires) {
 			// Get the type of the effect
-			effectType = require.getEffect().getSpecType();
-			// Create a color for this requirement
-			requirementColor = ColorFactory.getRequirementColor();
+			String effectType = require.getEffect().getSpecType();
 
 			// If only one conjunction of causes the get the unconditional color
 			// for solutions
+			Color solutionColor = null;
 			if (require.getCauses().size() == 1) {
 				solutionColor = ColorFactory.getUnconditionalSolutionColor();
 			}
@@ -119,13 +113,13 @@ public class ComponentPool implements Pool {
 
 				// For every cause in the disjunction
 				for (PortBase cause : causes) {
-					causeType = cause.getSpecType();
-					causeNode = nodes.get(causeType);
+					String causeType = cause.getSpecType();
+					Node causeNode = nodes.get(causeType);
 
 					if (!seen.contains(effectType)) {
 						// Create a new edge or get the one that has been
 						// created before
-						edge = causeNode.getOrCreate(effectType, requirementColor, solutionColor, effectType);
+						Edge edge = causeNode.getOrCreate(effectType, solutionColor, effectType);
 						// Increment label and counter
 						edge.incrementLabel();
 
@@ -170,9 +164,8 @@ public class ComponentPool implements Pool {
 		Set<String> seen = new HashSet<String>();
 		Set<String> toAdd = new HashSet<String>();
 		q.add(start);
-		Node current;
 		while (!q.isEmpty()) {
-			current = q.poll();
+			Node current = q.poll();
 			if (!seen.contains(current.getType())) {
 				if (incomingEdges.get(current.getType()) != null) {
 					for (Edge e : incomingEdges.get(current.getType())) {
@@ -387,7 +380,6 @@ public class ComponentPool implements Pool {
 			return this.valid;
 		}
 
-		boolean v;
 		boolean otherSolution = false;
 		for (Map.Entry<Set<String>, Boolean> entry : valids.entrySet()) {
 			if (entry.getKey().contains(toCheck) && entry.getValue().booleanValue()) {
@@ -398,7 +390,7 @@ public class ComponentPool implements Pool {
 					}
 				}
 
-				v = checkValidSystem(subsystemToCheck);
+				boolean v = checkValidSystem(subsystemToCheck);
 				if (!v) {
 					entry.setValue(false);
 				} else {
