@@ -21,11 +21,13 @@ import org.bip.api.OrchestratedExecutor;
 import org.bip.api.Port;
 import org.bip.engine.api.BDDBIPEngine;
 import org.bip.engine.api.BIPCoordinator;
+import org.bip.engine.api.BIPEngineStarter;
 import org.bip.engine.api.BehaviourEncoder;
 import org.bip.engine.api.CurrentStateEncoder;
 import org.bip.engine.api.GlueEncoder;
 import org.bip.engine.api.InteractionExecutor;
 import org.bip.engine.api.Pool;
+import org.bip.engine.api.StarterCallback;
 import org.bip.exceptions.BIPEngineException;
 import org.bip.executor.ExecutorKernel;
 import org.bip.executor.TunellingExecutorHandler;
@@ -53,7 +55,7 @@ import net.sf.javabdd.BDDFactory;
  * 
  * @author mavridou
  */
-public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
+public class BIPCoordinatorImpl implements BIPCoordinator, Runnable, BIPEngineStarter {
 
 	private Logger logger = LoggerFactory.getLogger(BIPCoordinatorImpl.class);
 	/**
@@ -65,6 +67,8 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	private CurrentStateEncoder currstenc;
 	private BDDBIPEngine engine;
 	private InteractionExecutor interactionExecutor;
+	private BIPEngineStarter engineStarter;
+	private StarterCallback callback = new EmptyCallback();
 	private ActorSystem system;
 
 	Thread currentThread = null;
@@ -326,8 +330,12 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 			boolean isSystemValid = pool.addInstance(executor);
 			if (isSystemValid && !isEngineExecuting) {
 				logger.info("System is valid, can start the engine");
-				start();
-				execute();
+				if (interactionExecutor == this) {
+					start();
+					execute();
+				} else {
+					engineStarter.setStartCallback(new StartCallback(engineStarter));
+				}
 			} else if (isSystemValid && isEngineExecuting) {
 				registrationLock.lock();
 				try {
@@ -344,10 +352,10 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 
 			logger.debug("Registration of {} is done", id);
 
+			
 			// return actorWithLifeCycle;
 			return executorActor;
 		}
-
 	}
 
 	/**
@@ -954,6 +962,14 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	public void setInteractionExecutor(InteractionExecutor interactionExecutor) {
 		this.interactionExecutor = interactionExecutor;
 	}
+	
+//	public void setEngineStarter(BIPEngineStarter starter) {
+//		this.engineStarter = starter;
+//	}
+//	
+//	public void setStartCallback(StarterCallback callback) {
+//		this.call
+//	}
 
 	/**
 	 * Helper function that returns the registered component instances that
@@ -994,6 +1010,24 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 		// itself).
 		this.typedActorContext = TypedActor.context();
 		this.typedActorSelf = TypedActor.self();
+		if(engineStarter == null) {
+			setEngineStarter(this);
+		}
 	}
 
+	@Override
+	public void setEngineStarter(BIPEngineStarter starter) {
+		this.engineStarter = starter;
+	}
+
+	@Override
+	public void setStartCallback(StarterCallback callback) {
+		this.callback = callback;
+	}
+
+	@Override
+	public void executeCallback() {
+		callback.execute();
+		callback = new EmptyCallback();
+	}
 }

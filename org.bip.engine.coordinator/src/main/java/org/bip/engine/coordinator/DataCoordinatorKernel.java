@@ -21,10 +21,12 @@ import org.bip.api.Data;
 import org.bip.api.DataWire;
 import org.bip.api.Port;
 import org.bip.engine.api.BIPCoordinator;
+import org.bip.engine.api.BIPEngineStarter;
 import org.bip.engine.api.BehaviourEncoder;
 import org.bip.engine.api.DataCoordinator;
 import org.bip.engine.api.DataEncoder;
 import org.bip.engine.api.InteractionExecutor;
+import org.bip.engine.api.StarterCallback;
 import org.bip.exceptions.BIPEngineException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -95,6 +97,8 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 
 	/** The interaction executor. */
 	private InteractionExecutor interactionExecutor;
+	private BIPEngineStarter engineStarter;
+	private StarterCallback callback = new EmptyCallback();
 
 	/** The d var positions to wires. */
 	private Map<Integer, Entry<Port, Port>> dVarPositionsToWires = new Hashtable<Integer, Entry<Port, Port>>();
@@ -130,6 +134,7 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 	
 	@Override
 	public void initialize() {
+		bipCoordinator.setEngineStarter(this);
 		bipCoordinator.initialize();
 	}
 	
@@ -288,8 +293,15 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 			// e.printStackTrace();
 		}
 
+		executeCallback();
+		
 		return actor;
 	}
+//
+//	private void executeCallback() {
+//		callback.execute();
+//		callback = new EmptyCallback();
+//	}
 
 	/*
 	 * (non-Javadoc)
@@ -810,9 +822,15 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 
 	public void setInteractionExecutor(InteractionExecutor interactionExecutor) {
 		this.interactionExecutor = interactionExecutor;
-
 	}
 
+//	public void setEngineStarter(BIPEngineStarter starter) {
+//		this.engineStarter = starter;
+//	}
+//	
+//	public void setStartCallback(StarterCallback callback) {
+//		this.callback = callback;
+//	}
 
 	public void specifyTemporaryConstraints(BDD constraints) {
 		bipCoordinator.specifyTemporaryConstraints(constraints);
@@ -946,4 +964,19 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 		return bipCoordinator.getNoComponents();
 	}
 
+	@Override
+	public void setEngineStarter(BIPEngineStarter starter) {
+		this.engineStarter = starter;
+	}
+
+	@Override
+	public void setStartCallback(StarterCallback callback) {
+		this.callback = callback;
+	}
+
+	@Override
+	public void executeCallback() {
+		callback.execute();
+		callback = new EmptyCallback();
+	}
 }

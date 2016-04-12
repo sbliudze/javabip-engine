@@ -25,7 +25,7 @@ import org.bip.exceptions.BIPEngineException;
   * @author mavridou
  */
 
-public interface BIPCoordinator extends BIPEngine, InteractionExecutor {
+public interface BIPCoordinator extends BIPEngine, InteractionExecutor, BIPEngineStarter {
 
 	/**
 	 * Returns the Behaviour of the BIP component.
