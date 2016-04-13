@@ -330,7 +330,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable, BIPEngineSt
 			boolean isSystemValid = pool.addInstance(executor);
 			if (isSystemValid && !isEngineExecuting) {
 				logger.info("System is valid, can start the engine");
-				if (interactionExecutor == this) {
+				if (engineStarter == this) {
 					start();
 					execute();
 				} else {
