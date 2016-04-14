@@ -8,7 +8,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-//import java.util.concurrent.Semaphore;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -76,6 +75,8 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable, BIPEngineSt
 	private Pool pool;
 	private int nbNewComponents = 0;
 	private Lock registrationLock = new ReentrantLock();
+
+	private Set<BIPComponent> pausedComponents = new HashSet<BIPComponent>();
 
 	private ArrayList<BIPComponent> registeredComponents = new ArrayList<BIPComponent>();
 
@@ -299,7 +300,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable, BIPEngineSt
 			int nbComponentStates = (behaviour.getStates()).size();
 
 			try {
-				logger.debug("Create {} nodes for {}", nbComponentPorts+nbComponentStates, id);
+				logger.debug("Create {} nodes for {}", nbComponentPorts + nbComponentStates, id);
 				behenc.createBDDNodes(executorActor, (behaviour.getEnforceablePorts()),
 						((new ArrayList<String>(behaviour.getStates()))));
 
@@ -368,7 +369,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable, BIPEngineSt
 	 * Otherwise, also the other inform function is called.
 	 */
 	public void inform(BIPComponent component, String currentState, Set<Port> disabledPorts) {
-		logger.debug("Inform engine from component {} at state {}", component, currentState);
+		logger.info("Inform engine from component {} at state {}", component, currentState);
 
 		blockNewComponent(component);
 
@@ -391,6 +392,12 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable, BIPEngineSt
 					// e.printStackTrace();
 				}
 				return;
+			}
+			
+			if (pausedComponents.contains(component)) {
+				pausedComponents.remove(component);
+				nbComponents++;
+				pool.addInstance(component);
 			}
 
 			/*
@@ -462,6 +469,9 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable, BIPEngineSt
 				} catch (BIPEngineException e) {
 					e.printStackTrace();
 				}
+			}
+			if(pool.isSystemValid()) {
+				engineThread.notify();
 			}
 			// System.out.println("BC:" + (System.currentTimeMillis() - time1));
 		}
@@ -734,6 +744,8 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable, BIPEngineSt
 
 			componentsHaveInformed.clear();
 
+			informCurrentStateOfPausedComponents();
+
 			try {
 
 				// long time1 = System.currentTimeMillis();
@@ -794,6 +806,13 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable, BIPEngineSt
 				// number of registered components in the system was
 				// interrupted.");
 			}
+			if (!pool.isSystemValid()) {
+				try {
+					engineThread.wait();
+				} catch (InterruptedException e) {
+					isEngineExecuting = false;
+				}
+			}
 
 			logger.debug("***************************** END CYCLE *****************************");
 		}
@@ -807,6 +826,40 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable, BIPEngineSt
 		// }
 
 		return;
+	}
+
+	private void informCurrentStateOfPausedComponents() {
+		for (BIPComponent component : pausedComponents) {
+			Behaviour behaviour = getBehaviourByComponent(component);
+			if (behaviour == null) {
+				throw new BIPEngineException("Behaviour of component " + component + " is null");
+			}
+
+			Set<Port> allEnforceablePorts = new HashSet<Port>(behaviour.getEnforceablePorts());
+			try {
+				engine.informCurrentState(component,
+						currstenc.inform(component, behaviour.getCurrentState(), allEnforceablePorts));
+			} catch (BIPEngineException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+	public synchronized void pause(BIPComponent component) {
+		if (component == null) {
+			throw new BIPEngineException("Cannot pause a null component");
+		} else if (!registeredComponents.contains(component)) {
+			throw new BIPEngineException(
+					"Cannot pause component " + component + "because it has not been registered yet");
+		} else if (pausedComponents.contains(component)) {
+			logger.info("Component {} has already been paused", component);
+		}
+
+		// TODO Check with the component pool whether the system is still valid without the component
+		// If yes then continue as before but if not, then pause the engine thread at the end of the cycle
+		pool.removeInstance(component);
+		pausedComponents.add(component);
+		nbComponents--;
 	}
 
 	/**

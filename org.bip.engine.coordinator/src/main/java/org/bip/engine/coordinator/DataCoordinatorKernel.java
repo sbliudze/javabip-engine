@@ -148,6 +148,10 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 		bipCoordinator.start();
 	}
 
+	public void pause(BIPComponent component) {
+		bipCoordinator.pause(component);
+	}
+
 	public void stop() {
 		isEngineExecuting = false;
 		bipCoordinator.stop();

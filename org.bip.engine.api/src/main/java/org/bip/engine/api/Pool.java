@@ -9,4 +9,6 @@ public interface Pool {
 	public boolean addInstance(BIPComponent instance);
 
 	public boolean removeInstance(BIPComponent instances);
+	
+	public boolean isSystemValid();
 }
