@@ -39,7 +39,7 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 	private Set<BDD> permanentDataBDDs = new HashSet<BDD>();
 
 	private BDD totalConstraints;
-	private BDD totalGlueBDD;
+	private BDD totalGlueBDD = null;
 	// TODO: Put these as arguments
 	private int noNodes = 1500;
 	private int cacheSize = 50000;
@@ -360,7 +360,7 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		if (totalGlueBDD == null) {
 			totalGlueBDD = bdd_mgr.one();
 			for (BDD eachD : extraConstraints) {
-				totalGlueBDD.and(eachD);
+				totalGlueBDD.andWith(eachD);
 			}
 			logger.trace("Extra permanent constraints added to empty total BDD.");
 			bdd_mgr.reorder(BDDFactory.REORDER_SIFTITE);
@@ -369,7 +369,7 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		} else {
 
 			for (BDD eachD : extraConstraints) {
-				totalGlueBDD.and(eachD);
+				totalGlueBDD.andWith(eachD);
 			}
 			logger.trace("Extra permanent constraints added to existing total BDD.");
 			bdd_mgr.reorder(BDDFactory.REORDER_SIFTITE);
@@ -380,6 +380,9 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 
 	public synchronized void specifyPermanentExtraConstraints(Set<BDD> extraConstraints) {
 		this.permanentDataBDDs.addAll(extraConstraints);
+		if (totalGlueBDD != null) {
+			dataConstraintsComputation(permanentDataBDDs);
+		}
 	}
 
 	public synchronized void informBehaviour(BIPComponent component, BDD componentBDD) {
@@ -444,6 +447,7 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 			}
 			logger.trace("Glue constraints added to empty total BDD.");
 
+			logger.debug("permanent Data BDD are size {}", permanentDataBDDs.size());
 			if (this.permanentDataBDDs.size() != 0) {
 				dataConstraintsComputation(this.permanentDataBDDs);
 			}
