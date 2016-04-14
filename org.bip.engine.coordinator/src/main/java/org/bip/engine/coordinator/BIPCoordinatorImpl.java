@@ -76,8 +76,6 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable, BIPEngineSt
 	private Pool pool;
 	private int nbNewComponents = 0;
 	private Lock registrationLock = new ReentrantLock();
-	private Semaphore informBlocker = new Semaphore(0);
-	private Set<BIPComponent> newComponents = new HashSet<BIPComponent>();
 
 	private ArrayList<BIPComponent> registeredComponents = new ArrayList<BIPComponent>();
 
@@ -301,6 +299,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable, BIPEngineSt
 			int nbComponentStates = (behaviour.getStates()).size();
 
 			try {
+				logger.debug("Create {} nodes for {}", nbComponentPorts+nbComponentStates, id);
 				behenc.createBDDNodes(executorActor, (behaviour.getEnforceablePorts()),
 						((new ArrayList<String>(behaviour.getStates()))));
 
@@ -328,6 +327,8 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable, BIPEngineSt
 			executorActor.register(typedActorEngine); // BIG TODO: Try
 														// synchronous call
 			boolean isSystemValid = pool.addInstance(executor);
+			logger.debug("Added to the pool who says validity is {} and we know engine is running? {}", isSystemValid,
+					isEngineExecuting);
 			if (isSystemValid && !isEngineExecuting) {
 				logger.info("System is valid, can start the engine");
 				if (engineStarter == this) {
@@ -352,7 +353,6 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable, BIPEngineSt
 
 			logger.debug("Registration of {} is done", id);
 
-			
 			// return actorWithLifeCycle;
 			return executorActor;
 		}
@@ -370,15 +370,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable, BIPEngineSt
 	public void inform(BIPComponent component, String currentState, Set<Port> disabledPorts) {
 		logger.debug("Inform engine from component {} at state {}", component, currentState);
 
-		if (newComponents.contains(component)) {
-			try {
-				logger.debug("Component {} waits for registration to be done", component);
-				informBlocker.acquire();
-				logger.debug("Registration seems finalized");
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-		}
+		blockNewComponent(component);
 
 		synchronized (this) {
 			// long time1 = System.currentTimeMillis();
@@ -797,8 +789,10 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable, BIPEngineSt
 				isEngineExecuting = false;
 				engineThread.interrupt();
 				// e.printStackTrace();
-//				logger.error(
-//						"Semaphore's haveAllComponentsInformed acquire method for the number of registered components in the system was interrupted.");
+				// logger.error(
+				// "Semaphore's haveAllComponentsInformed acquire method for the
+				// number of registered components in the system was
+				// interrupted.");
 			}
 
 			logger.debug("***************************** END CYCLE *****************************");
@@ -962,14 +956,14 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable, BIPEngineSt
 	public void setInteractionExecutor(InteractionExecutor interactionExecutor) {
 		this.interactionExecutor = interactionExecutor;
 	}
-	
-//	public void setEngineStarter(BIPEngineStarter starter) {
-//		this.engineStarter = starter;
-//	}
-//	
-//	public void setStartCallback(StarterCallback callback) {
-//		this.call
-//	}
+
+	// public void setEngineStarter(BIPEngineStarter starter) {
+	// this.engineStarter = starter;
+	// }
+	//
+	// public void setStartCallback(StarterCallback callback) {
+	// this.call
+	// }
 
 	/**
 	 * Helper function that returns the registered component instances that
@@ -1010,7 +1004,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable, BIPEngineSt
 		// itself).
 		this.typedActorContext = TypedActor.context();
 		this.typedActorSelf = TypedActor.self();
-		if(engineStarter == null) {
+		if (engineStarter == null) {
 			setEngineStarter(this);
 		}
 	}
@@ -1029,5 +1023,18 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable, BIPEngineSt
 	public void executeCallback() {
 		callback.execute();
 		callback = new EmptyCallback();
+	}
+
+	@Override
+	public void blockNewComponent(BIPComponent component) {
+		if (engineStarter == this && newComponents.contains(component)) {
+			try {
+				logger.debug("Component {} waits for registration to be done", component);
+				informBlocker.acquire();
+				logger.debug("Registration seems finalized");
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
 	}
 }
