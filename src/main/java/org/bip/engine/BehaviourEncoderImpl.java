@@ -67,6 +67,7 @@ public class BehaviourEncoderImpl implements BehaviourEncoder {
 	 */
 	public synchronized void createBDDNodes(BIPComponent component, List<Port> componentPorts, List<String> componentStates) throws BIPEngineException {
 
+		logger.debug("Creating BDD nodes for {}", component);
 		int nbComponentPorts = componentPorts.size();
 		int nbComponentStates = componentStates.size();
 		int initialNoNodes = nbComponentPorts + nbComponentStates + auxSum;
@@ -100,14 +101,15 @@ public class BehaviourEncoderImpl implements BehaviourEncoder {
 				}
 			}	
 		}
+		
 		componentToStateToBDD.put(component, stateToBDD);
 		stateBDDs.put(component, singleNodeBDDsForStates);
 
 		BDD[] singleNodeBDDsForPorts = new BDD[nbComponentPorts];
 		Hashtable <String, BDD> portToBDD = new Hashtable<String, BDD>();
-		logger.trace("Behaviour Encoder: Number of component ports: "+ nbComponentPorts+ " for component: "+component);
-		logger.trace("Behaviour Encoder: Number of component states: "+nbComponentStates+ " for component: "+component);
-		
+		logger.debug("Behaviour Encoder: Number of component ports: "+ nbComponentPorts+ " for component: "+component);
+		logger.debug("Behaviour Encoder: Number of component states: "+nbComponentStates+ " for component: "+component);
+
 		for (int i = 0; i < nbComponentPorts; i++) {
 			/*Create new variable in the BDD manager for the port of each component instance.*/
 			singleNodeBDDsForPorts[i] = engine.getBDDManager().ithVar(i + nbComponentStates + auxSum);

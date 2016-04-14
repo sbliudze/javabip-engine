@@ -132,6 +132,7 @@ public class DataEncoderImpl implements DataEncoder {
 	 * @see org.bip.engine.api.DataEncoder#specifyDataGlue(java.lang.Iterable)
 	 */
 	public Set<BDD> specifyDataGlue(Iterable<DataWire> dataGlue) throws BIPEngineException {
+		logger.debug("Create new data BDD nodes for {}", dataGlue);
 		if (dataGlue == null || !dataGlue.iterator().hasNext()) {
 			logger.error("The glue parser has failed to compute the data glue.\n"
 					+ "\tPossible reasons: No data transfer or corrupt/non-existant glue XML file.");
@@ -207,6 +208,7 @@ public class DataEncoderImpl implements DataEncoder {
 	 *             the BIP engine exception
 	 */
 	private Set<BDD> createDataBDDNodes(Iterable<DataWire> dataWires) throws BIPEngineException {
+		
 		/*
 		 * Get the number of BDD-nodes of the System. We base this on the assumption that all the
 		 * components have registered before. Therefore, we know the size of the BDD nodes created

@@ -279,18 +279,18 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 
 		logger.debug("******************************* Engine **********************************");
 		logger.debug("Number of possible interactions is: {} " + possibleInteraction.size());
-		 Iterator<byte[]> it = possibleInteraction.iterator();
+		Iterator<byte[]> it = possibleInteraction.iterator();
 
 		/* for debugging */
-		 while (it.hasNext()) {
-		 byte[] value = it.next();
-		
-		 StringBuilder sb = new StringBuilder();
-		 for (byte b : value) {
-		 sb.append(String.format("%02X ", b));
-		 }
-		 logger.debug("Engine solutions: " + sb.toString());
-		 }
+		while (it.hasNext()) {
+			byte[] value = it.next();
+
+			StringBuilder sb = new StringBuilder();
+			for (byte b : value) {
+				sb.append(String.format("%02X ", b));
+			}
+			logger.debug("Engine solutions: " + sb.toString());
+		}
 
 		ArrayList<byte[]> cubeMaximals = new ArrayList<byte[]>();
 		List<Integer> positionOfPorts = wrapper.getBehaviourEncoderInstance().getPositionsOfPorts();
@@ -357,26 +357,24 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 	}
 
 	private synchronized void dataConstraintsComputation(Set<BDD> extraConstraints) {
-		synchronized (this) {
-			if (totalGlueBDD == null) {
-				totalGlueBDD = bdd_mgr.one();
-				for (BDD eachD : extraConstraints) {
-					totalGlueBDD.andWith(eachD);
-				}
-				logger.trace("Extra permanent constraints added to empty total BDD.");
-				bdd_mgr.reorder(BDDFactory.REORDER_SIFTITE);
-				// System.out.println("EData: Reorder stats: " +
-				// bdd_mgr.getReorderStats());
-			} else {
-
-				for (BDD eachD : extraConstraints) {
-					totalGlueBDD.andWith(eachD);
-				}
-				logger.trace("Extra permanent constraints added to existing total BDD.");
-				bdd_mgr.reorder(BDDFactory.REORDER_SIFTITE);
-				// System.out.println("EData: Reorder stats: " +
-				// bdd_mgr.getReorderStats());
+		if (totalGlueBDD == null) {
+			totalGlueBDD = bdd_mgr.one();
+			for (BDD eachD : extraConstraints) {
+				totalGlueBDD.and(eachD);
 			}
+			logger.trace("Extra permanent constraints added to empty total BDD.");
+			bdd_mgr.reorder(BDDFactory.REORDER_SIFTITE);
+			// System.out.println("EData: Reorder stats: " +
+			// bdd_mgr.getReorderStats());
+		} else {
+
+			for (BDD eachD : extraConstraints) {
+				totalGlueBDD.and(eachD);
+			}
+			logger.trace("Extra permanent constraints added to existing total BDD.");
+			bdd_mgr.reorder(BDDFactory.REORDER_SIFTITE);
+			// System.out.println("EData: Reorder stats: " +
+			// bdd_mgr.getReorderStats());
 		}
 	}
 
@@ -432,9 +430,9 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 	public synchronized void informGlue(List<BDD> totalGlue) throws BIPEngineException {
 		synchronized (this) {
 			BDD prev = totalGlueBDD;
-			if(prev != null)
+			if (prev != null)
 				prev.free();
-			
+
 			totalGlueBDD = bdd_mgr.one();
 			for (BDD glueBDD : totalGlue) {
 				/*
@@ -449,7 +447,7 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 			if (this.permanentDataBDDs.size() != 0) {
 				dataConstraintsComputation(this.permanentDataBDDs);
 			}
-			
+
 			logger.debug("glue is computed");
 		}
 	}
