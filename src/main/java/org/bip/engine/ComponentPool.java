@@ -209,6 +209,10 @@ public class ComponentPool implements Pool {
 		lock.unlock();
 	}
 
+	public boolean isSystemValid() {
+		return valid;
+	}
+
 	/**
 	 * Adds an instance to the pool.
 	 * 
