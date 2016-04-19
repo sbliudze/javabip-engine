@@ -308,7 +308,7 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 			if (countPortEnable(cubeMaximals.get(0),
 					(ArrayList<Integer>) wrapper.getBehaviourEncoderInstance().getPositionsOfPorts()) == 0) {
 				logger.error("Deadlock. No enabled ports.");
-				throw new BIPEngineException("Deadlock. No enabled ports.");
+//				throw new BIPEngineException("Deadlock. No enabled ports.");
 			}
 		}
 
