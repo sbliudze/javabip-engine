@@ -149,6 +149,7 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 	}
 
 	public void pause(BIPComponent component) {
+		logger.warn("DATA COORDINATOR pause called");
 		bipCoordinator.pause(component);
 	}
 
