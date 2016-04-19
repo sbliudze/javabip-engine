@@ -12,12 +12,10 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import org.bip.api.BIPComponent;
 import org.bip.api.BIPGlue;
-import org.bip.api.Port;
 import org.bip.api.PortBase;
 import org.bip.api.Require;
 import org.bip.engine.api.Pool;
 import org.bip.exceptions.BIPEngineException;
-import org.bip.executor.ExecutorKernel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -74,8 +72,7 @@ public class ComponentPool implements Pool {
 	 * who have only spontaneous or internal transitions) - Edge from T to T'
 	 * labeled x means that one instance of type T' needs x instances of type T.
 	 * 
-	 * See more at {@link org.bip.engine.Node} or
-	 * {@link org.bip.engine.Edge}
+	 * See more at {@link org.bip.engine.Node} or {@link org.bip.engine.Edge}
 	 */
 	public void initialize() {
 		lock.lock();
@@ -236,16 +233,18 @@ public class ComponentPool implements Pool {
 				throw new BIPEngineException("Trying to add a null component to the pool.");
 			}
 
-			// TODO Find another way to find the ports without casting
-			List<Port> enforceablePorts = ((ExecutorKernel) instance).getBehavior().getEnforceablePorts();
-
-			// If the component has no enforceable ports, it is not in the graph
-			// but
-			// is a "valid system" so we return it.
-			if (enforceablePorts == null || enforceablePorts.isEmpty()) {
-				return true;
-			} else if (!nodes.containsKey(instance.getType())
-					&& !(enforceablePorts == null || enforceablePorts.isEmpty())) {
+			// // TODO Find another way to find the ports without casting
+			// List<Port> enforceablePorts = ((ExecutorKernel)
+			// instance).getBehavior().getEnforceablePorts();
+			//
+			// // If the component has no enforceable ports, it is not in the
+			// graph
+			// // but
+			// // is a "valid system" so we return it.
+			// if (enforceablePorts == null || enforceablePorts.isEmpty()) {
+			// return true;
+			// } else
+			if (!nodes.containsKey(instance.getType())) {
 				logger.error("Trying to add a component of type that is not in the graph: {}", instance.getType());
 				throw new BIPEngineException(
 						"Trying to add a component of type that is not in the graph: " + instance.getType());
@@ -307,18 +306,25 @@ public class ComponentPool implements Pool {
 				throw new BIPEngineException("Trying to remove a null component from the pool.");
 			}
 
-			// TODO Find another way to find the ports without casting
-			List<Port> enforceablePorts = ((ExecutorKernel) instance).getBehavior().getEnforceablePorts();
-
-			// If the component has no enforceable ports, it is not in the graph
-			// so
-			// the system is as valid as it was before removing it
-			if (enforceablePorts == null || enforceablePorts.isEmpty()) {
-				return this.valid;
-
-				// Check whether this type is in the graph
-			} else if (!nodes.containsKey(instance.getType())
-					&& !(enforceablePorts == null || enforceablePorts.isEmpty())) {
+			// // TODO Find another way to find the ports without casting
+			// List<Port> enforceablePorts = new ArrayList<Port>();
+			// try {
+			// enforceablePorts = ((ExecutorKernel)
+			// instance).getBehavior().getEnforceablePorts();
+			// } catch (ClassCastException e) {
+			// logger.error("{} is the real class of the component",
+			// instance.getClass());
+			// }
+			//
+			// // If the component has no enforceable ports, it is not in the
+			// graph
+			// // so the system is as valid as it was before removing it
+			// if (enforceablePorts == null || enforceablePorts.isEmpty()) {
+			// return this.valid;
+			//
+			// // Check whether this type is in the graph
+			// } else
+			if (!nodes.containsKey(instance.getType())) {
 				logger.error("Trying to remove a componnent of type that is not in the graph {}", instance.getType());
 				throw new BIPEngineException(
 						"Trying to remove a componnent of type that is not in the graph " + instance.getType());

@@ -77,6 +77,9 @@ public class CurrentStateEncoderImpl implements CurrentStateEncoder {
 
 		// For debugging
 		Behaviour behaviour = wrapper.getBehaviourByComponent(component);
+		if (behaviour == null) {
+			logger.error("Behaviour of component {} is null", component);
+		}
 		assert (behaviour != null);
 
 		ArrayList<String> componentStates = new ArrayList<String>(behaviour.getStates());
