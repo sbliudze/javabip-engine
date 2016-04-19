@@ -856,6 +856,9 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable, BIPEngineSt
 			}
 
 			Set<Port> allEnforceablePorts = new HashSet<Port>(behaviour.getEnforceablePorts());
+			logger.debug("Component {} is paused so saying it is at state {}", component, behaviour.getCurrentState());
+			logger.debug("Disabled ports are {}", allEnforceablePorts);
+			
 			try {
 				engine.informCurrentState(component,
 						currstenc.inform(component, behaviour.getCurrentState(), allEnforceablePorts));
@@ -881,6 +884,23 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable, BIPEngineSt
 		nbComponents--;
 		logger.warn("We have now {} components. Paused components are {}", nbComponents, pausedComponents);
 		logger.warn("{}", pool.isSystemValid() ? "The system is still valid" : "The system is not valid anymore");
+		
+		// Inform the core engine that all ports are disabled
+		Behaviour behaviour = getBehaviourByComponent(component);
+		if (behaviour == null) {
+			throw new BIPEngineException("Behaviour of component " + component + " is null");
+		}
+
+		Set<Port> allEnforceablePorts = new HashSet<Port>(behaviour.getEnforceablePorts());
+		logger.debug("Component {} is paused so saying it is at state {}", component, behaviour.getCurrentState());
+		logger.debug("Disabled ports are {}", allEnforceablePorts);
+		
+		try {
+			engine.informCurrentState(component,
+					currstenc.inform(component, behaviour.getCurrentState(), allEnforceablePorts));
+		} catch (BIPEngineException e) {
+			e.printStackTrace();
+		}
 	}
 
 	/**
