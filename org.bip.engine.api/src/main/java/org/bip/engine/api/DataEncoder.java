@@ -73,6 +73,6 @@ public interface DataEncoder {
 	void setBehaviourEncoder(BehaviourEncoder behaviourEncoder);
 
 
-
+	Set<BDD> extendDataBDDNodes(Iterable<DataWire> wires, Set<BIPComponent> newComponents);
 
 }
