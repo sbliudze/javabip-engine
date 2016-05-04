@@ -14,6 +14,7 @@ import net.sf.javabdd.BDD;
 import net.sf.javabdd.BDDFactory;
 
 import org.bip.api.BIPComponent;
+import org.bip.api.Behaviour;
 import org.bip.api.DataWire;
 import org.bip.api.Port;
 import org.bip.api.PortBase;
@@ -62,35 +63,40 @@ public class DataEncoderImpl implements DataEncoder {
 	Map<Entry<PortBase, PortBase>, Boolean> portToTriggersMapping = new Hashtable<Entry<PortBase, PortBase>, Boolean>();
 
 	/*
-	 * Possible implementation: Send each combination's BDD to the engine that takes the conjunction
-	 * of all of them on-the-fly. When all the registered components have informed at an execution
-	 * cycle then take the conjunction of the above total BDD with the global BDD.
+	 * Possible implementation: Send each combination's BDD to the engine that
+	 * takes the conjunction of all of them on-the-fly. When all the registered
+	 * components have informed at an execution cycle then take the conjunction
+	 * of the above total BDD with the global BDD.
 	 * 
-	 * Actually we do not care about the number of components that have informed. We care whether
-	 * the semaphore has been totally released.
+	 * Actually we do not care about the number of components that have
+	 * informed. We care whether the semaphore has been totally released.
 	 * 
-	 * Otherwise, the Data Encoder needs to compute and keep the total BDD. It needs to know when
-	 * all the components will have informed the engine about their current state and only then send
-	 * the total BDD to the core engine.
+	 * Otherwise, the Data Encoder needs to compute and keep the total BDD. It
+	 * needs to know when all the components will have informed the engine about
+	 * their current state and only then send the total BDD to the core engine.
 	 * 
-	 * Three are the main factors that should contribute in the implementation decision. 1. BDD
-	 * complexity (especially in the conjunction with the global BDD) 2. Number of function calls 3.
-	 * Transfering information regarding the number of components that have informed. 4. Here also
-	 * is the questions whether the DataEncoder should save the BDDs or not at each execution cycle.
+	 * Three are the main factors that should contribute in the implementation
+	 * decision. 1. BDD complexity (especially in the conjunction with the
+	 * global BDD) 2. Number of function calls 3. Transfering information
+	 * regarding the number of components that have informed. 4. Here also is
+	 * the questions whether the DataEncoder should save the BDDs or not at each
+	 * execution cycle.
 	 * 
 	 * @see org.bip.engine.DataEncoder#inform(java.util.Map)
 	 */
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see org.bip.engine.api.DataEncoder#encodeDisabledCombinations(org.bip.api.BIPComponent,
-	 * org.bip.api.Port, java.util.Map)
+	 * @see
+	 * org.bip.engine.api.DataEncoder#encodeDisabledCombinations(org.bip.api.
+	 * BIPComponent, org.bip.api.Port, java.util.Map)
 	 */
 	public synchronized BDD encodeDisabledCombinations(BIPComponent decidingComponent, Port decidingPort,
 			Map<BIPComponent, Set<Port>> disabledCombinations) throws BIPEngineException {
 		/*
-		 * The disabledCombinations and disabledComponents are checked in the DataCoordinator,
-		 * wherein exceptions are thrown. Here, we just use assertion.
+		 * The disabledCombinations and disabledComponents are checked in the
+		 * DataCoordinator, wherein exceptions are thrown. Here, we just use
+		 * assertion.
 		 */
 		BDD result;
 		assert (disabledCombinations != null);
@@ -101,7 +107,8 @@ public class DataEncoderImpl implements DataEncoder {
 		Set<BIPComponent> disabledComponents = disabledCombinations.keySet();
 		for (BIPComponent component : disabledComponents) {
 			logger.trace("Inform Specific: decidingPort is " + decidingPort + " of component: " + decidingComponent);
-			// System.out.println("Inform Specific: decidingPort is " + decidingPort +
+			// System.out.println("Inform Specific: decidingPort is " +
+			// decidingPort +
 			// " of component: "
 			// + decidingComponent);
 
@@ -112,7 +119,8 @@ public class DataEncoderImpl implements DataEncoder {
 			logger.trace("Inform Specific: disabled Component ports size: " + componentPorts.size());
 			for (Port port : componentPorts) {
 				logger.trace("Inform Specific: disabledPort is " + port.getId() + "of component" + port.component());
-				// System.out.println("Inform Specific: disabledPort is " + port.getId() +
+				// System.out.println("Inform Specific: disabledPort is " +
+				// port.getId() +
 				// "of component"
 				// + port.component());
 
@@ -154,7 +162,8 @@ public class DataEncoderImpl implements DataEncoder {
 	// private Set<BDD> computeDvariablesBDDs() {
 	// Set<BDD> result = BDDmanager.one();
 	// long time = System.currentTimeMillis();
-	// logger.trace("Adding implications to the data constraints: " + implicationsOfDs.size());
+	// logger.trace("Adding implications to the data constraints: " +
+	// implicationsOfDs.size());
 	// System.out.println("Adding implications to the data constraints: " +
 	// implicationsOfDs.size());
 	// System.out.println("Number of BDD nodes: " + BDDmanager.getNodeNum());
@@ -169,18 +178,20 @@ public class DataEncoderImpl implements DataEncoder {
 	//
 	// }
 	// BDDmanager.reorder(BDDFactory.REORDER_SIFTITE);
-	// System.out.println("EData: Reorder stats: " + BDDmanager.getReorderStats());
+	// System.out.println("EData: Reorder stats: " +
+	// BDDmanager.getReorderStats());
 	// System.out.println(System.currentTimeMillis() - time);
 	// return result;
 	// }
 
 	/**
-	 * Find the d-variables that correspond to each port. Find the BDDs of these d-variables and
-	 * return them.
+	 * Find the d-variables that correspond to each port. Find the BDDs of these
+	 * d-variables and return them.
 	 * 
 	 * @param port
 	 *            the port
-	 * @return ArrayList<BDD> of d-variables that correspond to the port given as an argument.
+	 * @return ArrayList<BDD> of d-variables that correspond to the port given
+	 *         as an argument.
 	 */
 	// TODO: after merging the createDataBDDNodes function delete this one
 	private synchronized ArrayList<BDD> createImplications(Port port) {
@@ -208,11 +219,12 @@ public class DataEncoderImpl implements DataEncoder {
 	 *             the BIP engine exception
 	 */
 	private Set<BDD> createDataBDDNodes(Iterable<DataWire> dataWires) throws BIPEngineException {
-		
+
 		/*
-		 * Get the number of BDD-nodes of the System. We base this on the assumption that all the
-		 * components have registered before. Therefore, we know the size of the BDD nodes created
-		 * for states and ports, which is the current System BDD size.
+		 * Get the number of BDD-nodes of the System. We base this on the
+		 * assumption that all the components have registered before. Therefore,
+		 * we know the size of the BDD nodes created for states and ports, which
+		 * is the current System BDD size.
 		 */
 		int initialSystemBDDSize = dataCoordinator.getNoPorts() + dataCoordinator.getNoStates();
 		int currentSystemBddSize = initialSystemBDDSize;
@@ -232,12 +244,12 @@ public class DataEncoderImpl implements DataEncoder {
 			logger.trace("outPorts size: " + outPorts.size());
 
 			/*
-			 * Here take the cross product of in and out variables to create the d-variables for one
-			 * data-wire Store this in a Map with the ports as the key and the d-variable as a
-			 * value.
+			 * Here take the cross product of in and out variables to create the
+			 * d-variables for one data-wire Store this in a Map with the ports
+			 * as the key and the d-variable as a value.
 			 * 
-			 * Before creating the d-variable check for dublicates in the Map. If this does not
-			 * exist then create it.
+			 * Before creating the d-variable check for dublicates in the Map.
+			 * If this does not exist then create it.
 			 */
 			for (Port inPort : inPorts) {
 				for (Port outPort : outPorts) {
@@ -247,7 +259,8 @@ public class DataEncoderImpl implements DataEncoder {
 
 					if (!portsToDVarBDDMapping.containsKey(inOutPortsPair)) {
 						/*
-						 * Create new variable in the BDD manager for the d-variables.
+						 * Create new variable in the BDD manager for the
+						 * d-variables.
 						 */
 						if (BDDmanager.varNum() < currentSystemBddSize + 1) {
 							BDDmanager.setVarNum(currentSystemBddSize + 1);
@@ -263,12 +276,11 @@ public class DataEncoderImpl implements DataEncoder {
 						}
 						logger.trace("Create D-variable BDD node for inPort: " + inPort + " and outPort " + outPort);
 
-						implicationsOfDs.add(node.not().or(
-								componentInBDDs.get(inPort).and(componentOutBDDs.get(outPort))));
+						implicationsOfDs.add(node.imp(componentInBDDs.get(inPort).and(componentOutBDDs.get(outPort))));
 						portsToDVarBDDMapping.put(inOutPortsPair, node);
 						/*
-						 * Store the position of the d-variables in the BDD manager, for further use
-						 * in the BDDBIPEngine.
+						 * Store the position of the d-variables in the BDD
+						 * manager, for further use in the BDDBIPEngine.
 						 */
 						dataCoordinator.getdVarPositionsToWires().put(currentSystemBddSize, inOutPortsPair);
 						dataCoordinator.getPositionsOfDVariables().add(currentSystemBddSize);
@@ -315,15 +327,68 @@ public class DataEncoderImpl implements DataEncoder {
 				result.free();
 				result = temp;
 			}
-			BDD temp2 = bdd.not().or(result);
+			BDD temp2 = bdd.imp(result);
 			implicationsOfDs.add(temp2);
 		}
 		return implicationsOfDs;
 	}
 
+	public synchronized Set<BDD> extendDataBDDNodes(Iterable<DataWire> wires, Set<BIPComponent> newComponents) {
+		Set<BDD> newBDDs = new HashSet<BDD>();
+		int systemSize = dataCoordinator.getNoComponents() + dataCoordinator.getNoStates();
+
+		for (DataWire wire : wires) {
+			List<Port> inPorts = inPorts(wire.getTo(), newComponents);
+			List<Port> outPorts = outPorts(wire.getFrom(), newComponents);
+			
+			for (Port inPort : inPorts) {
+				for (Port outPort : outPorts) {
+					Entry<Port, Port> inOutPortsPair = new AbstractMap.SimpleEntry<Port, Port>(inPort, outPort);
+					if (!portsToDVarBDDMapping.containsKey(inOutPortsPair)) {
+						/*
+						 * Create new variable in the BDD manager for the
+						 * d-variables.
+						 */
+						if (BDDmanager.varNum() < systemSize + 1) {
+							BDDmanager.setVarNum(systemSize + 1);
+						}
+						BDD node = BDDmanager.ithVar(systemSize);
+						if (node == null) {
+							logger.error("Single node BDD for d-variable for port " + inPort.getId() + " of component "
+									+ inPort.component() + " and port " + outPort.getId() + " of component "
+									+ outPort.component() + " is null");
+							throw new BIPEngineException("Single node BDD for d-variable for port " + inPort.getId()
+									+ " of component " + inPort.component() + " and port " + outPort.getId()
+									+ " of component " + outPort.component() + " is null");
+						}
+						logger.trace("Create D-variable BDD node for inPort: " + inPort + " and outPort " + outPort);
+
+						newBDDs.add(node.imp(componentInBDDs.get(inPort).and(componentOutBDDs.get(outPort))));
+						portsToDVarBDDMapping.put(inOutPortsPair, node);
+
+						dataCoordinator.getdVarPositionsToWires().put(systemSize, inOutPortsPair);
+						dataCoordinator.getPositionsOfDVariables().add(systemSize);
+						
+						if (portsToDVarBDDMapping.get(inOutPortsPair) == null
+								|| portsToDVarBDDMapping.get(inOutPortsPair).isZero()) {
+							logger.error("Single node BDD for d variable for ports " + inPort.getId() + " and "
+									+ outPort.toString() + " is equal to null");
+							throw new BIPEngineException("Single node BDD for d variable for ports " + inPort.getId()
+									+ " and " + outPort.toString() + " is equal to null");
+						}
+						systemSize++;
+					}
+				}
+			}
+		}
+		implicationsOfDs.addAll(newBDDs);
+
+		return newBDDs;
+	}
+
 	/*
-	 * NB: Inputs are not ports actually. In the specType the type of the component is stored. In
-	 * the id the name of the data variable is stored.
+	 * NB: Inputs are not ports actually. In the specType the type of the
+	 * component is stored. In the id the name of the data variable is stored.
 	 */
 	/**
 	 * In ports.
@@ -336,21 +401,24 @@ public class DataEncoderImpl implements DataEncoder {
 	 */
 	private synchronized List<Port> inPorts(PortBase inData) throws BIPEngineException {
 		/*
-		 * Store in the Arraylist below all the possible in ports. Later to take their cross
-		 * product.
+		 * Store in the Arraylist below all the possible in ports. Later to take
+		 * their cross product.
 		 */
 		/*
-		 * Input data are always assigned to transitions. Therefore, I need the list of ports of the
-		 * component that will re receiving the data.
+		 * Input data are always assigned to transitions. Therefore, I need the
+		 * list of ports of the component that will re receiving the data.
 		 */
 		List<Port> dataInPorts = new ArrayList<Port>();
 		Iterable<BIPComponent> inComponentInstances = dataCoordinator.getBIPComponentInstances(inData.getSpecType());
 		for (BIPComponent component : inComponentInstances) {
 			if (dataCoordinator.getBehaviourByComponent(component).portsNeedingData(inData.getId()).isEmpty()
 					|| dataCoordinator.getBehaviourByComponent(component).portsNeedingData(inData.getId()) == null) {
-				logger.error("Output Component of data wire for component "+ inData.getSpecType() + " and data " + inData.getId() +" is incorrect. Possible reasons: 1) Input and output components of data wire are reversed; 2) The required data is not specified in the data wires.");
-				throw new BIPEngineException(
-						"Output Component of data wire for component "+ inData.getSpecType() + " and data " + inData.getId() +" is incorrect. Possible reasons: 1) Input and output components of data wire are reversed; 2) The required data is not specified in the data wires.");
+				logger.error("Output Component of data wire for component " + inData.getSpecType() + " and data "
+						+ inData.getId()
+						+ " is incorrect. Possible reasons: 1) Input and output components of data wire are reversed; 2) The required data is not specified in the data wires.");
+				throw new BIPEngineException("Output Component of data wire for component " + inData.getSpecType()
+						+ " and data " + inData.getId()
+						+ " is incorrect. Possible reasons: 1) Input and output components of data wire are reversed; 2) The required data is not specified in the data wires.");
 			} else {
 				logger.trace("inData: " + inData.getId());
 				logger.trace("inData component: " + component.getId());
@@ -358,11 +426,54 @@ public class DataEncoderImpl implements DataEncoder {
 				logger.trace("dataInPorts size: " + dataInPorts.size());
 				for (Port port : dataInPorts) {
 					if (behaviourEncoder.getBDDOfAPort(port.component(), port.getId()) == null) {
-						logger.error("BDD for inPort in DataEncoder was not found. Possible reason: specifyDataGlue is called before registration of components has finished.");
+						logger.error(
+								"BDD for inPort in DataEncoder was not found. Possible reason: specifyDataGlue is called before registration of components has finished.");
 						throw new BIPEngineException(
 								"BDD for inPort in DataEncoder was not found. Possible reason: specifyDataGlue is called before registration of components has finished.");
 					} else {
 						this.componentInBDDs.put(port, behaviourEncoder.getBDDOfAPort(port.component(), port.getId()));
+						logger.trace("ComponentInBDDs size: " + componentInBDDs.size());
+					}
+				}
+			}
+		}
+		return dataInPorts;
+	}
+
+	private List<Port> inPorts(PortBase inData, Set<BIPComponent> components) {
+		/*
+		 * Store in the Arraylist below all the possible in ports. Later to take
+		 * their cross product.
+		 */
+		/*
+		 * Input data are always assigned to transitions. Therefore, I need the
+		 * list of ports of the component that will re receiving the data.
+		 */
+		List<Port> dataInPorts = new ArrayList<Port>();
+		for (BIPComponent component : components) {
+			Behaviour componentBehaviour = dataCoordinator.getBehaviourByComponent(component);
+			List<Port> portsNeedingData = componentBehaviour.portsNeedingData(inData.getId());
+			if (portsNeedingData == null || portsNeedingData.isEmpty()) {
+				logger.error("Output Component of data wire for component " + inData.getSpecType() + " and data "
+						+ inData.getId()
+						+ " is incorrect. Possible reasons: 1) Input and output components of data wire are reversed; 2) The required data is not specified in the data wires.");
+				throw new BIPEngineException("Output Component of data wire for component " + inData.getSpecType()
+						+ " and data " + inData.getId()
+						+ " is incorrect. Possible reasons: 1) Input and output components of data wire are reversed; 2) The required data is not specified in the data wires.");
+			} else {
+				logger.trace("inData: " + inData.getId());
+				logger.trace("inData component: " + component.getId());
+				dataInPorts.addAll(portsNeedingData);
+				logger.trace("dataInPorts size: " + dataInPorts.size());
+				for (Port port : dataInPorts) {
+					BDD bddOfPort = behaviourEncoder.getBDDOfAPort(port.component(), port.getId());
+					if (bddOfPort == null) {
+						logger.error(
+								"BDD for inPort in DataEncoder was not found. Possible reason: specifyDataGlue is called before registration of components has finished.");
+						throw new BIPEngineException(
+								"BDD for inPort in DataEncoder was not found. Possible reason: specifyDataGlue is called before registration of components has finished.");
+					} else {
+						componentInBDDs.put(port, bddOfPort);
 						logger.trace("ComponentInBDDs size: " + componentInBDDs.size());
 					}
 				}
@@ -382,31 +493,35 @@ public class DataEncoderImpl implements DataEncoder {
 	 */
 	private synchronized List<Port> outPorts(PortBase outData) throws BIPEngineException {
 		/*
-		 * Store in the Arraylist below all the possible out ports. Later to take their cross
-		 * product.
+		 * Store in the Arraylist below all the possible out ports. Later to
+		 * take their cross product.
 		 */
 		/*
-		 * NB: These are not ports actually. In the specType the type of the component is stored. In
-		 * the id the name of the data variable is stored.
+		 * NB: These are not ports actually. In the specType the type of the
+		 * component is stored. In the id the name of the data variable is
+		 * stored.
 		 * 
-		 * Input data are always assigned to transitions. Therefore, I need the list of ports of the
-		 * component that will be receiving the data.
+		 * Input data are always assigned to transitions. Therefore, I need the
+		 * list of ports of the component that will be receiving the data.
 		 */
 		Iterable<BIPComponent> outComponentInstances = dataCoordinator.getBIPComponentInstances(outData.getSpecType());
 		List<Port> dataOutPorts = new ArrayList<Port>();
 		for (BIPComponent component : outComponentInstances) {
 			if (dataCoordinator.getBehaviourByComponent(component).getDataProvidingPorts(outData.getId()).isEmpty()
-					|| dataCoordinator.getBehaviourByComponent(component).getDataProvidingPorts(outData.getId()) == null) {
-				logger.error("Input Component of data wire is incorrect. Possible reason: Input and output of data wire are reversed.");
+					|| dataCoordinator.getBehaviourByComponent(component)
+							.getDataProvidingPorts(outData.getId()) == null) {
+				logger.error(
+						"Input Component of data wire is incorrect. Possible reason: Input and output of data wire are reversed.");
 				throw new BIPEngineException(
 						"Input Component of data wire is incorrect. Possible reason: Input and output of data wire are reversed.");
 			} else {
-				dataOutPorts.addAll(dataCoordinator.getBehaviourByComponent(component).getDataProvidingPorts(
-						outData.getId()));
+				dataOutPorts.addAll(
+						dataCoordinator.getBehaviourByComponent(component).getDataProvidingPorts(outData.getId()));
 				logger.trace("Get Data Out Ports size: " + (dataOutPorts.size()));
 				for (Port port : dataOutPorts) {
 					if (behaviourEncoder.getBDDOfAPort(port.component(), port.getId()) == null) {
-						logger.error("BDD for outPort in DataEncoder was not found. Possible reason: specifyDataGlue is called before registration of components has finished.");
+						logger.error(
+								"BDD for outPort in DataEncoder was not found. Possible reason: specifyDataGlue is called before registration of components has finished.");
 						throw new BIPEngineException(
 								"BDD for outPort in DataEncoder was not found. Possible reason: specifyDataGlue is called before registration of components has finished.");
 					} else {
@@ -419,10 +534,53 @@ public class DataEncoderImpl implements DataEncoder {
 		return dataOutPorts;
 	}
 
+	private List<Port> outPorts(PortBase outData, Set<BIPComponent> components) {
+		/*
+		 * Store in the Arraylist below all the possible out ports. Later to
+		 * take their cross product.
+		 */
+		/*
+		 * NB: These are not ports actually. In the specType the type of the
+		 * component is stored. In the id the name of the data variable is
+		 * stored.
+		 * 
+		 * Input data are always assigned to transitions. Therefore, I need the
+		 * list of ports of the component that will be receiving the data.
+		 */
+		List<Port> dataOutPorts = new ArrayList<Port>();
+		for (BIPComponent component : components) {
+			Behaviour componentBehaviour = dataCoordinator.getBehaviourByComponent(component);
+			Set<Port> dataProvidingPorts = componentBehaviour.getDataProvidingPorts(outData.getId());
+			if (dataProvidingPorts == null || dataProvidingPorts.isEmpty()) {
+				logger.error(
+						"Input Component of data wire is incorrect. Possible reason: Input and output of data wire are reversed.");
+				throw new BIPEngineException(
+						"Input Component of data wire is incorrect. Possible reason: Input and output of data wire are reversed.");
+			} else {
+				dataOutPorts.addAll(dataProvidingPorts);
+				logger.trace("Get Data Out Ports size: " + (dataOutPorts.size()));
+				for (Port port : dataOutPorts) {
+					BDD bddOfPort = behaviourEncoder.getBDDOfAPort(port.component(), port.getId());
+					if (bddOfPort == null) {
+						logger.error(
+								"BDD for outPort in DataEncoder was not found. Possible reason: specifyDataGlue is called before registration of components has finished.");
+						throw new BIPEngineException(
+								"BDD for outPort in DataEncoder was not found. Possible reason: specifyDataGlue is called before registration of components has finished.");
+					} else {
+						componentOutBDDs.put(port, bddOfPort);
+						logger.trace("ComponentInBDDs size: " + componentOutBDDs.size());
+					}
+				}
+			}
+		}
+		return dataOutPorts;
+	}
+
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see org.bip.engine.api.DataEncoder#setBDDManager(net.sf.javabdd.BDDFactory)
+	 * @see
+	 * org.bip.engine.api.DataEncoder#setBDDManager(net.sf.javabdd.BDDFactory)
 	 */
 	public void setBDDManager(BDDFactory manager) {
 		this.BDDmanager = manager;
@@ -431,7 +589,9 @@ public class DataEncoderImpl implements DataEncoder {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see org.bip.engine.api.DataEncoder#setBehaviourEncoder(org.bip.engine.api.BehaviourEncoder)
+	 * @see
+	 * org.bip.engine.api.DataEncoder#setBehaviourEncoder(org.bip.engine.api.
+	 * BehaviourEncoder)
 	 */
 	public void setBehaviourEncoder(BehaviourEncoder behaviourEncoder) {
 		this.behaviourEncoder = behaviourEncoder;
@@ -440,7 +600,9 @@ public class DataEncoderImpl implements DataEncoder {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see org.bip.engine.api.DataEncoder#setDataCoordinator(org.bip.engine.api.DataCoordinator)
+	 * @see
+	 * org.bip.engine.api.DataEncoder#setDataCoordinator(org.bip.engine.api.
+	 * DataCoordinator)
 	 */
 	public void setDataCoordinator(DataCoordinator dataCoordinator) {
 		this.dataCoordinator = dataCoordinator;
