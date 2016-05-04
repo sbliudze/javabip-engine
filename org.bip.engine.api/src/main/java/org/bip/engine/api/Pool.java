@@ -3,10 +3,12 @@ package org.bip.engine.api;
 import org.bip.api.BIPComponent;
 
 public interface Pool {
+	
+	void initialize();
+	
+	boolean isValid();
 
-	public void initialize();
+	boolean addInstance(BIPComponent instance);
 
-	public boolean addInstance(BIPComponent instance);
-
-	public boolean removeInstance(BIPComponent instances);
+	boolean removeInstance(BIPComponent instances);
 }

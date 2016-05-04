@@ -13,6 +13,7 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import org.antlr.v4.parse.ANTLRParser.sync_return;
 import org.bip.api.BIPActor;
 import org.bip.api.BIPComponent;
 import org.bip.api.BIPGlue;
@@ -76,6 +77,9 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable, BIPEngineSt
 	private Pool pool;
 	private int nbNewComponents = 0;
 	private Lock registrationLock = new ReentrantLock();
+	private Set<BIPComponent> pausedComponents = new HashSet<BIPComponent>();
+	private Semaphore pauseBlocker = new Semaphore(0);
+	private int nbPausedComponents = 0;
 
 	private ArrayList<BIPComponent> registeredComponents = new ArrayList<BIPComponent>();
 
@@ -299,7 +303,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable, BIPEngineSt
 			int nbComponentStates = (behaviour.getStates()).size();
 
 			try {
-				logger.debug("Create {} nodes for {}", nbComponentPorts+nbComponentStates, id);
+				logger.debug("Create {} nodes for {}", nbComponentPorts + nbComponentStates, id);
 				behenc.createBDDNodes(executorActor, (behaviour.getEnforceablePorts()),
 						((new ArrayList<String>(behaviour.getStates()))));
 
@@ -309,7 +313,9 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable, BIPEngineSt
 
 			if (!isEngineExecuting) {
 				engine.informBehaviour(executor, behenc.behaviourBDD(executorActor));
-				nbComponents++;
+				synchronized (pausedComponents) {
+					nbComponents++;
+				}
 			}
 
 			for (int i = 0; i < nbComponentPorts; i++) {
@@ -330,7 +336,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable, BIPEngineSt
 			logger.debug("Added to the pool who says validity is {} and we know engine is running? {}", isSystemValid,
 					isEngineExecuting);
 			if (isSystemValid && !isEngineExecuting) {
-				logger.info("System is valid, can start the engine");
+				logger.debug("System is valid, can start the engine");
 				if (engineStarter == this) {
 					start();
 					execute();
@@ -346,6 +352,11 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable, BIPEngineSt
 					nbNewComponents++;
 				} finally {
 					registrationLock.unlock();
+				}
+
+				synchronized (engineThread) {
+					logger.debug("Notify the engine in register from {}", component);
+					engineThread.notify();
 				}
 			} else if (!isSystemValid && isEngineExecuting) {
 				throw new BIPEngineException("The system cannot be invalid if the engine is running");
@@ -371,6 +382,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable, BIPEngineSt
 		logger.debug("Inform engine from component {} at state {}", component, currentState);
 
 		blockNewComponent(component);
+		blockUnpausingComponent(component);
 
 		synchronized (this) {
 			// long time1 = System.currentTimeMillis();
@@ -446,6 +458,17 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable, BIPEngineSt
 						logger.trace("Number of available permits in the semaphore: {}",
 								haveAllComponentsInformed.availablePermits());
 					}
+
+					if (pool.isValid()) {
+						synchronized (engineThread) {
+							engineThread.notify();
+						}
+//						try {
+//							haveAllComponentsInformed.acquire();
+//						} catch (InterruptedException e) {
+//							e.printStackTrace();
+//						}
+					}
 				}
 				/**
 				 * An exception is thrown when a component informs the
@@ -466,6 +489,42 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable, BIPEngineSt
 			// System.out.println("BC:" + (System.currentTimeMillis() - time1));
 		}
 
+	}
+
+	@Override
+	public void blockNewComponent(BIPComponent component) {
+		if (engineStarter == this && newComponents.contains(component)) {
+			try {
+				logger.debug("Component {} waits for registration to be done", component);
+				informBlocker.acquire();
+				logger.debug("Registration seems finalized");
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+	private void blockUnpausingComponent(BIPComponent component) {
+		if (pausedComponents.contains(component)) {
+			logger.debug("Unpause {}", component);
+			try {
+				logger.debug("Wait for the engine to be in the right spot.");
+				pauseBlocker.acquire();
+				logger.debug("Engine is ready to unpause.");
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+
+			synchronized (this) {
+				if (!componentsHaveInformed.contains(component)) {
+					synchronized (pausedComponents) {
+						pausedComponents.remove(component);
+						nbPausedComponents--;
+						pool.addInstance(component);
+					}
+				}
+			}
+		}
 	}
 
 	/**
@@ -748,32 +807,11 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable, BIPEngineSt
 			}
 
 			logger.debug("Iteration done, checking for new components");
-			registrationLock.lock();
-			try {
-				int prev = nbNewComponents;
-				nbNewComponents = 0;
-				if (prev != 0) {
-					logger.debug("{} new component{}!", prev, (prev == 1) ? "" : "s");
-
-					logger.debug("Adding the new components' BDDs to the total Behaviour BDD");
-					computeTotalBehaviour();
-
-					logger.debug("Recomputing the glue's BDD completely");
-					computeTotalGlueAndInformEngine();
-
-					nbComponents += prev;
-					informBlocker.release(prev);
-					logger.debug("{} available permits for components to inform", informBlocker.availablePermits());
-					newComponents.clear();
-
-					logger.debug("total number of components now is {}", nbComponents);
-				} else {
-					logger.debug("No new components");
-				}
-			} finally {
-				registrationLock.unlock();
-			}
+			finalizeRegistrations();
 			logger.debug("Done with checking for new components");
+			// Components can unpause
+			logger.debug("The engine is ready to pause/unpause components.");
+			pauseBlocker.release(nbComponents);
 
 			try {
 				logger.trace("Waiting for the acquire in run()...");
@@ -781,6 +819,28 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable, BIPEngineSt
 						nbComponents);
 				haveAllComponentsInformed.acquire(nbComponents);
 				logger.debug("Successfully acquired the {} permits.", nbComponents);
+
+				// No components can pause here because they have either all
+				// informed or released a permit for haveAllComponentsInformed
+				// in pause(BIPComponent)
+
+				// If pool is not valid anymore, pause the engine
+				pauseEngine();
+
+				// Components have to wait to pause/unpause again (unless the
+				// engine is
+				// paused if it wants to unpause)
+				pauseBlocker.drainPermits();
+				logger.debug("Components can't pause anymore, {} available permits", pauseBlocker.availablePermits());
+
+				// Update the number of components
+				synchronized (pausedComponents) {
+					nbComponents -= nbPausedComponents;
+					nbPausedComponents = 0;
+				}
+				// Inform the current state of every paused components before
+				// running an iteration
+				informPausedComponentsState();
 
 				logger.trace("run() acquire successful.");
 			} catch (InterruptedException e) {
@@ -807,6 +867,100 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable, BIPEngineSt
 		// }
 
 		return;
+	}
+
+	private void informPausedComponentsState() {
+		synchronized (pausedComponents) {
+			logger.debug("Informing the core engine of the current state of all paused components");
+			for (BIPComponent component : pausedComponents) {
+				informPausedComponentState(component);
+			}
+			logger.debug("Done informing the current state of the paused components.");
+		}
+	}
+	
+	private void informPausedComponentState(BIPComponent component) {
+		Behaviour componentBehaviour = getBehaviourByComponent(component);
+
+		String currentState = componentBehaviour.getCurrentState();
+		Set<Port> enforceablePortsforCurrentState = new HashSet<Port>(
+				componentBehaviour.getStateToPorts().get(currentState));
+
+		// Get intersection between all the ports for this state and the
+		// set of enforceable port so we get all the enforceable ports
+		// for this state
+		enforceablePortsforCurrentState.retainAll(componentBehaviour.getEnforceablePorts());
+		logger.debug("Component {} is at state {} and has enforceable ports " + enforceablePortsforCurrentState,
+				component, currentState);
+		engine.informCurrentState(component,
+				currstenc.inform(component, currentState, enforceablePortsforCurrentState));
+	}
+
+	private void pauseEngine() {
+		synchronized (engineThread) {
+			logger.debug(!pool.isValid() ? "Engine needs to be paused." : "No need to pause the engine.");
+			while (!pool.isValid()) {
+				logger.debug("Engine is paused.");
+				try {
+					engineThread.wait();
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
+			logger.debug("Engine resuming execution.");
+		}
+	}
+
+	private void finalizeRegistrations() {
+		registrationLock.lock();
+		try {
+			int prev = nbNewComponents;
+			nbNewComponents = 0;
+
+			if (prev != 0) {
+				logger.debug("{} new component{}!", prev, (prev == 1) ? "" : "s");
+
+				logger.debug("Adding the new components' BDDs to the total Behaviour BDD");
+				computeTotalBehaviour();
+
+				logger.debug("Recomputing the glue's BDD completely");
+				computeTotalGlueAndInformEngine();
+
+				synchronized (pausedComponents) {
+					nbComponents += prev;
+				}
+				informBlocker.release(prev);
+				logger.debug("{} available permits for components to inform", informBlocker.availablePermits());
+				newComponents.clear();
+
+				logger.debug("total number of components now is {}", nbComponents);
+			} else {
+				logger.debug("No new components");
+			}
+		} finally {
+			registrationLock.unlock();
+		}
+	}
+
+	@Override
+	public void pause(BIPComponent component) {
+		logger.debug("Going to pause {}", component);
+		try {
+			logger.debug("Waiting for the engine to be in the right spot to pause.");
+			pauseBlocker.acquire();
+			logger.debug("Engine is ready to pause {}", component);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		synchronized (pausedComponents) {
+			logger.debug("Pause the component {}", component);
+			pausedComponents.add(component);
+			pool.removeInstance(component);
+			nbPausedComponents++;
+			logger.debug("Release a permit on haveAllComponentsInformed because {} is paused", component);
+			haveAllComponentsInformed.release();
+			informPausedComponentState(component);
+		}
 	}
 
 	/**
@@ -1023,18 +1177,5 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable, BIPEngineSt
 	public void executeCallback() {
 		callback.execute();
 		callback = new EmptyCallback();
-	}
-
-	@Override
-	public void blockNewComponent(BIPComponent component) {
-		if (engineStarter == this && newComponents.contains(component)) {
-			try {
-				logger.debug("Component {} waits for registration to be done", component);
-				informBlocker.acquire();
-				logger.debug("Registration seems finalized");
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-		}
 	}
 }

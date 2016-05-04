@@ -1031,4 +1031,10 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 			}
 		}
 	}
+
+	@Override
+	public void pause(BIPComponent component) {
+		// TODO Auto-generated method stub
+		
+	}
 }
