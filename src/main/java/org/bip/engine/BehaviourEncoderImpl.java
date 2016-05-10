@@ -72,10 +72,11 @@ public class BehaviourEncoderImpl implements BehaviourEncoder {
 		int nbComponentStates = componentStates.size();
 		int initialNoNodes = nbComponentPorts + nbComponentStates + auxSum;
 		
-		if (engine.getBDDManager().varNum() < initialNoNodes){
+		logger.debug("Going to extend the variables in the BDD");
+		if (engine.getBDDManager().varNum() < initialNoNodes) {
 			engine.getBDDManager().setVarNum(initialNoNodes);
 		}
-		
+		logger.debug("Added new variable");
 		BDD[] singleNodeBDDsForStates = new BDD[nbComponentStates];
 		Hashtable <String, BDD> stateToBDD = new Hashtable<String, BDD>();
 		for (int i = 0; i < nbComponentStates; i++) {
@@ -90,6 +91,7 @@ public class BehaviourEncoderImpl implements BehaviourEncoder {
 					throw e;
 				}
 			}
+			logger.debug("Create new variable for state {}", componentStates.get(i));
 			stateToBDD.put(componentStates.get(i), singleNodeBDDsForStates[i]);
 			if (stateToBDD.get(componentStates.get(i)) == null){
 				try {

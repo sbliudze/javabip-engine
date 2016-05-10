@@ -344,7 +344,7 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		// bdd_mgr = null;
 		// time = System.currentTimeMillis() - time;
 		// System.out.println("Engine cycle time: "+ time);
-
+		logger.debug("End of iteration in core engine");
 	}
 
 	public synchronized void informCurrentState(BIPComponent component, BDD componentBDD) {
@@ -360,7 +360,9 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		if (totalGlueBDD == null) {
 			totalGlueBDD = bdd_mgr.one();
 			for (BDD eachD : extraConstraints) {
-				totalGlueBDD.andWith(eachD);
+				BDD tmp = totalGlueBDD.and(eachD);
+				totalGlueBDD.free();
+				totalGlueBDD = tmp;
 			}
 			logger.trace("Extra permanent constraints added to empty total BDD.");
 			bdd_mgr.reorder(BDDFactory.REORDER_SIFTITE);
@@ -369,7 +371,9 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		} else {
 
 			for (BDD eachD : extraConstraints) {
-				totalGlueBDD.andWith(eachD);
+				BDD tmp = totalGlueBDD.and(eachD);
+				totalGlueBDD.free();
+				totalGlueBDD = tmp;
 			}
 			logger.trace("Extra permanent constraints added to existing total BDD.");
 			bdd_mgr.reorder(BDDFactory.REORDER_SIFTITE);
@@ -379,10 +383,7 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 	}
 
 	public synchronized void specifyPermanentExtraConstraints(Set<BDD> extraConstraints) {
-		this.permanentDataBDDs.addAll(extraConstraints);
-		if (totalGlueBDD != null) {
-			dataConstraintsComputation(permanentDataBDDs);
-		}
+		permanentDataBDDs = extraConstraints;
 	}
 
 	public synchronized void informBehaviour(BIPComponent component, BDD componentBDD) {
@@ -431,29 +432,26 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 	}
 
 	public synchronized void informGlue(List<BDD> totalGlue) throws BIPEngineException {
-		synchronized (this) {
-			BDD prev = totalGlueBDD;
-			if (prev != null)
-				prev.free();
+		if(totalGlueBDD != null) 
+			totalGlueBDD.free();
 
-			totalGlueBDD = bdd_mgr.one();
-			for (BDD glueBDD : totalGlue) {
-				/*
-				 * Re-ordering function and statistics printouts
-				 */
-				logger.trace("And with effect Instance");
-				totalGlueBDD.andWith(glueBDD);
-				logger.trace("Finish andwith effect Instance");
-			}
-			logger.trace("Glue constraints added to empty total BDD.");
-
-			logger.debug("permanent Data BDD are size {}", permanentDataBDDs.size());
-			if (this.permanentDataBDDs.size() != 0) {
-				dataConstraintsComputation(this.permanentDataBDDs);
-			}
-
-			logger.debug("glue is computed");
+		totalGlueBDD = bdd_mgr.one();
+		for (BDD glueBDD : totalGlue) {
+			/*
+			 * Re-ordering function and statistics printouts
+			 */
+			logger.trace("And with effect Instance");
+			totalGlueBDD.andWith(glueBDD);
+			logger.trace("Finish andwith effect Instance");
 		}
+		logger.trace("Glue constraints added to empty total BDD.");
+
+		logger.debug("permanent Data BDD are size {}", permanentDataBDDs.size());
+		if (permanentDataBDDs != null && permanentDataBDDs.size() != 0) {
+			dataConstraintsComputation(permanentDataBDDs);
+		}
+
+		logger.debug("glue is computed");
 	}
 
 	public void setOSGiBIPEngine(BIPCoordinator wrapper) {
