@@ -336,11 +336,12 @@ public class DataEncoderImpl implements DataEncoder {
 	public synchronized Set<BDD> extendDataBDDNodes(Iterable<DataWire> wires, Set<BIPComponent> newComponents) {
 		Set<BDD> newBDDs = new HashSet<BDD>();
 		int systemSize = dataCoordinator.getNoComponents() + dataCoordinator.getNoStates();
+		// TODO filter components based on the wires
 
 		for (DataWire wire : wires) {
-			List<Port> inPorts = inPorts(wire.getTo(), newComponents);
+			List<Port> inPorts = inPorts(wire.getTo());
 			List<Port> outPorts = outPorts(wire.getFrom(), newComponents);
-			
+
 			for (Port inPort : inPorts) {
 				for (Port outPort : outPorts) {
 					Entry<Port, Port> inOutPortsPair = new AbstractMap.SimpleEntry<Port, Port>(inPort, outPort);
@@ -368,7 +369,7 @@ public class DataEncoderImpl implements DataEncoder {
 
 						dataCoordinator.getdVarPositionsToWires().put(systemSize, inOutPortsPair);
 						dataCoordinator.getPositionsOfDVariables().add(systemSize);
-						
+
 						if (portsToDVarBDDMapping.get(inOutPortsPair) == null
 								|| portsToDVarBDDMapping.get(inOutPortsPair).isZero()) {
 							logger.error("Single node BDD for d variable for ports " + inPort.getId() + " and "
@@ -383,6 +384,27 @@ public class DataEncoderImpl implements DataEncoder {
 		}
 		implicationsOfDs.addAll(newBDDs);
 
+		// Build BDDs for the data-transfer constraints
+		for (DataWire wire : wires) {
+			List<Port> inPorts = inPorts(wire.getTo());
+			for (Port inPort : inPorts) {
+				ArrayList<BDD> auxiliary = createImplications(inPort);
+				logger.trace("Auxiliary size " + auxiliary.size() + " for port " + inPort.getId() + " of component "
+						+ inPort.component().getId());
+				if (!auxiliary.isEmpty()) {
+					moreImplications.put(componentInBDDs.get(inPort), auxiliary);
+				}
+			}
+		}
+		
+		for (Map.Entry<BDD, ArrayList<BDD>> entry: moreImplications.entrySet()) {
+			BDD res = BDDmanager.zero();
+			logger.trace("entry of moreImplications size: " + entry.getValue().size());
+			for (BDD oneImplication : entry.getValue()) {
+				res.orWith(oneImplication);
+			}
+			implicationsOfDs.add(entry.getKey().imp(res));
+		}
 		return newBDDs;
 	}
 
@@ -450,7 +472,9 @@ public class DataEncoderImpl implements DataEncoder {
 		 * list of ports of the component that will re receiving the data.
 		 */
 		List<Port> dataInPorts = new ArrayList<Port>();
-		for (BIPComponent component : components) {
+		Set<BIPComponent> componentsForWire = filterForType(inData.getSpecType(), components);
+
+		for (BIPComponent component : componentsForWire) {
 			Behaviour componentBehaviour = dataCoordinator.getBehaviourByComponent(component);
 			List<Port> portsNeedingData = componentBehaviour.portsNeedingData(inData.getId());
 			if (portsNeedingData == null || portsNeedingData.isEmpty()) {
@@ -548,7 +572,9 @@ public class DataEncoderImpl implements DataEncoder {
 		 * list of ports of the component that will be receiving the data.
 		 */
 		List<Port> dataOutPorts = new ArrayList<Port>();
-		for (BIPComponent component : components) {
+		Set<BIPComponent> componentsForWire = filterForType(outData.getSpecType(), components);
+
+		for (BIPComponent component : componentsForWire) {
 			Behaviour componentBehaviour = dataCoordinator.getBehaviourByComponent(component);
 			Set<Port> dataProvidingPorts = componentBehaviour.getDataProvidingPorts(outData.getId());
 			if (dataProvidingPorts == null || dataProvidingPorts.isEmpty()) {
@@ -574,6 +600,16 @@ public class DataEncoderImpl implements DataEncoder {
 			}
 		}
 		return dataOutPorts;
+	}
+
+	private Set<BIPComponent> filterForType(String type, Set<BIPComponent> components) {
+		Set<BIPComponent> componentsForType = new HashSet<BIPComponent>();
+		for (BIPComponent component : components) {
+			if (component.getType().equals(type)) {
+				componentsForType.add(component);
+			}
+		}
+		return componentsForType;
 	}
 
 	/*
