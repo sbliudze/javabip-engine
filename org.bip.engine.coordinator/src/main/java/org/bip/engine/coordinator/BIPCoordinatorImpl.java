@@ -24,6 +24,7 @@ import org.bip.engine.api.BIPCoordinator;
 import org.bip.engine.api.BIPEngineStarter;
 import org.bip.engine.api.BehaviourEncoder;
 import org.bip.engine.api.CurrentStateEncoder;
+import org.bip.engine.api.DataInformer;
 import org.bip.engine.api.GlueEncoder;
 import org.bip.engine.api.InteractionExecutor;
 import org.bip.engine.api.Pool;
@@ -68,6 +69,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable, BIPEngineSt
 	private BDDBIPEngine engine;
 	private InteractionExecutor interactionExecutor;
 	private BIPEngineStarter engineStarter;
+	private DataInformer dataBDDInformer;
 	private StarterCallback callback = new EmptyCallback();
 	private ActorSystem system;
 
@@ -75,7 +77,6 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable, BIPEngineSt
 
 	private Pool pool;
 	private int nbNewComponents = 0;
-	private Lock registrationLock = new ReentrantLock();
 
 	private ArrayList<BIPComponent> registeredComponents = new ArrayList<BIPComponent>();
 
@@ -302,7 +303,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable, BIPEngineSt
 				logger.debug("Create {} nodes for {}", nbComponentPorts+nbComponentStates, id);
 				behenc.createBDDNodes(executorActor, (behaviour.getEnforceablePorts()),
 						((new ArrayList<String>(behaviour.getStates()))));
-
+				logger.debug("Nodes created for {}", id);
 			} catch (BIPEngineException e) {
 				e.printStackTrace();
 			}
@@ -757,10 +758,19 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable, BIPEngineSt
 
 					logger.debug("Adding the new components' BDDs to the total Behaviour BDD");
 					computeTotalBehaviour();
-
+					
+					if (dataBDDInformer != null) {
+						logger.debug("inform the new data BDDs to the engine");
+						dataBDDInformer.informDataBDDs();
+					}
+					
 					logger.debug("Recomputing the glue's BDD completely");
 					computeTotalGlueAndInformEngine();
 
+					if (dataBDDInformer != null) {
+						dataBDDInformer.clearDataBDDs();
+					}
+					
 					nbComponents += prev;
 					informBlocker.release(prev);
 					logger.debug("{} available permits for components to inform", informBlocker.availablePermits());
@@ -1036,5 +1046,10 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable, BIPEngineSt
 				e.printStackTrace();
 			}
 		}
+	}
+
+	@Override
+	public void setDataInformer(DataInformer informer) {
+		dataBDDInformer = informer;
 	}
 }

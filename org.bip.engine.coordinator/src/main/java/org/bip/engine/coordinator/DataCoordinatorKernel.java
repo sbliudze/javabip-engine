@@ -25,6 +25,7 @@ import org.bip.engine.api.BIPEngineStarter;
 import org.bip.engine.api.BehaviourEncoder;
 import org.bip.engine.api.DataCoordinator;
 import org.bip.engine.api.DataEncoder;
+import org.bip.engine.api.DataInformer;
 import org.bip.engine.api.InteractionExecutor;
 import org.bip.engine.api.StarterCallback;
 import org.bip.exceptions.BIPEngineException;
@@ -90,6 +91,7 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 	 * Create instances of all the the Data Encoder and of the BIPCoordinator.
 	 */
 	private DataEncoder dataEncoder;
+	private Set<BDD> newComponentsDataBDDs = new HashSet<BDD>();
 
 	/** The bip coordinator. */
 	private BIPCoordinator bipCoordinator = null;
@@ -140,6 +142,7 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 	@Override
 	public void initialize() {
 		bipCoordinator.setEngineStarter(this);
+		bipCoordinator.setDataInformer(this);
 		bipCoordinator.initialize();
 	}
 
@@ -260,55 +263,65 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 		 * The condition below checks whether the component has already been
 		 * registered.
 		 */
-		BIPActor actor = null;
-		logger.debug("Registering {}", id);
+		registrationLock.lock();
 		try {
-			if (object == null) {
-				throw new BIPEngineException("Registering a null component.");
+			BIPActor actor = null;
+			logger.debug("Registering {}", id);
+			try {
+				if (object == null) {
+					throw new BIPEngineException("Registering a null component.");
+				}
+				actor = bipCoordinator.register(object, id, useSpec);
+
+				logger.debug("Done registering {} with the bip coordinator", id);
+				BIPComponent component = bipCoordinator.getComponentFromObject(object);
+				Behaviour behaviour = bipCoordinator.getBehaviourByComponent(component);
+
+				if (behaviour == null) {
+					throw new BIPEngineException("Registering a component with null behaviour.");
+				}
+				assert (component != null && behaviour != null);
+
+				if (registeredComponents.contains(component)) {
+					logger.error("Component " + component + " has already registered before.");
+					throw new BIPEngineException("Component " + component + " has already registered before.");
+				} else {
+					registeredComponents.add(component);
+					componentBehaviourMapping.put(component, behaviour);
+					nbPorts += behaviour.getEnforceablePorts().size();
+					nbStates += behaviour.getStates().size();
+				}
+				ArrayList<BIPComponent> componentInstances = new ArrayList<BIPComponent>();
+
+				/*
+				 * If this component type already exists in the hashtable,
+				 * update the ArrayList of BIPComponents that corresponds to
+				 * this component type.
+				 */
+				if (typeInstancesMapping.containsKey(component.getType())) {
+					componentInstances.addAll(typeInstancesMapping.get(component.getType()));
+				}
+
+				componentInstances.add(component);
+				// SB: Not sure this is necessary, but should not harm
+				typeInstancesMapping.remove(component.getType());
+				typeInstancesMapping.put(component.getType(), componentInstances);
+
+				// Data encoder, add the new data bdd nodes for this component
+				if (isEngineExecuting)
+					newComponentsDataBDDs = dataEncoder.extendDataBDDNodes(dataWires, component);
+
+			} catch (BIPEngineException e) {
+				e.printStackTrace();
 			}
-			actor = bipCoordinator.register(object, id, useSpec);
 
-			logger.debug("Done registering {} with the bip coordinator", id);
-			BIPComponent component = bipCoordinator.getComponentFromObject(object);
-			Behaviour behaviour = bipCoordinator.getBehaviourByComponent(component);
-
-			if (behaviour == null) {
-				throw new BIPEngineException("Registering a component with null behaviour.");
-			}
-			assert (component != null && behaviour != null);
-
-			if (registeredComponents.contains(component)) {
-				logger.error("Component " + component + " has already registered before.");
-				throw new BIPEngineException("Component " + component + " has already registered before.");
-			} else {
-				registeredComponents.add(component);
-				componentBehaviourMapping.put(component, behaviour);
-				nbPorts += behaviour.getEnforceablePorts().size();
-				nbStates += behaviour.getStates().size();
-
-			}
-			ArrayList<BIPComponent> componentInstances = new ArrayList<BIPComponent>();
-
-			/*
-			 * If this component type already exists in the hashtable, update
-			 * the ArrayList of BIPComponents that corresponds to this component
-			 * type.
-			 */
-			if (typeInstancesMapping.containsKey(component.getType())) {
-				componentInstances.addAll(typeInstancesMapping.get(component.getType()));
-			}
-
-			componentInstances.add(component);
-			// SB: Not sure this is necessary, but should not harm
-			typeInstancesMapping.remove(component.getType());
-			typeInstancesMapping.put(component.getType(), componentInstances);
-		} catch (BIPEngineException e) {
-			e.printStackTrace();
+			executeCallback();
+			
+			return actor;
+		} finally {
+			registrationLock.unlock();
 		}
 
-		executeCallback();
-
-		return actor;
 	}
 
 	/*
@@ -319,7 +332,7 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 	 */
 	public void inform(BIPComponent component, String currentState, Set<Port> disabledPorts) {
 		blockNewComponent(component);
-		
+
 		// for each component store its undecided ports
 		// TODO create undecided port with the help of set.removeAll
 		// long time1 = System.currentTimeMillis();
@@ -509,17 +522,19 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 		// for each undecided port of each component :
 		for (Port port : getUndecidedPorts(component, currentState, disabledPorts)) {
 			// get list of DataIn needed for its guards
-//			logger.debug("Trying to get the data for component {}", component);
-//			logger.debug("We are at state {}", currentState);
-//			logger.debug("Checking for port {}", port);
+			// logger.debug("Trying to get the data for component {}",
+			// component);
+			// logger.debug("We are at state {}", currentState);
+			// logger.debug("Checking for port {}", port);
 			Set<Data<?>> dataIn = decidingBehaviour.portToDataInForGuard(port);
 			logger.debug("Port " + port + " of component " + decidingBehaviour.getComponentType()
 					+ " required the following dataIn: " + dataIn);
-			
+
 			if (dataIn.isEmpty()) {
 				// if the data is empty, then the port is enabled. just send it.
-//				logger.debug("data is empty");
-//				this.informSpecific(component, port, new HashMap<BIPComponent, Set<Port>>());
+				// logger.debug("data is empty");
+				// this.informSpecific(component, port, new
+				// HashMap<BIPComponent, Set<Port>>());
 				continue;
 			}
 
@@ -709,7 +724,7 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 				if (!portsExecuted.contains(port)
 						&& (valuation[portToPosition.get(port)] == 1 || valuation[portToPosition.get(port)] == -1)
 						&& isEngineExecuting) {
-					 logger.debug("Chosen Port: " + port.getId() + " of component: " + port.component());
+					logger.debug("Chosen Port: " + port.getId() + " of component: " + port.component());
 					enabledPorts.add(port);
 				}
 			}
@@ -786,6 +801,7 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 		}
 		List<List<Port>> bigInteraction = new ArrayList<List<Port>>();
 		bigInteraction.add(portsExecuted);
+		logger.debug("Done with subinteractions");
 		return bigInteraction;
 	}
 
@@ -799,7 +815,7 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 	 * @param providingData
 	 *            port that provides data for execution
 	 */
-	private synchronized void setDataValuationToExecutor(Port askingData, Port providingData) {
+	private void setDataValuationToExecutor(Port askingData, Port providingData) {
 		logger.debug("Call setDataValuationToExecutor");
 		logger.debug("port {} asks for data from {}", askingData, providingData);
 		if (isEngineExecuting) {
@@ -1030,5 +1046,19 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 				e.printStackTrace();
 			}
 		}
+	}
+
+	@Override
+	public void informDataBDDs() {
+		bipCoordinator.specifyPermanentConstraints(newComponentsDataBDDs);
+	}
+
+	@Override
+	public void clearDataBDDs() {
+		newComponentsDataBDDs.clear();
+	}
+
+	@Override
+	public void setDataInformer(DataInformer informer) {
 	}
 }
