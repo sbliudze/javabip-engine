@@ -329,7 +329,7 @@ public class DataEncoderImpl implements DataEncoder {
 					}
 					logger.debug("Create D-variable BDD node for inPort: " + inPort + " and outPort " + outPort);
 
-					implicationsOfDs.add(node.imp(componentInBDDs.get(inPort).and(componentOutBDDs.get(outPort))));
+					implicationsOfDs.add(node.not().or(componentInBDDs.get(inPort).and(componentOutBDDs.get(outPort))));
 					portsToDVarBDDMapping.put(inOutPortsPair, node);
 					/*
 					 * Store the position of the d-variables in the BDD manager,
@@ -382,7 +382,7 @@ public class DataEncoderImpl implements DataEncoder {
 				result.free();
 				result = temp;
 			}
-			BDD temp2 = bdd.imp(result);
+			BDD temp2 = bdd.not().or(result);
 			implicationsOfPortsToDs.add(temp2);
 		}
 
