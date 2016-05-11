@@ -8,9 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-
-import net.sf.javabdd.BDD;
-import net.sf.javabdd.BDDFactory;
+import java.util.concurrent.Semaphore;
 
 import org.bip.api.BIPActor;
 import org.bip.api.BIPComponent;
@@ -31,6 +29,9 @@ import org.bip.engine.api.StarterCallback;
 import org.bip.exceptions.BIPEngineException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import net.sf.javabdd.BDD;
+import net.sf.javabdd.BDDFactory;
 
 /**
  * There is no need for DataCoordinator interface, just DataCoordinatorImpl will
@@ -92,12 +93,8 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 	 */
 	private DataEncoder dataEncoder;
 	private Set<BDD> newComponentsDataBDDs = new HashSet<BDD>();
-
 	/** The bip coordinator. */
 	private BIPCoordinator bipCoordinator = null;
-
-	/** The registration finished. */
-	private boolean registrationFinished = false;
 
 	/** The component data wires. */
 	private Map<String, Map<String, Set<DataWire>>> componentDataWires;
@@ -245,7 +242,6 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 
 			componentDataWires.put(componentType, dataWire);
 		}
-		registrationFinished = true;
 		int nbComponent = informedComponents.size();
 		for (int i = 0; i < nbComponent; i++) {
 			inform(informedComponents.get(i), informedComponentsState.get(i), informedComponentsPorts.get(i));
@@ -316,7 +312,7 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 			}
 
 			executeCallback();
-			
+
 			return actor;
 		} finally {
 			registrationLock.unlock();
@@ -342,12 +338,9 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 			 * informSpecific cannot be done: In the informSpecific information
 			 * is required from all the registered components.
 			 */
-			if (!registrationFinished) {
-				informedComponents.add(component);
-				informedComponentsState.add(currentState);
-				informedComponentsPorts.add(disabledPorts);
-				return;
-			}
+			informedComponents.add(component);
+			informedComponentsState.add(currentState);
+			informedComponentsPorts.add(disabledPorts);
 
 			try {
 				doInformSpecific(component, currentState, disabledPorts);
@@ -387,7 +380,8 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 	 */
 	public synchronized void informSpecific(BIPComponent decidingComponent, Port decidingPort,
 			Map<BIPComponent, Set<Port>> disabledCombinations) throws BIPEngineException {
-		logger.debug("Calling inform specific");
+		logger.debug("{} calling inform specific", decidingComponent);
+
 		if (disabledCombinations == null || disabledCombinations.isEmpty()) {
 			logger.debug("No disabled combinations specified in informSpecific for deciding component."
 					+ decidingComponent.getId() + " for deciding port " + decidingPort.getId()
@@ -463,42 +457,6 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 		bipCoordinator.specifyTemporaryConstraints(
 				dataEncoder.encodeDisabledCombinations(decidingComponent, decidingPort, disabledCombinations));
 
-	}
-
-	public void execute(byte[] valuation) throws BIPEngineException {
-		if (interactionExecutor != this && isEngineExecuting) {
-			interactionExecutor.execute(valuation);
-		} else if (isEngineExecuting) {
-			executeInteractions(preparePorts(valuation));
-		}
-		logger.debug("*************************************************************************");
-	}
-
-	/**
-	 * BDDBIPEngine informs the BIPCoordinator for the components (and their
-	 * associated ports) that are part of the same chosen interaction.
-	 * 
-	 * Through this function all the components need to be notified. If they are
-	 * participating in an interaction then their port to be fired is sent to
-	 * them through the execute function of the BIPExecutor. If they are not
-	 * participating in an interaction then null is sent to them.
-	 * 
-	 * @param portGroupsToExecute
-	 *            the port groups to execute
-	 * @throws BIPEngineException
-	 *             the BIP engine exception
-	 */
-	public void executeInteractions(List<List<Port>> portGroupsToExecute) throws BIPEngineException {
-		this.count++;
-		/**
-		 * This is a list of components participating in the
-		 * chosen-by-the-engine interactions. This keeps track of the chosen
-		 * components in order to differentiate them from the non chosen ones.
-		 * Through this function all the components need to be notified. Either
-		 * by sending null to them or the port to be fired.
-		 */
-		if (isEngineExecuting)
-			bipCoordinator.executeInteractions(portGroupsToExecute);
 	}
 
 	/**
@@ -886,6 +844,42 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 		}
 		return null;
 
+	}
+
+	public void execute(byte[] valuation) throws BIPEngineException {
+		if (interactionExecutor != this && isEngineExecuting) {
+			interactionExecutor.execute(valuation);
+		} else if (isEngineExecuting) {
+			executeInteractions(preparePorts(valuation));
+		}
+		logger.debug("*************************************************************************");
+	}
+
+	/**
+	 * BDDBIPEngine informs the BIPCoordinator for the components (and their
+	 * associated ports) that are part of the same chosen interaction.
+	 * 
+	 * Through this function all the components need to be notified. If they are
+	 * participating in an interaction then their port to be fired is sent to
+	 * them through the execute function of the BIPExecutor. If they are not
+	 * participating in an interaction then null is sent to them.
+	 * 
+	 * @param portGroupsToExecute
+	 *            the port groups to execute
+	 * @throws BIPEngineException
+	 *             the BIP engine exception
+	 */
+	public void executeInteractions(List<List<Port>> portGroupsToExecute) throws BIPEngineException {
+		this.count++;
+		/**
+		 * This is a list of components participating in the
+		 * chosen-by-the-engine interactions. This keeps track of the chosen
+		 * components in order to differentiate them from the non chosen ones.
+		 * Through this function all the components need to be notified. Either
+		 * by sending null to them or the port to be fired.
+		 */
+		if (isEngineExecuting)
+			bipCoordinator.executeInteractions(portGroupsToExecute);
 	}
 
 	public void setInteractionExecutor(InteractionExecutor interactionExecutor) {

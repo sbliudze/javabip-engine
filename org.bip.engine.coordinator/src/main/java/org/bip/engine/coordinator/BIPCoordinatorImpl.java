@@ -410,6 +410,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable, BIPEngineSt
 					logger.debug("Adding {} to the components that have informed this cycle.", component);
 					componentsHaveInformed.add(component);
 					try {
+						logger.debug("Component {} is at state {} and has disabled ports: "+ disabledPorts, component, currentState);
 						engine.informCurrentState(component, currstenc.inform(component, currentState, disabledPorts));
 					} catch (BIPEngineException e) {
 						e.printStackTrace();
