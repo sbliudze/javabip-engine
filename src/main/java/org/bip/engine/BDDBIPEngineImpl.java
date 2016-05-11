@@ -159,6 +159,7 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		BDD totalCurrentStateBdd = bdd_mgr.one();
 		BDD tmp;
 
+		logger.debug("Number of current state BDDs {}", currentStateBDDs.size());
 		logger.debug("Conjunction of current states about to start..");
 		for (Enumeration<BIPComponent> componentsEnum = currentStateBDDs.keys(); componentsEnum.hasMoreElements();) {
 			BIPComponent component = componentsEnum.nextElement();
@@ -412,7 +413,7 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 				// System.out.println("E5: Reorder stats: " +
 				// bdd_mgr.getReorderStats());
 				logger.trace("E5: Reorder stats: " + bdd_mgr.getReorderStats());
-				logger.trace("Behaviour constraints added to empty total BDD.");
+				logger.debug("Behaviour constraints added to empty total BDD.");
 			} else {
 
 				for (BIPComponent component : newComponents) {
@@ -424,7 +425,7 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 				// System.out.println("E7: Reorder stats: " +
 				// bdd_mgr.getReorderStats());
 				logger.trace("E7: Reorder stats: " + bdd_mgr.getReorderStats());
-				logger.trace("Behaviour constraints added to existing total BDD.");
+				logger.debug("Behaviour constraints added to existing total BDD.");
 
 			}
 			newComponents.clear();

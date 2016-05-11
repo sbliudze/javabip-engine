@@ -58,9 +58,6 @@ public class DataEncoderImpl implements DataEncoder {
 
 	Set<BDD> implicationsOfPortsToDs = new HashSet<BDD>();
 
-	/** The more implications. */
-	Map<BDD, ArrayList<BDD>> moreImplications = new Hashtable<BDD, ArrayList<BDD>>();
-
 	/** The port to triggers mapping. */
 	Map<Entry<PortBase, PortBase>, Boolean> portToTriggersMapping = new Hashtable<Entry<PortBase, PortBase>, Boolean>();
 
@@ -252,10 +249,12 @@ public class DataEncoderImpl implements DataEncoder {
 
 		Set<BDD> result = new HashSet<BDD>(implicationsOfDs);
 		result.addAll(implicationsOfPortsToDs);
+		logger.debug("Size of result {}", result.size());
+		logger.debug("Size of system {}", currentSystemBddSize);
 		return result;
 	}
 
-	public Set<BDD> extendDataBDDNodes(Iterable<DataWire> wires, BIPComponent newComponent) {
+	public synchronized Set<BDD> extendDataBDDNodes(Iterable<DataWire> wires, BIPComponent newComponent) {
 		logger.debug("Extending the bdd nodes for {}", newComponent);
 		String newComponentType = newComponent.getType();
 		int currentSystemBddSize = dataCoordinator.getNoPorts() + dataCoordinator.getNoStates();
@@ -287,13 +286,17 @@ public class DataEncoderImpl implements DataEncoder {
 			}
 		}
 
+		for (BDD bdd : implicationsOfPortsToDs) {
+			bdd.free();
+		}
 		implicationsOfPortsToDs.clear();
-		moreImplications.clear();
 
 		createImplicationsOfPortsToDs(wires);
 
 		Set<BDD> result = new HashSet<BDD>(implicationsOfDs);
 		result.addAll(implicationsOfPortsToDs);
+		logger.debug("Size of result {}", result.size());
+		logger.debug("Size of system {}", currentSystemBddSize);
 		return result;
 	}
 
@@ -353,7 +356,8 @@ public class DataEncoderImpl implements DataEncoder {
 		return currentSystemBddSize;
 	}
 
-	private void createImplicationsOfPortsToDs(Iterable<DataWire> wires) {
+	private synchronized void createImplicationsOfPortsToDs(Iterable<DataWire> wires) {
+		Map<BDD, ArrayList<BDD>> moreImplications = new Hashtable<BDD, ArrayList<BDD>>();
 		// TODO: Consider moving this into the previous cycle
 		// TODO: Do it only after discussing having a component instance
 		// associated to a port instance.
@@ -362,6 +366,7 @@ public class DataEncoderImpl implements DataEncoder {
 		while (wiresIt.hasNext()) {
 			DataWire wire = wiresIt.next();
 			List<Port> inPorts = inPorts(wire.getTo());
+			logger.debug("Wire {} has {} associated ports in the system", wire, inPorts.size());
 			for (Port inPort : inPorts) {
 				ArrayList<BDD> auxiliary = createImplications(inPort);
 				logger.trace("Auxiliary size " + auxiliary.size() + " for port " + inPort.getId() + " of component "
