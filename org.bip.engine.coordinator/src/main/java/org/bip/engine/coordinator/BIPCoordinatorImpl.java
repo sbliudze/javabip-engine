@@ -359,6 +359,12 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable, BIPEngineSt
 		}
 	}
 
+	@Override
+	public void deregister(BIPComponent component) {
+		// TODO Auto-generated method stub
+		
+	}
+
 	/**
 	 * Components call the inform function to give information about their
 	 * current state and their number of disabled ports by guards that do not

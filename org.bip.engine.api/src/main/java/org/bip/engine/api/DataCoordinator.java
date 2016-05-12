@@ -50,4 +50,6 @@ public interface DataCoordinator extends BIPEngine, BIPCoordinator, InteractionE
 	 * @return the positionsOfDVariables
 	 */
 	public List<Integer> getPositionsOfDVariables();
+
+	void setNbDVars(int nbDVars);
 }

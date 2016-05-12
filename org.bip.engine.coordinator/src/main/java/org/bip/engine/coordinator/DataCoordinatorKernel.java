@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.concurrent.Semaphore;
 
 import org.bip.api.BIPActor;
 import org.bip.api.BIPComponent;
@@ -84,6 +83,8 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 
 	/** Number of states of components registered. */
 	private int nbStates;
+
+	private int nbDVars = 0;
 
 	/** The interactions count (for logging purposes). */
 	private int count;
@@ -304,8 +305,9 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 				typeInstancesMapping.put(component.getType(), componentInstances);
 
 				// Data encoder, add the new data bdd nodes for this component
-				if (isEngineExecuting)
+				if (isEngineExecuting) {
 					newComponentsDataBDDs = dataEncoder.extendDataBDDNodes(dataWires, component);
+				}
 
 			} catch (BIPEngineException e) {
 				e.printStackTrace();
@@ -318,6 +320,36 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 			registrationLock.unlock();
 		}
 
+	}
+
+	@Override
+	public synchronized void deregister(BIPComponent component) {
+		if (component == null) {
+			logger.error("Cannot deregister null component.");
+			throw new BIPEngineException("Cannot deregister null component.");
+		}
+		if (!registeredComponents.contains(component)) {
+			logger.error("Cannot deregister a component {} that was not registered.", component);
+			throw new BIPEngineException("Cannot deregister a component " + component + " that was not registered.");
+		}
+		// TODO remove the component from the data encoder and then deregister
+		// it with the bipcoordinator
+		Behaviour componentBehaviour = componentBehaviourMapping.get(component);
+		registeredComponents.remove(component);
+		componentBehaviourMapping.remove(component);
+		if (informedComponents.remove(component)) {
+			for (String state : componentBehaviour.getStates()) {
+				informedComponentsState.remove(state);
+			}
+
+			for (Port port : componentBehaviour.getAllPorts()) {
+				informedComponentsPorts.remove(port);
+			}
+		}
+
+		typeInstancesMapping.get(component.getType()).remove(component);
+
+		bipCoordinator.deregister(component);
 	}
 
 	/*
@@ -689,7 +721,7 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 				}
 			}
 		}
-		
+
 		logger.debug("Enabled ports: {}", enabledPorts);
 
 		if (enabledPorts.size() != 0) {
@@ -699,7 +731,7 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 		for (List<Port> lp : bigInteraction) {
 			sb.append('[');
 			for (Port port : lp) {
-				sb.append(port.getId()+", ");
+				sb.append(port.getId() + ", ");
 			}
 			sb.append(']');
 		}
@@ -1071,5 +1103,10 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 
 	@Override
 	public void setDataInformer(DataInformer informer) {
+	}
+
+	@Override
+	public void setNbDVars(int nbDVars) {
+		this.nbDVars = nbDVars;
 	}
 }
