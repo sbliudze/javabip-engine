@@ -126,7 +126,9 @@ public class DataEncoderImpl implements DataEncoder {
 				Set<Entry<Port, Port>> allpairsBiDirectionalPairs = portsToDVarBDDMapping.keySet();
 				Entry<Port, Port> pairToNegate = new AbstractMap.SimpleEntry<Port, Port>(decidingPort, port);
 				if (allpairsBiDirectionalPairs.contains(pairToNegate)) {
-					result.andWith(portsToDVarBDDMapping.get(pairToNegate).not());
+					BDD tmp = result.and(portsToDVarBDDMapping.get(pairToNegate).not());
+					result.free();
+					result = tmp;
 				}
 			}
 		}
@@ -348,7 +350,7 @@ public class DataEncoderImpl implements DataEncoder {
 								+ " and " + outPort.toString() + " is equal to null");
 					}
 					currentSystemBddSize++;
-					logger.trace("CurrentSystemBDDSize: " + currentSystemBddSize);
+					logger.debug("CurrentSystemBDDSize: {}", currentSystemBddSize);
 				}
 			}
 		}

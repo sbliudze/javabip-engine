@@ -462,13 +462,15 @@ public class GlueEncoderImpl implements GlueEncoder {
 						for (HashSet<BDD> subset : subsetsOfGivenSize) {
 							BDD monomial = engine.getBDDManager().one();
 							for (int i = 0; i < size; i++) {
-								if (subset.contains(setOfPortBDDs.get(i))) {
+								BDD portBDD = setOfPortBDDs.get(i);
+								logger.debug("Going to add node {} in the glue for port {}", portBDD, port.getId());
+								if (subset.contains(portBDD)) {
 									/*
 									 * Cannot use andWith here. Do not want to
 									 * free the BDDs assigned to the ports at
 									 * the Behaviour Encoder.
 									 */
-									BDD tmp = monomial.and(setOfPortBDDs.get(i));
+									BDD tmp = monomial.and(portBDD);
 									monomial.free();
 									monomial = tmp;
 								} else {
@@ -477,7 +479,7 @@ public class GlueEncoderImpl implements GlueEncoder {
 									 * free the BDDs assigned to the ports at
 									 * the Behaviour Encoder.
 									 */
-									BDD tmp = monomial.and(setOfPortBDDs.get(i).not());
+									BDD tmp = monomial.and(portBDD.not());
 									monomial.free();
 									monomial = tmp;
 								}

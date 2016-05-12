@@ -93,20 +93,27 @@ public class CurrentStateEncoderImpl implements CurrentStateEncoder {
 			}
 		}
 		BDD result = engine.getBDDManager().one().and(statesToBDDs.get(currentState));
+		StringBuilder sb = new StringBuilder("Current state BDD for " + component + "is: "
+				+ statesToBDDs.get(currentState) + "(" + currentState + ") ");
 		for (String componentState : componentStates) {
 
 			if (!componentState.equals(currentState)) {
 				result.andWith(statesToBDDs.get(componentState).not());
+				sb.append("&& !" + statesToBDDs.get(componentState) + "(" + componentState + ") ");
 			}
 		}
 
 		for (Port disabledPort : disabledPorts) {
 			logger.trace("Conjunction of negated disabled ports: " + disabledPort.getId() + " of component "
 					+ disabledPort.getSpecType());
+			sb.append("&& !" + portsToBDDs.get(disabledPort.getId()) + " (" + portsToBDDs.get(disabledPort.getId())
+					+ ") ");
 			BDD tmp = result.and(portsToBDDs.get(disabledPort.getId()).not());
 			result.free();
 			result = tmp;
 		}
+
+		logger.debug(sb.toString());
 
 		return result;
 	}

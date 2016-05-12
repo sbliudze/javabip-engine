@@ -168,6 +168,7 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 				throw new BIPEngineException("Current state BDD is null of component " + component);
 			}
 
+			logger.debug("Component {} has current state BDD {}", component, currentStateBDDs.get(component));
 			tmp = totalCurrentStateBdd.and(currentStateBDDs.get(component));
 			totalCurrentStateBdd.free();
 			totalCurrentStateBdd = tmp;
@@ -199,8 +200,8 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		// long time = System.currentTimeMillis();
 
 		BDD totalCurrentStateAndDisabledCombinations = totalCurrentStateBdd(currentStateBDDs);
-		// logger.debug("Test print BDD {}",
-		// totalCurrentStateAndDisabledCombinations);
+		logger.debug("Test print current state BDD {}", totalCurrentStateAndDisabledCombinations);
+		logger.debug("Test print total glue BDD {}", totalGlueBDD);
 		BDD solns = totalConstraints.and(totalGlueBDD).and(totalCurrentStateAndDisabledCombinations);
 
 		logger.trace("INFORM SPECIFIC CALL: Disabled Combinations size " + temporaryConstraints.size());
@@ -330,6 +331,7 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		 */
 		// For performance info
 
+		logger.debug("Chosen interaction : {}", chosenInteraction);
 		wrapper.execute(chosenInteraction);
 		// System.out.println((System.currentTimeMillis() - time));
 
