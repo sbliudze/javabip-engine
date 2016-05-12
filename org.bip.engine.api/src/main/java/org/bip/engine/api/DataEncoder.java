@@ -3,13 +3,14 @@ package org.bip.engine.api;
 import java.util.Map;
 import java.util.Set;
 
-import net.sf.javabdd.BDD;
-import net.sf.javabdd.BDDFactory;
-
 import org.bip.api.BIPComponent;
+import org.bip.api.Behaviour;
 import org.bip.api.DataWire;
 import org.bip.api.Port;
 import org.bip.exceptions.BIPEngineException;
+
+import net.sf.javabdd.BDD;
+import net.sf.javabdd.BDDFactory;
 
 // TODO: Auto-generated Javadoc
 /**
@@ -74,4 +75,6 @@ public interface DataEncoder {
 
 	
 	Set<BDD> extendDataBDDNodes(Iterable<DataWire> wires, BIPComponent newComponent);
+	
+	void deleteDataBDDNodes(BIPComponent component, Behaviour componentBehaviour);
 }

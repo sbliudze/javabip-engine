@@ -77,6 +77,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable, BIPEngineSt
 
 	private Pool pool;
 	private int nbNewComponents = 0;
+	private int nbDeregisteringComponents = 0;
 
 	private ArrayList<BIPComponent> registeredComponents = new ArrayList<BIPComponent>();
 
@@ -361,8 +362,40 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable, BIPEngineSt
 
 	@Override
 	public void deregister(BIPComponent component) {
-		// TODO Auto-generated method stub
+		if (component == null) {
+			logger.error("Cannot deregister null component.");
+			throw new BIPEngineException("Cannot deregister null component.");
+		}
+		if (!registeredComponents.contains(component)) {
+			logger.error("Cannot deregister a component {} that was not registered.", component);
+			throw new BIPEngineException("Cannot deregister a component " + component + " that was not registered.");
+		}
 		
+		blockDeregistratingComponent(component);
+		
+		synchronized (this) {
+			// TODO Remove component from the data structures, then from the behaviour BDD, the glue BDD
+			/*
+			 * x glueenc
+			 * v behenc
+			 * v pool
+			 * v componentsBehaviourMapping
+			 * v typeInstancesMapping
+			 * v componentsHaveInformed
+			 * v nbComponents
+			 * v haveAllComponentsInformed
+			 */
+			Behaviour componentBehaviour = componentBehaviourMapping.remove(component);
+			typeInstancesMapping.get(component.getType()).remove(component);
+			componentsHaveInformed.remove(component);
+			nbDeregisteringComponents++;
+			
+			haveAllComponentsInformed.release();
+			if (!pool.removeInstance(component)) {
+				// TODO pause engine
+				
+			}
+		}
 	}
 
 	/**
@@ -760,42 +793,10 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable, BIPEngineSt
 			}
 
 			logger.debug("Iteration done, checking for new components");
-			registrationLock.lock();
-			try {
-				int prev = nbNewComponents;
-				nbNewComponents = 0;
-				if (prev != 0) {
-					logger.debug("{} new component{}!", prev, (prev == 1) ? "" : "s");
-
-					logger.debug("Adding the new components' BDDs to the total Behaviour BDD");
-					computeTotalBehaviour();
-
-					if (dataBDDInformer != null) {
-						logger.debug("inform the new data BDDs to the engine");
-						dataBDDInformer.informDataBDDs();
-					}
-
-					logger.debug("Recomputing the glue's BDD completely");
-					computeTotalGlueAndInformEngine();
-
-					if (dataBDDInformer != null) {
-						dataBDDInformer.clearDataBDDs();
-					}
-
-					nbComponents += prev;
-					logger.debug("Releasing {} permits for the informBlocker", prev);
-					informBlocker.release(prev);
-					logger.debug("{} available permits for components to inform", informBlocker.availablePermits());
-					newComponents.clear();
-
-					logger.debug("total number of components now is {}", nbComponents);
-				} else {
-					logger.debug("No new components");
-				}
-			} finally {
-				registrationLock.unlock();
-			}
+			finalizeRegistrations();
 			logger.debug("Done with checking for new components");
+			
+			deregistrationBlocker.release(nbComponents);
 
 			try {
 				logger.trace("Waiting for the acquire in run()...");
@@ -805,6 +806,17 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable, BIPEngineSt
 				logger.debug("Successfully acquired the {} permits.", nbComponents);
 
 				logger.trace("run() acquire successful.");
+				
+				deregistrationBlocker.drainPermits();
+				
+				if (nbDeregisteringComponents != 0 || nbNewComponents != 0) {
+					
+				}
+				
+				synchronized (this) {
+					nbComponents -= nbDeregisteringComponents;
+					nbDeregisteringComponents = 0;
+				}
 			} catch (InterruptedException e) {
 				// This exception is expected if we call engine.stop() before
 				// trying to acquire the permits in the semaphore
@@ -829,6 +841,42 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable, BIPEngineSt
 		// }
 
 		return;
+	}
+
+	private void finalizeRegistrations() {
+		registrationLock.lock();
+		try {
+			if (nbNewComponents != 0) {
+				logger.debug("{} new component{}!", nbNewComponents, (nbNewComponents == 1) ? "" : "s");
+
+				logger.debug("Adding the new components' BDDs to the total Behaviour BDD");
+				computeTotalBehaviour();
+
+				if (dataBDDInformer != null) {
+					logger.debug("inform the new data BDDs to the engine");
+					dataBDDInformer.informDataBDDs();
+				}
+
+				logger.debug("Recomputing the glue's BDD completely");
+				computeTotalGlueAndInformEngine();
+
+				if (dataBDDInformer != null) {
+					dataBDDInformer.clearDataBDDs();
+				}
+
+				nbComponents += nbNewComponents;
+				logger.debug("Releasing {} permits for the informBlocker", nbNewComponents);
+				informBlocker.release(nbNewComponents);
+				logger.debug("{} available permits for components to inform", informBlocker.availablePermits());
+				newComponents.clear();
+
+				logger.debug("total number of components now is {}", nbComponents);
+			} else {
+				logger.debug("No new components");
+			}
+		} finally {
+			registrationLock.unlock();
+		}
 	}
 
 	/**
@@ -1063,5 +1111,17 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable, BIPEngineSt
 	@Override
 	public void setDataInformer(DataInformer informer) {
 		dataBDDInformer = informer;
+	}
+
+	@Override
+	public void blockDeregistratingComponent(BIPComponent component) {
+		if (engineStarter == this) {
+			try {
+				deregistrationBlocker.acquire();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
+		
 	}
 }

@@ -84,7 +84,7 @@ public interface BDDBIPEngine {
 	 */
 	void specifyPermanentExtraConstraints(Set<BDD> specifyDataGlue);
 
-
+	void resetBehaviourBDD();
 
 }
 

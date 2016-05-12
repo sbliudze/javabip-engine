@@ -323,7 +323,7 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 	}
 
 	@Override
-	public synchronized void deregister(BIPComponent component) {
+	public void deregister(BIPComponent component) {
 		if (component == null) {
 			logger.error("Cannot deregister null component.");
 			throw new BIPEngineException("Cannot deregister null component.");
@@ -332,23 +332,29 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 			logger.error("Cannot deregister a component {} that was not registered.", component);
 			throw new BIPEngineException("Cannot deregister a component " + component + " that was not registered.");
 		}
-		// TODO remove the component from the data encoder and then deregister
-		// it with the bipcoordinator
-		Behaviour componentBehaviour = componentBehaviourMapping.get(component);
-		registeredComponents.remove(component);
-		componentBehaviourMapping.remove(component);
-		if (informedComponents.remove(component)) {
-			for (String state : componentBehaviour.getStates()) {
-				informedComponentsState.remove(state);
+		blockDeregistratingComponent(component);
+		
+		synchronized (this) {
+			// TODO remove the component from the data encoder and then deregister
+			// it with the bipcoordinator
+			Behaviour componentBehaviour = componentBehaviourMapping.get(component);
+			registeredComponents.remove(component);
+			componentBehaviourMapping.remove(component);
+			if (informedComponents.remove(component)) {
+				for (String state : componentBehaviour.getStates()) {
+					informedComponentsState.remove(state);
+				}
+
+				for (Port port : componentBehaviour.getAllPorts()) {
+					informedComponentsPorts.remove(port);
+				}
 			}
 
-			for (Port port : componentBehaviour.getAllPorts()) {
-				informedComponentsPorts.remove(port);
-			}
+			typeInstancesMapping.get(component.getType()).remove(component);
+			
+			dataEncoder.deleteDataBDDNodes(component, componentBehaviour);
 		}
-
-		typeInstancesMapping.get(component.getType()).remove(component);
-
+		
 		bipCoordinator.deregister(component);
 	}
 
@@ -1092,6 +1098,17 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 	}
 
 	@Override
+	public void blockDeregistratingComponent(BIPComponent component) {
+		if (engineStarter == this) {
+			try {
+				deregistrationBlocker.acquire();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+	@Override
 	public void informDataBDDs() {
 		bipCoordinator.specifyPermanentConstraints(newComponentsDataBDDs);
 	}
@@ -1108,5 +1125,10 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 	@Override
 	public void setNbDVars(int nbDVars) {
 		this.nbDVars = nbDVars;
+	}
+
+	@Override
+	public int getNbDVars() {
+		return nbDVars;
 	}
 }

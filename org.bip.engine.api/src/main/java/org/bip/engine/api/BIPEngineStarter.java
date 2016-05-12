@@ -13,6 +13,7 @@ public interface BIPEngineStarter {
 	Semaphore informBlocker = new Semaphore(0);
 	Set<BIPComponent> newComponents = new HashSet<BIPComponent>();
 	Lock registrationLock = new ReentrantLock();
+	Semaphore deregistrationBlocker = new Semaphore(0);
 	
 	/**
 	 * Starts the BIPEngine
@@ -28,4 +29,6 @@ public interface BIPEngineStarter {
 	void executeCallback();
 	
 	void blockNewComponent(BIPComponent component);
+	
+	void blockDeregistratingComponent(BIPComponent component);
 }

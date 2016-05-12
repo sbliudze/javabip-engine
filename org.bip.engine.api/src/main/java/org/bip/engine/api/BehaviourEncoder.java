@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.bip.api.BIPComponent;
+import org.bip.api.Behaviour;
 import org.bip.api.Port;
 import org.bip.exceptions.BIPEngineException;
 
@@ -113,6 +114,8 @@ public interface BehaviourEncoder {
 	 * @return the port to position
 	 */
 	Map<Port, Integer> getPortToPosition();
+	
+	void deleteBDDNodes(BIPComponent component, Behaviour componentBehaviour);
 	
 }
 
