@@ -261,7 +261,7 @@ public class DataEncoderImpl implements DataEncoder {
 		logger.debug("Extending the bdd nodes for {}", newComponent);
 		String newComponentType = newComponent.getType();
 		int currentSystemBddSize = dataCoordinator.getNoPorts() + dataCoordinator.getNoStates();
-		currentSystemBddSize += portsToDVarBDDMapping.size();
+		currentSystemBddSize += dataCoordinator.getNbDVars();
 		logger.debug("{} BDD nodes in the system already", currentSystemBddSize);
 
 		for (DataWire wire : wires) {
@@ -585,6 +585,37 @@ public class DataEncoderImpl implements DataEncoder {
 			}
 		}
 		return dataOutPorts;
+	}
+
+	@Override
+	public void deleteDataBDDNodes(BIPComponent component, Behaviour componentBehaviour) {
+		List<Port> ports = componentBehaviour.getEnforceablePorts();
+		
+		for (Port port : ports) {
+			componentOutBDDs.remove(port);
+			componentInBDDs.remove(port);
+			
+			Iterator<Entry<Entry<PortBase, PortBase>, Boolean>> itTriggers = portToTriggersMapping.entrySet().iterator();
+			while (itTriggers.hasNext()) {
+				Entry<Entry<PortBase, PortBase>, Boolean> entry = itTriggers.next();
+				Entry<PortBase, PortBase> pair = entry.getKey();
+				if (pair.getKey().equals(port) || pair.getValue().equals(port)) {
+					itTriggers.remove();
+				}
+			}
+			
+			Iterator<Entry<Entry<Port, Port>, BDD>> itDVars = portsToDVarBDDMapping.entrySet().iterator();
+			while (itDVars.hasNext()) {
+				Entry<Entry<Port, Port>, BDD> entry = itDVars.next();
+				Entry<Port, Port> pair = entry.getKey();
+				if (pair.getKey().equals(port) || pair.getValue().equals(port)) {
+					itDVars.remove();
+				}
+			}
+		}
+		
+		//TODO recompute implicationsofDs and implicationsOfPortsToDs
+		
 	}
 
 	/*

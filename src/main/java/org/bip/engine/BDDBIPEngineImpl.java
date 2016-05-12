@@ -465,4 +465,10 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		return bdd_mgr;
 	}
 
+	@Override
+	public void resetBehaviourBDD() {
+		totalConstraints.free();
+		newComponents.addAll(behaviourBDDs.keySet());
+	}
+
 }

@@ -169,6 +169,19 @@ public class BehaviourEncoderImpl implements BehaviourEncoder {
 		portBDDs.put(component, singleNodeBDDsForPorts);
 	}
 
+	@Override
+	public synchronized void deleteBDDNodes(BIPComponent component, Behaviour componentBehaviour) {
+		stateBDDs.remove(component);
+		portBDDs.remove(component);
+		componentToPortToBDD.remove(component);
+		componentToStateToBDD.remove(component);
+		List<Port> ports = componentBehaviour.getEnforceablePorts();
+		for (Port port : ports) {
+			Integer pos = portToPosition.remove(port);
+			positionsOfPorts.remove(pos);
+		}
+	}
+
 	/**
 	 * 
 	 * Computes the Behavior BDD of a component .
