@@ -253,6 +253,7 @@ public class DataEncoderImpl implements DataEncoder {
 		result.addAll(implicationsOfPortsToDs);
 		logger.debug("Size of result {}", result.size());
 		logger.debug("Size of system {}", currentSystemBddSize);
+		dataCoordinator.setNbDVars(currentSystemBddSize - dataCoordinator.getNoStates() - dataCoordinator.getNoPorts());
 		return result;
 	}
 
@@ -299,6 +300,7 @@ public class DataEncoderImpl implements DataEncoder {
 		result.addAll(implicationsOfPortsToDs);
 		logger.debug("Size of result {}", result.size());
 		logger.debug("Size of system {}", currentSystemBddSize);
+		dataCoordinator.setNbDVars(currentSystemBddSize - dataCoordinator.getNoStates() - dataCoordinator.getNoPorts());
 		return result;
 	}
 
