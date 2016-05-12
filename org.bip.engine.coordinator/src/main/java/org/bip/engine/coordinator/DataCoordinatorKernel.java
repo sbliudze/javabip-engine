@@ -644,6 +644,7 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 	 * @return the list
 	 */
 	private List<List<Port>> preparePorts(byte[] valuation) {
+		logger.debug("Valuation: {}", valuation);
 		/*
 		 * Grouping the interaction into smaller ones (with respect to data
 		 * transfer)
@@ -662,6 +663,7 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 		 */
 		ArrayList<Port> enabledPorts = new ArrayList<Port>();
 		Map<Port, Integer> portToPosition = bipCoordinator.getBehaviourEncoderInstance().getPortToPosition();
+		logger.debug("Port to position {}", bipCoordinator.getBehaviourEncoderInstance().getPortToPosition());
 		ArrayList<BIPComponent> componentsEnum = registeredComponents;
 		for (BIPComponent component : componentsEnum) {
 			Iterable<Port> componentPorts = null;
@@ -687,11 +689,22 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 				}
 			}
 		}
+		
+		logger.debug("Enabled ports: {}", enabledPorts);
 
 		if (enabledPorts.size() != 0) {
 			bigInteraction.add(enabledPorts);
 		}
-		logger.debug("big interaction is: {}", bigInteraction);
+		StringBuilder sb = new StringBuilder("Big interaction is: [");
+		for (List<Port> lp : bigInteraction) {
+			sb.append('[');
+			for (Port port : lp) {
+				sb.append(port.getId()+", ");
+			}
+			sb.append(']');
+		}
+		sb.append(']');
+		logger.debug(sb.toString());
 		/*
 		 * Here the ports mentioned above have been added For debug only //TODO:
 		 * Comment out before performance evaluation
@@ -727,8 +740,10 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 	 */
 	private List<List<Port>> mergingSubInteractions(byte[] chosenInteraction, ArrayList<Port> portsExecuted) {
 		logger.debug("Call mergingSubInteractions");
+		logger.debug("Positions of D variables: {}", positionsOfDVariables);
 		for (Integer i : positionsOfDVariables) {
 			if (chosenInteraction[i] == 1) {
+				logger.debug("Position {} in merging subinteractions", i);
 				Entry<Port, Port> pair = dVarPositionsToWires.get(i);
 				Port firstPair = pair.getKey();
 				Port secondPair = pair.getValue();
@@ -737,6 +752,7 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 				// + firstPair.component() + "\n\t " + secondPair + "\n\t of
 				// component " +
 				// secondPair.component());
+				logger.debug("Wire in interaction from {} to {}", firstPair, secondPair);
 
 				// TODO DISCUSS DANGER remove from merged interactions those
 				// where component communicates with itself
@@ -758,6 +774,7 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 			}
 		}
 		List<List<Port>> bigInteraction = new ArrayList<List<Port>>();
+		logger.debug("Ports executed: {}", portsExecuted);
 		bigInteraction.add(portsExecuted);
 		logger.debug("Done with subinteractions");
 		return bigInteraction;

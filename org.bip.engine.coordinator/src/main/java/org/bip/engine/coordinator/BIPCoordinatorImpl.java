@@ -295,12 +295,13 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable, BIPEngineSt
 			 */
 			logger.info("Component : {}", component);
 
+			int nbVar = engine.getBDDManager().varNum();
 			componentBehaviourMapping.put(executorActor, behaviour);
 			int nbComponentPorts = (behaviour.getEnforceablePorts()).size();
 			int nbComponentStates = (behaviour.getStates()).size();
 
 			try {
-				logger.debug("Create {} nodes for {}", nbComponentPorts+nbComponentStates, id);
+				logger.debug("Create {} nodes for {}", nbComponentPorts + nbComponentStates, id);
 				behenc.createBDDNodes(executorActor, (behaviour.getEnforceablePorts()),
 						((new ArrayList<String>(behaviour.getStates()))));
 				logger.debug("Nodes created for {}", id);
@@ -314,9 +315,8 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable, BIPEngineSt
 			}
 
 			for (int i = 0; i < nbComponentPorts; i++) {
-				behenc.getPositionsOfPorts().add(nbPorts + nbStates + nbComponentStates + i);
-				behenc.getPortToPosition().put((behaviour.getEnforceablePorts()).get(i),
-						nbPorts + nbStates + nbComponentStates + i);
+				behenc.getPositionsOfPorts().add(nbVar + nbComponentStates + i);
+				behenc.getPortToPosition().put((behaviour.getEnforceablePorts()).get(i), nbVar + nbComponentStates + i);
 			}
 			nbPorts += nbComponentPorts;
 			nbStates += nbComponentStates;
@@ -410,7 +410,8 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable, BIPEngineSt
 					logger.debug("Adding {} to the components that have informed this cycle.", component);
 					componentsHaveInformed.add(component);
 					try {
-						logger.debug("Component {} is at state {} and has disabled ports: "+ disabledPorts, component, currentState);
+						logger.debug("Component {} is at state {} and has disabled ports: " + disabledPorts, component,
+								currentState);
 						engine.informCurrentState(component, currstenc.inform(component, currentState, disabledPorts));
 					} catch (BIPEngineException e) {
 						e.printStackTrace();
@@ -535,7 +536,11 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable, BIPEngineSt
 			 * interaction.
 			 */
 			for (BIPComponent component : registeredComponents) {
-				component.execute(null);
+				if (!newComponents.contains(component)) {
+					component.execute(null);
+				} else {
+					logger.debug("Not going to execute null for component {}", component);
+				}
 
 			}
 
@@ -746,7 +751,6 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable, BIPEngineSt
 				logger.debug("Stopping the engine. BIPEngineException when running one iteration.");
 				isEngineExecuting = false;
 				engineThread.interrupt();
-				e1.printStackTrace();
 			}
 
 			logger.debug("Iteration done, checking for new components");
@@ -759,20 +763,21 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable, BIPEngineSt
 
 					logger.debug("Adding the new components' BDDs to the total Behaviour BDD");
 					computeTotalBehaviour();
-					
+
 					if (dataBDDInformer != null) {
 						logger.debug("inform the new data BDDs to the engine");
 						dataBDDInformer.informDataBDDs();
 					}
-					
+
 					logger.debug("Recomputing the glue's BDD completely");
 					computeTotalGlueAndInformEngine();
 
 					if (dataBDDInformer != null) {
 						dataBDDInformer.clearDataBDDs();
 					}
-					
+
 					nbComponents += prev;
+					logger.debug("Releasing {} permits for the informBlocker", prev);
 					informBlocker.release(prev);
 					logger.debug("{} available permits for components to inform", informBlocker.availablePermits());
 					newComponents.clear();
