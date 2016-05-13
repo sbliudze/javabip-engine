@@ -211,7 +211,6 @@ public class BehaviourEncoderImpl implements BehaviourEncoder {
 		Hashtable<String, BDD> stateToBDD = componentToStateToBDD.get(component);
 
 		BDD tmp;
-		StringBuilder sb = new StringBuilder("Behaviour BDD of component " + component + " is:");
 		for (String componentState : componentStates) {
 			logger.debug("BE: Component State: " + componentState);
 

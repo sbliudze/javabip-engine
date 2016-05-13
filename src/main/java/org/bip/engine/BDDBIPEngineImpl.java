@@ -468,6 +468,7 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 	@Override
 	public void resetBehaviourBDD() {
 		totalConstraints.free();
+		totalConstraints = null;
 		newComponents.addAll(behaviourBDDs.keySet());
 	}
 

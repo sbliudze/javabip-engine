@@ -10,9 +10,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import net.sf.javabdd.BDD;
-import net.sf.javabdd.BDDFactory;
-
 import org.bip.api.BIPComponent;
 import org.bip.api.Behaviour;
 import org.bip.api.DataWire;
@@ -24,6 +21,9 @@ import org.bip.engine.api.DataEncoder;
 import org.bip.exceptions.BIPEngineException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import net.sf.javabdd.BDD;
+import net.sf.javabdd.BDDFactory;
 
 /**
  * Deals with the DataGlue. Encodes the informSpecific information.
@@ -303,7 +303,45 @@ public class DataEncoderImpl implements DataEncoder {
 		dataCoordinator.setNbDVars(currentSystemBddSize - dataCoordinator.getNoStates() - dataCoordinator.getNoPorts());
 		return result;
 	}
+	
+	private Set<BDD> recomputeDataBDDs(Iterable<DataWire> wires) {
+		/*
+		 * Get the number of BDD-nodes of the System. We base this on the
+		 * assumption that all the components have registered before. Therefore,
+		 * we know the size of the BDD nodes created for states and ports, which
+		 * is the current System BDD size.
+		 */
+		int initialSystemBDDSize = dataCoordinator.getNoPorts() + dataCoordinator.getNoStates() + dataCoordinator.getNbDVars();
+		int currentSystemBddSize = initialSystemBDDSize;
+		logger.trace("CurrentSystemBDDSize: " + currentSystemBddSize);
 
+		// Create BDD nodes for all the variables representing data wires
+		Iterator<DataWire> dataIterator = wires.iterator();
+		while (dataIterator.hasNext()) {
+			// Find all (component,port)-pair instances for both ends of the
+			// wire
+			DataWire dataWire = dataIterator.next();
+			// In-end of the wire
+			List<Port> inPorts = inPorts(dataWire.getTo());
+			logger.trace("inPorts Size: " + inPorts.size());
+			// Out-end of the wire
+			List<Port> outPorts = outPorts(dataWire.getFrom());
+			logger.trace("outPorts size: " + outPorts.size());
+
+			currentSystemBddSize = crossProductOfPorts(inPorts, outPorts, currentSystemBddSize);
+
+		}
+
+		createImplicationsOfPortsToDs(wires);
+
+		Set<BDD> result = new HashSet<BDD>(implicationsOfDs);
+		result.addAll(implicationsOfPortsToDs);
+		logger.debug("Size of result {}", result.size());
+		logger.debug("Size of system {}", currentSystemBddSize);
+		dataCoordinator.setNbDVars(currentSystemBddSize - dataCoordinator.getNoStates() - dataCoordinator.getNoPorts());
+		return result;
+	}
+	
 	private int crossProductOfPorts(List<Port> inPorts, List<Port> outPorts, int currentSystemBddSize) {
 		/*
 		 * Here take the cross product of in and out variables to create the
@@ -588,7 +626,7 @@ public class DataEncoderImpl implements DataEncoder {
 	}
 
 	@Override
-	public void deleteDataBDDNodes(BIPComponent component, Behaviour componentBehaviour) {
+	public Set<BDD> deleteDataBDDNodes(BIPComponent component, Behaviour componentBehaviour, Iterable<DataWire> wires) {
 		List<Port> ports = componentBehaviour.getEnforceablePorts();
 		
 		for (Port port : ports) {
@@ -615,7 +653,7 @@ public class DataEncoderImpl implements DataEncoder {
 		}
 		
 		//TODO recompute implicationsofDs and implicationsOfPortsToDs
-		
+		return recomputeDataBDDs(wires);
 	}
 
 	/*
