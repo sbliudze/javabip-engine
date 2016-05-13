@@ -10,8 +10,6 @@ import java.util.Map;
 import java.util.Set;
 //import java.util.concurrent.Semaphore;
 import java.util.concurrent.Semaphore;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 import org.bip.api.BIPActor;
 import org.bip.api.BIPComponent;
@@ -244,6 +242,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable, BIPEngineSt
 				} catch (Exception exception) {
 					executorActor = TypedActor.get(typedActorContext).typedActorOf(new TypedProps<OrchestratedExecutor>(
 							OrchestratedExecutor.class, new Creator<OrchestratedExecutor>() {
+
 								public ExecutorKernel create() {
 									return executor;
 								}
@@ -326,8 +325,11 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable, BIPEngineSt
 			// }
 			logger.info("******************************************************************************");
 			org.bip.api.BIPEngine typedActorEngine = (org.bip.api.BIPEngine) typedActorSelf;
-			executorActor.register(typedActorEngine); // BIG TODO: Try
-														// synchronous call
+			executorActor.register(typedActorEngine); // BIG
+														// TODO:
+														// Try
+														// synchronous
+														// call
 			boolean isSystemValid = pool.addInstance(executor);
 			logger.debug("Added to the pool who says validity is {} and we know engine is running? {}", isSystemValid,
 					isEngineExecuting);
@@ -370,30 +372,25 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable, BIPEngineSt
 			logger.error("Cannot deregister a component {} that was not registered.", component);
 			throw new BIPEngineException("Cannot deregister a component " + component + " that was not registered.");
 		}
-		
+
 		blockDeregistratingComponent(component);
-		
+
 		synchronized (this) {
-			// TODO Remove component from the data structures, then from the behaviour BDD, the glue BDD
 			/*
-			 * x glueenc
-			 * v behenc
-			 * v pool
-			 * v componentsBehaviourMapping
-			 * v typeInstancesMapping
-			 * v componentsHaveInformed
-			 * v nbComponents
-			 * v haveAllComponentsInformed
+			 * TODO list: x glueenc v behenc v pool v componentsBehaviourMapping
+			 * v typeInstancesMapping v componentsHaveInformed v nbComponents v
+			 * haveAllComponentsInformed
 			 */
 			Behaviour componentBehaviour = componentBehaviourMapping.remove(component);
 			typeInstancesMapping.get(component.getType()).remove(component);
 			componentsHaveInformed.remove(component);
 			nbDeregisteringComponents++;
-			
+			behenc.deleteBDDNodes(component, componentBehaviour);
+
 			haveAllComponentsInformed.release();
 			if (!pool.removeInstance(component)) {
 				// TODO pause engine
-				
+
 			}
 		}
 	}
@@ -795,38 +792,18 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable, BIPEngineSt
 			logger.debug("Iteration done, checking for new components");
 			finalizeRegistrations();
 			logger.debug("Done with checking for new components");
-			
+
 			deregistrationBlocker.release(nbComponents);
 
-			try {
-				logger.trace("Waiting for the acquire in run()...");
-				logger.debug("{} components have informed. {} total", haveAllComponentsInformed.availablePermits(),
-						nbComponents);
-				haveAllComponentsInformed.acquire(nbComponents);
-				logger.debug("Successfully acquired the {} permits.", nbComponents);
-
-				logger.trace("run() acquire successful.");
-				
-				deregistrationBlocker.drainPermits();
-				
-				if (nbDeregisteringComponents != 0 || nbNewComponents != 0) {
-					
-				}
-				
-				synchronized (this) {
-					nbComponents -= nbDeregisteringComponents;
-					nbDeregisteringComponents = 0;
-				}
-			} catch (InterruptedException e) {
-				// This exception is expected if we call engine.stop() before
-				// trying to acquire the permits in the semaphore
-				isEngineExecuting = false;
-				engineThread.interrupt();
-				// e.printStackTrace();
-				// logger.error(
-				// "Semaphore's haveAllComponentsInformed acquire method for the
-				// number of registered components in the system was
-				// interrupted.");
+			waitForComponentsToInform();
+			
+			deregistrationBlocker.drainPermits();
+			
+			recomputeBDDs();
+			
+			synchronized (this) {
+				nbComponents -= nbDeregisteringComponents;
+				nbDeregisteringComponents = 0;
 			}
 
 			logger.debug("***************************** END CYCLE *****************************");
@@ -849,21 +826,6 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable, BIPEngineSt
 			if (nbNewComponents != 0) {
 				logger.debug("{} new component{}!", nbNewComponents, (nbNewComponents == 1) ? "" : "s");
 
-				logger.debug("Adding the new components' BDDs to the total Behaviour BDD");
-				computeTotalBehaviour();
-
-				if (dataBDDInformer != null) {
-					logger.debug("inform the new data BDDs to the engine");
-					dataBDDInformer.informDataBDDs();
-				}
-
-				logger.debug("Recomputing the glue's BDD completely");
-				computeTotalGlueAndInformEngine();
-
-				if (dataBDDInformer != null) {
-					dataBDDInformer.clearDataBDDs();
-				}
-
 				nbComponents += nbNewComponents;
 				logger.debug("Releasing {} permits for the informBlocker", nbNewComponents);
 				informBlocker.release(nbNewComponents);
@@ -879,14 +841,51 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable, BIPEngineSt
 		}
 	}
 
+	private void waitForComponentsToInform() {
+
+		try {
+			logger.trace("Waiting for the acquire in run()...");
+			logger.debug("{} components have informed. {} total", haveAllComponentsInformed.availablePermits(),
+					nbComponents);
+			haveAllComponentsInformed.acquire(nbComponents);
+			logger.debug("Successfully acquired the {} permits.", nbComponents);
+
+			logger.trace("run() acquire successful.");
+		} catch (InterruptedException e) {
+			// This exception is expected if we call engine.stop() before
+			// trying to acquire the permits in the semaphore
+			isEngineExecuting = false;
+			engineThread.interrupt();
+		}
+	}
+	
+	private synchronized void recomputeBDDs() {
+		if (nbDeregisteringComponents != 0 || nbNewComponents != 0) {
+			// TODO recompute behaviour and glue
+			computeTotalBehaviour();
+
+			if (dataBDDInformer != null) {
+				logger.debug("inform the new data BDDs to the engine");
+				dataBDDInformer.informDataBDDs();
+			}
+
+			logger.debug("Recomputing the glue's BDD completely");
+			computeTotalGlueAndInformEngine();
+
+			if (dataBDDInformer != null) {
+				dataBDDInformer.clearDataBDDs();
+			}
+		}
+	}
+
 	/**
 	 * Interrupt the Engine thread.
 	 */
 	public void stop() {
 		logger.debug("*************** Calling engine.stop() ***************");
 		if (engineThread == null) {
-			logger.error("Stoping the engine before starting it.");
-			throw new BIPEngineException("Stoping the engine before starting it.");
+			logger.error("Stopping the engine before starting it.");
+			throw new BIPEngineException("Stopping the engine before starting it.");
 		}
 		isEngineExecuting = false;
 		engineThread.interrupt();
@@ -1122,6 +1121,6 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable, BIPEngineSt
 				e.printStackTrace();
 			}
 		}
-		
+
 	}
 }

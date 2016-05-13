@@ -305,8 +305,10 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 				typeInstancesMapping.put(component.getType(), componentInstances);
 
 				// Data encoder, add the new data bdd nodes for this component
-				if (isEngineExecuting) {
-					newComponentsDataBDDs = dataEncoder.extendDataBDDNodes(dataWires, component);
+				synchronized (newComponentsDataBDDs) {
+					if (isEngineExecuting) {
+						newComponentsDataBDDs = dataEncoder.extendDataBDDNodes(dataWires, component);
+					}
 				}
 
 			} catch (BIPEngineException e) {
@@ -333,9 +335,10 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 			throw new BIPEngineException("Cannot deregister a component " + component + " that was not registered.");
 		}
 		blockDeregistratingComponent(component);
-		
+
 		synchronized (this) {
-			// TODO remove the component from the data encoder and then deregister
+			// TODO remove the component from the data encoder and then
+			// deregister
 			// it with the bipcoordinator
 			Behaviour componentBehaviour = componentBehaviourMapping.get(component);
 			registeredComponents.remove(component);
@@ -351,10 +354,14 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 			}
 
 			typeInstancesMapping.get(component.getType()).remove(component);
-			
-			dataEncoder.deleteDataBDDNodes(component, componentBehaviour);
+
+			synchronized (newComponentsDataBDDs) {
+				if (isEngineExecuting) {
+					dataEncoder.deleteDataBDDNodes(component, componentBehaviour, dataWires);
+				}
+			}
 		}
-		
+
 		bipCoordinator.deregister(component);
 	}
 

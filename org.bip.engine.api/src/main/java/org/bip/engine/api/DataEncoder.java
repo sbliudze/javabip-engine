@@ -76,5 +76,5 @@ public interface DataEncoder {
 	
 	Set<BDD> extendDataBDDNodes(Iterable<DataWire> wires, BIPComponent newComponent);
 	
-	void deleteDataBDDNodes(BIPComponent component, Behaviour componentBehaviour);
+	Set<BDD> deleteDataBDDNodes(BIPComponent component, Behaviour componentBehaviour, Iterable<DataWire> wires);
 }
