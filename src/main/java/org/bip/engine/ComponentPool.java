@@ -209,6 +209,11 @@ public class ComponentPool implements Pool {
 		lock.unlock();
 	}
 
+	@Override
+	public boolean isValid() {
+		return valid;
+	}
+
 	/**
 	 * Adds an instance to the pool.
 	 * 
@@ -235,24 +240,24 @@ public class ComponentPool implements Pool {
 			// TODO Find another way to find the ports without casting
 			List<Port> enforceablePorts = ((ExecutorKernel) instance).getBehavior().getEnforceablePorts();
 
-			// If the component has no enforceable ports, it is not in the graph
-			// but
-			// is a "valid system" so we return it.
-			if (enforceablePorts == null || enforceablePorts.isEmpty()) {
-				return true;
-			} else if (!nodes.containsKey(instance.getType())
-					&& !(enforceablePorts == null || enforceablePorts.isEmpty())) {
-				logger.error("Trying to add a component of type that is not in the graph: {}", instance.getType());
-				throw new BIPEngineException(
-						"Trying to add a component of type that is not in the graph: " + instance.getType());
-			}
-
-			if (this.added.contains(instance.getId())) {
-				logger.error("Component {} of type {} has already been added to the pool or ID is wrong (duplicate)",
-						instance.getId(), instance.getType());
-				throw new BIPEngineException("Component " + instance.getId() + " of type " + instance.getType()
-						+ " has already been added to the pool or ID is wrong (duplicate)");
-			}
+//			// If the component has no enforceable ports, it is not in the graph
+//			// but
+//			// is a "valid system" so we return it.
+//			if (enforceablePorts == null || enforceablePorts.isEmpty()) {
+//				return true;
+//			} else if (!nodes.containsKey(instance.getType())
+//					&& !(enforceablePorts == null || enforceablePorts.isEmpty())) {
+//				logger.error("Trying to add a component of type that is not in the graph: {}", instance.getType());
+//				throw new BIPEngineException(
+//						"Trying to add a component of type that is not in the graph: " + instance.getType());
+//			}
+//
+//			if (this.added.contains(instance.getId())) {
+//				logger.error("Component {} of type {} has already been added to the pool or ID is wrong (duplicate)",
+//						instance.getId(), instance.getType());
+//				throw new BIPEngineException("Component " + instance.getId() + " of type " + instance.getType()
+//						+ " has already been added to the pool or ID is wrong (duplicate)");
+//			}
 
 			// Always update the counters
 			boolean tmpValid = decrementCounters(instance.getType());
@@ -304,21 +309,21 @@ public class ComponentPool implements Pool {
 			}
 
 			// TODO Find another way to find the ports without casting
-			List<Port> enforceablePorts = ((ExecutorKernel) instance).getBehavior().getEnforceablePorts();
-
-			// If the component has no enforceable ports, it is not in the graph
-			// so
-			// the system is as valid as it was before removing it
-			if (enforceablePorts == null || enforceablePorts.isEmpty()) {
-				return this.valid;
-
-				// Check whether this type is in the graph
-			} else if (!nodes.containsKey(instance.getType())
-					&& !(enforceablePorts == null || enforceablePorts.isEmpty())) {
-				logger.error("Trying to remove a componnent of type that is not in the graph {}", instance.getType());
-				throw new BIPEngineException(
-						"Trying to remove a componnent of type that is not in the graph " + instance.getType());
-			}
+//			List<Port> enforceablePorts = ((ExecutorKernel) instance).getBehavior().getEnforceablePorts();
+//
+//			// If the component has no enforceable ports, it is not in the graph
+//			// so
+//			// the system is as valid as it was before removing it
+//			if (enforceablePorts == null || enforceablePorts.isEmpty()) {
+//				return this.valid;
+//
+//				// Check whether this type is in the graph
+//			} else if (!nodes.containsKey(instance.getType())
+//					&& !(enforceablePorts == null || enforceablePorts.isEmpty())) {
+//				logger.error("Trying to remove a componnent of type that is not in the graph {}", instance.getType());
+//				throw new BIPEngineException(
+//						"Trying to remove a componnent of type that is not in the graph " + instance.getType());
+//			}
 
 			// Exception if this component has never been added or been
 			// removed.
