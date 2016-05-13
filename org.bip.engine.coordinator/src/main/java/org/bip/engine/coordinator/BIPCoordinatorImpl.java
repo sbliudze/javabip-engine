@@ -363,7 +363,10 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable, BIPEngineSt
 	}
 
 	@Override
-	public void deregister(BIPComponent component) {
+	public void deregister(Object instance) {
+		
+		BIPComponent component = objectToComponent.get(instance);
+		
 		if (component == null) {
 			logger.error("Cannot deregister null component.");
 			throw new BIPEngineException("Cannot deregister null component.");
@@ -382,16 +385,14 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable, BIPEngineSt
 			 * haveAllComponentsInformed
 			 */
 			Behaviour componentBehaviour = componentBehaviourMapping.remove(component);
+			registeredComponents.remove(component);
 			typeInstancesMapping.get(component.getType()).remove(component);
 			componentsHaveInformed.remove(component);
 			nbDeregisteringComponents++;
 			behenc.deleteBDDNodes(component, componentBehaviour);
 
 			haveAllComponentsInformed.release();
-			if (!pool.removeInstance(component)) {
-				// TODO pause engine
-
-			}
+			pool.removeInstance(component);
 		}
 	}
 
@@ -491,16 +492,8 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable, BIPEngineSt
 				 * Coordinator without being registered first.
 				 */
 			} else {
-				try {
-					logger.error("No component with name" + component.getId()
-							+ " specified in the inform 	was registered." + "\tPossible reason: "
-							+ "Name attribute in ComponentType annotation does not match the name of the Class.");
-					throw new BIPEngineException("Component " + component.getId()
-							+ " specified in the inform was registered." + "\tPossible reason: "
-							+ "Name attribute in ComponentType annotation does not match the name of the Class.");
-				} catch (BIPEngineException e) {
-					e.printStackTrace();
-				}
+				logger.error("No component with name {}, either an error or it was deregistered", component.getId());
+				return;
 			}
 			// System.out.println("BC:" + (System.currentTimeMillis() - time1));
 		}
@@ -796,11 +789,13 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable, BIPEngineSt
 			deregistrationBlocker.release(nbComponents);
 
 			waitForComponentsToInform();
-			
+
 			deregistrationBlocker.drainPermits();
 			
+			pauseEngine();
+
 			recomputeBDDs();
-			
+
 			synchronized (this) {
 				nbComponents -= nbDeregisteringComponents;
 				nbDeregisteringComponents = 0;
@@ -858,7 +853,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable, BIPEngineSt
 			engineThread.interrupt();
 		}
 	}
-	
+
 	private synchronized void recomputeBDDs() {
 		if (nbDeregisteringComponents != 0 || nbNewComponents != 0) {
 			// TODO recompute behaviour and glue
@@ -874,6 +869,19 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable, BIPEngineSt
 
 			if (dataBDDInformer != null) {
 				dataBDDInformer.clearDataBDDs();
+			}
+		}
+	}
+
+	private void pauseEngine() {
+		synchronized (pool) {
+			while (!pool.isValid()) {
+				try {
+					pool.wait();
+				} catch (InterruptedException e) {
+					logger.error("Engine interrupted while being paused");
+					isEngineExecuting = false;
+				}
 			}
 		}
 	}

@@ -325,7 +325,10 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 	}
 
 	@Override
-	public void deregister(BIPComponent component) {
+	public void deregister(Object instance) {
+		
+		BIPComponent component = bipCoordinator.getComponentFromObject(instance);
+		
 		if (component == null) {
 			logger.error("Cannot deregister null component.");
 			throw new BIPEngineException("Cannot deregister null component.");
@@ -362,7 +365,7 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 			}
 		}
 
-		bipCoordinator.deregister(component);
+		bipCoordinator.deregister(instance);
 	}
 
 	/*

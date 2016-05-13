@@ -4,9 +4,11 @@ import org.bip.api.BIPComponent;
 
 public interface Pool {
 
-	public void initialize();
+	void initialize();
 
-	public boolean addInstance(BIPComponent instance);
+	boolean addInstance(BIPComponent instance);
 
-	public boolean removeInstance(BIPComponent instances);
+	boolean removeInstance(BIPComponent instances);
+	
+	boolean isValid();
 }
