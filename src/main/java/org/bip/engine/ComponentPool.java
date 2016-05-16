@@ -12,12 +12,10 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import org.bip.api.BIPComponent;
 import org.bip.api.BIPGlue;
-import org.bip.api.Port;
 import org.bip.api.PortBase;
 import org.bip.api.Require;
 import org.bip.engine.api.Pool;
 import org.bip.exceptions.BIPEngineException;
-import org.bip.executor.ExecutorKernel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -237,8 +235,8 @@ public class ComponentPool implements Pool {
 				throw new BIPEngineException("Trying to add a null component to the pool.");
 			}
 
-			// TODO Find another way to find the ports without casting
-			List<Port> enforceablePorts = ((ExecutorKernel) instance).getBehavior().getEnforceablePorts();
+//			// TODO Find another way to find the ports without casting
+//			List<Port> enforceablePorts = ((ExecutorKernel) instance).getBehavior().getEnforceablePorts();
 
 //			// If the component has no enforceable ports, it is not in the graph
 //			// but
