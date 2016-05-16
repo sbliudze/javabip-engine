@@ -822,7 +822,6 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable, BIPEngineSt
 				nbComponents += nbNewComponents;
 				logger.debug("Releasing {} permits for the informBlocker", nbNewComponents);
 				informBlocker.release(nbNewComponents);
-				nbNewComponents = 0;
 				logger.debug("{} available permits for components to inform", informBlocker.availablePermits());
 				newComponents.clear();
 
@@ -855,6 +854,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable, BIPEngineSt
 
 	private synchronized void recomputeBDDs() {
 		if (nbDeregisteringComponents != 0 || nbNewComponents != 0) {
+			nbNewComponents = 0;
 			computeTotalBehaviour();
 
 			if (dataBDDInformer != null) {
@@ -1023,7 +1023,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable, BIPEngineSt
 		return behenc;
 	}
 
-	public BDDFactory getBDDManager() {
+	public synchronized BDDFactory getBDDManager() {
 		return engine.getBDDManager();
 	}
 
