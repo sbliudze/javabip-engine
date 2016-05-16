@@ -326,9 +326,9 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 
 	@Override
 	public void deregister(Object instance) {
-		
+
 		BIPComponent component = bipCoordinator.getComponentFromObject(instance);
-		
+
 		if (component == null) {
 			logger.error("Cannot deregister null component.");
 			throw new BIPEngineException("Cannot deregister null component.");
@@ -789,35 +789,39 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 	private List<List<Port>> mergingSubInteractions(byte[] chosenInteraction, ArrayList<Port> portsExecuted) {
 		logger.debug("Call mergingSubInteractions");
 		logger.debug("Positions of D variables: {}", positionsOfDVariables);
-		for (Integer i : positionsOfDVariables) {
-			if (chosenInteraction[i] == 1) {
-				logger.debug("Position {} in merging subinteractions", i);
-				Entry<Port, Port> pair = dVarPositionsToWires.get(i);
-				Port firstPair = pair.getKey();
-				Port secondPair = pair.getValue();
-				// logger.trace("D variable for ports: " + "\n\t" + firstPair +
-				// "\n\t of component "
-				// + firstPair.component() + "\n\t " + secondPair + "\n\t of
-				// component " +
-				// secondPair.component());
-				logger.debug("Wire in interaction from {} to {}", firstPair, secondPair);
 
-				// TODO DISCUSS DANGER remove from merged interactions those
-				// where component communicates with itself
-				if (firstPair.component().equals(secondPair.component())) {
-					continue;
-				}
+		synchronized (positionsOfDVariables) {
+			for (Integer i : positionsOfDVariables) {
+				if (chosenInteraction[i] == 1) {
+					logger.debug("Position {} in merging subinteractions", i);
+					Entry<Port, Port> pair = dVarPositionsToWires.get(i);
+					Port firstPair = pair.getKey();
+					Port secondPair = pair.getValue();
+					// logger.trace("D variable for ports: " + "\n\t" +
+					// firstPair +
+					// "\n\t of component "
+					// + firstPair.component() + "\n\t " + secondPair + "\n\t of
+					// component " +
+					// secondPair.component());
+					logger.debug("Wire in interaction from {} to {}", firstPair, secondPair);
 
-				// check for data for the first component
-				setDataValuationToExecutor(firstPair, secondPair);
-				// check for data for the second component
-				setDataValuationToExecutor(secondPair, firstPair);
+					// TODO DISCUSS DANGER remove from merged interactions those
+					// where component communicates with itself
+					if (firstPair.component().equals(secondPair.component())) {
+						continue;
+					}
 
-				if (!portsExecuted.contains(firstPair)) {
-					portsExecuted.add(firstPair);
-				}
-				if (!portsExecuted.contains(secondPair)) {
-					portsExecuted.add(secondPair);
+					// check for data for the first component
+					setDataValuationToExecutor(firstPair, secondPair);
+					// check for data for the second component
+					setDataValuationToExecutor(secondPair, firstPair);
+
+					if (!portsExecuted.contains(firstPair)) {
+						portsExecuted.add(firstPair);
+					}
+					if (!portsExecuted.contains(secondPair)) {
+						portsExecuted.add(secondPair);
+					}
 				}
 			}
 		}
@@ -986,7 +990,9 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 	 * @return the positionsOfDVariables
 	 */
 	public List<Integer> getPositionsOfDVariables() {
-		return positionsOfDVariables;
+		synchronized (positionsOfDVariables) {
+			return positionsOfDVariables;
+		}
 	}
 
 	/**
@@ -1006,7 +1012,9 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 	 *            the positionsOfDVariables to set
 	 */
 	public void setPositionsOfDVariables(List<Integer> positionsOfDVariables) {
-		this.positionsOfDVariables = positionsOfDVariables;
+		synchronized (positionsOfDVariables) {
+			this.positionsOfDVariables = positionsOfDVariables;
+		}
 	}
 
 	@Override
