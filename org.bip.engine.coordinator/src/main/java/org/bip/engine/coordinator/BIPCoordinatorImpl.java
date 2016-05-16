@@ -781,7 +781,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable, BIPEngineSt
 			}
 
 			logger.debug("Iteration done, checking for new components");
-			finalizeRegistrations();
+			int nbNew = finalizeRegistrations();
 			logger.debug("Done with checking for new components");
 
 			deregistrationBlocker.release(nbComponents);
@@ -792,7 +792,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable, BIPEngineSt
 
 			pauseEngine();
 
-			recomputeBDDs();
+			recomputeBDDs(nbNew);
 
 			synchronized (this) {
 				nbComponents -= nbDeregisteringComponents;
@@ -813,15 +813,17 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable, BIPEngineSt
 		return;
 	}
 
-	private void finalizeRegistrations() {
+	private int finalizeRegistrations() {
 		registrationLock.lock();
 		try {
-			if (nbNewComponents != 0) {
-				logger.debug("{} new component{}!", nbNewComponents, (nbNewComponents == 1) ? "" : "s");
+			int prev = nbNewComponents;
+			nbNewComponents = 0;
+			if (prev != 0) {
+				logger.debug("{} new component{}!", prev, (prev == 1) ? "" : "s");
 
-				nbComponents += nbNewComponents;
-				logger.debug("Releasing {} permits for the informBlocker", nbNewComponents);
-				informBlocker.release(nbNewComponents);
+				nbComponents += prev;
+				logger.debug("Releasing {} permits for the informBlocker", prev);
+				informBlocker.release(prev);
 				logger.debug("{} available permits for components to inform", informBlocker.availablePermits());
 				newComponents.clear();
 
@@ -829,6 +831,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable, BIPEngineSt
 			} else {
 				logger.debug("No new components");
 			}
+			return prev;
 		} finally {
 			registrationLock.unlock();
 		}
@@ -852,9 +855,8 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable, BIPEngineSt
 		}
 	}
 
-	private synchronized void recomputeBDDs() {
-		if (nbDeregisteringComponents != 0 || nbNewComponents != 0) {
-			nbNewComponents = 0;
+	private synchronized void recomputeBDDs(int nbNew) {
+		if (nbDeregisteringComponents != 0 || nbNew != 0) {
 			computeTotalBehaviour();
 
 			if (dataBDDInformer != null) {
