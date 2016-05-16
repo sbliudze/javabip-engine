@@ -364,9 +364,10 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable, BIPEngineSt
 
 	@Override
 	public void deregister(Object instance) {
-		
+
 		BIPComponent component = objectToComponent.get(instance);
-		
+		logger.debug("Calling deregister for component {}", component);
+
 		if (component == null) {
 			logger.error("Cannot deregister null component.");
 			throw new BIPEngineException("Cannot deregister null component.");
@@ -377,22 +378,19 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable, BIPEngineSt
 		}
 
 		blockDeregistratingComponent(component);
+		logger.debug("Going on with deregistration of component {}", component);
 
 		synchronized (this) {
-			/*
-			 * TODO list: x glueenc v behenc v pool v componentsBehaviourMapping
-			 * v typeInstancesMapping v componentsHaveInformed v nbComponents v
-			 * haveAllComponentsInformed
-			 */
 			Behaviour componentBehaviour = componentBehaviourMapping.remove(component);
 			registeredComponents.remove(component);
 			typeInstancesMapping.get(component.getType()).remove(component);
 			componentsHaveInformed.remove(component);
 			nbDeregisteringComponents++;
 			behenc.deleteBDDNodes(component, componentBehaviour);
-
-			haveAllComponentsInformed.release();
+			
 			pool.removeInstance(component);
+			haveAllComponentsInformed.release();
+			
 		}
 	}
 
@@ -791,7 +789,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable, BIPEngineSt
 			waitForComponentsToInform();
 
 			deregistrationBlocker.drainPermits();
-			
+
 			pauseEngine();
 
 			recomputeBDDs();
@@ -824,6 +822,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable, BIPEngineSt
 				nbComponents += nbNewComponents;
 				logger.debug("Releasing {} permits for the informBlocker", nbNewComponents);
 				informBlocker.release(nbNewComponents);
+				nbNewComponents = 0;
 				logger.debug("{} available permits for components to inform", informBlocker.availablePermits());
 				newComponents.clear();
 
@@ -856,7 +855,6 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable, BIPEngineSt
 
 	private synchronized void recomputeBDDs() {
 		if (nbDeregisteringComponents != 0 || nbNewComponents != 0) {
-			// TODO recompute behaviour and glue
 			computeTotalBehaviour();
 
 			if (dataBDDInformer != null) {
@@ -874,7 +872,10 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable, BIPEngineSt
 	}
 
 	private void pauseEngine() {
+		logger.debug("Checking if engine needs to be paused.");
 		synchronized (pool) {
+			logger.debug("The system is{}valid with components {}", pool.isValid() ? " " : " not ",
+					registeredComponents);
 			while (!pool.isValid()) {
 				try {
 					pool.wait();
