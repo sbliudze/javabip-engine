@@ -792,7 +792,7 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 
 		synchronized (positionsOfDVariables) {
 			for (Integer i : positionsOfDVariables) {
-				if (chosenInteraction[i] == 1) {
+				if (i < chosenInteraction.length && chosenInteraction[i] == 1) {
 					logger.debug("Position {} in merging subinteractions", i);
 					Entry<Port, Port> pair = dVarPositionsToWires.get(i);
 					Port firstPair = pair.getKey();
