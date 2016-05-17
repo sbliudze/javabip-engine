@@ -387,10 +387,10 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable, BIPEngineSt
 			componentsHaveInformed.remove(component);
 			nbDeregisteringComponents++;
 			behenc.deleteBDDNodes(component, componentBehaviour);
-			
+
 			pool.removeInstance(component);
 			haveAllComponentsInformed.release();
-			
+
 		}
 	}
 
@@ -873,18 +873,15 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable, BIPEngineSt
 		}
 	}
 
-	private void pauseEngine() {
+	private synchronized void pauseEngine() {
 		logger.debug("Checking if engine needs to be paused.");
-		synchronized (pool) {
-			logger.debug("The system is{}valid with components {}", pool.isValid() ? " " : " not ",
-					registeredComponents);
-			while (!pool.isValid()) {
-				try {
-					pool.wait();
-				} catch (InterruptedException e) {
-					logger.error("Engine interrupted while being paused");
-					isEngineExecuting = false;
-				}
+		logger.debug("The system is{}valid with components {}", pool.isValid() ? " " : " not ", registeredComponents);
+		while (!pool.isValid()) {
+			try {
+				wait();
+			} catch (InterruptedException e) {
+				logger.error("Engine interrupted while being paused");
+				isEngineExecuting = false;
 			}
 		}
 	}
