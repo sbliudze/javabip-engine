@@ -211,6 +211,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable, BIPEngineSt
 
 	private HashMap<Object, BIPComponent> objectToComponent = new HashMap<Object, BIPComponent>();
 	private final boolean hasBothProxies = true;
+	private int nbNew;
 
 	/**
 	 * The BIP Engine creates an Actor for every BIP component and registers the
@@ -314,9 +315,12 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable, BIPEngineSt
 				nbComponents++;
 			}
 
-			for (int i = 0; i < nbComponentPorts; i++) {
-				behenc.getPositionsOfPorts().add(nbVar + nbComponentStates + i);
-				behenc.getPortToPosition().put((behaviour.getEnforceablePorts()).get(i), nbVar + nbComponentStates + i);
+			synchronized (behenc) {
+				for (int i = 0; i < nbComponentPorts; i++) {
+					behenc.getPositionsOfPorts().add(nbVar + nbComponentStates + i);
+					behenc.getPortToPosition().put((behaviour.getEnforceablePorts()).get(i),
+							nbVar + nbComponentStates + i);
+				}
 			}
 			nbPorts += nbComponentPorts;
 			nbStates += nbComponentStates;
@@ -330,6 +334,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable, BIPEngineSt
 														// Try
 														// synchronous
 														// call
+			boolean wasSystemValid = pool.isValid();
 			boolean isSystemValid = pool.addInstance(executor);
 			logger.debug("Added to the pool who says validity is {} and we know engine is running? {}", isSystemValid,
 					isEngineExecuting);
@@ -341,18 +346,20 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable, BIPEngineSt
 				} else {
 					engineStarter.setStartCallback(new StartCallback(engineStarter));
 				}
-			} else if (isSystemValid && isEngineExecuting) {
+			} else if (isEngineExecuting) {
 				registrationLock.lock();
 				try {
-					logger.debug("New component has been added, compute the BDD and all");
+					logger.debug("New component {} has been added, compute the BDD and all", component);
 					engine.informBehaviour(executor, behenc.behaviourBDD(executorActor));
 					newComponents.add(executorActor);
 					nbNewComponents++;
 				} finally {
 					registrationLock.unlock();
 				}
-			} else if (!isSystemValid && isEngineExecuting) {
-				throw new BIPEngineException("The system cannot be invalid if the engine is running");
+
+				if (!wasSystemValid && isSystemValid) {
+					nbNew = finalizeRegistrations();
+				}
 			}
 
 			logger.debug("Registration of {} is done", id);
@@ -521,9 +528,11 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable, BIPEngineSt
 		ArrayList<Port> portsExecuted = new ArrayList<Port>();
 
 		Map<Port, Integer> portToPosition = getBehaviourEncoderInstance().getPortToPosition();
-		for (Port port : portToPosition.keySet()) {
-			if (valuation[portToPosition.get(port)] == 1 || valuation[portToPosition.get(port)] == -1) {
-				portsExecuted.add(port);
+		synchronized (behenc) {
+			for (Port port : portToPosition.keySet()) {
+				if (valuation[portToPosition.get(port)] == 1 || valuation[portToPosition.get(port)] == -1) {
+					portsExecuted.add(port);
+				}
 			}
 		}
 		logger.trace("chosenPorts size: " + portsExecuted.size());
@@ -781,7 +790,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable, BIPEngineSt
 			}
 
 			logger.debug("Iteration done, checking for new components");
-			int nbNew = finalizeRegistrations();
+			nbNew = finalizeRegistrations();
 			logger.debug("Done with checking for new components");
 
 			deregistrationBlocker.release(nbComponents);
@@ -792,7 +801,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable, BIPEngineSt
 
 			pauseEngine();
 
-			recomputeBDDs(nbNew);
+			recomputeBDDs(this.nbNew);
 
 			synchronized (this) {
 				nbComponents -= nbDeregisteringComponents;
@@ -831,6 +840,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable, BIPEngineSt
 			} else {
 				logger.debug("No new components");
 			}
+
 			return prev;
 		} finally {
 			registrationLock.unlock();
@@ -1104,6 +1114,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable, BIPEngineSt
 
 	@Override
 	public void blockNewComponent(BIPComponent component) {
+		logger.debug("Component {} is {}a new component", component, newComponents.contains(component) ? "" : "not ");
 		if (engineStarter == this && newComponents.contains(component)) {
 			try {
 				logger.debug("Component {} waits for registration to be done", component);
@@ -1111,6 +1122,14 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable, BIPEngineSt
 				logger.debug("Registration seems finalized");
 			} catch (InterruptedException e) {
 				e.printStackTrace();
+			}
+
+		}
+
+		synchronized (this) {
+			if (pool.isValid()) {
+				logger.debug("Wake up the engine if needed from {}", component);
+				notifyAll();
 			}
 		}
 	}
