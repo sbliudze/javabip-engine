@@ -27,9 +27,6 @@ import org.slf4j.LoggerFactory;
 public class ComponentPool implements Pool {
 	private Logger logger = LoggerFactory.getLogger(ComponentPool.class);
 
-	// Add lock for concurrency purposes
-	private Lock lock;
-
 	// The glue describing the interactions in the system.
 	private BIPGlue glue;
 
@@ -55,7 +52,6 @@ public class ComponentPool implements Pool {
 	private Map<Set<String>, Boolean> valids;
 
 	public ComponentPool(BIPGlue glue) {
-		this.lock = new ReentrantLock();
 		this.glue = glue;
 		this.nodes = new HashMap<String, Node>();
 		this.incomingEdges = new MultiHashMap<String, Edge>();
@@ -72,11 +68,9 @@ public class ComponentPool implements Pool {
 	 * who have only spontaneous or internal transitions) - Edge from T to T'
 	 * labeled x means that one instance of type T' needs x instances of type T.
 	 * 
-	 * See more at {@link org.bip.engine.Node} or
-	 * {@link org.bip.engine.Edge}
+	 * See more at {@link org.bip.engine.Node} or {@link org.bip.engine.Edge}
 	 */
-	public void initialize() {
-		lock.lock();
+	public synchronized void initialize() {
 		Set<String> seen = new HashSet<String>();
 		List<Require> requires = glue.getRequiresConstraints();
 		// Create all nodes
@@ -142,8 +136,6 @@ public class ComponentPool implements Pool {
 
 		// Get all connected components
 		setConnectedComponents();
-
-		lock.unlock();
 	}
 
 	private void setConnectedComponents() {
@@ -193,8 +185,7 @@ public class ComponentPool implements Pool {
 	 * This method cleans up the pool, resets the node and reinitializes
 	 * necessary data structures.
 	 */
-	public void cleanup() {
-		lock.lock();
+	public synchronized void cleanup() {
 		this.valid = false;
 		this.added = new HashSet<String>();
 		this.subsystem = new HashMap<String, Integer>();
@@ -204,11 +195,10 @@ public class ComponentPool implements Pool {
 		for (Node node : nodes.values()) {
 			node.reset();
 		}
-		lock.unlock();
 	}
 
 	@Override
-	public boolean isValid() {
+	public synchronized boolean isValid() {
 		return valid;
 	}
 
@@ -227,67 +217,66 @@ public class ComponentPool implements Pool {
 	 *             if trying to add a null component or a component with
 	 *             unregistered type or a component already in the pool.
 	 */
-	public boolean addInstance(BIPComponent instance) throws BIPEngineException {
-		lock.lock();
-		try {
-			if (instance == null) {
-				logger.error("Trying to add a null component to the pool.");
-				throw new BIPEngineException("Trying to add a null component to the pool.");
-			}
+	public synchronized boolean addInstance(BIPComponent instance) throws BIPEngineException {
+		if (instance == null) {
+			logger.error("Trying to add a null component to the pool.");
+			throw new BIPEngineException("Trying to add a null component to the pool.");
+		}
 
-//			// TODO Find another way to find the ports without casting
-//			List<Port> enforceablePorts = ((ExecutorKernel) instance).getBehavior().getEnforceablePorts();
+		// // TODO Find another way to find the ports without casting
+		// List<Port> enforceablePorts = ((ExecutorKernel)
+		// instance).getBehavior().getEnforceablePorts();
 
-//			// If the component has no enforceable ports, it is not in the graph
-//			// but
-//			// is a "valid system" so we return it.
-//			if (enforceablePorts == null || enforceablePorts.isEmpty()) {
-//				return true;
-//			} else if (!nodes.containsKey(instance.getType())
-//					&& !(enforceablePorts == null || enforceablePorts.isEmpty())) {
-//				logger.error("Trying to add a component of type that is not in the graph: {}", instance.getType());
-//				throw new BIPEngineException(
-//						"Trying to add a component of type that is not in the graph: " + instance.getType());
-//			}
-//
-//			if (this.added.contains(instance.getId())) {
-//				logger.error("Component {} of type {} has already been added to the pool or ID is wrong (duplicate)",
-//						instance.getId(), instance.getType());
-//				throw new BIPEngineException("Component " + instance.getId() + " of type " + instance.getType()
-//						+ " has already been added to the pool or ID is wrong (duplicate)");
-//			}
+		// // If the component has no enforceable ports, it is not in the
+		// graph
+		// // but
+		// // is a "valid system" so we return it.
+		// if (enforceablePorts == null || enforceablePorts.isEmpty()) {
+		// return true;
+		// } else if (!nodes.containsKey(instance.getType())
+		// && !(enforceablePorts == null || enforceablePorts.isEmpty())) {
+		// logger.error("Trying to add a component of type that is not in
+		// the graph: {}", instance.getType());
+		// throw new BIPEngineException(
+		// "Trying to add a component of type that is not in the graph: " +
+		// instance.getType());
+		// }
+		//
+		if (this.added.contains(instance.getId())) {
+			logger.error("Component {} of type {} has already been added to the pool or ID is wrong (duplicate)",
+					instance.getId(), instance.getType());
+			throw new BIPEngineException("Component " + instance.getId() + " of type " + instance.getType()
+					+ " has already been added to the pool or ID is wrong (duplicate)");
+		}
 
-			// Always update the counters
-			boolean tmpValid = decrementCounters(instance.getType());
-			// Modify in the optimizers for valid checks whether the connected
-			// subgraph of instance makes the graph valid
-			this.valid |= tmpValid;
-			if (tmpValid) {
-				for (Map.Entry<Set<String>, Boolean> entry : valids.entrySet()) {
-					if (entry.getKey().contains(instance.getType())) {
-						entry.setValue(true);
-						break;
-					}
+		// Always update the counters
+		boolean tmpValid = decrementCounters(instance.getType());
+		// Modify in the optimizers for valid checks whether the connected
+		// subgraph of instance makes the graph valid
+		this.valid |= tmpValid;
+		if (tmpValid) {
+			for (Map.Entry<Set<String>, Boolean> entry : valids.entrySet()) {
+				if (entry.getKey().contains(instance.getType())) {
+					entry.setValue(true);
+					break;
 				}
 			}
-
-			// Remember we added this component
-			this.added.add(instance.getId());
-			// Increment the number of components of this type we have added
-			Integer count = this.subsystem.get(instance.getType());
-			if (count == null || count.intValue() == 0) {
-				this.subsystem.put(instance.getType(), 1);
-			} else {
-				this.subsystem.put(instance.getType(), count + 1);
-			}
-
-			// if we have a valid system then add this component to the pool
-			// return a set of all the instances that were in it and empty the
-			// pool
-			return valid;
-		} finally {
-			lock.unlock();
 		}
+
+		// Remember we added this component
+		this.added.add(instance.getId());
+		// Increment the number of components of this type we have added
+		Integer count = this.subsystem.get(instance.getType());
+		if (count == null || count.intValue() == 0) {
+			this.subsystem.put(instance.getType(), 1);
+		} else {
+			this.subsystem.put(instance.getType(), count + 1);
+		}
+
+		// if we have a valid system then add this component to the pool
+		// return a set of all the instances that were in it and empty the
+		// pool
+		return valid;
 	}
 
 	/**
@@ -298,61 +287,58 @@ public class ComponentPool implements Pool {
 	 * @return {@code true} if the system is still valid and {@code false}
 	 *         otherwise.
 	 */
-	public boolean removeInstance(BIPComponent instance) {
-		lock.lock();
-		try {
-			if (instance == null) {
-				logger.error("Trying to remove a null component from the pool.");
-				throw new BIPEngineException("Trying to remove a null component from the pool.");
-			}
-
-			// TODO Find another way to find the ports without casting
-//			List<Port> enforceablePorts = ((ExecutorKernel) instance).getBehavior().getEnforceablePorts();
-//
-//			// If the component has no enforceable ports, it is not in the graph
-//			// so
-//			// the system is as valid as it was before removing it
-//			if (enforceablePorts == null || enforceablePorts.isEmpty()) {
-//				return this.valid;
-//
-//				// Check whether this type is in the graph
-//			} else if (!nodes.containsKey(instance.getType())
-//					&& !(enforceablePorts == null || enforceablePorts.isEmpty())) {
-//				logger.error("Trying to remove a componnent of type that is not in the graph {}", instance.getType());
-//				throw new BIPEngineException(
-//						"Trying to remove a componnent of type that is not in the graph " + instance.getType());
-//			}
-
-			// Exception if this component has never been added or been
-			// removed.
-			if (!added.contains(instance.getId())) {
-				logger.error(
-						"Component {} of type {} has never been added to the pool but is asked to be removed or it has been removed already.",
-						instance.getId(), instance.getType());
-				throw new BIPEngineException("Component " + instance.getId() + " of type " + instance.getType()
-						+ " has never been added to the pool and asked to be removed or has been removed already.");
-			}
-
-			// Decrement the number of those we have
-			Integer count = this.subsystem.get(instance.getType());
-			if (count == null || count.intValue() == 0) {
-				logger.error("We are removing a component and we should not be able to remove this one.");
-				throw new BIPEngineException(
-						"We are removing a component and we should not be able to remove this one.");
-			} else {
-				this.subsystem.put(instance.getType(), count - 1);
-			}
-			// Remove it from the added component
-			this.added.remove(instance.getId());
-
-			// Increment the counters and check whether the system is still
-			// valid.
-			this.valid = incrementCounters(instance.getType());
-
-			return this.valid;
-		} finally {
-			lock.unlock();
+	public synchronized boolean removeInstance(BIPComponent instance) {
+		if (instance == null) {
+			logger.error("Trying to remove a null component from the pool.");
+			throw new BIPEngineException("Trying to remove a null component from the pool.");
 		}
+
+		// TODO Find another way to find the ports without casting
+		// List<Port> enforceablePorts = ((ExecutorKernel)
+		// instance).getBehavior().getEnforceablePorts();
+		//
+		// // If the component has no enforceable ports, it is not in the graph
+		// // so
+		// // the system is as valid as it was before removing it
+		// if (enforceablePorts == null || enforceablePorts.isEmpty()) {
+		// return this.valid;
+		//
+		// // Check whether this type is in the graph
+		// } else if (!nodes.containsKey(instance.getType())
+		// && !(enforceablePorts == null || enforceablePorts.isEmpty())) {
+		// logger.error("Trying to remove a componnent of type that is not in
+		// the graph {}", instance.getType());
+		// throw new BIPEngineException(
+		// "Trying to remove a componnent of type that is not in the graph " +
+		// instance.getType());
+		// }
+
+		// Exception if this component has never been added or been
+		// removed.
+		if (!added.contains(instance.getId())) {
+			logger.error(
+					"Component {} of type {} has never been added to the pool but is asked to be removed or it has been removed already.",
+					instance.getId(), instance.getType());
+			throw new BIPEngineException("Component " + instance.getId() + " of type " + instance.getType()
+					+ " has never been added to the pool and asked to be removed or has been removed already.");
+		}
+
+		// Decrement the number of those we have
+		Integer count = this.subsystem.get(instance.getType());
+		if (count == null || count.intValue() == 0) {
+			logger.error("We are removing a component and we should not be able to remove this one.");
+			throw new BIPEngineException("We are removing a component and we should not be able to remove this one.");
+		} else {
+			this.subsystem.put(instance.getType(), count - 1);
+		}
+		// Remove it from the added component
+		this.added.remove(instance.getId());
+
+		// Increment the counters and check whether the system is still
+		// valid.
+		this.valid = incrementCounters(instance.getType());
+
+		return this.valid;
 	}
 
 	private boolean incrementCounters(String type) {
