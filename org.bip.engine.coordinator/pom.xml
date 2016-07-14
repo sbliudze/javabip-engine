@@ -30,9 +30,10 @@
 		<!-- <camel-version>2.9.2</camel-version> -->
 		<!-- Older CF is using 2.6.0-fuse-01-15 -->
 		<camel-version>2.6.0-fuse-01-15</camel-version>
-		<osgi.export>org.bip.engine.coordinator</osgi.export>
+		<osgi.export>org.bip.engine.coordinator, org.bip.engine.resources, org.bip.engine.constraints, org.bip.engine.constraints.z3, org.bip.engine.constraints.jacop   </osgi.export>
 		<osgi.dynamic.import></osgi.dynamic.import>
 		<osgi.bundles></osgi.bundles>
+		<osgi.embed.depdendencies>antlr4, antlr4-runtime, org.abego.treelayout.core, antlr-runtime, antlr</osgi.embed.depdendencies>
 	</properties>
 
 	<dependencies>
@@ -108,6 +109,23 @@
     		<version>2.1.1</version>
     	</dependency>
 
+		<dependency>
+			<groupId>org.antlr</groupId>
+			<artifactId>antlr4</artifactId>
+			<version>4.0</version>
+		</dependency>
+		
+		<dependency>
+			<groupId>com.microsoft</groupId>
+			<artifactId>com.microsoft.z3</artifactId>
+			<version>v4.06</version>
+		</dependency>
+		
+		<dependency>
+			<groupId>org.jacop</groupId>
+			<artifactId>jacop</artifactId>
+			<version>4.4.0</version>
+		</dependency>
 
 	</dependencies>
 

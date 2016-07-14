@@ -1,12 +1,15 @@
 package org.bip.engine.coordinator;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.antlr.v4.runtime.RecognitionException;
 import org.bip.api.BIPActor;
 import org.bip.api.BIPComponent;
 import org.bip.api.BIPEngine;
@@ -14,12 +17,14 @@ import org.bip.api.BIPGlue;
 import org.bip.api.Behaviour;
 import org.bip.api.Port;
 import org.bip.api.ResourceProvider;
+import org.bip.constraints.jacop.JacopSolver;
 import org.bip.engine.api.BIPCoordinator;
 import org.bip.engine.api.DataCoordinator;
 import org.bip.engine.api.InteractionExecutor;
 import org.bip.engine.api.ResourceCoordinator;
 import org.bip.engine.api.ResourceEncoder;
 import org.bip.exceptions.BIPEngineException;
+import org.bip.resources.DNetException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,7 +33,7 @@ public class ResourceCoordinatorImpl implements BIPEngine, InteractionExecutor, 
 	//TODO think when we should call the dataCoordinator and when the bipCoordinator
 	
 	/** The logger. */
-	private Logger logger = LoggerFactory.getLogger(DataCoordinatorKernel.class);
+	private Logger logger = LoggerFactory.getLogger(ResourceCoordinatorImpl.class);
 
 	/** The registered components. */
 	private ArrayList<BIPComponent> registeredComponents = new ArrayList<BIPComponent>();
@@ -67,7 +72,7 @@ public class ResourceCoordinatorImpl implements BIPEngine, InteractionExecutor, 
 
 	/** The bip coordinator. */
 	private BIPCoordinator bipCoordinator = null;
-	private DataCoordinator dataCoordinator = null;
+	private BIPEngine prevCoordinator = null; //either dataCoordinator or BIPCoordinator
 
 	/** The registration finished. */
 	private boolean registrationFinished = false;
@@ -92,21 +97,26 @@ public class ResourceCoordinatorImpl implements BIPEngine, InteractionExecutor, 
 	
 	private  List<Port> portsRequestingResource;
 	private  List<Port> portsReleasingResource;
+	
+	private ResourceHelper resourceHelper;
 
 	/**
 	 * Instantiates a new data coordinator impl.
 	 * 
 	 * @param bipCoordinator
 	 *            the bip coordinator
+	 * @throws DNetException 
+	 * @throws IOException 
+	 * @throws RecognitionException 
 	 */
-	public ResourceCoordinatorImpl(BIPCoordinator bipCoordinator, DataCoordinator dataCoordinator, ResourceEncoder resourceEncoder) {
+	public ResourceCoordinatorImpl(BIPCoordinator bipCoordinator, BIPEngine nextCoordinator, ResourceEncoder resourceEncoder) {
 
 		this.resourceEncoder = resourceEncoder;
 
 		assert (bipCoordinator != null);
 
 		this.bipCoordinator = bipCoordinator;
-		this.dataCoordinator = dataCoordinator;
+		this.prevCoordinator = nextCoordinator;
 
 		this.bipCoordinator.setInteractionExecutor(this);
 		resourceEncoder.setResourceCoordinator(this);
@@ -118,6 +128,20 @@ public class ResourceCoordinatorImpl implements BIPEngine, InteractionExecutor, 
 		componentToPortsReleasingResource = new HashMap<BIPComponent, List<Port>>();
 		portsRequestingResource = new ArrayList<Port>();
 		portsReleasingResource = new ArrayList<Port>();
+		
+		JacopSolver solver = new JacopSolver();
+		try {
+			resourceHelper = new ResourceHelper("", solver, true);
+		} catch (RecognitionException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (DNetException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	
 	@Override
@@ -151,7 +175,7 @@ public class ResourceCoordinatorImpl implements BIPEngine, InteractionExecutor, 
 	}
 	
 	private synchronized void delayedSpecifyGlue(BIPGlue glue) {
-		dataCoordinator.specifyGlue(glue); // the call to the bipCoordinator happens within
+		prevCoordinator.specifyGlue(glue); // the call to the bipCoordinator happens within
 		registrationFinished = true;
 		int nbComponent = informedComponents.size();
 		for (int i = 0; i < nbComponent; i++) {
@@ -168,7 +192,7 @@ public class ResourceCoordinatorImpl implements BIPEngine, InteractionExecutor, 
 			if (object == null) {
 				throw new BIPEngineException("Registering a null component.");
 			}
-			actor = dataCoordinator.register(object, id, useSpec);
+			actor = prevCoordinator.register(object, id, useSpec);
 
 			BIPComponent component = bipCoordinator.getComponentFromObject(object);
 			Behaviour behaviour = bipCoordinator.getBehaviourByComponent(component);
@@ -203,8 +227,8 @@ public class ResourceCoordinatorImpl implements BIPEngine, InteractionExecutor, 
 			typeInstancesMapping.remove(component.getType());
 			typeInstancesMapping.put(component.getType(), componentInstances);
 			
-			componentToPortsRequestingResource.put(component, component.getPortsRequestingResources());
-			componentToPortsReleasingResource.put(component, component.getPortsReleasingResources());
+			//componentToPortsRequestingResource.put(component, component.getPortsRequestingResources());
+			//componentToPortsReleasingResource.put(component, component.getPortsReleasingResources());
 			
 			//TODO put ports releasing and requesting in the corresponding lists
 		} catch (BIPEngineException e) {
@@ -239,14 +263,48 @@ public class ResourceCoordinatorImpl implements BIPEngine, InteractionExecutor, 
 		 * have finished --- why I wonder?
 		 */
 
-		dataCoordinator.inform(component, currentState, disabledPorts);
+		prevCoordinator.inform(component, currentState, disabledPorts);
 		// System.out.println((System.currentTimeMillis() - time1));
 	}
 	
 	private void doInformSpecific(BIPComponent component, String currentState, Set<Port> disabledPorts) {
-		// TODO Auto-generated method stub
+		// it is either called at the last inform, or at each inform.
+		Set<Port> resourceRequestingPorts = getRequestingPort(component, currentState, disabledPorts); // ports
+		Behaviour decidingBehaviour = componentBehaviourMapping.get(component);
+		// for each undecided port of each component :
+		for (Port port : resourceRequestingPorts) {
+			String request = decidingBehaviour.getRequest(port);
+		}
+
 		
 	}
+
+		private Set<Port> getRequestingPort(BIPComponent component,
+				String currentState, Set<Port> disabledPorts) {
+			Set<Port> undecidedPorts = new HashSet<Port>();
+			Behaviour behaviour = componentBehaviourMapping.get(component);
+			boolean portIsDisabled = false;
+			// for each port that we have
+			Set<Port> currentPorts = behaviour.getStateToPorts().get(currentState);
+			for (Port port : currentPorts) {
+				// TODO rewrite with sets after fixing port equals
+				for (Port disabledPort : disabledPorts) {
+					// if it is equal to one of the disabled ports, we mark it as
+					// disabled and do not add to the collection of undecided
+					if (port.getId().equals(disabledPort.getId())) {
+						portIsDisabled = true;
+						break;
+					}
+				}
+				if (!portIsDisabled && behaviour.getPortsRequestingResources().contains(port)) {
+					undecidedPorts.add(port);
+				}
+				portIsDisabled = false;
+			}
+			logger.trace("For component {} the undecided ports are {}. ",
+					component.getId(), undecidedPorts);
+			return undecidedPorts;
+		}
 
 	public synchronized void informSpecific(BIPComponent decidingComponent, Port decidingPort,
 			Map<BIPComponent, Set<Port>> disabledCombinations) throws BIPEngineException {
@@ -343,13 +401,13 @@ public class ResourceCoordinatorImpl implements BIPEngine, InteractionExecutor, 
 		// Iterable<Port>>();
 		// logger.trace("positionsOfDVariables size: " + positionsOfDVariables.size());
 		ArrayList<Port> portsExecuted = new ArrayList<Port>();
-		List<List<Port>> bigInteraction = mergingSubInteractions(valuation, portsExecuted);
+		List<List<Port>> bigInteraction=null;// = mergingSubInteractions(valuation, portsExecuted);
 
 		
 		for (Port port: portsExecuted) {
 			// if the chosen port releases resources, release its resources.
 			if (portsReleasingResource.contains(port)) {
-				String amounts = port.component().getReleasedAmounts(port);
+				//String amounts = port.component().getReleasedAmounts(port);
 				//parse amounts to get resource names and numbers
 				//for each resource
 				//resources.get(resourceName).increase(resourceAmount);
@@ -369,7 +427,7 @@ public class ResourceCoordinatorImpl implements BIPEngine, InteractionExecutor, 
 		ArrayList<BIPComponent> componentsEnum = registeredComponents;
 		for (BIPComponent component : componentsEnum) {
 			Iterable<Port> componentPorts = null;
-			Behaviour behaviour = getBehaviourByComponent(component);
+			Behaviour behaviour = null;// = getBehaviourByComponent(component);
 			if (behaviour == null) {
 				isEngineExecuting = false;
 				return null;

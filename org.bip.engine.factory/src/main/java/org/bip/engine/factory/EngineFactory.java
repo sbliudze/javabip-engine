@@ -7,12 +7,14 @@ import org.bip.engine.BehaviourEncoderImpl;
 import org.bip.engine.CurrentStateEncoderImpl;
 import org.bip.engine.DataEncoderImpl;
 import org.bip.engine.GlueEncoderImpl;
+import org.bip.engine.ResourceEncoderImpl;
 import org.bip.engine.api.BDDBIPEngine;
 import org.bip.engine.api.BIPCoordinator;
 import org.bip.engine.api.BehaviourEncoder;
 import org.bip.engine.api.CurrentStateEncoder;
 import org.bip.engine.api.DataEncoder;
 import org.bip.engine.api.GlueEncoder;
+import org.bip.engine.api.ResourceEncoder;
 import org.bip.engine.coordinator.BIPCoordinatorImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,6 +52,47 @@ public class EngineFactory {
 		}
 
 		final BIPEngine engine = bipEngine;
+
+		BIPEngine actor = TypedActor.get(actorSystem).typedActorOf(
+				new TypedProps<BIPEngine>(BIPEngine.class, new Creator<BIPEngine>() {
+					public BIPEngine create() {
+								return engine;
+							}
+						}), id);
+
+
+		// TODO: make the DataCoordinatorImpl implement this function (after
+		// refactoring the coordinators)
+		// executor.setProxy(actor);
+		actor.initialize();
+
+		actor.specifyGlue(glue);
+		
+		return actor;
+	}
+	
+	public BIPEngine create(String id, BIPGlue glue, String cfNetPath) {
+
+		GlueEncoder glueenc = new GlueEncoderImpl();
+		BehaviourEncoder behenc = new BehaviourEncoderImpl();
+		CurrentStateEncoder currstenc = new CurrentStateEncoderImpl();
+		BDDBIPEngine bddBIPEngine = new BDDBIPEngineImpl();
+
+		BIPCoordinator basicCoordinator = new BIPCoordinatorImpl(actorSystem, glueenc, behenc, currstenc, bddBIPEngine);
+
+		BIPEngine prevCoordinator;
+
+		if (glue.getDataWires().size() == 0) {
+			prevCoordinator = basicCoordinator;
+		}
+		else {
+			DataEncoder dataEncoder = new DataEncoderImpl();
+			prevCoordinator = new org.bip.engine.coordinator.DataCoordinatorKernel(basicCoordinator, dataEncoder);
+		}
+		
+		ResourceEncoder resourceEncoder= new ResourceEncoderImpl();
+
+		final BIPEngine engine = new  org.bip.engine.coordinator.ResourceCoordinatorImpl(basicCoordinator, prevCoordinator, resourceEncoder);
 
 		BIPEngine actor = TypedActor.get(actorSystem).typedActorOf(
 				new TypedProps<BIPEngine>(BIPEngine.class, new Creator<BIPEngine>() {
