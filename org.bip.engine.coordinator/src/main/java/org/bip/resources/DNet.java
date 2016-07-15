@@ -138,7 +138,13 @@ public class DNet {
 	
 	/******************* Running *******************/
 
-	public ArrayList<DnetConstraint> run(HashMap<Place, ArrayList<PlaceVariable>> placeVariables, HashMap<Place, ArrayList<Transition>> placeTokens) throws DNetException {
+	public void run(HashMap<Place, ArrayList<PlaceVariable>> placeVariables, HashMap<Place, ArrayList<Transition>> placeTokens) throws DNetException {
+		firedTransitions.clear();
+		ArrayList<Transition> disabled = new ArrayList<Transition>();
+		findEnabledAndFireWithoutConstraints(placeVariables, placeTokens, disabled);
+	}
+	
+	public ArrayList<DnetConstraint> runAndFindConstraints(HashMap<Place, ArrayList<PlaceVariable>> placeVariables, HashMap<Place, ArrayList<Transition>> placeTokens) throws DNetException {
 		firedTransitions.clear();
 		ArrayList<Transition> disabled = new ArrayList<Transition>();
 		findEnabledAndFireWithoutConstraints(placeVariables, placeTokens, disabled);

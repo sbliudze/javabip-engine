@@ -16,6 +16,7 @@ import org.bip.api.BIPEngine;
 import org.bip.api.BIPGlue;
 import org.bip.api.Behaviour;
 import org.bip.api.Port;
+import org.bip.api.ResourceManager;
 import org.bip.api.ResourceProvider;
 import org.bip.constraints.jacop.JacopSolver;
 import org.bip.engine.api.BIPCoordinator;
@@ -97,6 +98,9 @@ public class ResourceCoordinatorImpl implements BIPEngine, InteractionExecutor, 
 	
 	private  List<Port> portsRequestingResource;
 	private  List<Port> portsReleasingResource;
+
+	private HashMap<String, ResourceManager> resourceNameToManagers = new HashMap<String, ResourceManager>();
+	private Set<ResourceManager> resourceManagers = new HashSet<ResourceManager>();
 	
 	private ResourceHelper resourceHelper;
 
@@ -231,11 +235,20 @@ public class ResourceCoordinatorImpl implements BIPEngine, InteractionExecutor, 
 			//componentToPortsReleasingResource.put(component, component.getPortsReleasingResources());
 			
 			//TODO put ports releasing and requesting in the corresponding lists
+			
+			if (component.resourceName()!=null) {
+				resourceManagers.add(component);
+				resourceNameToManagers.put(component.resourceName(), component);
+				resourceHelper.addResource(component);
+			}
+			
 		} catch (BIPEngineException e) {
 		}
 
 		return actor;
 	}
+	
+	
 	
 	public synchronized void inform(BIPComponent component, String currentState, Set<Port> disabledPorts) {
 		// for each component store its undecided ports
@@ -274,6 +287,17 @@ public class ResourceCoordinatorImpl implements BIPEngine, InteractionExecutor, 
 		// for each undecided port of each component :
 		for (Port port : resourceRequestingPorts) {
 			String request = decidingBehaviour.getRequest(port);
+			String interactionID = "1";
+			// TODO create a assembled utility for the requests if needed
+			try {
+				resourceHelper.specifyRequest(request, interactionID);
+				if (!resourceHelper.canAllocate(interactionID)) {
+					resourceEncoder.encodeDisabledCombinations(component, port, null);
+				}
+			} catch (DNetException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 
 		
@@ -401,22 +425,30 @@ public class ResourceCoordinatorImpl implements BIPEngine, InteractionExecutor, 
 		// Iterable<Port>>();
 		// logger.trace("positionsOfDVariables size: " + positionsOfDVariables.size());
 		ArrayList<Port> portsExecuted = new ArrayList<Port>();
+		ArrayList<Port> portsReqResources = new ArrayList<Port>();
 		List<List<Port>> bigInteraction=null;// = mergingSubInteractions(valuation, portsExecuted);
 
 		
 		for (Port port: portsExecuted) {
 			// if the chosen port releases resources, release its resources.
 			if (portsReleasingResource.contains(port)) {
-				//String amounts = port.component().getReleasedAmounts(port);
-				//parse amounts to get resource names and numbers
+				String amounts = "0";//port.component().getReleasedAmounts(port);
+				String resourceName = "";
+				//TODO parse amounts to get resource names and numbers
 				//for each resource
-				//resources.get(resourceName).increase(resourceAmount);
+				resourceNameToManagers.get(resourceName).augmentCost(amounts);
 			}
 			// if the chosen port requests resources
 			if (portsRequestingResource.contains(port)) {
-				// somehow find other ports in the interaction in order to know which solutione exactly to use....
+				portsReqResources.add(port);
+				// somehow find other ports in the interaction in order to know which solution exactly to use....
 			}
 		}
+		
+		//at this stage we have found all the ports that require resources
+		// now, either ask if allocation possible, or extract the saved allocation.
+		// but first, get the combined utility
+		String globalUtility = getInteractionUtility(portsReqResources);
 		
 		/*
 		 * Find ports that participate in the interaction but not in data transfer and add them as a
@@ -427,7 +459,7 @@ public class ResourceCoordinatorImpl implements BIPEngine, InteractionExecutor, 
 		ArrayList<BIPComponent> componentsEnum = registeredComponents;
 		for (BIPComponent component : componentsEnum) {
 			Iterable<Port> componentPorts = null;
-			Behaviour behaviour = null;// = getBehaviourByComponent(component);
+			Behaviour behaviour = componentBehaviourMapping.get(component);
 			if (behaviour == null) {
 				isEngineExecuting = false;
 				return null;
@@ -455,8 +487,8 @@ public class ResourceCoordinatorImpl implements BIPEngine, InteractionExecutor, 
 			bigInteraction.add(enabledPorts);
 		}
 		/*
-		 * Here the ports mentioned above have been added For debug only //TODO: Comment out before
-		 * performance evaluation
+		 * Here the ports mentioned above have been added For debug only 
+		 * //TODO: Comment out before performance evaluation
 		 */
 		// System.out.println("++++++++++++++++++++++++++++++++++++++++++++");
 		// for (Iterable<Port> inter : bigInteraction) {
@@ -470,6 +502,21 @@ public class ResourceCoordinatorImpl implements BIPEngine, InteractionExecutor, 
 		// System.out.println("++++++++++++++++++++++++++++++++++++++++++++");
 		// logger.trace("Interactions: " + bigInteraction.size());
 		return bigInteraction;
+	}
+
+	private String getInteractionUtility(ArrayList<Port> portsReqResources) {
+		for (Port port: portsReqResources)
+		{
+			String request = componentBehaviourMapping.get(port.component()).getRequest(port);
+			String interactionID = "0";
+			try {
+				resourceHelper.specifyRequest(request, interactionID);
+			} catch (DNetException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		return null;
 	}
 
 	/**
