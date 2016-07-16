@@ -2,6 +2,7 @@ package org.bip.constraints.jacop;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.bip.constraint.DnetConstraint;
@@ -133,7 +134,7 @@ public class JacopFactory implements ExpressionCreator {
 	}
 
 	@Override
-	public VariableExpression sumTokens(ArrayList<PlaceVariable> placeTokens) {
+	public VariableExpression sumTokens(List<PlaceVariable> placeTokens) {
 
 		if (placeTokens.size() == 1) {
 			JacopPlaceVariable var = (JacopPlaceVariable) placeTokens.get(0);

@@ -1,7 +1,7 @@
 package org.bip.constraint;
 
-import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.bip.resources.ConstraintNode;
@@ -36,7 +36,7 @@ public interface ExpressionCreator {
 
 	PlaceVariable createVariable(String variableName);
 
-	VariableExpression sumTokens(ArrayList<PlaceVariable> arrayList);
+	VariableExpression sumTokens(List<PlaceVariable> arrayList);
 
 	PlaceVariable createCostVariable(String resourceName);
 

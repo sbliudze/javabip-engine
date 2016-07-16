@@ -4,8 +4,10 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Hashtable;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -48,10 +50,10 @@ public class ResourceHelper {
 	// a map: resource (place) name <-> resource provider
 	private HashMap<String, ResourceManager> placeNameToResource;
 	// a map: dnet place <-> list of tokens contained in that place (=list of transition that have put tokens in there)
-	protected HashMap<Place, ArrayList<Transition>> allPlaceTokens;
+	protected HashMap<Place, List<Transition>> allPlaceTokens;
 	//private Set<HashMap<Place, ArrayList<Transition>>> placeTokensSet;
 	// a map: dnet place <-> list of variables contained in that place (should be equal in size to the list of tokens)
-	protected HashMap<Place, ArrayList<PlaceVariable>> allPlaceVariables;
+	protected HashMap<Place, List<PlaceVariable>> allPlaceVariables;
 	//private Set<HashMap<Place, ArrayList<PlaceVariable>>> placeVariablesSet;
 	// a map: resource name <-> resource constraint (as provided by the resource and then parsed)
 	private HashMap<String, ConstraintNode> resourceToConstraint;
@@ -89,8 +91,8 @@ public class ResourceHelper {
 	/**************** Constructors *****************/
 
 	public ResourceHelper() {
-		allPlaceTokens = new HashMap<Place, ArrayList<Transition>>();
-		allPlaceVariables = new HashMap<Place, ArrayList<PlaceVariable>>();
+		allPlaceTokens = new HashMap<Place, List<Transition>>();
+		allPlaceVariables = new HashMap<Place, List<PlaceVariable>>();
 		resourceToConstraint = new HashMap<String, ConstraintNode>();
 		resources = new ArrayList<ResourceManager>();
 		placeNameToResource = new HashMap<String, ResourceManager>();
@@ -138,12 +140,12 @@ public class ResourceHelper {
 		 * Maybe do it by reversing the direction: the resource informs the allocator, but not the allocator asks the resource.
 		 */
 		this.dnet.reInit();
-//		placeVariables.clear();
-//		placeTokens.clear();
-//		for (Place place : dnet.places()) {
-//			placeTokens.put(place, new ArrayList<Transition>());
-//			placeVariables.put(place, new ArrayList<PlaceVariable>());
-//		}
+		allPlaceVariables.clear();
+		allPlaceTokens.clear();
+		for (Place place : dnet.places()) {
+			allPlaceTokens.put(place, new ArrayList<Transition>());
+			allPlaceVariables.put(place, new ArrayList<PlaceVariable>());
+		}
 		if (!resources.isEmpty()) {
 			resourceToConstraint.clear();
 			resourceToCost.clear();
@@ -181,6 +183,7 @@ public class ResourceHelper {
 		//logger.debug("Allocator checking resource availabilities for request " + requestString);
 		//addRequest(requestString);
 
+		//TODO just find constraints instead of this method
 		ArrayList<DnetConstraint> dNetConstraints = dnet.runAndFindConstraints(allPlaceVariables, allPlaceTokens);
 		logger.debug("For component " + interactionID + " The dnet constraints are: " + dNetConstraints);
 		for (DnetConstraint constr : dNetConstraints) {
@@ -203,7 +206,7 @@ public class ResourceHelper {
 		return true;
 	}
 
-	private HashMap<Place, ArrayList<Transition>> addRequest(String requestString, HashMap<Place, ArrayList<PlaceVariable>> placeVariables, HashMap<Place, ArrayList<Transition>> placeTokens) throws DNetException {
+	private HashMap<Place, List<Transition>> addRequest(String requestString, HashMap<Place, List<PlaceVariable>> placeVariables, HashMap<Place, List<Transition>> placeTokens) throws DNetException {
 		ConstraintNode request = null;
 		Utility u = null;
 		
@@ -272,14 +275,20 @@ public class ResourceHelper {
 	 * @return a map resource name <-> created initial variable
 	 * @throws DNetException when there is no DNet place corresponding to the resource name
 	 */
-	private Map<String, VariableExpression> createInitialTokenVariables(ArrayList<String> resourcesRequested, HashMap<Place, ArrayList<PlaceVariable>> placeVariables, HashMap<Place, ArrayList<Transition>> placeTokens) throws DNetException {
+	private Map<String, VariableExpression> createInitialTokenVariables(ArrayList<String> resourcesRequested, HashMap<Place, List<PlaceVariable>> placeVariables, HashMap<Place, List<Transition>> placeTokens) throws DNetException {
 		Map<String, VariableExpression> nameToVariable = new HashMap<String, VariableExpression>();
 		for (String requestedResourceName : resourcesRequested) {
 			if (dnet.nameToPlace.containsKey(requestedResourceName)) {
 				Place place = dnet.nameToPlace.get(requestedResourceName);
-				placeTokens.get(place).add(new InitialTransition());
+				//placeTokens.get(place).add(new InitialTransition());
+				Transition initT = new InitialTransition();
+				placeTokens.put(place, Arrays.asList(initT));
 				PlaceVariable initialVariable = factory.createVariable(place.name() + "-" + requestIndex);
-				placeVariables.get(place).add(initialVariable);
+				//placeVariables.get(place).add(initialVariable);
+				//TODO think, but should be ok: 
+				// when the initial tokens are put, there are no other tokens present
+				// (and if they are, they are in a different map)
+				placeVariables.put(place, Arrays.asList(initialVariable));
 				nameToVariable.put(requestedResourceName, initialVariable);
 			} else {
 				throw new DNetException("The resource " + requestedResourceName
@@ -326,28 +335,29 @@ public class ResourceHelper {
 		//new cycle should be not here
 		initializeDNet();
 		requestIndex ++; //this is the "colour" of the application -> so that we can run requests from several components 
+		// to be used in initial tokens to distinguish between them
 		
 		//TODO change token names in dnet run
 
 		logger.debug("Allocator checking resource availabilities for request " + requestString);
 		//ConstraintNode request = parseRequest(requestString);
-		HashMap<Place, ArrayList<PlaceVariable>> placeVariables = new HashMap<Place, ArrayList<PlaceVariable>>();
-		HashMap<Place, ArrayList<Transition>> placeTokens = new HashMap<Place, ArrayList<Transition>>();
+		HashMap<Place, List<PlaceVariable>> placeVariables = new HashMap<Place, List<PlaceVariable>>();
+		HashMap<Place, List<Transition>> placeTokens = new HashMap<Place, List<Transition>>();
 		
-		for (Place place : dnet.places()) {
-			placeTokens.put(place, new ArrayList<Transition>());
-			placeVariables.put(place, new ArrayList<PlaceVariable>());
-		}
-		
+		//inside initial tokens and their variables are created,
+		// as well as the request utility and its constraint 
 		addRequest(requestString, placeVariables, placeTokens);
 		
-
-		
 		//we need to pass them in the arguments so that we get them back after the run
-		dnet.run(placeVariables, placeTokens);
-		//TODO add all does not work - we should update one by one (otherwise the old ones are replaced) 
-		allPlaceVariables.putAll(placeVariables);
-		allPlaceTokens.putAll(placeTokens);
+		//we need to pass request Index in order to distinguish between same-place-tokens of different requests
+		dnet.run(placeVariables, placeTokens, requestIndex);
+
+		for (Place place: placeVariables.keySet()) {
+			allPlaceVariables.get(place).addAll(placeVariables.get(place));
+		}
+		for (Place place: placeTokens.keySet()) {
+			allPlaceTokens.get(place).addAll(placeTokens.get(place));
+		}
 
 		//------------------------------------		// This part should be gone once the Allocator is remodelled as Resource Coordinator.
 

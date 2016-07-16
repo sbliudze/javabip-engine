@@ -2,6 +2,7 @@ package org.bip.constraints.z3;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.bip.constraint.DnetConstraint;
@@ -133,7 +134,7 @@ public class Z3Factory implements ExpressionCreator {
 		return new Z3BooleanConstraint(provider.getContext().mkGe(variable, provider.getContext().mkInt(0)));
 	}
 
-	public VariableExpression sumTokens(ArrayList<PlaceVariable> placeTokens) {
+	public VariableExpression sumTokens(List<PlaceVariable> placeTokens) {
 		ArithExpr placeSum = getArithExpr(placeTokens.get(0));
 		Context ctx = provider.getContext();
 		for (int i = 1; i < placeTokens.size(); i++) {

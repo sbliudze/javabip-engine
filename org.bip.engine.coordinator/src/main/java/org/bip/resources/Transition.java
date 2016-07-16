@@ -2,6 +2,7 @@ package org.bip.resources;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.bip.constraint.DnetConstraint;
@@ -94,7 +95,7 @@ public class Transition {
 		return this.transitionName;
 	}
 	
-	public boolean enabled(HashMap<Place, ArrayList<Transition>> placeTokens) {
+	public boolean enabled(HashMap<Place, List<Transition>> placeTokens) {
 		if (fired) {
 			return false;
 		}

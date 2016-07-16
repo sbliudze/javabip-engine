@@ -3,6 +3,7 @@ package org.bip.resources;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.bip.constraint.ConstraintSolver;
@@ -136,23 +137,25 @@ public class DNet {
 	
 	/************************************************/
 	
-	/******************* Running *******************/
+	/******************* Running 
+	 * @param requestIndex *******************/
 
-	public void run(HashMap<Place, ArrayList<PlaceVariable>> placeVariables, HashMap<Place, ArrayList<Transition>> placeTokens) throws DNetException {
+	public void run(HashMap<Place, List<PlaceVariable>> placeVariables, HashMap<Place, List<Transition>> placeTokens, int requestIndex) throws DNetException {
 		firedTransitions.clear();
 		ArrayList<Transition> disabled = new ArrayList<Transition>();
-		findEnabledAndFireWithoutConstraints(placeVariables, placeTokens, disabled);
+		findEnabledAndFireWithoutConstraints(placeVariables, placeTokens, disabled, requestIndex);
 	}
 	
-	public ArrayList<DnetConstraint> runAndFindConstraints(HashMap<Place, ArrayList<PlaceVariable>> placeVariables, HashMap<Place, ArrayList<Transition>> placeTokens) throws DNetException {
-		firedTransitions.clear();
-		ArrayList<Transition> disabled = new ArrayList<Transition>();
-		findEnabledAndFireWithoutConstraints(placeVariables, placeTokens, disabled);
-		return getConstraints(placeVariables, placeTokens);
-	}
+//	public ArrayList<DnetConstraint> runAndFindConstraints(HashMap<Place, List<PlaceVariable>> placeVariables, HashMap<Place, List<Transition>> placeTokens) throws DNetException {
+//		firedTransitions.clear();
+//		ArrayList<Transition> disabled = new ArrayList<Transition>();
+//		findEnabledAndFireWithoutConstraints(placeVariables, placeTokens, disabled, 0);
+//		return getConstraints(placeVariables, placeTokens);
+//	}
 	
-	private void findEnabledAndFireWithoutConstraints(HashMap<Place, ArrayList<PlaceVariable>> placeVariables, HashMap<Place, ArrayList<Transition>> placeTokens,
-		 ArrayList<Transition> disabled) throws DNetException {
+	private void findEnabledAndFireWithoutConstraints(HashMap<Place, List<PlaceVariable>> placeVariables, 
+			HashMap<Place, List<Transition>> placeTokens,
+		 ArrayList<Transition> disabled,  int requestIndex) throws DNetException {
 		for (Transition transition : transitions) {
 			if (!disabled.contains(transition)) {
 				if (transition.enabled(placeTokens)) {
@@ -162,23 +165,23 @@ public class DNet {
 					for (Place place : transition.postplaces()) {
 						// add a new token
 						placeTokens.get(place).add(transition);
-
+						//TODO do we really need tokens? can we maybe use variables instead?
 						// add a new variable
-						String variableName = createVariableName(place, transition.name());
+						String variableName = createVariableName(place, transition.name(), requestIndex);
 
 						PlaceVariable var = factory.createVariable(variableName);
 						placeVariables.get(place).add(var);
 					}
 					logger.debug("After firing of " + transition.name() + " the tokens are: " + placeTokens);
-					findEnabledAndFireWithoutConstraints(placeVariables, placeTokens,  disabled);
+					findEnabledAndFireWithoutConstraints(placeVariables, placeTokens,  disabled, requestIndex);
 				}
 			}
 		}
 	}
 	
 	private ArrayList<DnetConstraint> getConstraints(
-			HashMap<Place, ArrayList<PlaceVariable>> placeVariables,
-			HashMap<Place, ArrayList<Transition>> placeTokens)
+			HashMap<Place, List<PlaceVariable>> placeVariables,
+			HashMap<Place, List<Transition>> placeTokens)
 			throws DNetException {
 		ArrayList<DnetConstraint> dependencyConstraints = new ArrayList<DnetConstraint>();
 		for (Transition transition : firedTransitions) {
@@ -218,8 +221,8 @@ public class DNet {
 		return dependencyConstraints;
 	}
 
-	private String createVariableName(Place place, String transitionName) {
-		return place.name() + "-" + transitionName;
+	private String createVariableName(Place place, String transitionName, int requestIndex) {
+		return place.name() + "-" + requestIndex + "-" + transitionName;
 	}
 
 	

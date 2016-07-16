@@ -181,7 +181,7 @@ public class AllocatorImpl implements Allocator {
 		logger.debug("Allocator checking resource availabilities for request " + requestString);
 		addRequest(requestString);
 
-		ArrayList<DnetConstraint> dNetConstraints = dnet.runAndFindConstraints(placeVariables, placeTokens);
+		ArrayList<DnetConstraint> dNetConstraints = new ArrayList<DnetConstraint>();//dnet.runAndFindConstraints(placeVariables, placeTokens);
 		logger.debug("For component " + componentID + " The dnet constraints are: " + dNetConstraints);
 		for (DnetConstraint constr : dNetConstraints) {
 			solver.addConstraint(constr);
