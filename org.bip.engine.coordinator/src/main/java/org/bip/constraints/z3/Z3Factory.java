@@ -150,14 +150,14 @@ public class Z3Factory implements ExpressionCreator {
 	}
 
 	@Override
-	public PlaceVariable createUtilityVariable() {
+	public DnetConstraint createUtilityConstraint(VariableExpression uVar, HashMap<Integer, ConstraintNode> utility,
+			Map<String, VariableExpression> nameToVariable) throws DNetException {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public DnetConstraint createUtilityConstraint(VariableExpression uVar, HashMap<Integer, ConstraintNode> utility,
-			Map<String, VariableExpression> nameToVariable) throws DNetException {
+	public PlaceVariable createUtilityVariable(int nameIndex) {
 		// TODO Auto-generated method stub
 		return null;
 	}

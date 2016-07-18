@@ -224,7 +224,7 @@ public class AllocatorImpl implements Allocator {
 		logger.debug("Tokens of the dnet at initialisation are: " + placeTokens);
 		
 		if (hasUtility) {
-			uVar = factory.createUtilityVariable();
+			uVar = factory.createUtilityVariable(0);
 			solver.addConstraint(factory.createUtilityConstraint(uVar, u.utility(), nameToVariable));
 		}
 		else {

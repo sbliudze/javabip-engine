@@ -21,7 +21,10 @@ public class JacopResourceAllocation implements ResourceAllocation {
 				continue;
 			}
 
-			int k = variables[i].id.indexOf("-");
+			//the name of the variable goes as follows
+			// resource name - request id - transition source
+			// we need to know the first two things in oder to be able to allocate
+			int k = variables[i].id.lastIndexOf("-");
 			String placeName = variables[i].id.substring(0, k);
 
 			// we assume the value is int (which is not the case in general)

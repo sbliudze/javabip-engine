@@ -137,8 +137,7 @@ public class DNet {
 	
 	/************************************************/
 	
-	/******************* Running 
-	 * @param requestIndex *******************/
+	/******************* Running *******************/
 
 	public void run(HashMap<Place, List<PlaceVariable>> placeVariables, HashMap<Place, List<Transition>> placeTokens, int requestIndex) throws DNetException {
 		firedTransitions.clear();
@@ -179,7 +178,7 @@ public class DNet {
 		}
 	}
 	
-	private ArrayList<DnetConstraint> getConstraints(
+	public ArrayList<DnetConstraint> getConstraints(
 			HashMap<Place, List<PlaceVariable>> placeVariables,
 			HashMap<Place, List<Transition>> placeTokens)
 			throws DNetException {

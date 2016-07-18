@@ -117,7 +117,8 @@ public class Z3Solver implements ConstraintSolver, ContextProvider {
 	}
 
 	@Override
-	public void addCostConstraint(PlaceVariable bigCost, VariableExpression sumCost, PlaceVariable uVar) {
+	public void addCostConstraint(PlaceVariable bigCost,
+			VariableExpression sumCost, VariableExpression sumUtility) {
 		// TODO Auto-generated method stub
 		
 	}

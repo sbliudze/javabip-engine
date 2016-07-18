@@ -109,8 +109,11 @@ public class JacopSolver implements ConstraintSolver {
 		factory.reinit(store, vars);
 	}
 
+	// bigU = U - sum(cost),
+	// therefore bigU + sum(cost) = U
+	//bigU should be eventually maximized
 	@Override
-	public void addCostConstraint(PlaceVariable bigCost, VariableExpression sumCost, PlaceVariable uVar) {
+	public void addCostConstraint(PlaceVariable bigCost, VariableExpression sumCost, VariableExpression uVar) {
 		JacopPlaceVariable bigCostJ = (JacopPlaceVariable) bigCost;
 		JacopPlaceVariable sumCostJ = (JacopPlaceVariable) sumCost;
 		JacopPlaceVariable uVarJ = (JacopPlaceVariable) uVar;

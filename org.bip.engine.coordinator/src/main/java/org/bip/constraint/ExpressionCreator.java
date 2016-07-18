@@ -40,7 +40,7 @@ public interface ExpressionCreator {
 
 	PlaceVariable createCostVariable(String resourceName);
 
-	PlaceVariable createUtilityVariable();
+	PlaceVariable createUtilityVariable(int nameIndex);
 
 	DnetConstraint createUtilityConstraint(VariableExpression uVar, HashMap<Integer, ConstraintNode> utility, Map<String, VariableExpression> nameToVariable) throws DNetException;
 }

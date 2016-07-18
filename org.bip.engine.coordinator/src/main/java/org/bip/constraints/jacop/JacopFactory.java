@@ -172,8 +172,8 @@ public class JacopFactory implements ExpressionCreator {
 	}
 
 	@Override
-	public PlaceVariable createUtilityVariable() {
-		IntVar uVar = new IntVar(store, "utility", 0, 1000);
+	public PlaceVariable createUtilityVariable(int nameIndex) {
+		IntVar uVar = new IntVar(store, "utility-"+nameIndex, 0, 1000);
 		vars.add(uVar);
 		return new JacopPlaceVariable(uVar);
 	}

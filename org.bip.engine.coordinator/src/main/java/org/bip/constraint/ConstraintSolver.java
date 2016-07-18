@@ -12,6 +12,6 @@ public interface ConstraintSolver {
 
 	public void newCycle();
 
-	public void addCostConstraint(PlaceVariable bigCost, VariableExpression sumCost, PlaceVariable uVar);
+	public void addCostConstraint(PlaceVariable bigCost, VariableExpression sumCost, VariableExpression sumUtility);
 
 }

@@ -84,7 +84,8 @@ public class ResourceHelper {
 	 * or whether we also try to maximize [global utility = comp utility - cost sum]
 	 */
 	private boolean hasUtility = false;
-	private PlaceVariable uVar;
+	//private PlaceVariable uVar;
+	VariableExpression sumUtility;
 	private int requestIndex = 0;
 
 
@@ -183,15 +184,15 @@ public class ResourceHelper {
 		//logger.debug("Allocator checking resource availabilities for request " + requestString);
 		//addRequest(requestString);
 
-		//TODO just find constraints instead of this method
-		ArrayList<DnetConstraint> dNetConstraints = dnet.runAndFindConstraints(allPlaceVariables, allPlaceTokens);
+		ArrayList<DnetConstraint> dNetConstraints = dnet.getConstraints(allPlaceVariables, allPlaceTokens);
 		logger.debug("For component " + interactionID + " The dnet constraints are: " + dNetConstraints);
 		for (DnetConstraint constr : dNetConstraints) {
 			solver.addConstraint(constr);
 		}
 
 		addCost();
-
+		
+		//TODO here: sum up all the utility variables and give them to the solver.
 		if (!solver.isSolvable(hasUtility)) {
 			return false;
 		}
@@ -202,9 +203,11 @@ public class ResourceHelper {
 		 * The model should be consistent with the solver, therefore, we save it for the round.
 		 */
 		requestToModel.put(interactionID, model);
-		solver.newCycle(); //i think it should be here, but check please :)
+		solver.newCycle(); //TODO i think it should be here, but check please :)
 		return true;
 	}
+	
+	private List<PlaceVariable> utilityVariables;
 
 	private HashMap<Place, List<Transition>> addRequest(String requestString, HashMap<Place, List<PlaceVariable>> placeVariables, HashMap<Place, List<Transition>> placeTokens) throws DNetException {
 		ConstraintNode request = null;
@@ -228,29 +231,14 @@ public class ResourceHelper {
 		logger.debug("Tokens of the dnet at initialisation are: " + placeTokens);
 		
 		if (hasUtility) {
-			uVar = factory.createUtilityVariable();
+			PlaceVariable uVar = factory.createUtilityVariable(requestIndex);
+			utilityVariables.add(uVar);
 			solver.addConstraint(factory.createUtilityConstraint(uVar, u.utility(), nameToVariable));
 		}
 		else {
 			solver.addConstraint(request.evaluateN(nameToVariable));
 		}
 		return placeTokens;
-	}
-	
-	private ConstraintNode parseRequest(String requestString) throws DNetException {
-		ConstraintNode request = null;
-		Utility u = null;
-		
-		if (!hasUtility) {
-			request = parseConstraint(requestString);
-		} else {
-			// TODO create its own parser to move it to constraint parser instead of dnet parser
-			u = parseCostOrUtility(requestString);
-			// to get the request from the utility, we take the fist value of constraint, 
-			// assumption: for every utility value, all the resources are present
-			request = u.utility().values().iterator().next();
-		}
-		return request;
 	}
 
 	/**
@@ -339,7 +327,7 @@ public class ResourceHelper {
 		
 		//TODO change token names in dnet run
 
-		logger.debug("Allocator checking resource availabilities for request " + requestString);
+		logger.debug("Resource Manager specifying request " + requestString);
 		//ConstraintNode request = parseRequest(requestString);
 		HashMap<Place, List<PlaceVariable>> placeVariables = new HashMap<Place, List<PlaceVariable>>();
 		HashMap<Place, List<Transition>> placeTokens = new HashMap<Place, List<Transition>>();
@@ -380,14 +368,14 @@ public class ResourceHelper {
 		requestToModel.remove(interactionID+requestString);
 	}
 	
-	public  Hashtable<String, Integer> getAllocation(String requestString, String interactionID) throws DNetException {
+	public  Hashtable<String, Integer> getAllocation(String interactionID) throws DNetException {
 		
-		if (!requestToModel.containsKey(interactionID + requestString)) {
-			throw new BIPException("The request " + requestString + " of component " + interactionID
+		if (!requestToModel.containsKey(interactionID)) {
+			throw new BIPException("The request of component " + interactionID
 					+ " given as data parameter for transition has not been accepted before as data given for the guard.");
 		}
 		
-		ResourceAllocation model = requestToModel.get(interactionID + requestString);
+		ResourceAllocation model = requestToModel.get(interactionID );
 		resourceLableToID.clear();
 		resourceLableToAmount.clear();
 		System.err.println("----------");
@@ -396,7 +384,11 @@ public class ResourceHelper {
 			if (Integer.parseInt(amountString) != 0) {
 				System.err.println(resourceName + "--" + amountString);
 			}
-			placeNameToResource.get(resourceName).decreaseCost(amountString);
+			// we distinguish between resource (the actual name of resource)
+			// and resourceName (which is name + request id)
+			int k = resourceName.lastIndexOf("-");
+			String resource = resourceName.substring(0, k);
+			placeNameToResource.get(resource).decreaseCost(amountString);
 			//resourceLableToID.put(resourceName, placeNameToResource.get(resourceName).providedResourceID());
 			resourceLableToAmount.put(resourceName, Integer.parseInt(amountString));
 		}
@@ -404,7 +396,7 @@ public class ResourceHelper {
 		
 		allocations.put(allocationID, model);
 		allocationID++;
-		requestToModel.remove(interactionID+requestString);
+		requestToModel.remove(interactionID);
 		
 		return resourceLableToAmount;
 	}
@@ -508,7 +500,11 @@ public class ResourceHelper {
 		if (hasUtility) {
 			VariableExpression sumCost = factory.sumTokens(costs);
 			PlaceVariable bigCost = factory.createCostVariable("global");
-			solver.addCostConstraint(bigCost, sumCost, uVar);
+			
+			this.sumUtility = factory.sumTokens(utilityVariables);
+			
+			//TODO replace uVar with sum of utilities
+			solver.addCostConstraint(bigCost, sumCost, sumUtility);
 		}
 	}
 
