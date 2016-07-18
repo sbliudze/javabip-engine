@@ -92,7 +92,7 @@ public class EngineFactory {
 		
 		ResourceEncoder resourceEncoder= new ResourceEncoderImpl();
 
-		final BIPEngine engine = new  org.bip.engine.coordinator.ResourceCoordinatorImpl(basicCoordinator, prevCoordinator, resourceEncoder);
+		final BIPEngine engine = new  org.bip.engine.coordinator.ResourceCoordinatorImpl(basicCoordinator, prevCoordinator, resourceEncoder, cfNetPath);
 
 		BIPEngine actor = TypedActor.get(actorSystem).typedActorOf(
 				new TypedProps<BIPEngine>(BIPEngine.class, new Creator<BIPEngine>() {

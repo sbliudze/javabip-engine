@@ -1,6 +1,5 @@
 package org.bip.constraints.z3;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -9,14 +8,10 @@ import org.bip.constraint.DnetConstraint;
 import org.bip.constraint.ExpressionCreator;
 import org.bip.constraint.PlaceVariable;
 import org.bip.constraint.VariableExpression;
-import org.bip.constraints.jacop.JacopConstraint;
-import org.bip.constraints.jacop.JacopPlaceVariable;
 import org.bip.exceptions.BIPException;
 import org.bip.resources.ConstraintNode;
 import org.bip.resources.ContextProvider;
 import org.bip.resources.DNetException;
-import org.jacop.constraints.PrimitiveConstraint;
-import org.jacop.core.IntVar;
 
 import com.microsoft.z3.ArithExpr;
 import com.microsoft.z3.BoolExpr;

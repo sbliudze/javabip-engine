@@ -109,11 +109,12 @@ public class ResourceCoordinatorImpl implements BIPEngine, InteractionExecutor, 
 	 * 
 	 * @param bipCoordinator
 	 *            the bip coordinator
+	 * @param cfNetPath 
 	 * @throws DNetException 
 	 * @throws IOException 
 	 * @throws RecognitionException 
 	 */
-	public ResourceCoordinatorImpl(BIPCoordinator bipCoordinator, BIPEngine nextCoordinator, ResourceEncoder resourceEncoder) {
+	public ResourceCoordinatorImpl(BIPCoordinator bipCoordinator, BIPEngine nextCoordinator, ResourceEncoder resourceEncoder, String cfNetPath) {
 
 		this.resourceEncoder = resourceEncoder;
 
@@ -132,20 +133,8 @@ public class ResourceCoordinatorImpl implements BIPEngine, InteractionExecutor, 
 		componentToPortsReleasingResource = new HashMap<BIPComponent, List<Port>>();
 		portsRequestingResource = new ArrayList<Port>();
 		portsReleasingResource = new ArrayList<Port>();
-		
-		JacopSolver solver = new JacopSolver();
-		try {
-			resourceHelper = new ResourceHelper("", solver, true);
-		} catch (RecognitionException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (DNetException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+
+		resourceHelper = new ResourceHelper(cfNetPath);
 	}
 	
 	@Override
@@ -206,6 +195,7 @@ public class ResourceCoordinatorImpl implements BIPEngine, InteractionExecutor, 
 			}
 			assert (component != null && behaviour != null);
 
+			
 			if (registeredComponents.contains(component)) {
 				logger.error("Component " + component + " has already registered before.");
 				throw new BIPEngineException("Component " + component + " has already registered before.");
@@ -216,6 +206,7 @@ public class ResourceCoordinatorImpl implements BIPEngine, InteractionExecutor, 
 				nbStates += behaviour.getStates().size();
 
 			}
+
 			ArrayList<BIPComponent> componentInstances = new ArrayList<BIPComponent>();
 
 			/*
@@ -235,7 +226,6 @@ public class ResourceCoordinatorImpl implements BIPEngine, InteractionExecutor, 
 			//componentToPortsReleasingResource.put(component, component.getPortsReleasingResources());
 			
 			//TODO put ports releasing and requesting in the corresponding lists
-			
 			if (component.resourceName()!=null) {
 				resourceManagers.add(component);
 				resourceNameToManagers.put(component.resourceName(), component);
@@ -243,8 +233,8 @@ public class ResourceCoordinatorImpl implements BIPEngine, InteractionExecutor, 
 			}
 			
 		} catch (BIPEngineException e) {
+			e.printStackTrace();
 		}
-
 		return actor;
 	}
 	

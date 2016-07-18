@@ -21,6 +21,7 @@ import org.bip.constraint.ExpressionCreator;
 import org.bip.constraint.PlaceVariable;
 import org.bip.constraint.ResourceAllocation;
 import org.bip.constraint.VariableExpression;
+import org.bip.constraints.jacop.JacopSolver;
 import org.bip.exceptions.BIPException;
 import org.bip.resources.ConstraintNode;
 import org.bip.resources.DNet;
@@ -104,15 +105,23 @@ public class ResourceHelper {
 		resourceToCost = new HashMap<String, Utility>();
 		allocationID = 0;
 	}
+	
+	public ResourceHelper(String dNetPath) {
+		this();
+		this.hasUtility = true;
+		this.solver = new JacopSolver();
+		this.factory = solver.expressionCreator();
+		parseAndInitializeDNet(dNetPath, factory);
+	}
 
-	public ResourceHelper(String dNetPath, ConstraintSolver solver) throws IOException, RecognitionException, DNetException {
+	public ResourceHelper(String dNetPath, ConstraintSolver solver) {
 		this();
 		this.solver = solver;
 		this.factory = solver.expressionCreator();
 		parseAndInitializeDNet(dNetPath, factory);
 	}
 	
-	public ResourceHelper(String dNetPath, ConstraintSolver solver, boolean hasUtility) throws IOException, RecognitionException, DNetException {
+	public ResourceHelper(String dNetPath, ConstraintSolver solver, boolean hasUtility)  {
 		this();
 		this.solver = solver;
 		this.factory = solver.expressionCreator();
@@ -120,15 +129,33 @@ public class ResourceHelper {
 		parseAndInitializeDNet(dNetPath, factory);
 	}
 
-	private void parseAndInitializeDNet(String dNetPath, ExpressionCreator factory) throws FileNotFoundException, IOException, DNetException {
-		FileInputStream stream = new FileInputStream(dNetPath);
-		dNetLexer lexer = new dNetLexer(new ANTLRInputStream(stream));
-		CommonTokenStream tokens = new CommonTokenStream(lexer);
-		dNetParser parser = new dNetParser(tokens);
-		parser.net();
+	private void parseAndInitializeDNet(String dNetPath, ExpressionCreator factory) {
+		dNetParser parser = null;
+		try {
+			FileInputStream stream = new FileInputStream(dNetPath);
+			dNetLexer lexer = new dNetLexer(new ANTLRInputStream(stream));
+			CommonTokenStream tokens = new CommonTokenStream(lexer);
+			 parser = new dNetParser(tokens);
+		} catch (FileNotFoundException e) {
+			throw new BIPException("Error while accessing the given cfNet file of the resource architecture", e);
+		} catch (IOException e) {
+			throw new BIPException("Error while accessing the given cfNet file of the resource architecture", e);
+		}
+
+		try {
+			parser.net();
+		} catch (RecognitionException e) {
+			throw new BIPException("Error while parsing the given cfNet of the resource architecture", e);
+		} catch (DNetException e) {
+			throw new BIPException("Error while parsing the given cfNet of the resource architecture", e);
+		}
 		this.dnet = parser.net;
 		this.dnet.setFactory(factory);
-		initializeDNet();
+		try {
+			initializeDNet();
+		} catch (DNetException e) {
+			throw new BIPException("Error while initializing the cfNet of the resource architecture", e);
+		}
 		solver.newCycle(); 
 	}
 

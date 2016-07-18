@@ -3,11 +3,9 @@ package org.bip.constraints.z3;
 import org.bip.constraint.DnetConstraint;
 import org.bip.constraint.PlaceVariable;
 import org.bip.resources.ContextProvider;
-import org.jacop.core.IntVar;
 
 import com.microsoft.z3.ArithExpr;
 import com.microsoft.z3.Context;
-import com.microsoft.z3.Expr;
 import com.microsoft.z3.IntExpr;
 
 public class Z3PlaceVariable implements PlaceVariable {
