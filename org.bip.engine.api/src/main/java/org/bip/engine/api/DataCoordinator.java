@@ -14,7 +14,7 @@ import org.bip.api.Port;
  * @author mavridou
  */
 
-public interface DataCoordinator extends BIPEngine, BIPCoordinator, InteractionExecutor {
+public interface DataCoordinator extends BIPEngine, Coordinator, InteractionExecutor {
 	
 	/**
 	 * Gets the data encoder.

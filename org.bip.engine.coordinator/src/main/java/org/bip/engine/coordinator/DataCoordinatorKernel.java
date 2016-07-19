@@ -22,6 +22,7 @@ import org.bip.api.DataWire;
 import org.bip.api.Port;
 import org.bip.engine.api.BIPCoordinator;
 import org.bip.engine.api.BehaviourEncoder;
+import org.bip.engine.api.Coordinator;
 import org.bip.engine.api.DataCoordinator;
 import org.bip.engine.api.DataEncoder;
 import org.bip.engine.api.InteractionExecutor;
@@ -39,7 +40,7 @@ import org.slf4j.LoggerFactory;
  * 
  * @authors: mavridou, zolotukhina
  */
-public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, DataCoordinator {
+public class DataCoordinatorKernel implements DataCoordinator {
 
 	// private volatile Boolean isBIPCoordinatorStopping = false;
 
@@ -85,7 +86,7 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 	private DataEncoder dataEncoder;
 
 	/** The bip coordinator. */
-	private BIPCoordinator bipCoordinator = null;
+	private Coordinator bipCoordinator = null;
 
 	/** The registration finished. */
 	private boolean registrationFinished = false;
@@ -123,8 +124,8 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 
 		this.bipCoordinator.setInteractionExecutor(this);
 		dataEncoder.setDataCoordinator(this);
-		dataEncoder.setBehaviourEncoder(this.bipCoordinator.getBehaviourEncoderInstance());
-		dataEncoder.setBDDManager(this.bipCoordinator.getBDDManager());
+		dataEncoder.setBehaviourEncoder(bipCoordinator.getBehaviourEncoderInstance());
+		dataEncoder.setBDDManager(bipCoordinator.getBDDManager());
 		componentDataWires = new HashMap<String, Map<String, Set<DataWire>>>();
 	}
 	
@@ -636,7 +637,7 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 		 * separate group
 		 */
 		ArrayList<Port> enabledPorts = new ArrayList<Port>();
-		Map<Port, Integer> portToPosition = bipCoordinator.getBehaviourEncoderInstance().getPortToPosition();
+		Map<Port, Integer> portToPosition = bipCoordinator.getPortsToPosition();
 		ArrayList<BIPComponent> componentsEnum = registeredComponents;
 		for (BIPComponent component : componentsEnum) {
 			Iterable<Port> componentPorts = null;
@@ -813,24 +814,6 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 
 	}
 
-
-	public void specifyTemporaryConstraints(BDD constraints) {
-		bipCoordinator.specifyTemporaryConstraints(constraints);
-	}
-
-	public void specifyPermanentConstraints(Set<BDD> constraints) {
-		bipCoordinator.specifyPermanentConstraints(constraints);
-	}
-
-	public BehaviourEncoder getBehaviourEncoderInstance() {
-		return bipCoordinator.getBehaviourEncoderInstance();
-	}
-
-
-	public BDDFactory getBDDManager() {
-		return bipCoordinator.getBDDManager();
-	}
-
 	public DataEncoder getDataEncoder() {
 		return dataEncoder;
 	}
@@ -944,6 +927,21 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 
 	public int getNoComponents() {
 		return bipCoordinator.getNoComponents();
+	}
+
+	@Override
+	public void specifyTemporaryConstraints(BDD constraints) {
+		bipCoordinator.specifyTemporaryConstraints(constraints);
+	}
+
+	@Override
+	public void specifyPermanentConstraints(Set<BDD> constraints) {
+		bipCoordinator.specifyPermanentConstraints(constraints);
+	}
+
+	@Override
+	public Map<Port, Integer> getPortsToPosition() {
+		return bipCoordinator.getPortsToPosition();
 	}
 
 }

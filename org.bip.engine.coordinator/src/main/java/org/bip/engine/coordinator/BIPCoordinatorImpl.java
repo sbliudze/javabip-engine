@@ -933,4 +933,9 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 		this.typedActorSelf = TypedActor.self();
 	}
 
+	@Override
+	public Map<Port, Integer> getPortsToPosition() {
+		return this.behenc.getPortToPosition();
+	}
+
 }

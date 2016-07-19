@@ -20,6 +20,7 @@ import org.bip.api.ResourceManager;
 import org.bip.api.ResourceProvider;
 import org.bip.constraints.jacop.JacopSolver;
 import org.bip.engine.api.BIPCoordinator;
+import org.bip.engine.api.Coordinator;
 import org.bip.engine.api.DataCoordinator;
 import org.bip.engine.api.InteractionExecutor;
 import org.bip.engine.api.ResourceCoordinator;
@@ -72,7 +73,7 @@ public class ResourceCoordinatorImpl implements ResourceCoordinator {
 	private ResourceEncoder resourceEncoder;
 
 	/** The bip coordinator. */
-	private BIPCoordinator bipCoordinator = null;
+	private Coordinator bipCoordinator = null;
 	private BIPEngine prevCoordinator = null; //either dataCoordinator or BIPCoordinator
 	// it cannot be just bip engine (or we should extend it) - I cannot call execute ports on it
 
@@ -128,7 +129,7 @@ public class ResourceCoordinatorImpl implements ResourceCoordinator {
 		this.bipCoordinator.setInteractionExecutor(this);
 		resourceEncoder.setResourceCoordinator(this);
 		//resourceEncoder.setBehaviourEncoder(this.bipCoordinator.getBehaviourEncoderInstance());
-		resourceEncoder.setBDDManager(this.bipCoordinator.getBDDManager());
+		resourceEncoder.setBDDManager(bipCoordinator.getBDDManager());
 		//componentDataWires = new HashMap<String, Map<String, Set<DataWire>>>();
 		interactionPorts = new ArrayList<Set>();
 		componentToPortsRequestingResource = new HashMap<BIPComponent, List<Port>>();
@@ -419,7 +420,7 @@ public class ResourceCoordinatorImpl implements ResourceCoordinator {
 		ArrayList<Port> portsExecuted = new ArrayList<Port>();
 		ArrayList<Port> portsReqResources = new ArrayList<Port>();
 		List<List<Port>> bigInteraction = null;
-		Map<Port, Integer> portToPosition = bipCoordinator.getBehaviourEncoderInstance().getPortToPosition();
+		Map<Port, Integer> portToPosition = bipCoordinator.getPortsToPosition();
 		for (Port port : portToPosition.keySet()) {
 			if (valuation[portToPosition.get(port)] == 1 || valuation[portToPosition.get(port)] == -1) {
 				portsExecuted.add(port);
