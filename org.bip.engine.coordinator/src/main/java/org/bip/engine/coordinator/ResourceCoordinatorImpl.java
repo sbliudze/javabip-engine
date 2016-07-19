@@ -29,7 +29,7 @@ import org.bip.resources.DNetException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ResourceCoordinatorImpl implements BIPEngine, InteractionExecutor, ResourceCoordinator {
+public class ResourceCoordinatorImpl implements ResourceCoordinator {
 
 	//TODO think when we should call the dataCoordinator and when the bipCoordinator
 	
@@ -74,6 +74,7 @@ public class ResourceCoordinatorImpl implements BIPEngine, InteractionExecutor, 
 	/** The bip coordinator. */
 	private BIPCoordinator bipCoordinator = null;
 	private BIPEngine prevCoordinator = null; //either dataCoordinator or BIPCoordinator
+	// it cannot be just bip engine (or we should extend it) - I cannot call execute ports on it
 
 	/** The registration finished. */
 	private boolean registrationFinished = false;
@@ -122,7 +123,8 @@ public class ResourceCoordinatorImpl implements BIPEngine, InteractionExecutor, 
 
 		this.bipCoordinator = bipCoordinator;
 		this.prevCoordinator = nextCoordinator;
-
+		
+		//this.prevCoordinator.setInteractionExecutor(this);
 		this.bipCoordinator.setInteractionExecutor(this);
 		resourceEncoder.setResourceCoordinator(this);
 		//resourceEncoder.setBehaviourEncoder(this.bipCoordinator.getBehaviourEncoderInstance());
@@ -226,7 +228,7 @@ public class ResourceCoordinatorImpl implements BIPEngine, InteractionExecutor, 
 			//componentToPortsReleasingResource.put(component, component.getPortsReleasingResources());
 			
 			//TODO put ports releasing and requesting in the corresponding lists
-			if (component.resourceName()!=null) {
+			if (component.resourceName()!=null && !(component.resourceName().equals(""))) {
 				resourceManagers.add(component);
 				resourceNameToManagers.put(component.resourceName(), component);
 				resourceHelper.addResource(component);
@@ -416,8 +418,17 @@ public class ResourceCoordinatorImpl implements BIPEngine, InteractionExecutor, 
 		// logger.trace("positionsOfDVariables size: " + positionsOfDVariables.size());
 		ArrayList<Port> portsExecuted = new ArrayList<Port>();
 		ArrayList<Port> portsReqResources = new ArrayList<Port>();
-		List<List<Port>> bigInteraction=null;// = mergingSubInteractions(valuation, portsExecuted);
-
+		List<List<Port>> bigInteraction = null;
+		Map<Port, Integer> portToPosition = bipCoordinator.getBehaviourEncoderInstance().getPortToPosition();
+		for (Port port : portToPosition.keySet()) {
+			if (valuation[portToPosition.get(port)] == 1 || valuation[portToPosition.get(port)] == -1) {
+				portsExecuted.add(port);
+			}
+		}
+		logger.trace("chosenPorts size: " + portsExecuted.size());
+		if (portsExecuted.size() != 0) {
+			bigInteraction.add(portsExecuted);
+		}
 		
 		for (Port port: portsExecuted) {
 			// if the chosen port releases resources, release its resources.
@@ -445,7 +456,7 @@ public class ResourceCoordinatorImpl implements BIPEngine, InteractionExecutor, 
 		 * separate group
 		 */
 		ArrayList<Port> enabledPorts = new ArrayList<Port>();
-		Map<Port, Integer> portToPosition = bipCoordinator.getBehaviourEncoderInstance().getPortToPosition();
+		//Map<Port, Integer> portToPosition = bipCoordinator.getBehaviourEncoderInstance().getPortToPosition();
 		ArrayList<BIPComponent> componentsEnum = registeredComponents;
 		for (BIPComponent component : componentsEnum) {
 			Iterable<Port> componentPorts = null;
@@ -531,6 +542,7 @@ public class ResourceCoordinatorImpl implements BIPEngine, InteractionExecutor, 
 		 * null to them or the port to be fired.
 		 */
 		if (isEngineExecuting)
+			//TODO shouldn't it be the prevCoordinator here?
 			bipCoordinator.executeInteractions(portGroupsToExecute);
 	}
 

@@ -64,6 +64,7 @@ public class ResourceHelper {
 	// a map: request string <-> model provided by the solver.
 	// is used in order not to solve the thing twice during the guard evaluation and the actual allocation
 	private HashMap<String, ResourceAllocation> requestToModel;
+	private List<PlaceVariable> utilityVariables;
 	/**
 	 * The map containing the requested resources in pairs: the label of requested resource <-> the id of the provided resource proxy.
 	 */
@@ -103,6 +104,7 @@ public class ResourceHelper {
 		resourceLableToID = new Hashtable<String, String>();
 		resourceLableToAmount = new Hashtable<String, Integer>();
 		resourceToCost = new HashMap<String, Utility>();
+		utilityVariables = new ArrayList<PlaceVariable>();
 		allocationID = 0;
 	}
 	
@@ -234,7 +236,7 @@ public class ResourceHelper {
 		return true;
 	}
 	
-	private List<PlaceVariable> utilityVariables;
+	
 
 	private HashMap<Place, List<Transition>> addRequest(String requestString, HashMap<Place, List<PlaceVariable>> placeVariables, HashMap<Place, List<Transition>> placeTokens) throws DNetException {
 		ConstraintNode request = null;
@@ -358,6 +360,10 @@ public class ResourceHelper {
 		//ConstraintNode request = parseRequest(requestString);
 		HashMap<Place, List<PlaceVariable>> placeVariables = new HashMap<Place, List<PlaceVariable>>();
 		HashMap<Place, List<Transition>> placeTokens = new HashMap<Place, List<Transition>>();
+		for (Place place : dnet.places()) {
+			placeTokens.put(place, new ArrayList<Transition>());
+			placeVariables.put(place, new ArrayList<PlaceVariable>());
+		}
 		
 		//inside initial tokens and their variables are created,
 		// as well as the request utility and its constraint 
@@ -374,25 +380,6 @@ public class ResourceHelper {
 			allPlaceTokens.get(place).addAll(placeTokens.get(place));
 		}
 
-		//------------------------------------		// This part should be gone once the Allocator is remodelled as Resource Coordinator.
-
-		ResourceAllocation model = requestToModel.get(interactionID + requestString);
-		resourceLableToID.clear();
-		resourceLableToAmount.clear();
-		System.err.println("----------");
-		for (String resourceName : model.resourceAmounts().keySet()) {
-			String amountString = model.resourceAmount(resourceName);
-			if (Integer.parseInt(amountString) != 0) {
-				System.err.println(resourceName + "--" + amountString);
-			}
-			placeNameToResource.get(resourceName).decreaseCost(amountString);
-			resourceLableToAmount.put(resourceName, Integer.parseInt(amountString));
-		}
-		System.err.println("----------");
-		
-		allocations.put(allocationID, model);
-		allocationID++;
-		requestToModel.remove(interactionID+requestString);
 	}
 	
 	public  Hashtable<String, Integer> getAllocation(String interactionID) throws DNetException {
@@ -520,6 +507,7 @@ public class ResourceHelper {
 					Utility cost = resourceToCost.get(place.name());
 					PlaceVariable costVar = factory.createCostVariable(place.name());
 					costs.add(costVar);
+					System.err.println("c: "+place.name() + " " + cost);
 					solver.addConstraint(factory.createUtilityConstraint(costVar, cost.utility(), stringtoConstraintVar));
 				}
 			}

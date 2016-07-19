@@ -38,6 +38,12 @@ import org.bip.resources.Utility;
   }
 }
 
+@rulecatch {
+   catch (RecognitionException e) {
+    throw e;
+   }
+}
+
 net returns [DNet resultNet]: { net = new DNet(); }
 	places 
 	transitions
