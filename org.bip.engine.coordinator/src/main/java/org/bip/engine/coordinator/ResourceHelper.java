@@ -213,6 +213,8 @@ public class ResourceHelper {
 		//logger.debug("Allocator checking resource availabilities for request " + requestString);
 		//addRequest(requestString);
 
+		System.out.println(allPlaceVariables);
+		
 		ArrayList<DnetConstraint> dNetConstraints = dnet.getConstraints(allPlaceVariables, allPlaceTokens);
 		logger.debug("For component " + interactionID + " The dnet constraints are: " + dNetConstraints);
 		for (DnetConstraint constr : dNetConstraints) {
@@ -382,12 +384,7 @@ public class ResourceHelper {
 
 	}
 	
-	public  Hashtable<String, Integer> getAllocation(String interactionID) throws DNetException {
-		
-		if (!requestToModel.containsKey(interactionID)) {
-			throw new BIPException("The request of component " + interactionID
-					+ " given as data parameter for transition has not been accepted before as data given for the guard.");
-		}
+	public  Hashtable<String, Integer> getAllocation(String interactionID) {
 		
 		ResourceAllocation model = requestToModel.get(interactionID );
 		resourceLableToID.clear();
@@ -396,15 +393,17 @@ public class ResourceHelper {
 		for (String resourceName : model.resourceAmounts().keySet()) {
 			String amountString = model.resourceAmount(resourceName);
 			if (Integer.parseInt(amountString) != 0) {
-				System.err.println(resourceName + "--" + amountString);
+				System.err.println(resourceName + " -- " + amountString);
 			}
 			// we distinguish between resource (the actual name of resource)
 			// and resourceName (which is name + request id)
 			int k = resourceName.lastIndexOf("-");
+			if (k>0) {
 			String resource = resourceName.substring(0, k);
 			placeNameToResource.get(resource).decreaseCost(amountString);
 			//resourceLableToID.put(resourceName, placeNameToResource.get(resourceName).providedResourceID());
 			resourceLableToAmount.put(resourceName, Integer.parseInt(amountString));
+			}
 		}
 		System.err.println("----------");
 		

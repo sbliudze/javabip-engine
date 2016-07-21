@@ -16,6 +16,7 @@ import org.bip.api.BIPEngine;
 import org.bip.api.BIPGlue;
 import org.bip.api.Behaviour;
 import org.bip.api.Port;
+import org.bip.api.ResourceHandle;
 import org.bip.api.ResourceManager;
 import org.bip.api.ResourceProvider;
 import org.bip.constraints.jacop.JacopSolver;
@@ -74,7 +75,7 @@ public class ResourceCoordinatorImpl implements ResourceCoordinator {
 
 	/** The bip coordinator. */
 	private Coordinator bipCoordinator = null;
-	private BIPEngine prevCoordinator = null; //either dataCoordinator or BIPCoordinator
+	private Coordinator prevCoordinator = null; //either dataCoordinator or BIPCoordinator
 	// it cannot be just bip engine (or we should extend it) - I cannot call execute ports on it
 
 	/** The registration finished. */
@@ -95,8 +96,10 @@ public class ResourceCoordinatorImpl implements ResourceCoordinator {
 	private boolean isEngineExecuting = false;
 	
 	private List<Set> interactionPorts;
-	private HashMap<BIPComponent, List<Port>> componentToPortsRequestingResource;
-	private HashMap<BIPComponent, List<Port>> componentToPortsReleasingResource;
+	private HashMap<BIPComponent, Set<Port>> componentToPortsRequestingResource;
+	private HashMap<BIPComponent, Set<Port>> componentToPortsReleasingResource;
+	private HashMap<Integer, Port> idToPort;
+	private HashMap<Port, Integer> portToId;
 	
 	private  List<Port> portsRequestingResource;
 	private  List<Port> portsReleasingResource;
@@ -116,7 +119,7 @@ public class ResourceCoordinatorImpl implements ResourceCoordinator {
 	 * @throws IOException 
 	 * @throws RecognitionException 
 	 */
-	public ResourceCoordinatorImpl(BIPCoordinator bipCoordinator, BIPEngine nextCoordinator, ResourceEncoder resourceEncoder, String cfNetPath) {
+	public ResourceCoordinatorImpl(BIPCoordinator bipCoordinator, Coordinator nextCoordinator, ResourceEncoder resourceEncoder, String cfNetPath) {
 
 		this.resourceEncoder = resourceEncoder;
 
@@ -132,11 +135,12 @@ public class ResourceCoordinatorImpl implements ResourceCoordinator {
 		resourceEncoder.setBDDManager(bipCoordinator.getBDDManager());
 		//componentDataWires = new HashMap<String, Map<String, Set<DataWire>>>();
 		interactionPorts = new ArrayList<Set>();
-		componentToPortsRequestingResource = new HashMap<BIPComponent, List<Port>>();
-		componentToPortsReleasingResource = new HashMap<BIPComponent, List<Port>>();
+		componentToPortsRequestingResource = new HashMap<BIPComponent, Set<Port>>();
+		componentToPortsReleasingResource = new HashMap<BIPComponent, Set<Port>>();
 		portsRequestingResource = new ArrayList<Port>();
 		portsReleasingResource = new ArrayList<Port>();
-
+		idToPort = new  HashMap<Integer, Port>();
+		portToId = new HashMap<Port, Integer>();
 		resourceHelper = new ResourceHelper(cfNetPath);
 	}
 	
@@ -225,8 +229,15 @@ public class ResourceCoordinatorImpl implements ResourceCoordinator {
 			typeInstancesMapping.remove(component.getType());
 			typeInstancesMapping.put(component.getType(), componentInstances);
 			
-			//componentToPortsRequestingResource.put(component, component.getPortsRequestingResources());
-			//componentToPortsReleasingResource.put(component, component.getPortsReleasingResources());
+			Set<Port> newRequestingPorts = behaviour.getPortsRequestingResources();
+			
+			componentToPortsRequestingResource.put(component, newRequestingPorts);
+			componentToPortsReleasingResource.put(component, behaviour.getPortsReleasingResources());
+			for (Port port: newRequestingPorts) {
+				idToPort.put(portIdNumber, port);
+				portToId.put(port, portIdNumber);
+				portIdNumber++;
+			}
 			
 			//TODO put ports releasing and requesting in the corresponding lists
 			if (component.resourceName()!=null && !(component.resourceName().equals(""))) {
@@ -273,18 +284,32 @@ public class ResourceCoordinatorImpl implements ResourceCoordinator {
 		// System.out.println((System.currentTimeMillis() - time1));
 	}
 	
+	//should be renewed after every execution
+	private Integer portIdNumber = 0;
+	
 	private void doInformSpecific(BIPComponent component, String currentState, Set<Port> disabledPorts) {
 		// it is either called at the last inform, or at each inform.
 		Set<Port> resourceRequestingPorts = getRequestingPort(component, currentState, disabledPorts); // ports
 		Behaviour decidingBehaviour = componentBehaviourMapping.get(component);
 		// for each undecided port of each component :
 		for (Port port : resourceRequestingPorts) {
+			
 			String request = decidingBehaviour.getRequest(port);
-			String interactionID = "1";
+			System.out.println("inform spec " + port.getId() + " " + request);
+			//every port participates ine ach interaction only once
+			// hence the map port <-> id is one-to-one mapping
+			
+			String portId = portToId.get(port).toString();
 			// TODO create a assembled utility for the requests if needed
 			try {
-				resourceHelper.specifyRequest(request, interactionID);
+				//TODO differentiate between portId (-> the token colour) and 
+				// interaction ID -> which ports should be considered together, and then the solution saved.
+				// or maybe it is better not to save the solution.
+				// we just check that it exists. and then when there are ports received, we query for the solution anew
+				// and maybe we can receive a better one.
+				resourceHelper.specifyRequest(request, portId);
 				if (!resourceHelper.canAllocate(interactionID)) {
+					System.out.println("encode disabled");
 					resourceEncoder.encodeDisabledCombinations(component, port, null);
 				}
 			} catch (DNetException e) {
@@ -292,31 +317,23 @@ public class ResourceCoordinatorImpl implements ResourceCoordinator {
 				e.printStackTrace();
 			}
 		}
-
 		
 	}
 
+	String interactionID = "i1";
+	
 		private Set<Port> getRequestingPort(BIPComponent component,
 				String currentState, Set<Port> disabledPorts) {
 			Set<Port> undecidedPorts = new HashSet<Port>();
 			Behaviour behaviour = componentBehaviourMapping.get(component);
-			boolean portIsDisabled = false;
+			//boolean portIsDisabled = false;
 			// for each port that we have
 			Set<Port> currentPorts = behaviour.getStateToPorts().get(currentState);
-			for (Port port : currentPorts) {
-				// TODO rewrite with sets after fixing port equals
-				for (Port disabledPort : disabledPorts) {
-					// if it is equal to one of the disabled ports, we mark it as
-					// disabled and do not add to the collection of undecided
-					if (port.getId().equals(disabledPort.getId())) {
-						portIsDisabled = true;
-						break;
-					}
-				}
-				if (!portIsDisabled && behaviour.getPortsRequestingResources().contains(port)) {
+			for (Port port :  behaviour.getPortsRequestingResources()) {
+				//TODO check that this works - there were some problems with port equals
+				if (currentPorts.contains(port) && !disabledPorts.contains(port)) {
 					undecidedPorts.add(port);
 				}
-				portIsDisabled = false;
 			}
 			logger.trace("For component {} the undecided ports are {}. ",
 					component.getId(), undecidedPorts);
@@ -405,40 +422,40 @@ public class ResourceCoordinatorImpl implements ResourceCoordinator {
 		if (interactionExecutor != this && isEngineExecuting) {
 			interactionExecutor.execute(valuation);
 		} else if (isEngineExecuting) {
-			executeInteractions(preparePorts(valuation));
+			preparePortsAndExecute(valuation);
+			
 		}
 		logger.debug("*************************************************************************");
 	}
 
-	private List<List<Port>> preparePorts(byte[] valuation) {
+	private void preparePorts(byte[] valuation) {
+
 		/*
-		 * Grouping the interaction into smaller ones (with respect to data transfer)
+		 * We get all the ports participating in the interaction, and then 
+		 * for those that require resources, provide these resources.
+		 * The interaction ports are not used for anything else and are not transfered further. 
 		 */
-		// Map<BIPComponent, Iterable<Port>> chosenPorts = new Hashtable<BIPComponent,
-		// Iterable<Port>>();
-		// logger.trace("positionsOfDVariables size: " + positionsOfDVariables.size());
-		ArrayList<Port> portsExecuted = new ArrayList<Port>();
+		
+		ArrayList<Port> portsToBeExecuted = new ArrayList<Port>();
 		ArrayList<Port> portsReqResources = new ArrayList<Port>();
-		List<List<Port>> bigInteraction = null;
 		Map<Port, Integer> portToPosition = bipCoordinator.getPortsToPosition();
 		for (Port port : portToPosition.keySet()) {
 			if (valuation[portToPosition.get(port)] == 1 || valuation[portToPosition.get(port)] == -1) {
-				portsExecuted.add(port);
+				portsToBeExecuted.add(port);
 			}
 		}
-		logger.trace("chosenPorts size: " + portsExecuted.size());
-		if (portsExecuted.size() != 0) {
-			bigInteraction.add(portsExecuted);
-		}
+		logger.trace("chosenPorts size: " + portsToBeExecuted.size());
+
 		
-		for (Port port: portsExecuted) {
+		for (Port port: portsToBeExecuted) {
 			// if the chosen port releases resources, release its resources.
 			if (portsReleasingResource.contains(port)) {
-				String amounts = "0";//port.component().getReleasedAmounts(port);
-				String resourceName = "";
+				Map<String, String> amounts = port.component().getReleasedAmounts(port);
+				for (String resourceName: amounts.keySet()) {
 				//TODO parse amounts to get resource names and numbers
 				//for each resource
-				resourceNameToManagers.get(resourceName).augmentCost(amounts);
+				resourceNameToManagers.get(resourceName).augmentCost(amounts.get(resourceName));
+				}
 			}
 			// if the chosen port requests resources
 			if (portsRequestingResource.contains(port)) {
@@ -447,63 +464,28 @@ public class ResourceCoordinatorImpl implements ResourceCoordinator {
 			}
 		}
 		
+		Hashtable<String, Integer> allocation = resourceHelper.getAllocation(interactionID);
+		//for each allocated resource, get its handle, find a port it is allocated to and provide
+		System.out.println(allocation);
+		for (String resourceName: allocation.keySet()) {
+			int i = resourceName.indexOf('-');
+			String compId =  resourceName.substring(i);
+			System.out.println(resourceName + " " + compId);
+			Integer id = Integer.parseInt(compId);
+			String resource = resourceName.substring(0, i);
+			System.out.println(resource);
+			ResourceManager rM = resourceNameToManagers.get(resource);
+			Integer amount = allocation.get(resourceName);
+			ResourceHandle handle = rM.decreaseCost(amount.toString());
+			Port port = idToPort.get(id);
+			BIPComponent requestingComponent = port.component();
+			requestingComponent.provideAllocation(resource, handle);
+		}
 		//at this stage we have found all the ports that require resources
 		// now, either ask if allocation possible, or extract the saved allocation.
 		// but first, get the combined utility
 		String globalUtility = getInteractionUtility(portsReqResources);
-		
-		/*
-		 * Find ports that participate in the interaction but not in data transfer and add them as a
-		 * separate group
-		 */
-		ArrayList<Port> enabledPorts = new ArrayList<Port>();
-		//Map<Port, Integer> portToPosition = bipCoordinator.getBehaviourEncoderInstance().getPortToPosition();
-		ArrayList<BIPComponent> componentsEnum = registeredComponents;
-		for (BIPComponent component : componentsEnum) {
-			Iterable<Port> componentPorts = null;
-			Behaviour behaviour = componentBehaviourMapping.get(component);
-			if (behaviour == null) {
-				isEngineExecuting = false;
-				return null;
-			}
-
-				componentPorts = behaviour.getEnforceablePorts();
-
-
-
-			// if (componentPorts == null || !componentPorts.iterator().hasNext()) {
-			// logger.trace("Component {} does not have any enforceable ports.", component);
-			// }
-			for (Port port : componentPorts) {
-				if (!portsExecuted.contains(port)
-						&& (valuation[portToPosition.get(port)] == 1 || valuation[portToPosition.get(port)] == -1)
-						&& isEngineExecuting) {
-					// logger.trace("Chosen Port: {}" + port.getId() + "of component: " +
-					// port.component());
-					enabledPorts.add(port);
-				}
-			}
-		}
-
-		if (enabledPorts.size() != 0) {
-			bigInteraction.add(enabledPorts);
-		}
-		/*
-		 * Here the ports mentioned above have been added For debug only 
-		 * //TODO: Comment out before performance evaluation
-		 */
-		// System.out.println("++++++++++++++++++++++++++++++++++++++++++++");
-		// for (Iterable<Port> inter : bigInteraction) {
-		// for (Port port : inter) {
-		// logger.debug("ENGINE choice: " + "Chosen Port: {}" + port.getId() + " of component: "
-		// + port.component());
-		// System.out.println("ENGINE choice: " + "Chosen Port: " + port.getId() + " of component: "
-		// + port.component());
-		// }
-		// }
-		// System.out.println("++++++++++++++++++++++++++++++++++++++++++++");
-		// logger.trace("Interactions: " + bigInteraction.size());
-		return bigInteraction;
+		portIdNumber = 0;
 	}
 
 	private String getInteractionUtility(ArrayList<Port> portsReqResources) {
@@ -556,6 +538,16 @@ public class ResourceCoordinatorImpl implements ResourceCoordinator {
 	public void setInteractionExecutor(InteractionExecutor interactionExecutor) {
 		this.interactionExecutor = interactionExecutor;
 
+	}
+
+	@Override
+	public void preparePortsAndExecute(byte[] valuation) {
+		preparePorts(valuation);
+		//TODO it does not work as that one is not the interaction executor
+		//it can be resolved bby changing the protocol and removing interactionExecutor
+		prevCoordinator.preparePortsAndExecute(valuation);
+		//TODO make sure it is ok not to call executeInteractions()
+		
 	}
 	
 }

@@ -446,7 +446,8 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 		if (interactionExecutor != this && isEngineExecuting) {
 			interactionExecutor.execute(valuation);
 		} else if (isEngineExecuting) {
-			executeInteractions(preparePorts(valuation));
+			preparePortsAndExecute(valuation);
+			//executeInteractions(preparePorts(valuation));
 		}
 	}
 
@@ -936,6 +937,11 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	@Override
 	public Map<Port, Integer> getPortsToPosition() {
 		return this.behenc.getPortToPosition();
+	}
+
+	@Override
+	public void preparePortsAndExecute(byte[] valuation) {
+		executeInteractions(preparePorts(valuation));
 	}
 
 }

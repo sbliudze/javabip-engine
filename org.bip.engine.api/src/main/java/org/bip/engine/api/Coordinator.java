@@ -81,4 +81,6 @@ public interface Coordinator  extends BIPEngine, InteractionExecutor {
 	void specifyPermanentConstraints(Set<BDD> constraints);
 	
 	Map<Port, Integer> getPortsToPosition();
+	
+
 }

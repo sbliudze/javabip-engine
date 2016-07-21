@@ -426,7 +426,8 @@ public class DataCoordinatorKernel implements DataCoordinator {
 		if (interactionExecutor != this && isEngineExecuting) {
 			interactionExecutor.execute(valuation);
 		} else if (isEngineExecuting) {
-			executeInteractions(preparePorts(valuation));
+			preparePortsAndExecute(valuation);
+			//executeInteractions(preparePorts(valuation));
 		}
 		logger.debug("*************************************************************************");
 	}
@@ -942,6 +943,18 @@ public class DataCoordinatorKernel implements DataCoordinator {
 	@Override
 	public Map<Port, Integer> getPortsToPosition() {
 		return bipCoordinator.getPortsToPosition();
+	}
+
+	@Override
+	public void preparePortsAndExecute(byte[] valuation) {
+		
+		
+		ArrayList<Port> portsExecuted = new ArrayList<Port>();
+
+		 mergingSubInteractions(valuation, portsExecuted);
+		
+		bipCoordinator.preparePortsAndExecute(valuation);
+		
 	}
 
 }

@@ -30,4 +30,6 @@ public interface InteractionExecutor {
 	 * @throws BIPEngineException the BIP engine exception
 	 */
 	public void executeInteractions(List<List<Port>> portsToFire) throws BIPEngineException;
+	
+	public void preparePortsAndExecute(byte[] valuation);
 }

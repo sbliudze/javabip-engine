@@ -11,6 +11,7 @@ import org.bip.engine.ResourceEncoderImpl;
 import org.bip.engine.api.BDDBIPEngine;
 import org.bip.engine.api.BIPCoordinator;
 import org.bip.engine.api.BehaviourEncoder;
+import org.bip.engine.api.Coordinator;
 import org.bip.engine.api.CurrentStateEncoder;
 import org.bip.engine.api.DataEncoder;
 import org.bip.engine.api.GlueEncoder;
@@ -80,7 +81,7 @@ public class EngineFactory {
 
 		BIPCoordinator basicCoordinator = new BIPCoordinatorImpl(actorSystem, glueenc, behenc, currstenc, bddBIPEngine);
 
-		BIPEngine prevCoordinator;
+		Coordinator prevCoordinator;
 
 		if (glue.getDataWires().size() == 0) {
 			prevCoordinator = basicCoordinator;

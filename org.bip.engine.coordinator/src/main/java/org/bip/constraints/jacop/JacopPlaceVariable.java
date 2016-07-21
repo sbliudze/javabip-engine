@@ -42,5 +42,9 @@ public class JacopPlaceVariable implements PlaceVariable {
 	public IntVar intVar() {
 		return variable;
 	}
+	
+	public String toString() {
+		return this.name;
+	}
 
 }
