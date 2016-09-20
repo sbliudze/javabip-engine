@@ -146,6 +146,7 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		for (int i = 0; i < size; i++) {
 			int comparison = compareCube(c_cube, cubeMaximals.get(i),
 					portBDDsPosition);
+			// if they are equal of if c_cube is bigger
 			if (comparison == 1 || comparison == 0) {
 				cubeMaximals.remove(i);
 				cubeMaximals.add(i, c_cube);
@@ -404,6 +405,7 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 					totalConstraints.andWith(behaviourBDDs.get(componentsEnum.nextElement()));
 
 				}
+				//TODO make a more informative exception in case there is no register (bdd_mgr is null, exception)
 				bdd_mgr.reorder(BDDFactory.REORDER_SIFTITE);
 				// System.out.println("E5: Reorder stats: " + bdd_mgr.getReorderStats());
 				logger.trace("E5: Reorder stats: " + bdd_mgr.getReorderStats());
