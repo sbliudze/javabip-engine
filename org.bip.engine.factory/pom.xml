@@ -40,8 +40,8 @@
         </dependency>
 
 		<dependency>
-			<groupId>org.bip</groupId>
-			<artifactId>org.bip.engine</artifactId>
+			<groupId>org.bip.shared</groupId>
+			<artifactId>org.bip.engine.core</artifactId>
 			<version>0.1.0-SNAPSHOT</version>
 		</dependency>
         
