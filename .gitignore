@@ -11,7 +11,7 @@ bin/
 *.gitignore~
 *.html
 META-INF/
-.xml~
+*.xml~
 *.java~
 RemoteSystemsTempFiles/
 .DS_Store
