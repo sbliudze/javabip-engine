@@ -6,6 +6,12 @@
   <version>0.1.0-SNAPSHOT</version>
   <packaging>pom</packaging>
 
+	<parent> 
+		<groupId>org.bip</groupId>
+		<artifactId>org.bip.parent</artifactId>
+		<version>0.1.0-SNAPSHOT</version>
+	</parent>
+
   <name>BIP :: Core :: Engine </name>
 
 <scm>
@@ -15,11 +21,11 @@
 </scm>
 
 
-  <description>It contains all core packages/functionality of BIP project.</description>
+  <description>It contains all core packages/functionality of BIP Engine project.</description>
 
   <modules>
 	<module>org.bip.engine.api</module>
-    <module>org.bip.engine.bdd</module>
+   <module>org.bip.engine.bdd</module>
 	<module>org.bip.engine.coordinator</module>
 	<module>org.bip.engine.core</module>
 	<module>org.bip.engine.factory</module>

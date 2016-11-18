@@ -36,67 +36,51 @@
         <dependency>
             <groupId>org.bip</groupId>
             <artifactId>org.bip.api</artifactId>
-            <version>0.1.0-SNAPSHOT</version>
         </dependency>
 
 		<dependency>
 			<groupId>org.bip.shared</groupId>
 			<artifactId>org.bip.engine.core</artifactId>
-			<version>0.1.0-SNAPSHOT</version>
 		</dependency>
         
         <dependency>  
         	<groupId>org.bip</groupId>
   			<artifactId>org.bip.executor.impl</artifactId>
-  			<version>0.1.0-SNAPSHOT</version>
   		</dependency>
         
         <dependency>
         	<groupId>org.bip</groupId>
 			<artifactId>org.bip.executor</artifactId>
-			<version>0.1.0-SNAPSHOT</version>
 		</dependency>
 
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
-			<version>4.6</version>
 		</dependency>
 
 		<dependency>
-			<groupId>ch.epfl.risdlab</groupId>
-			<artifactId>javabdd</artifactId>
-			<version>1.0b2</version>
-		</dependency>
-		
-		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-api</artifactId>
-			<version>1.5.11</version>
 		</dependency>
 
 		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-log4j12</artifactId>
-			<version>1.5.11</version>
 		</dependency>
 
 		<dependency>
 			<groupId>log4j</groupId>
 			<artifactId>log4j</artifactId>
-			<version>1.2.16</version>
 		</dependency>
 		
 		<dependency>
-    		<groupId>com.typesafe.akka</groupId>
-    		<artifactId>akka-actor_2.11</artifactId>
-    		<version>2.3.9</version>
+			<groupId>com.typesafe.akka</groupId>
+        <artifactId>akka-osgi_${scala.binary.version}</artifactId>
     	</dependency>
 
 		<dependency>
 			<groupId>org.bip.shared</groupId>
 			<artifactId>org.bip.engine.coordinator</artifactId>
-			<version>0.1.0-SNAPSHOT</version>
 		</dependency>
 
 	</dependencies>
@@ -176,7 +160,7 @@
 				<version>2.12.4</version>
 				<configuration>
 					<includes>
-						<include>**/org/bip/executor/*Tests.class</include>
+						<include></include>
 					</includes>
 				</configuration>
 			</plugin>
@@ -193,29 +177,5 @@
 
 		</plugins>
 	</build>
-
-
-	<pluginRepositories>
-		<pluginRepository>
-			<id>maven-repo</id>
-			<name>maven repo</name>
-			<url>http://repo1.maven.org/maven2/</url>
-		</pluginRepository>
-
-	</pluginRepositories>
-
-	<repositories>
-		<repository>
-			<id>maven-repo</id>
-			<name>maven repo</name>
-			<url>http://repo1.maven.org/maven2/</url>
-		</repository>
-		<repository>
-			<id>fusesource.releases</id>
-			<name>FuseSource Releases Repository</name>
-			<url>http://repo.fusesource.com/maven2/</url>
-		</repository>
-
-	</repositories>
 
 </project>

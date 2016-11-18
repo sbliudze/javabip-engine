@@ -31,9 +31,8 @@
     <dependencies>
 
         <dependency>
-            <groupId>ch.epfl.risdlab</groupId>
+            <groupId>org.javabip</groupId>
             <artifactId>javabdd</artifactId>
-            <version>1.0b2</version>
         </dependency>
 
     </dependencies>
@@ -115,7 +114,7 @@
                 <version>2.12.4</version>
                 <configuration>
                     <includes>
-                        <include>**/org/bip/executor/*Tests.class</include>
+                        <include></include>
                     </includes>
                 </configuration>
             </plugin>
@@ -132,14 +131,5 @@
 
         </plugins>
     </build>
-
-    <pluginRepositories>
-        <pluginRepository>
-            <id>maven-repo</id>
-            <name>maven repo</name>
-            <url>http://repo1.maven.org/maven2/</url>
-        </pluginRepository>
-
-    </pluginRepositories>
 
 </project>
