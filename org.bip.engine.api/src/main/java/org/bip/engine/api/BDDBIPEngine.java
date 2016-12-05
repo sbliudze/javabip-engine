@@ -1,5 +1,23 @@
-package org.bip.engine.api;
+/*
+ * Copyright 2012-2016 École polytechnique fédérale de Lausanne (EPFL), Switzerland
+ * Copyright 2012-2016 Crossing-Tech SA, Switzerland
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Author: Simon Bliudze, Anastasia Mavridou, Radoslaw Szymanek and Alina Zolotukhina
+ */
 
+package org.bip.engine.api;
 
 import java.util.List;
 import java.util.Set;
@@ -11,81 +29,84 @@ import org.bip.api.BIPComponent;
 import org.bip.exceptions.BIPEngineException;
 
 /**
- * Receives the current state, glue and behaviour BDDs.
- * Computes the possible maximal interactions and picks one non-deterministically.
- * Notifies the OSGiBIPEngine about the outcome.
+ * Receives the current state, glue and behaviour BDDs. Computes the possible maximal interactions and picks one
+ * non-deterministically. Notifies the OSGiBIPEngine about the outcome.
+ * 
  * @author mavridou
  */
 public interface BDDBIPEngine {
 
 	/**
-	 * Inform current state.
+	 * Inform the kernel engine of the current state BDD of the specified component.
 	 *
-	 * @param component the component
-	 * @param componentBDD BDD corresponding to the current state of the particular component
+	 * @param component
+	 *            the specific BIP component.
+	 * @param componentBDD
+	 *            BDD corresponding to the current state of the particular component.
 	 */
 	void informCurrentState(BIPComponent component, BDD componentBDD);
-	
+
 	/**
-	 * Inform behaviour.
+	 * Inform the kernel engine of the behaviour BDD of the specified component.
 	 *
-	 * @param component the component
-	 * @param componentBDD BDD corresponding to the behavior of the particular component
+	 * @param component
+	 *            the specific BIP component.
+	 * @param componentBDD
+	 *            BDD corresponding to the behavior of the particular component.
 	 */
 	void informBehaviour(BIPComponent component, BDD componentBDD);
-	
+
 	/**
-	 * Inform glue.
+	 * Inform the kernel engine of the glue BDDs of the system.
 	 *
-	 * @param totalGlue BDD corresponding to the total glue of the components of the system
-	 * @throws BIPEngineException the BIP engine exception
-	 */	
-	void informGlue(List<BDD> totalGlue) throws BIPEngineException;
-	
-	/**
-	 * Total behaviour bdd.
-	 *
-	 * @throws BIPEngineException the BIP engine exception
+	 * @param totalGlue
+	 *            BDD corresponding to the total glue of the components of the system.
 	 */
-	void totalBehaviourBDD() throws BIPEngineException;
-	
+	void informGlue(List<BDD> totalGlue);
+
+	/**
+	 * Computes the total behaviour BDD.
+	 *
+	 */
+	void totalBehaviourBDD();
+
 	/**
 	 * Computes possible maximal interactions and chooses one non-deterministically.
 	 *
-	 * @throws BIPEngineException the BIP engine exception
+	 * @throws BIPEngineException
+	 *             when current state or disabled combinations BDD is null and in case of deadlock.
 	 */
 	void runOneIteration() throws BIPEngineException;
-	
+
 	/**
 	 * Setter for the OSGiBIPEngine.
 	 *
-	 * @param wrapper the new OS gi bip engine
+	 * @param wrapper
+	 *            the new OSGi BIP engine.
 	 */
 	void setOSGiBIPEngine(BIPCoordinator wrapper);
-	
+
 	/**
 	 * Getter for the BDD Manager.
 	 *
-	 * @return the BDD manager
+	 * @return the BDD manager.
 	 */
-	BDDFactory getBDDManager(); 
-		
-	/**
-	 * Specify temporary extra constraints.
-	 *
-	 * @param informSpecific the inform specific
-	 */
-	void specifyTemporaryExtraConstraints(BDD informSpecific);
+	BDDFactory getBDDManager();
 
 	/**
-	 * Specify permanent extra constraints.
+	 * Specifies additional temporary constraints, for example, the ones imposed by data exchange.
 	 *
-	 * @param specifyDataGlue the specify data glue
+	 * @param extraConstraint
+	 *            the BDD corresponding to the extra constraint.
 	 */
-	void specifyPermanentExtraConstraints(Set<BDD> specifyDataGlue);
+	void specifyTemporaryExtraConstraints(BDD extraConstraint);
 
-
+	/**
+	 * Specifies additional permanent constraints, for example, the ones imposed by data wires.
+	 *
+	 * @param extraConstraints
+	 *            the set of BDDs corresponding to additional permanent constraint
+	 */
+	void specifyPermanentExtraConstraints(Set<BDD> extraConstraints);
 
 }
-
-
