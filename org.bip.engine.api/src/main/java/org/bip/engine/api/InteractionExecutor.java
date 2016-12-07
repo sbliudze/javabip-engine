@@ -22,10 +22,9 @@ import java.util.List;
 import org.bip.api.Port;
 import org.bip.exceptions.BIPEngineException;
 
-// TODO: Auto-generated Javadoc
 /**
  * The Interface InteractionExecutor.
- *
+ * 
  * @author mavridou
  */
 public interface InteractionExecutor {
@@ -34,8 +33,6 @@ public interface InteractionExecutor {
 	 * Called by the engine, receives the byte valuation which is then transformed to a list of interactions and sent
 	 * either to the BIP Coordinator or to Data Coordinator.
 	 * 
-	 * TODO: change the annotations
-	 *
 	 * @param valuation
 	 *            the valuation containing the engine decision of the ports to be executed and data transfers to be
 	 *            performed.
@@ -46,7 +43,7 @@ public interface InteractionExecutor {
 
 	/**
 	 * Notifies all the components whether they need to perform a transition.
-	 *
+	 * 
 	 * @param portsToFire
 	 *            the list of interactions, each containing one or several ports.
 	 * @throws BIPEngineException

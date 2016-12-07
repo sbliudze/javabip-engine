@@ -79,12 +79,12 @@ public interface BDDBIPEngine {
 	void runOneIteration() throws BIPEngineException;
 
 	/**
-	 * Setter for the OSGiBIPEngine.
+	 * Setter for the BIPCoordinator.
 	 *
 	 * @param wrapper
-	 *            the new OSGi BIP engine.
+	 *            the new BIP Coordinator.
 	 */
-	void setOSGiBIPEngine(BIPCoordinator wrapper);
+	void setBIPCoordinator(BIPCoordinator wrapper);
 
 	/**
 	 * Getter for the BDD Manager.

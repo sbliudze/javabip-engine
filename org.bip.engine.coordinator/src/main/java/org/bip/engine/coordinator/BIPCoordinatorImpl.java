@@ -155,7 +155,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 		currstenc.setEngine(engine);
 		currstenc.setBIPCoordinator(this);
 
-		engine.setOSGiBIPEngine(this);
+		engine.setBIPCoordinator(this);
 		this.system = system;
 
 	}

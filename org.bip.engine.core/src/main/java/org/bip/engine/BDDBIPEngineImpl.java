@@ -455,7 +455,7 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		}
 	}
 
-	public void setOSGiBIPEngine(BIPCoordinator wrapper) {
+	public void setBIPCoordinator(BIPCoordinator wrapper) {
 		this.wrapper = wrapper;
 	}
 
