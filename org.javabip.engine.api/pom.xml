@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>org.javabip</groupId>
+		<artifactId>org.javabip.engine</artifactId>
+		<version>0.1.0-SNAPSHOT</version>
+		<relativePath>../pom.xml</relativePath>
+	</parent>
+
+  <groupId>org.javabip</groupId>
+  <artifactId>org.javabip.engine.api</artifactId>
+  <version>0.1.0-SNAPSHOT</version>
+  
+	<description>
+      It is an engine API.
+  </description>
+
+	<packaging>bundle</packaging>
+
+	<name>BIP :: Engine :: API</name>
+
+	<properties>
+		<osgi.private></osgi.private>
+		<osgi.import>org.javabip.api, org.javabip.exceptions, net.sf.javabdd</osgi.import>
+		<osgi.export>org.javabip.engine.api</osgi.export>
+		<osgi.dynamic.import></osgi.dynamic.import>
+		<osgi.bundles></osgi.bundles>
+	</properties>
+
+	<dependencies>
+
+        <dependency>
+            <groupId>org.javabip</groupId>
+            <artifactId>org.javabip.api</artifactId>
+        </dependency>
+
+		<dependency>
+  			<groupId>org.javabip</groupId>
+  			<artifactId>javabdd</artifactId>
+		</dependency>
+
+	</dependencies>
+
+	<reporting>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-report-plugin</artifactId>
+				<version>2.12.4</version>
+			</plugin>
+		</plugins>
+	</reporting>
+
+	<build>
+
+		<pluginManagement>
+			<plugins>
+
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-project-info-reports-plugin</artifactId>
+					<version>2.4</version>
+				</plugin>
+
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-surefire-report-plugin</artifactId>
+					<version>2.9</version>
+					<executions>
+						<execution>
+							<id>html report for tests</id>
+							<phase>site</phase>
+							<goals>
+								<goal>report</goal>
+							</goals>
+						</execution>
+					</executions>
+				</plugin>
+
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-surefire-plugin</artifactId>
+					<version>2.12.4</version>
+				</plugin>
+
+			</plugins>
+
+
+
+		</pluginManagement>
+
+		<plugins>
+
+			<plugin>
+				<groupId>org.apache.felix</groupId>
+				<artifactId>maven-bundle-plugin</artifactId>
+				<version>2.3.5</version>
+				<extensions>true</extensions>
+				<configuration>
+					<instructions>
+						<Embed-Transitive>true</Embed-Transitive>
+						<Bundle-Name>${project.name}</Bundle-Name>
+						<Bundle-SymbolicName>${project.artifactId}</Bundle-SymbolicName>
+						<Export-Package>${osgi.export}</Export-Package>
+						<Import-Package>${osgi.import}</Import-Package>
+						<DynamicImport-Package>${osgi.dynamic.import}</DynamicImport-Package>
+						<Private-Package>${osgi.private}</Private-Package>
+						<Require-Bundle>${osgi.bundles}</Require-Bundle>
+					</instructions>
+				</configuration>
+			</plugin>
+
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<version>2.12.4</version>
+				<configuration>
+					<includes>
+						<include></include>
+					</includes>
+				</configuration>
+			</plugin>
+			
+			<plugin>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>2.3.2</version>
+				<configuration>
+					<source>1.6</source>
+					<target>1.6</target>
+					<compilerArgument></compilerArgument>
+				</configuration>
+			</plugin>
+
+		</plugins>
+	</build>
+
+	<pluginRepositories>
+		<pluginRepository>
+			<id>maven-repo</id>
+			<name>maven repo</name>
+			<url>http://repo1.maven.org/maven2/</url>
+		</pluginRepository>
+
+	</pluginRepositories>
+
+</project>
