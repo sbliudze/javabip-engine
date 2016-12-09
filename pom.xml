@@ -25,10 +25,10 @@
 
   <modules>
 	<module>org.javabip.engine.api</module>
-   <module>org.javabip.engine.bdd</module>
+	<module>org.javabip.engine.bdd</module>
 	<module>org.javabip.engine.coordinator</module>
 	<module>org.javabip.engine.core</module>
-	<module>org.javabip.engine.factory</module>
+	<module>org.javabip.engine.factory</module> 
   </modules>
    
 </project>
