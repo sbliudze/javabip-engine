@@ -45,7 +45,7 @@
         
         <dependency>  
         	<groupId>org.javabip</groupId>
-  			<artifactId>org.javabip.executor.impl</artifactId>
+  			<artifactId>org.javabip.executor</artifactId>
   		</dependency>
         
         <dependency>
