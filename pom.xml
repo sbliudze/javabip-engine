@@ -14,13 +14,6 @@
 
   <name>BIP :: Core :: Engine </name>
 
-<scm>
-	<developerConnection>scm:git:git@git.xtech.io:bip/bip-engine-shared.git</developerConnection>
-	<url>https://git.xtech.io/bip/bip-engine-shared</url>
-	<tag>HEAD</tag>
-</scm>
-
-
   <description>It contains all core packages/functionality of BIP Engine project.</description>
 
   <modules>

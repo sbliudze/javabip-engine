@@ -167,19 +167,4 @@ public class DataHelper {
 		return groupedByName;
 	}
 
-	/**
-	 * Creates a dataContainer list with three elements, builds a data value table for this list.
-	 */
-	public static void test() {
-		String memory = "memory";
-		String processor = "processor";
-
-		DataContainer c11 = new DataContainer(memory, 28, null, null);
-		DataContainer c12 = new DataContainer(memory, 56, null, null);
-		DataContainer c2 = new DataContainer(processor, 1, null, null);
-		ArrayList<DataContainer> dataList = new ArrayList<DataContainer>(Arrays.asList(c11, c12, c2));
-		ArrayList<ArrayList<DataContainer>> dataTable = getDataValueTable(dataList);
-		System.out.println(dataTable);
-	}
-
 }
