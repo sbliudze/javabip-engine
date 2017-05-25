@@ -1,10 +1,10 @@
-# BIP Engine project
+# JavaBIP Engine project
 
 
+In order to build the project, the following projects must be built before : 
 
-In order to be able to build this one you need to build before : 
-
-org.javabip.core project with its dependencies as described in this project README.md
+javabip-core project 
+javabdd project
 
 You can build this project just by executing the command below. 
  
