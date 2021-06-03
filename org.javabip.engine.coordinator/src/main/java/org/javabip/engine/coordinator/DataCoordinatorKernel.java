@@ -18,34 +18,17 @@
  */
 package org.javabip.engine.coordinator;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Hashtable;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-
+import com.google.gson.Gson;
 import net.sf.javabdd.BDD;
 import net.sf.javabdd.BDDFactory;
-
-import org.javabip.api.BIPActor;
-import org.javabip.api.BIPComponent;
-import org.javabip.api.BIPEngine;
-import org.javabip.api.BIPGlue;
-import org.javabip.api.Behaviour;
-import org.javabip.api.Data;
-import org.javabip.api.DataWire;
-import org.javabip.api.Port;
-import org.javabip.engine.api.BIPCoordinator;
-import org.javabip.engine.api.BehaviourEncoder;
-import org.javabip.engine.api.DataCoordinator;
-import org.javabip.engine.api.DataEncoder;
-import org.javabip.engine.api.InteractionExecutor;
+import org.javabip.api.*;
+import org.javabip.engine.api.*;
 import org.javabip.exceptions.BIPEngineException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.*;
+import java.util.Map.Entry;
 
 /**
  * DataCoordinatorKernel implements the DataCoordinator interface. It takes care of data exchange, and the rest of the
@@ -510,13 +493,21 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 						}
 						Object inValue = aComponent.getData(wire.getFrom().getId(), inDataItem.type());
 						// get data out variable in order to get the ports
-						if (inValue != null) {
+							if (inValue != null) {
 							assert (componentBehaviourMapping.get(aComponent) != null);
 							assert (wire.getFrom() != null);
 							Set<Port> providingPorts = componentBehaviourMapping.get(aComponent).getDataProvidingPorts(
 									wire.getFrom().getId());
-							dataList.add(new DataContainer(inDataItem.name(), inValue, aComponent, providingPorts));
-							dataValues.add(inValue);
+
+							if (wire.isCopy()){
+								Gson gson = new Gson();
+								Object inValueCopy = gson.fromJson(gson.toJson(inValue), Object.class);
+								dataList.add(new DataContainer(inDataItem.name(), inValueCopy, aComponent, providingPorts));
+								dataValues.add(inValueCopy);
+							} else {
+								dataList.add(new DataContainer(inDataItem.name(), inValue, aComponent, providingPorts));
+								dataValues.add(inValue);
+							}
 						}
 					}
 					logger.debug("Added a data evaluation of data " + inDataItem.name() + " with the values "
