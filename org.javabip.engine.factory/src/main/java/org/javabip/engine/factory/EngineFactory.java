@@ -69,7 +69,7 @@ public class EngineFactory {
 
 		final BIPEngine engine = bipEngine;
 
-		BIPEngine actor = TypedActor.get(actorSystem).typedActorOf(
+		BIPEngine actor = (BIPEngine) TypedActor.get(actorSystem).typedActorOf(
 				new TypedProps<BIPEngine>(BIPEngine.class, new Creator<BIPEngine>() {
 					public BIPEngine create() {
 						return engine;
