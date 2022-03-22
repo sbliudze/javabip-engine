@@ -133,7 +133,7 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 		bipCoordinator.initialize();
 	}
 
-	public void start() {
+	public void start() throws Exception {
 		delayedSpecifyGlue(glueHolder);
 		bipCoordinator.start();
 	}
@@ -739,6 +739,9 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 					assert (componentBehaviourMapping.get(askingData.component()) != null);
 					String dataOutName = getProviderDataName(providingData,
 							componentBehaviourMapping.get(askingData.component()).getComponentType(), dataItem.name());
+					Boolean isCopy = getWireIsCopy(providingData,
+							componentBehaviourMapping.get(askingData.component()).getComponentType(), dataItem.name());
+
 					BIPComponent providingComponent = providingData.component();
 					if (dataOutName != null && !dataOutName.isEmpty() && isEngineExecuting) {
 						Object dataValue = providingComponent.getData(dataOutName, dataItem.type());
@@ -757,12 +760,37 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 									+ dataOutName + " and type: " + dataItem.type()
 									+ " The function getData of the Executor kernel returns null for these arguments. ");
 						}
-						askingData.component().setData(dataItem.name(), dataValue);
-
+						if (isCopy!=null && isCopy){
+							Gson gson = new Gson();
+							Object newDataValue = gson.fromJson(gson.toJson(dataValue), Object.class);
+							askingData.component().setData(dataItem.name(), newDataValue);
+						} else {
+							askingData.component().setData(dataItem.name(), dataValue);
+						}
 					}
 				}
 			}
 		}
+
+	}
+
+	private Boolean getWireIsCopy(Port providingPort, String requiringComponentType, String dataName) {
+		BIPComponent providingComponent = providingPort.component();
+		assert (componentBehaviourMapping.get(providingComponent) != null);
+		for (DataWire wire : this.componentDataWires.get(requiringComponentType).get(dataName)) {
+			if (wire.getFrom().getSpecType()
+					.equals(componentBehaviourMapping.get(providingComponent).getComponentType())) {
+				Set<Port> portsProviding = componentBehaviourMapping.get(providingComponent).getDataProvidingPorts(
+						wire.getFrom().getId());
+				for (Port outport : portsProviding) {
+					if (outport.getId().equals(providingPort.getId())
+							&& outport.getSpecType().equals(providingPort.getSpecType())) {
+						return wire.isCopy();
+					}
+				}
+			}
+		}
+		return null;
 
 	}
 

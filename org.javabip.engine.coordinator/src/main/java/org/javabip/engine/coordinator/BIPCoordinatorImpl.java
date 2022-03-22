@@ -18,42 +18,23 @@
  */
 package org.javabip.engine.coordinator;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Hashtable;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.Semaphore;
-
+import akka.actor.ActorContext;
+import akka.actor.ActorSystem;
+import akka.actor.TypedActor;
+import akka.actor.TypedProps;
+import akka.japi.Creator;
 import net.sf.javabdd.BDD;
 import net.sf.javabdd.BDDFactory;
-
-import org.javabip.api.BIPActor;
-import org.javabip.api.BIPComponent;
-import org.javabip.api.BIPGlue;
-import org.javabip.api.Behaviour;
-import org.javabip.api.OrchestratedExecutor;
-import org.javabip.api.Port;
-import org.javabip.engine.api.BDDBIPEngine;
-import org.javabip.engine.api.BIPCoordinator;
-import org.javabip.engine.api.BehaviourEncoder;
-import org.javabip.engine.api.CurrentStateEncoder;
-import org.javabip.engine.api.GlueEncoder;
-import org.javabip.engine.api.InteractionExecutor;
+import org.javabip.api.*;
+import org.javabip.engine.api.*;
 import org.javabip.exceptions.BIPEngineException;
 import org.javabip.executor.ExecutorKernel;
 import org.javabip.executor.TunellingExecutorHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import akka.actor.ActorContext;
-import akka.actor.ActorSystem;
-import akka.actor.TypedActor;
-import akka.actor.TypedProps;
-import akka.japi.Creator;
+import java.util.*;
+import java.util.concurrent.Semaphore;
 
 /**
  * Orchestrates the execution of the behaviour, glue and current state encoders. At the initialization phase, it
@@ -231,7 +212,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 										}
 									}), executor.getId());
 				} catch (Exception exception) {
-					executorActor = TypedActor.get(typedActorContext).typedActorOf(
+					executorActor = (OrchestratedExecutor) TypedActor.get(typedActorContext).typedActorOf(
 							new TypedProps<OrchestratedExecutor>(OrchestratedExecutor.class,
 									new Creator<OrchestratedExecutor>() {
 										public ExecutorKernel create() {
@@ -242,7 +223,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 
 			} else {
 
-				executorActor = TypedActor.get(typedActorContext).typedActorOf(
+				executorActor = (OrchestratedExecutor) TypedActor.get(typedActorContext).typedActorOf(
 						new TypedProps<OrchestratedExecutor>(OrchestratedExecutor.class,
 								new Creator<OrchestratedExecutor>() {
 									public ExecutorKernel create() {
@@ -685,7 +666,8 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	/**
 	 * Create a thread for the Engine and start it.
 	 */
-	public void start() {
+	public void start() throws Exception {
+		if (registeredComponents.isEmpty()) throw new Exception("Empty!");
 		delayedSpecifyGlue(glueHolder);
 		engineThread = new Thread(this, "BIPEngine");
 		engineThread.start();
@@ -701,8 +683,8 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 		}
 		isEngineExecuting = false;
 		engineThread.stop();
+		engineThread = null;
 		// engineThread.interrupt();
-
 	}
 
 	/**
