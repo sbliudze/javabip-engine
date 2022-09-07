@@ -17,17 +17,9 @@
  */
 package org.javabip.engine;
 
-import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.HashSet;
-import java.util.Hashtable;
-import java.util.List;
-import java.util.Map;
-
 import net.sf.javabdd.BDD;
 import org.javabip.api.*;
 import org.javabip.engine.api.BDDBIPEngine;
-import org.javabip.engine.api.BIPCoordinator;
 import org.javabip.engine.api.BehaviourEncoder;
 import org.javabip.engine.api.GlueCoordinator;
 import org.javabip.engine.api.GlueEncoder;

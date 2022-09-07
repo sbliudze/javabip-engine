@@ -19,14 +19,13 @@
 
 package org.javabip.engine.api;
 
-import java.util.List;
-import java.util.Map;
-
+import net.sf.javabdd.BDD;
 import org.javabip.api.BIPComponent;
 import org.javabip.api.Port;
 import org.javabip.exceptions.BIPEngineException;
 
-import net.sf.javabdd.BDD;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Receives information about the behaviour of each registered component and computes the total behaviour BDD.

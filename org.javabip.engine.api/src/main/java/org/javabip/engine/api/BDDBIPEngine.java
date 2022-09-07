@@ -19,14 +19,13 @@
 
 package org.javabip.engine.api;
 
-import java.util.List;
-import java.util.Set;
-
 import net.sf.javabdd.BDD;
 import net.sf.javabdd.BDDFactory;
-
 import org.javabip.api.BIPComponent;
 import org.javabip.exceptions.BIPEngineException;
+
+import java.util.List;
+import java.util.Set;
 
 /**
  * Receives the current state, glue and behaviour BDDs. Computes the possible maximal interactions and picks one

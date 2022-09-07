@@ -18,12 +18,12 @@
  */
 package org.javabip.engine.api;
 
+import org.javabip.api.BIPEngine;
+import org.javabip.api.Port;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-
-import org.javabip.api.BIPEngine;
-import org.javabip.api.Port;
 
 // TODO: Auto-generated Javadoc
 /**

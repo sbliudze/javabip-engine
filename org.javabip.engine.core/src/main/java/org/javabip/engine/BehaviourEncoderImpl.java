@@ -18,14 +18,7 @@
 
 package org.javabip.engine;
 
-import java.util.ArrayList;
-import java.util.Hashtable;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import net.sf.javabdd.BDD;
-
 import org.javabip.api.BIPComponent;
 import org.javabip.api.Behaviour;
 import org.javabip.api.Port;

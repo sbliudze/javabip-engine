@@ -18,10 +18,10 @@
  */
 package org.javabip.engine.api;
 
-import java.util.List;
-
 import org.javabip.api.Port;
 import org.javabip.exceptions.BIPEngineException;
+
+import java.util.List;
 
 /**
  * The Interface InteractionExecutor.

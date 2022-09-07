@@ -18,19 +18,8 @@
 
 package org.javabip.engine;
 
-import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.HashSet;
-import java.util.Hashtable;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Random;
-import java.util.Set;
-
 import net.sf.javabdd.BDD;
 import net.sf.javabdd.BDDFactory;
-
 import org.javabip.api.BIPComponent;
 import org.javabip.api.PortBase;
 import org.javabip.engine.api.BDDBIPEngine;
@@ -38,6 +27,9 @@ import org.javabip.engine.api.GlueCoordinator;
 import org.javabip.exceptions.BIPEngineException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.*;
+import java.util.Map.Entry;
 
 /**
  * Receives the current state, glue and behaviour BDDs. Computes the possible maximal interactions and picks one

@@ -18,12 +18,11 @@
  */
 package org.javabip.engine.api;
 
-import java.util.List;
-
 import net.sf.javabdd.BDD;
-
 import org.javabip.api.BIPGlue;
 import org.javabip.exceptions.BIPEngineException;
+
+import java.util.List;
 
 /**
  * Receives information about the glue and computes the glue BDD.
