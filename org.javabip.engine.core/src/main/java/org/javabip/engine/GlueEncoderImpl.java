@@ -25,19 +25,17 @@ import java.util.List;
 import java.util.Map;
 
 import net.sf.javabdd.BDD;
-
-import org.javabip.api.Accept;
-import org.javabip.api.BIPComponent;
-import org.javabip.api.BIPGlue;
-import org.javabip.api.PortBase;
-import org.javabip.api.Require;
+import org.javabip.api.*;
 import org.javabip.engine.api.BDDBIPEngine;
 import org.javabip.engine.api.BIPCoordinator;
 import org.javabip.engine.api.BehaviourEncoder;
+import org.javabip.engine.api.GlueCoordinator;
 import org.javabip.engine.api.GlueEncoder;
 import org.javabip.exceptions.BIPEngineException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.*;
 
 /**
  * Receives information about the glue and computes the glue BDD.
@@ -51,7 +49,7 @@ public class GlueEncoderImpl implements GlueEncoder {
 	// TODO: Dependencies to be simplified (see the BIPCoordinator implementation)
 	private BehaviourEncoder behenc;
 	private BDDBIPEngine engine;
-	private BIPCoordinator wrapper;
+	private GlueCoordinator wrapper;
 	private BIPGlue glueSpec;
 
 	/**
@@ -543,7 +541,7 @@ public class GlueEncoderImpl implements GlueEncoder {
 		this.engine = engine;
 	}
 
-	public void setBIPCoordinator(BIPCoordinator wrapper) {
+	public void setBIPCoordinator(GlueCoordinator wrapper) {
 		this.wrapper = wrapper;
 	}
 

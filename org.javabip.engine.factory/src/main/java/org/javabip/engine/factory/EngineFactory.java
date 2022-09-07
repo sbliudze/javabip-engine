@@ -26,12 +26,12 @@ import org.javabip.engine.CurrentStateEncoderImpl;
 import org.javabip.engine.DataEncoderImpl;
 import org.javabip.engine.GlueEncoderImpl;
 import org.javabip.engine.api.BDDBIPEngine;
-import org.javabip.engine.api.BIPCoordinator;
+import org.javabip.engine.api.GlueCoordinator;
 import org.javabip.engine.api.BehaviourEncoder;
 import org.javabip.engine.api.CurrentStateEncoder;
 import org.javabip.engine.api.DataEncoder;
 import org.javabip.engine.api.GlueEncoder;
-import org.javabip.engine.coordinator.BIPCoordinatorImpl;
+import org.javabip.engine.coordinator.GlueCoordinatorImpl;
 
 import akka.actor.ActorSystem;
 import akka.actor.TypedActor;
@@ -56,7 +56,7 @@ public class EngineFactory {
 		CurrentStateEncoder currstenc = new CurrentStateEncoderImpl();
 		BDDBIPEngine bddBIPEngine = new BDDBIPEngineImpl();
 
-		BIPCoordinator basicCoordinator = new BIPCoordinatorImpl(actorSystem, glueenc, behenc, currstenc, bddBIPEngine);
+		GlueCoordinator basicCoordinator = new GlueCoordinatorImpl(actorSystem, glueenc, behenc, currstenc, bddBIPEngine);
 
 		BIPEngine bipEngine;
 

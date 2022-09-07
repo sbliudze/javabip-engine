@@ -30,6 +30,7 @@ import org.javabip.engine.api.BDDBIPEngine;
 import org.javabip.engine.api.BIPCoordinator;
 import org.javabip.engine.api.BehaviourEncoder;
 import org.javabip.engine.api.CurrentStateEncoder;
+import org.javabip.engine.api.GlueCoordinator;
 import org.javabip.exceptions.BIPEngineException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,7 +52,7 @@ public class CurrentStateEncoderImpl implements CurrentStateEncoder {
 	private BDDBIPEngine engine;
 
 	/** The wrapper. */
-	private BIPCoordinator wrapper;
+	private GlueCoordinator wrapper;
 
 	/** The logger. */
 	private Logger logger = LoggerFactory.getLogger(CurrentStateEncoderImpl.class);
@@ -120,7 +121,7 @@ public class CurrentStateEncoderImpl implements CurrentStateEncoder {
 	 * 
 	 * @see org.bip.engine.api.CurrentStateEncoder#setBIPCoordinator(org.bip.engine.api.BIPCoordinator)
 	 */
-	public void setBIPCoordinator(BIPCoordinator wrapper) {
+	public void setBIPCoordinator(GlueCoordinator wrapper) {
 		this.wrapper = wrapper;
 	}
 

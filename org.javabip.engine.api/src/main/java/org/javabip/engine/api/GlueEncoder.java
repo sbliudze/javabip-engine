@@ -65,7 +65,7 @@ public interface GlueEncoder {
 	 * @param wrapper
 	 *            the new BIP coordinator.
 	 */
-	void setBIPCoordinator(BIPCoordinator wrapper);
+	void setBIPCoordinator(GlueCoordinator wrapper);
 
 	/**
 	 * Computes the total Glue BDD.

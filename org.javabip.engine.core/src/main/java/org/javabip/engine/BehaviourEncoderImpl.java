@@ -30,11 +30,13 @@ import org.javabip.api.BIPComponent;
 import org.javabip.api.Behaviour;
 import org.javabip.api.Port;
 import org.javabip.engine.api.BDDBIPEngine;
-import org.javabip.engine.api.BIPCoordinator;
 import org.javabip.engine.api.BehaviourEncoder;
+import org.javabip.engine.api.GlueCoordinator;
 import org.javabip.exceptions.BIPEngineException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.*;
 
 // TODO: Auto-generated Javadoc
 /**
@@ -67,7 +69,7 @@ public class BehaviourEncoderImpl implements BehaviourEncoder {
 	private BDDBIPEngine engine;
 
 	/** The wrapper. */
-	private BIPCoordinator wrapper;
+	private GlueCoordinator wrapper;
 
 	/** The positions of ports. */
 	private ArrayList<Integer> positionsOfPorts = new ArrayList<Integer>();
@@ -255,7 +257,7 @@ public class BehaviourEncoderImpl implements BehaviourEncoder {
 	 * 
 	 * @see org.bip.engine.api.BehaviourEncoder#setBIPCoordinator(org.bip.engine.api.BIPCoordinator)
 	 */
-	public void setBIPCoordinator(BIPCoordinator wrapper) {
+	public void setBIPCoordinator(GlueCoordinator wrapper) {
 		this.wrapper = wrapper;
 	}
 

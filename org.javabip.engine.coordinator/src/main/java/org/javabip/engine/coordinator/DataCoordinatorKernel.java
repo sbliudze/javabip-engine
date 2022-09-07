@@ -24,6 +24,7 @@ import net.sf.javabdd.BDDFactory;
 import org.javabip.api.*;
 import org.javabip.engine.api.*;
 import org.javabip.exceptions.BIPEngineException;
+import org.javabip.exceptions.BIPException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -83,7 +84,7 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 	private DataEncoder dataEncoder;
 
 	/** The bip coordinator. */
-	private BIPCoordinator bipCoordinator = null;
+	private GlueCoordinator glueCoordinator = null;
 
 	/** The registration finished. */
 	private boolean registrationFinished = false;
@@ -108,39 +109,39 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 	/**
 	 * Instantiates a new data coordinator implementation.
 	 * 
-	 * @param bipCoordinator
+	 * @param glueCoordinator
 	 *            the BIP coordinator.
 	 * @param dataEncoder
 	 *            the data encoder.
 	 */
-	public DataCoordinatorKernel(BIPCoordinator bipCoordinator, DataEncoder dataEncoder) {
+	public DataCoordinatorKernel(GlueCoordinator glueCoordinator, DataEncoder dataEncoder) {
 
 		this.dataEncoder = dataEncoder;
 
-		assert (bipCoordinator != null);
+		assert (glueCoordinator != null);
 
-		this.bipCoordinator = bipCoordinator;
+		this.glueCoordinator = glueCoordinator;
 
-		this.bipCoordinator.setInteractionExecutor(this);
+		this.glueCoordinator.setInteractionExecutor(this);
 		dataEncoder.setDataCoordinator(this);
-		dataEncoder.setBehaviourEncoder(this.bipCoordinator.getBehaviourEncoderInstance());
-		dataEncoder.setBDDManager(this.bipCoordinator.getBDDManager());
+		dataEncoder.setBehaviourEncoder(this.glueCoordinator.getBehaviourEncoderInstance());
+		dataEncoder.setBDDManager(this.glueCoordinator.getBDDManager());
 		componentDataWires = new HashMap<String, Map<String, Set<DataWire>>>();
 	}
 
 	@Override
 	public void initialize() {
-		bipCoordinator.initialize();
+		glueCoordinator.initialize();
 	}
 
-	public void start() throws Exception {
+	public void start() {
 		delayedSpecifyGlue(glueHolder);
-		bipCoordinator.start();
+		glueCoordinator.start();
 	}
 
 	public void stop() {
 		isEngineExecuting = false;
-		bipCoordinator.stop();
+		glueCoordinator.stop();
 
 	}
 
@@ -155,7 +156,7 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 			setInteractionExecutor(this);
 		}
 		isEngineExecuting = true;
-		bipCoordinator.execute();
+		glueCoordinator.execute();
 	}
 
 	/**
@@ -165,7 +166,7 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 	 *            the glue
 	 */
 	private synchronized void delayedSpecifyGlue(BIPGlue glue) {
-		bipCoordinator.specifyGlue(glue);
+		glueCoordinator.specifyGlue(glue);
 		this.dataWires = glue.getDataWires();
 		try {
 			/*
@@ -175,7 +176,7 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 			 */
 			Set<BDD> dataConstraints = dataEncoder.specifyDataGlue(dataWires);
 			// logger.debug("Data constraints from the encoder not null: " + (dataConstraints != null));
-			bipCoordinator.specifyPermanentConstraints(dataConstraints);
+			glueCoordinator.specifyPermanentConstraints(dataConstraints);
 		} catch (BIPEngineException e) {
 			e.printStackTrace();
 		}
@@ -245,10 +246,10 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 			if (object == null) {
 				throw new BIPEngineException("Registering a null component.");
 			}
-			actor = bipCoordinator.register(object, id, useSpec);
+			actor = glueCoordinator.register(object, id, useSpec);
 
-			BIPComponent component = bipCoordinator.getComponentFromObject(object);
-			Behaviour behaviour = bipCoordinator.getBehaviourByComponent(component);
+			BIPComponent component = glueCoordinator.getComponentFromObject(object);
+			Behaviour behaviour = glueCoordinator.getBehaviourByComponent(component);
 
 			if (behaviour == null) {
 				throw new BIPEngineException("Registering a component with null behaviour.");
@@ -281,6 +282,8 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 			typeInstancesMapping.put(component.getType(), componentInstances);
 		} catch (BIPEngineException e) {
 			// e.printStackTrace();
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
 
 		return actor;
@@ -314,7 +317,7 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 		 * Inform the BIPCoordinator only after all the informSpecifics for the particular component have finished
 		 */
 
-		bipCoordinator.inform(component, currentState, disabledPorts);
+		glueCoordinator.inform(component, currentState, disabledPorts);
 		// System.out.println((System.currentTimeMillis() - time1));
 	}
 
@@ -406,8 +409,32 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 		 * Send each disabled combination of each deciding Component directly to the Data Encoder.
 		 */
 
-		bipCoordinator.specifyTemporaryConstraints(dataEncoder.encodeDisabledCombinations(decidingComponent,
+		glueCoordinator.specifyTemporaryConstraints(dataEncoder.encodeDisabledCombinations(decidingComponent,
 				decidingPort, disabledCombinations));
+
+	}
+
+	/**
+	 * informInternal is served for notifying the engine on the internal transition happened on the component
+	 * needed for the monitoring
+	 *
+	 * @param decidingComponent
+	 * @param currentState
+	 */
+	@Override
+	public void informInteral(BIPComponent decidingComponent, String currentState) {
+
+	}
+
+	/**
+	 * informSpontaneous is served for notifying the engine on the spontaneous transition happened on the component
+	 * needed for the monitoring
+	 *
+	 * @param decidingComponent
+	 * @param currentState
+	 */
+	@Override
+	public void informSpontaneous(BIPComponent decidingComponent, String currentState) {
 
 	}
 
@@ -433,7 +460,7 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 	 * @throws BIPEngineException
 	 *             the BIP engine exception
 	 */
-	public void executeInteractions(List<List<Port>> portGroupsToExecute) throws BIPEngineException {
+	public void executeInteractions(List<List<Port>> portGroupsToExecute) throws BIPException {
 		this.count++;
 		/**
 		 * This is a list of components participating in the chosen-by-the-engine interactions. This keeps track of the
@@ -441,7 +468,7 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 		 * components need to be notified. Either by sending null to them or the port to be fired.
 		 */
 		if (isEngineExecuting)
-			bipCoordinator.executeInteractions(portGroupsToExecute);
+			glueCoordinator.executeInteractions(portGroupsToExecute);
 	}
 
 	/**
@@ -627,7 +654,7 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 		 * Find ports that participate in the interaction but not in data transfer and add them as a separate group
 		 */
 		ArrayList<Port> enabledPorts = new ArrayList<Port>();
-		Map<Port, Integer> portToPosition = bipCoordinator.getBehaviourEncoderInstance().getPortToPosition();
+		Map<Port, Integer> portToPosition = glueCoordinator.getBehaviourEncoderInstance().getPortToPosition();
 		ArrayList<BIPComponent> componentsEnum = registeredComponents;
 		for (BIPComponent component : componentsEnum) {
 			Iterable<Port> componentPorts = null;
@@ -831,19 +858,19 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 	}
 
 	public void specifyTemporaryConstraints(BDD constraints) {
-		bipCoordinator.specifyTemporaryConstraints(constraints);
+		glueCoordinator.specifyTemporaryConstraints(constraints);
 	}
 
 	public void specifyPermanentConstraints(Set<BDD> constraints) {
-		bipCoordinator.specifyPermanentConstraints(constraints);
+		glueCoordinator.specifyPermanentConstraints(constraints);
 	}
 
 	public BehaviourEncoder getBehaviourEncoderInstance() {
-		return bipCoordinator.getBehaviourEncoderInstance();
+		return glueCoordinator.getBehaviourEncoderInstance();
 	}
 
 	public BDDFactory getBDDManager() {
-		return bipCoordinator.getBDDManager();
+		return glueCoordinator.getBDDManager();
 	}
 
 	public DataEncoder getDataEncoder() {
@@ -860,7 +887,7 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 
 	@Override
 	public BIPComponent getComponentFromObject(Object component) {
-		return bipCoordinator.getComponentFromObject(component);
+		return glueCoordinator.getComponentFromObject(component);
 	}
 
 	/**
@@ -926,7 +953,7 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 	}
 
 	public int getNoComponents() {
-		return bipCoordinator.getNoComponents();
+		return glueCoordinator.getNoComponents();
 	}
 
 }

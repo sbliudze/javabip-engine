@@ -41,7 +41,7 @@ import org.javabip.exceptions.BIPEngineException;
  * components.
  */
 
-public interface BIPCoordinator extends BIPEngine, InteractionExecutor {
+public interface GlueCoordinator extends BIPEngine, InteractionExecutor {
 
 	/**
 	 * Returns the Behaviour of the specified BIP component.

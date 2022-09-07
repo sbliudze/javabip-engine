@@ -32,7 +32,7 @@ import org.javabip.api.Port;
  * engine kernel of the constraints due to data invalid for guards.
  */
 
-public interface DataCoordinator extends BIPEngine, BIPCoordinator, InteractionExecutor {
+public interface DataCoordinator extends BIPEngine, GlueCoordinator, InteractionExecutor {
 
 	/**
 	 * Gets the data encoder.

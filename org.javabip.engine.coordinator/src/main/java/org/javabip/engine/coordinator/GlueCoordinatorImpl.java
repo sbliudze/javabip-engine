@@ -46,9 +46,9 @@ import java.util.concurrent.Semaphore;
  * 
  * @author Anastasia Mavridou
  */
-public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
+public class GlueCoordinatorImpl implements GlueCoordinator, Runnable {
 
-	private Logger logger = LoggerFactory.getLogger(BIPCoordinatorImpl.class);
+	private Logger logger = LoggerFactory.getLogger(GlueCoordinatorImpl.class);
 	/**
 	 * Create instances of all the the Glue Encoder, the Behaviour Encoder, the Current State Encoder, the Symbolic BIP
 	 * Engine
@@ -117,8 +117,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	private ActorContext typedActorContext;
 	private Object typedActorSelf;
 
-	public BIPCoordinatorImpl(ActorSystem system, GlueEncoder glueEncoder, BehaviourEncoder behenc,
-			CurrentStateEncoder currentStateEncoder, BDDBIPEngine engine) {
+	public GlueCoordinatorImpl(ActorSystem system, GlueEncoder glueEncoder, BehaviourEncoder behenc, CurrentStateEncoder currentStateEncoder, BDDBIPEngine engine) {
 
 		this.glueenc = glueEncoder;
 		this.behenc = behenc;
@@ -202,7 +201,7 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 
 				try {
 					final Object proxyingBoth = TunellingExecutorHandler.newProxyInstance(
-							BIPCoordinatorImpl.class.getClassLoader(), executor, component);
+							GlueCoordinatorImpl.class.getClassLoader(), executor, component);
 
 					executorActor = (OrchestratedExecutor) TypedActor.get(typedActorContext).typedActorOf(
 							new TypedProps<Object>((Class<? super Object>) proxyingBoth.getClass(),
@@ -641,6 +640,8 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 
 				isEngineExecuting = false;
 				// e1.printStackTrace();
+			} catch (Exception e) {
+				e.printStackTrace();
 			}
 
 			try {
@@ -666,8 +667,12 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	/**
 	 * Create a thread for the Engine and start it.
 	 */
-	public void start() throws Exception {
-		if (registeredComponents.isEmpty()) throw new Exception("Empty!");
+	public void start() {
+		if (registeredComponents.isEmpty()) try {
+			throw new Exception("Empty!");
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 		delayedSpecifyGlue(glueHolder);
 		engineThread = new Thread(this, "BIPEngine");
 		engineThread.start();
@@ -729,6 +734,30 @@ public class BIPCoordinatorImpl implements BIPCoordinator, Runnable {
 	public void informSpecific(BIPComponent decidingComponent, Port decidingPort,
 			Map<BIPComponent, Set<Port>> disabledCombinations) throws BIPEngineException {
 		logger.warn("InformSpecific of BIPCoordinator is called. That should never happen. All the information should be passed directly from the DataCoordinator to the DataEncoder.");
+	}
+
+	/**
+	 * informInternal is served for notifying the engine on the internal transition happened on the component
+	 * needed for the monitoring
+	 *
+	 * @param decidingComponent
+	 * @param currentState
+	 */
+	@Override
+	public void informInteral(BIPComponent decidingComponent, String currentState) {
+
+	}
+
+	/**
+	 * informSpontaneous is served for notifying the engine on the spontaneous transition happened on the component
+	 * needed for the monitoring
+	 *
+	 * @param decidingComponent
+	 * @param currentState
+	 */
+	@Override
+	public void informSpontaneous(BIPComponent decidingComponent, String currentState) {
+
 	}
 
 	/**

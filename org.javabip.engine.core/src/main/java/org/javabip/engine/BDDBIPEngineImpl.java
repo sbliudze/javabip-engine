@@ -34,7 +34,7 @@ import net.sf.javabdd.BDDFactory;
 import org.javabip.api.BIPComponent;
 import org.javabip.api.PortBase;
 import org.javabip.engine.api.BDDBIPEngine;
-import org.javabip.engine.api.BIPCoordinator;
+import org.javabip.engine.api.GlueCoordinator;
 import org.javabip.exceptions.BIPEngineException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -63,7 +63,7 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 	Map<Integer, Entry<PortBase, PortBase>> dVariablesToPosition = new Hashtable<Integer, Entry<PortBase, PortBase>>();
 	List<Integer> positionsOfDVariables = new ArrayList<Integer>();
 
-	private BIPCoordinator wrapper;
+	private GlueCoordinator wrapper;
 
 	/**
 	 * Counts the number of enabled ports in the Maximal cube chosen
@@ -455,7 +455,7 @@ public class BDDBIPEngineImpl implements BDDBIPEngine {
 		}
 	}
 
-	public void setBIPCoordinator(BIPCoordinator wrapper) {
+	public void setBIPCoordinator(GlueCoordinator wrapper) {
 		this.wrapper = wrapper;
 	}
 

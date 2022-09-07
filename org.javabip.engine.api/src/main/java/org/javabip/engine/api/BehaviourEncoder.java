@@ -76,7 +76,7 @@ public interface BehaviourEncoder {
 	 * @param wrapper
 	 *            the new BIP coordinator.
 	 */
-	void setBIPCoordinator(BIPCoordinator wrapper);
+	void setBIPCoordinator(GlueCoordinator wrapper);
 
 	/**
 	 * Provides a mapping between components and their state BDDs.

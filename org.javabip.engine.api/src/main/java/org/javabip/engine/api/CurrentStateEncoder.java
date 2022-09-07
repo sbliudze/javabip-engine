@@ -65,7 +65,7 @@ public interface CurrentStateEncoder {
 	 * @param wrapper
 	 *            the new BIP coordinator.
 	 */
-	void setBIPCoordinator(BIPCoordinator wrapper);
+	void setBIPCoordinator(GlueCoordinator wrapper);
 
 	/**
 	 * Setter for the BehaviourEncoder.

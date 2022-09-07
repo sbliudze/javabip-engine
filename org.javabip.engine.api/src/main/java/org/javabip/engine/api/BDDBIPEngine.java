@@ -84,7 +84,7 @@ public interface BDDBIPEngine {
 	 * @param wrapper
 	 *            the new BIP Coordinator.
 	 */
-	void setBIPCoordinator(BIPCoordinator wrapper);
+	void setBIPCoordinator(GlueCoordinator wrapper);
 
 	/**
 	 * Getter for the BDD Manager.
