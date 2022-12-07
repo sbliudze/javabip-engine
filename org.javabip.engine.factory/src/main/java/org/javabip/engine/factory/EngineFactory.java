@@ -18,25 +18,16 @@
  */
 package org.javabip.engine.factory;
 
-import org.javabip.api.BIPEngine;
-import org.javabip.api.BIPGlue;
-import org.javabip.engine.BDDBIPEngineImpl;
-import org.javabip.engine.BehaviourEncoderImpl;
-import org.javabip.engine.CurrentStateEncoderImpl;
-import org.javabip.engine.DataEncoderImpl;
-import org.javabip.engine.GlueEncoderImpl;
-import org.javabip.engine.api.BDDBIPEngine;
-import org.javabip.engine.api.GlueCoordinator;
-import org.javabip.engine.api.BehaviourEncoder;
-import org.javabip.engine.api.CurrentStateEncoder;
-import org.javabip.engine.api.DataEncoder;
-import org.javabip.engine.api.GlueEncoder;
-import org.javabip.engine.coordinator.GlueCoordinatorImpl;
-
 import akka.actor.ActorSystem;
 import akka.actor.TypedActor;
 import akka.actor.TypedProps;
 import akka.japi.Creator;
+import org.javabip.api.BIPEngine;
+import org.javabip.api.BIPGlue;
+import org.javabip.engine.*;
+import org.javabip.engine.api.*;
+import org.javabip.engine.coordinator.DataCoordinatorKernel;
+import org.javabip.engine.coordinator.GlueCoordinatorImpl;
 
 /**
  * Responsible for creating a BIP Engine actor either as BIP Coordinator or as Data Coordinator.
@@ -64,7 +55,7 @@ public class EngineFactory {
 			bipEngine = basicCoordinator;
 		} else {
 			DataEncoder dataEncoder = new DataEncoderImpl();
-			bipEngine = new org.javabip.engine.coordinator.DataCoordinatorKernel(basicCoordinator, dataEncoder);
+			bipEngine = new DataCoordinatorKernel(basicCoordinator, dataEncoder);
 		}
 
 		final BIPEngine engine = bipEngine;

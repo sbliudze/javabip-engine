@@ -233,11 +233,18 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 	}
 
 	/*
+	 * believe me, this way it is easier
+	 */
+	public synchronized BIPActor register(Object object, String id, boolean useSpec) {
+		return register(object, id, useSpec, false, false);
+	}
+
+	/*
 	 * (non-Javadoc)
 	 * 
 	 * @see org.bip.api.BIPEngine#register(org.bip.api.BIPComponent, org.bip.api.Behaviour)
 	 */
-	public synchronized BIPActor register(Object object, String id, boolean useSpec) {
+	public synchronized BIPActor register(Object object, String id, boolean useSpec, boolean doRuntimeVerification, boolean useVerCorsReport) {
 		/*
 		 * The condition below checks whether the component has already been registered.
 		 */
@@ -246,7 +253,7 @@ public class DataCoordinatorKernel implements BIPEngine, InteractionExecutor, Da
 			if (object == null) {
 				throw new BIPEngineException("Registering a null component.");
 			}
-			actor = glueCoordinator.register(object, id, useSpec);
+			actor = glueCoordinator.register(object, id, useSpec, doRuntimeVerification, useVerCorsReport);
 
 			BIPComponent component = glueCoordinator.getComponentFromObject(object);
 			Behaviour behaviour = glueCoordinator.getBehaviourByComponent(component);
