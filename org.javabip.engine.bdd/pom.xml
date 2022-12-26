@@ -10,7 +10,6 @@
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <groupId>org.javabip</groupId>
     <artifactId>org.javabip.engine.bdd</artifactId>
     <version>0.1.0-SNAPSHOT</version>
 
@@ -25,7 +24,7 @@
     <properties>
         <osgi.export>net.sf.javabdd</osgi.export>
         <osgi.import>jdd.bdd;resolution:=optional, jdd.util;resolution:=optional, *</osgi.import>
-        <osgi.private></osgi.private>
+        <osgi.private/>
     </properties>
 
     <dependencies>
@@ -36,16 +35,6 @@
         </dependency>
 
     </dependencies>
-
-    <reporting>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-report-plugin</artifactId>
-                <version>2.12.4</version>
-            </plugin>
-        </plugins>
-    </reporting>
 
     <build>
 
@@ -90,7 +79,7 @@
             <plugin>
                 <groupId>org.apache.felix</groupId>
                 <artifactId>maven-bundle-plugin</artifactId>
-                <version>2.3.7</version>
+                <version>5.1.8</version>
                 <executions>
                     <execution>
                         <id>wrap-dependency</id>
@@ -114,7 +103,7 @@
                 <version>2.12.4</version>
                 <configuration>
                     <includes>
-                        <include></include>
+                        <include/>
                     </includes>
                 </configuration>
             </plugin>
@@ -123,9 +112,9 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>2.3.2</version>
                 <configuration>
-                    <source>1.6</source>
-                    <target>1.6</target>
-                    <compilerArgument></compilerArgument>
+                    <source>11</source>
+                    <target>11</target>
+                    <compilerArgument/>
                 </configuration>
             </plugin>
 
